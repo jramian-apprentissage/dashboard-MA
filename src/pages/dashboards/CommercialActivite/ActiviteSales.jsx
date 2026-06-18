@@ -21,7 +21,7 @@ export default function ActiviteSales() {
 
   return (
     <div className={styles.page}>
-      <SectionLabel badge="Kavkom">Activité Sales — indicateurs clés</SectionLabel>
+      <SectionLabel badge="RINGOVER">Activité Sales — indicateurs clés</SectionLabel>
       <div className={styles.kpiGrid6}>
         {d.kpis.map(k => <KPICard key={k.label} {...k} />)}
       </div>

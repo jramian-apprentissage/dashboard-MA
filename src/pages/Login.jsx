@@ -33,8 +33,7 @@ export default function Login() {
         <div className={styles.logoWrap}>
           <img src={logoFull} alt="Mon Ambassadeur" className={styles.logo} />
         </div>
-        <h1 className={styles.title}>Espace Analytics</h1>
-        <p className={styles.sub}>Connectez-vous pour accéder à vos tableaux de bord</p>
+        <h1 className={styles.title}>Dashboard Mon Ambassadeur</h1>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.field}>
             <label className={styles.label}>Adresse email</label>
@@ -65,7 +64,7 @@ export default function Login() {
           </button>
         </form>
         <div className={styles.hint}>
-          <strong>Démo</strong> — Admin : j.ramian@cepremium.fr / admin123
+          <strong>Accès Démo</strong> — j.ramian@cepremium.fr / admin123
         </div>
       </div>
     </div>

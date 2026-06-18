@@ -21,7 +21,7 @@ export default function ActiviteTLM() {
 
   return (
     <div className={styles.page}>
-      <SectionLabel badge="Kavkom — Statut 'Non faisable'">Activité TLM — indicateurs clés</SectionLabel>
+      <SectionLabel badge="KAVKOM — 'EN STAND BY'">Activité TLM — indicateurs clés</SectionLabel>
       <div className={styles.kpiGrid4}>
         {d.kpis.slice(0, 8).map(k => <KPICard key={k.label} {...k} />)}
       </div>

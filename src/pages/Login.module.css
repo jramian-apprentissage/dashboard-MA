@@ -32,15 +32,9 @@
 }
 .logo { height: 36px; }
 .title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--blanc);
-  text-align: center;
-  margin-bottom: 6px;
-}
-.sub {
-  font-size: 13px;
-  color: var(--text2);
   text-align: center;
   margin-bottom: 28px;
 }
