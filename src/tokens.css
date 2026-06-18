@@ -1,0 +1,93 @@
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Roman.woff2') format('woff2'); font-weight: 400; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Medium.woff2') format('woff2'); font-weight: 500; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-SemiBold.woff2') format('woff2'); font-weight: 600; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Bold.woff2') format('woff2'); font-weight: 700; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Light.woff2') format('woff2'); font-weight: 300; }
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* ─── Palette Mon Ambassadeur ─────────────────── */
+  --orchidee:   #160512;
+  --myrtille:   #26001F;
+  --sable:      #E3E1D8;
+  --ciment:     #A7ADAA;
+  --soleil:     #FFF993;
+  --blanc:      #FFFFFF;
+  --brouillard: #FBFBFB;
+
+  /* ─── Surfaces ────────────────────────────────── */
+  --bg:    #FBFBFB;   /* Brouillard — fond global des pages */
+  --bg-sidebar: #26001F; /* Myrtille — sidebar gauche */
+  --bg2:   #1E0119;   /* intermédiaire */
+  --bg3:   #160512;   /* Orchidée — fond des cartes (plus sombre) */
+  --bg4:   #2E0027;   /* intra-carte — éléments internes */
+
+  /* ─── Texte sur fond blanc (Brouillard) ──────── */
+  --page-text:  rgba(22,5,18,0.80);   /* Orchidée 80% */
+  --page-text2: rgba(22,5,18,0.45);   /* Orchidée 45% — secondaire */
+  --page-border: rgba(22,5,18,0.08);  /* Orchidée 8% — séparateurs */
+
+  /* ─── Bordures ────────────────────────────────── */
+  --border:    rgba(227,225,216,0.07);   /* Sable 7% */
+  --border2:   rgba(227,225,216,0.14);   /* Sable 14% — hover */
+  --border-sol: rgba(255,249,147,0.18);  /* Soleil — focus / actif */
+
+  /* ─── Typographie ─────────────────────────────── */
+  --text:   #FBFBFB;                    /* Brouillard — valeurs KPI, titres importants */
+  --text2:  rgba(227,225,216,0.72);     /* Sable 72% — libellés, texte secondaire */
+  --text3:  rgba(167,173,170,0.65);     /* Ciment 65% — hints, labels axes */
+
+  /* ─── Accent principal ────────────────────────── */
+  --accent:        #FFF993;                   /* Soleil */
+  --accent-dim:    rgba(255,249,147,0.07);
+  --accent-border: rgba(255,249,147,0.18);
+  --accent-glow:   rgba(255,249,147,0.04);    /* Halo spotlight */
+
+  /* ─── Sémantique sobre ────────────────────────── */
+  /* Positif : vert sauge très désaturé */
+  --pos:      #7EB89A;
+  --pos-dim:  rgba(126,184,154,0.08);
+
+  /* Négatif : terracotta mat, jamais vif */
+  --neg:      #B87B65;
+  --neg-dim:  rgba(184,123,101,0.07);
+
+  /* Attention : or mat */
+  --warn:     #C4973A;
+  --warn-dim: rgba(196,151,58,0.07);
+
+  /* Neutre : Ciment */
+  --neu:      rgba(167,173,170,0.55);
+
+  /* ─── Typo ────────────────────────────────────── */
+  --font: 'OverusedGrotesk', sans-serif;
+  --r:  8px;
+  --r2: 12px;
+  --r3: 16px;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--page-text);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { font-family: var(--font); cursor: pointer; border: none; background: none; }
+a { color: inherit; text-decoration: none; }
+
+/* Focus visible — anneau Soleil pour navigation clavier */
+:focus-visible {
+  outline: 2px solid rgba(255,249,147,0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Réduction du mouvement — respecte les préférences système */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

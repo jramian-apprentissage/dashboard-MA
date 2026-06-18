@@ -1,0 +1,28 @@
+.page { display: flex; flex-direction: column; gap: 0; }
+.kpiGrid6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
+.kpiGrid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.chartWrap { position: relative; }
+
+.statutTable { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.statutRow { display: flex; align-items: center; gap: 8px; }
+.statutLbl { font-size: 10.5px; color: var(--text2); width: 120px; flex-shrink: 0; }
+.statutTrack { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 14px; overflow: hidden; }
+.statutFill { height: 100%; background: var(--accent); border-radius: 3px; opacity: 0.5; }
+.statutVals { display: flex; gap: 6px; font-size: 10.5px; width: 72px; justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.pct { color: var(--text3); }
+
+/* Table performance */
+.perfTable { width: 100%; border-collapse: collapse; }
+.perfTable th { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.perfTable td { font-size: 12px; color: var(--text2); padding: 10px 12px; border-bottom: 1px solid rgba(227,225,216,0.04); font-variant-numeric: tabular-nums; }
+.perfTable tr:last-child td { border-bottom: none; }
+.perfTable tr:hover td { background: rgba(255,249,147,0.02); }
+.topRow td { background: rgba(255,249,147,0.025) !important; }
+.tdName { color: var(--text); font-weight: 600; }
+.tdNum { text-align: right; }
+.tauxPill { font-weight: 700; font-size: 12px; }
+
+.subNote { font-size: 10.5px; color: var(--text3); }
+.legend { display: flex; align-items: center; font-size: 10.5px; color: var(--text3); gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }

@@ -1,0 +1,57 @@
+.page { display: flex; flex-direction: column; gap: 0; }
+.kpiGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
+.col6040 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-bottom: 20px; }
+.col4060 { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; margin-bottom: 20px; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.tbl td { font-size: 12px; color: var(--text2); padding: 8px 8px; border-bottom: 1px solid rgba(227,225,216,0.04); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: rgba(255,249,147,0.02); }
+.rank { font-weight: 700; }
+.tdName { color: var(--text); font-weight: 500; }
+.tdRight { text-align: right; }
+.miniBarWrap { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text3); }
+.miniBar { width: 50px; height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.miniFill { height: 100%; background: var(--accent); border-radius: 2px; opacity: 0.6; }
+
+/* Collaborateurs */
+.collabRow { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.04); border-radius: 7px; margin-bottom: 5px; border: 1px solid transparent; transition: border-color 0.15s; }
+.collabRow:hover { border-color: var(--border); }
+.collabLeft { display: flex; align-items: center; gap: 10px; }
+.collabAvatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0; border: 1px solid var(--accent-border); }
+.collabName { font-size: 12px; color: var(--text2); }
+.collabRight { display: flex; align-items: center; gap: 10px; }
+.collabBar { width: 55px; height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+.collabFill { height: 100%; background: var(--pos); border-radius: 2px; opacity: 0.6; }
+.collabMarge { font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.chartWrap { position: relative; }
+.donutLegend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; justify-content: center; }
+.legItem { font-size: 10px; color: var(--text3); }
+
+/* Health score */
+.healthStats { display: flex; justify-content: space-around; margin-top: 14px; }
+.hStat { text-align: center; }
+.hVal { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.hLbl { font-size: 9.5px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.hsCard { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; border: 1px solid transparent; transition: border-color 0.15s; }
+.hsCard:hover { border-color: var(--border); }
+.hsAvatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.hsInfo { flex: 1; min-width: 0; }
+.hsName { font-size: 12.5px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hsSub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.hsRight { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex-shrink: 0; }
+.hsScore { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+.hsBarRow { display: flex; align-items: center; gap: 6px; }
+.hsBar { width: 70px; height: 3px; border-radius: 2px; background: var(--border2); overflow: hidden; }
+.hsBarFill { height: 100%; border-radius: 2px; }
+
+/* Churn — terracotta sobrement */
+.metaSub { font-size: 10px; color: var(--text3); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+.bigVal { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.churnHead { display: flex; gap: 28px; margin-bottom: 12px; }
+.sep { height: 1px; background: var(--border); margin: 12px 0; }
+.infoRow { font-size: 11.5px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+.subnote { font-size: 10px; color: var(--text3); margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }

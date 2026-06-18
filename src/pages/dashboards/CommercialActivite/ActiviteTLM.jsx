@@ -1,0 +1,133 @@
+import { Bar, Line } from 'react-chartjs-2';
+import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
+import { useChartMount } from '../../../hooks/useChartMount';
+import KPICard from '../../../components/ui/KPICard';
+import Card from '../../../components/ui/Card';
+import SectionLabel from '../../../components/ui/SectionLabel';
+import MotifBar from '../../../components/ui/MotifBar';
+import { activiteTLMData as d, months } from '../../../data/mockData';
+import styles from './Activite.module.css';
+
+Chart.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler);
+
+const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'OverusedGrotesk' } };
+const gridStyle = { color: 'rgba(227,225,216,0.04)' };
+const borderCol = { color: 'rgba(227,225,216,0.08)' };
+const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
+const lineAnim = { duration: 900, easing: 'easeOutQuart' };
+
+export default function ActiviteTLM() {
+  const mounted = useChartMount();
+
+  return (
+    <div className={styles.page}>
+      <SectionLabel badge="Kavkom — Statut 'Non faisable'">Activité TLM — indicateurs clés</SectionLabel>
+      <div className={styles.kpiGrid4}>
+        {d.kpis.slice(0, 8).map(k => <KPICard key={k.label} {...k} />)}
+      </div>
+      <div className={styles.kpiGrid4} style={{ marginTop: 0 }}>
+        {d.kpis.slice(8).map(k => <KPICard key={k.label} {...k} />)}
+      </div>
+
+      <div className={styles.twoCol}>
+        <Card title="Statut par appels TLM — répartition">
+          <div className={styles.chartWrap} style={{ height: 190 }}>
+            <Bar
+              data={{
+                labels: d.statutAppels.map(s => s.label),
+                datasets: [{ data: d.statutAppels.map(s => s.count), backgroundColor: ['rgba(255,249,147,0.7)', 'rgba(167,173,170,0.4)', 'rgba(240,92,92,0.6)', 'rgba(245,166,35,0.6)', 'rgba(74,224,140,0.6)', 'rgba(240,92,92,0.4)'], borderRadius: 5, borderSkipped: false }],
+              }}
+              options={{ responsive: true, maintainAspectRatio: false, animation: barAnim, plugins: { legend: { display: false } }, scales: { x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol }, y: { ticks: tickStyle, grid: gridStyle, border: borderCol } } }}
+            />
+          </div>
+          <div className={styles.statutTable}>
+            {d.statutAppels.map((s, i) => (
+              <div key={s.label} className={styles.statutRow}>
+                <div className={styles.statutLbl}>{s.label}</div>
+                <div className={styles.statutTrack}>
+                  <div
+                    className={styles.statutFill}
+                    style={{
+                      width: mounted ? `${s.pct * 3}%` : '0%',
+                      transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 65}ms`,
+                    }}
+                  />
+                </div>
+                <div className={styles.statutVals}><span>{s.count}</span><span className={styles.pct}>{s.pct}%</span></div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Card title="Motifs de refus en appel TLM">
+          <div className={styles.subNote} style={{ marginBottom: 12 }}>Freins récurrents rencontrés par les équipes TLM</div>
+          {d.motifsRefus.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
+          <div className={styles.subNote} style={{ marginTop: 8 }}>Plusieurs motifs possibles par appel</div>
+        </Card>
+      </div>
+
+      <SectionLabel>Performance globale / collaborateur TLM</SectionLabel>
+      <Card title="Comparatif individuel — principaux leviers TLM">
+        <table className={styles.perfTable}>
+          <thead><tr>
+            <th>Collaborateur</th>
+            <th>Appels émis</th>
+            <th>Exploitables</th>
+            <th>Fiches complétées</th>
+            <th>RDV pris</th>
+            <th>Taux complétion</th>
+            <th>Taux transf.</th>
+          </tr></thead>
+          <tbody>
+            {d.collaborateurs.map((c, i) => (
+              <tr key={c.name} className={i === 0 ? styles.topRow : ''}>
+                <td className={styles.tdName}>{c.name}</td>
+                <td className={styles.tdNum}>{c.appels}</td>
+                <td className={styles.tdNum}>{c.exploitables}</td>
+                <td className={styles.tdNum}>{c.fiches}</td>
+                <td className={styles.tdNum}>{c.rdv}</td>
+                <td className={styles.tdNum}>
+                  <span className={styles.tauxPill} style={{ color: parseInt(c.tauxCompletion) >= 70 ? 'var(--pos)' : 'var(--warn)' }}>{c.tauxCompletion}</span>
+                </td>
+                <td className={styles.tdNum}>
+                  <span className={styles.tauxPill} style={{ color: parseFloat(c.taux) >= 5 ? 'var(--pos)' : 'var(--warn)' }}>{c.taux}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
+      <SectionLabel>Évolution mensuelle TLM</SectionLabel>
+      <Card title="Appels, RDV pris & Fiches complétées — évolution mensuelle">
+        <div className={styles.chartWrap} style={{ height: 210 }}>
+          <Line
+            data={{
+              labels: months,
+              datasets: [
+                { label: 'Appels émis', data: d.evolutionMensuelle.appels, borderColor: 'var(--accent)', backgroundColor: 'rgba(255,249,147,0.05)', pointBackgroundColor: 'var(--accent)', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y' },
+                { label: 'Fiches complétées', data: d.evolutionMensuelle.fiches, borderColor: 'rgba(227,225,216,0.5)', backgroundColor: 'rgba(227,225,216,0.03)', pointBackgroundColor: 'rgba(227,225,216,0.5)', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y2' },
+                { label: 'RDV pris', data: d.evolutionMensuelle.rdv, borderColor: '#7EB89A', backgroundColor: 'rgba(126,184,154,0.04)', pointBackgroundColor: '#7EB89A', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y2' },
+              ],
+            }}
+            options={{
+              responsive: true, maintainAspectRatio: false,
+              animation: lineAnim,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: tickStyle, grid: gridStyle, border: borderCol },
+                y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left' },
+                y2: { ticks: { ...tickStyle, color: 'rgba(126,184,154,0.5)' }, grid: { display: false }, border: borderCol, position: 'right' },
+              },
+            }}
+          />
+        </div>
+        <div className={styles.legend}>
+          <span className={styles.legDot} style={{ background: 'var(--accent)' }} />Appels (axe gauche)
+          <span className={styles.legDot} style={{ background: 'rgba(227,225,216,0.5)', marginLeft: 14 }} />Fiches complétées (axe droit)
+          <span className={styles.legDot} style={{ background: '#7EB89A', marginLeft: 14 }} />RDV pris (axe droit)
+        </div>
+      </Card>
+    </div>
+  );
+}

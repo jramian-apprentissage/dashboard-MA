@@ -1,0 +1,53 @@
+.page { display: flex; flex-direction: column; gap: 0; }
+.kpiGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+
+.metaSub { font-size: 10px; color: var(--text3); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.04em; }
+.metaVal { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+.pipeTotal { margin-bottom: 14px; }
+
+.stageRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.stageLbl { font-size: 11px; color: var(--text2); width: 140px; flex-shrink: 0; }
+.stageTrack { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 21px; overflow: hidden; }
+.stageFill { height: 100%; background: var(--accent); border-radius: 3px; display: flex; align-items: center; padding: 0 8px; font-size: 10px; font-weight: 600; color: var(--orchidee); justify-content: space-between; min-width: 40px; }
+.stageAmt { font-size: 10.5px; color: var(--text2); width: 62px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+/* Opps sans action — sobre */
+.alertCount { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.alertNum { font-size: 34px; font-weight: 700; color: var(--neg); letter-spacing: -0.02em; }
+.alertSub { font-size: 11.5px; color: var(--text2); line-height: 1.5; }
+
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border); }
+.tbl td { font-size: 12px; color: var(--text2); padding: 8px 8px; border-bottom: 1px solid rgba(227,225,216,0.04); vertical-align: middle; }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl td strong { color: var(--text); font-weight: 500; }
+.tbl tr:hover td { background: rgba(255,249,147,0.02); }
+
+/* Secteurs */
+.sectorRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.sectorLbl { font-size: 11px; color: var(--text2); width: 110px; flex-shrink: 0; }
+.sectorTrack { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 15px; overflow: hidden; }
+.sectorFill { height: 100%; background: var(--accent); border-radius: 3px; opacity: 0.55; }
+.sectorVal { font-size: 11px; color: var(--text2); width: 58px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+
+/* Donut */
+.donutWrap { position: relative; height: 190px; margin-bottom: 8px; }
+.donutLegend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+.legItem { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text3); }
+.legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
+
+/* Missions */
+.missionCard { background: rgba(255,255,255,0.04); border-radius: 7px; padding: 11px 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); transition: border-color 0.15s; }
+.missionCard:hover { border-color: var(--border2); }
+.missionName { font-size: 12.5px; color: var(--text2); font-weight: 500; }
+.missionRev { font-size: 14px; font-weight: 700; color: var(--text); text-align: right; letter-spacing: -0.01em; }
+.missionAvg { font-size: 10px; color: var(--text3); margin-top: 2px; text-align: right; }
+.sep { height: 1px; background: var(--border); margin: 12px 0; }
+.revMoyen { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text2); }
+.revMoyenVal { font-size: 15px; font-weight: 700; color: var(--accent); }
+
+/* Ligne */
+.lineWrap { position: relative; height: 200px; margin-bottom: 10px; }
+.legend { display: flex; align-items: center; font-size: 10.5px; color: var(--text3); gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.subnote { font-size: 10px; color: var(--text3); margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }
