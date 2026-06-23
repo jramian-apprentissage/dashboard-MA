@@ -17,6 +17,13 @@ export default function DashboardLayout({ dashboardName, children, extraFilters 
         <div className={styles.filters}>
           {extraFilters}
 
+          <PeriodPicker
+            value={periodKey}
+            customFrom={customFrom}
+            customTo={customTo}
+            onChange={onChange}
+          />
+
           {/* Bouton Comparer + picker période de comparaison */}
           <div className={styles.compareWrap}>
             <button
@@ -46,13 +53,6 @@ export default function DashboardLayout({ dashboardName, children, extraFilters 
               />
             )}
           </div>
-
-          <PeriodPicker
-            value={periodKey}
-            customFrom={customFrom}
-            customTo={customTo}
-            onChange={onChange}
-          />
           <div className={styles.mockPill}>
             <span className={styles.dot} />
             Mock
