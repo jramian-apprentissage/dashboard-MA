@@ -1,5 +1,6 @@
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
+import { useRef, useMemo } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
@@ -16,10 +17,11 @@ const gridStyle = { color: 'rgba(227,225,216,0.04)' };
 const borderCol = { color: 'rgba(227,225,216,0.08)' };
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
 
-function rdvInsidePlugin(rows) {
+function makeRdvPlugin(rowsRef) {
   return {
     id: 'rdvInside',
     afterDatasetsDraw(chart) {
+      const rows = rowsRef.current;
       const { ctx } = chart;
       const meta = chart.getDatasetMeta(0);
       ctx.save();
@@ -112,9 +114,14 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   const trancheRows = hasRealData
     ? salesData.result.tranches.map(row => ({
         ...row,
-        rdv: rdvResult?.byHour?.[row.t] ?? row.rdv,
+        rdv: rdvResult?.byHour != null ? (rdvResult.byHour[row.t] ?? 0) : row.rdv,
       }))
     : (d.tranchesHoraires.data[selectedCollab] || d.tranchesHoraires.data['Tous']);
+
+  // Plugin ref — pointe toujours vers trancheRows courant (évite le cache Chart.js par ID)
+  const trancheRowsRef = useRef(trancheRows);
+  trancheRowsRef.current = trancheRows;
+  const rdvPlugin = useMemo(() => makeRdvPlugin(trancheRowsRef), []); // eslint-disable-line
 
   return (
     <div className={styles.page}>
@@ -146,7 +153,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       <Card title={`Joignabilité & RDV par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
         <div className={styles.chartWrap} style={{ height: 240 }}>
           <Bar
-            plugins={[rdvInsidePlugin(trancheRows)]}
+            plugins={[rdvPlugin]}
             data={{
               labels: trancheRows.map(r => r.t),
               datasets: [
