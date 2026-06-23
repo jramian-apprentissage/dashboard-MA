@@ -205,22 +205,19 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
 }
 
 // ─── RDV Sheet ───────────────────────────────────────────────────────────────
-// Colonne A (0) : date  (format DD/MM/YYYY ou ISO)
-// Colonne H (7) : télépro
-// Colonne I (8) : honoré (TRUE / FALSE)
-
-// Colonne A (0) = date du RDV ← à utiliser
-// Colonne H (7) = "BDR"      ← télépro qui a posé le RDV
-// Colonne I (8) = "Présent"  ← honoré TRUE/FALSE
-const RDV_COL = { DATE: 0, COLLAB: 7, HONORE: 8 };
+// Ancienne structure (avant Apps Script) :
+//   A(0)=date+heure, H(7)=BDR, I(8)=Présent
+// Nouvelle structure (après Apps Script) :
+//   A(0)=date, B(1)=heure, I(8)=BDR, J(9)=Présent
+// Le parseur détecte automatiquement la structure via l'en-tête.
 
 // Parseur dédié au fichier RDV
-// Formats rencontrés : "22.04.2024 15:00" (DD.MM.YYYY HH:MM)
-//                      "22/04/2024"        (DD/MM/YYYY)
-//                      "2024-04-22"        (ISO)
+// Col A contient la date uniquement après restructuration (DD.MM.YYYY)
+// Formats tolérés pour l'historique : "DD.MM.YYYY", "DD/MM/YYYY", "YYYY-MM-DD"
+// Garde aussi le support "DD.MM.YYYY HH:MM" pour rétrocompatibilité si split non fait
 function parseRDVDate(str) {
   if (!str) return null;
-  const s = str.trim().split(' ')[0]; // conserver uniquement la partie date (avant l'heure)
+  const s = str.trim().split(' ')[0]; // partie date (avant l'éventuelle heure)
   // ISO YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
     const d = new Date(s + 'T00:00:00');
@@ -251,13 +248,28 @@ function parseRDVDate(str) {
 export function parseRDVSheetCSV(csvText) {
   const lines = csvText.split(/\r?\n/).filter(l => l.trim());
   if (lines.length < 2) return [];
+
+  // Détection automatique de la structure via l'en-tête ligne 1
+  const header = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
+  // Nouvelle structure : col B est exactement "heure" (après Apps Script)
+  // Ancienne structure : col B est "date / horaire meeting" (nom long)
+  const hasTimeCol = header[1] === 'heure' || header[1] === 'time';
+  const COL = hasTimeCol
+    ? { DATE: 0, TIME: 1, COLLAB: 8, HONORE: 9 }  // après Apps Script
+    : { DATE: 0, TIME: -1, COLLAB: 7, HONORE: 8 }; // ancienne structure
+
   return lines.slice(1)
     .map(line => {
       const cols = parseCSVLine(line);
+      const rawDate = (cols[COL.DATE] || '').trim();
+      const rawTime = COL.TIME >= 0
+        ? (cols[COL.TIME] || '').trim()
+        : (rawDate.includes(' ') ? rawDate.split(' ')[1] : '');
       return {
-        date:    cols[RDV_COL.DATE]   || '',
-        collab:  (cols[RDV_COL.COLLAB] || '').trim(),
-        honore:  (cols[RDV_COL.HONORE] || '').trim().toLowerCase() === 'présent',
+        date:   rawDate.split(' ')[0] || '',
+        time:   rawTime,
+        collab: (cols[COL.COLLAB] || '').trim(),
+        honore: (cols[COL.HONORE] || '').trim().toLowerCase() === 'présent',
       };
     })
     .filter(r => r.date && r.collab);
@@ -304,12 +316,12 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
   });
 
   // ── Par tranche horaire (heure de création du RDV, arrondie à l'heure pleine)
-  // Format date colonne A : "01.06.2026 16:56" → tranche "16:00" pour matcher Ringover
+  // Utilise r.time (col B après restructuration), arrondie à "HH:00" pour matcher Ringover
   const byHourMap = {};
   filtered.forEach(r => {
-    const parts = r.date.trim().split(' ');
-    if (parts.length < 2) return;
-    const [hh] = parts[1].split(':');
+    const timePart = r.time?.trim();
+    if (!timePart) return;
+    const [hh] = timePart.split(':');
     if (!hh) return;
     const key = `${hh.padStart(2, '0')}:00`;
     byHourMap[key] = (byHourMap[key] || 0) + 1;
