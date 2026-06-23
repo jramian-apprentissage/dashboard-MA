@@ -2,18 +2,55 @@ import PeriodPicker from '../ui/PeriodPicker';
 import { usePeriod } from '../../contexts/PeriodContext';
 import styles from './DashboardLayout.module.css';
 
-export default function DashboardLayout({ dashboardName, children, extraFilters }) {
+const PERIOD_LABELS = {
+  today:        "aujourd'hui",
+  yesterday:    "hier",
+  week:         "la semaine en cours",
+  month:        "le mois en cours",
+  'last-week':  "la semaine dernière",
+  'last-month': "le mois précédent",
+  quarter:      "le trimestre en cours",
+};
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function buildPeriodLabel(key, customFrom, customTo) {
+  if (key === 'custom' && customFrom && customTo)
+    return `du ${fmtDate(customFrom)} au ${fmtDate(customTo)}`;
+  return PERIOD_LABELS[key] || 'la période sélectionnée';
+}
+
+export default function DashboardLayout({ dashboardName, children, extraFilters, activeFilters = [] }) {
   const {
     periodKey, customFrom, customTo, onChange,
     compareActive, comparePeriodKey, compareFrom, compareTo,
     toggleCompare, onCompareChange,
   } = usePeriod();
 
+  const periodLabel = buildPeriodLabel(periodKey, customFrom, customTo);
+  const filterParts = activeFilters.filter(Boolean);
+  const subtitle = filterParts.length > 0
+    ? `${periodLabel} · ${filterParts.join(' · ')}`
+    : periodLabel;
+
   return (
     <div className={styles.shell}>
       {/* Barre de filtres — fond blanc, sticky */}
       <div className={styles.filterBar}>
-        <h1 className={styles.title}>{dashboardName}</h1>
+
+        {/* Titre + sous-titre */}
+        <div className={styles.titleBlock}>
+          <h1 className={styles.title}>{dashboardName}</h1>
+          <p className={styles.subtitle}>
+            Vous analysez les KPI&nbsp;
+            <span className={styles.subtitlePeriod}>{subtitle}</span>
+          </p>
+        </div>
+
         <div className={styles.filters}>
           {extraFilters}
 
