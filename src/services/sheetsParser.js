@@ -209,11 +209,10 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
 // Colonne H (7) : télépro
 // Colonne I (8) : honoré (TRUE / FALSE)
 
-// Colonne A (0) = "Date de Création" (ignorée)
-// Colonne B (1) = "Date / Horaire Meeting" ← date du RDV à utiliser
-// Colonne H (7) = "BDR"                   ← télépro qui a posé le RDV
-// Colonne I (8) = "Présent"               ← honoré TRUE/FALSE
-const RDV_COL = { DATE: 1, COLLAB: 7, HONORE: 8 };
+// Colonne A (0) = date du RDV ← à utiliser
+// Colonne H (7) = "BDR"      ← télépro qui a posé le RDV
+// Colonne I (8) = "Présent"  ← honoré TRUE/FALSE
+const RDV_COL = { DATE: 0, COLLAB: 7, HONORE: 8 };
 
 // Parseur dédié au fichier RDV
 // Formats rencontrés : "22.04.2024 15:00" (DD.MM.YYYY HH:MM)
