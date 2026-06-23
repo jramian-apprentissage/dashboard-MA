@@ -5,9 +5,9 @@ export const DASHBOARD_ROUTES = {
 
 export const DASHBOARD_TABS = {
   'commercial-rc': [
-    { id: 'synthese', label: 'Synthèse' },
-    { id: 'focus-commercial', label: 'Focus commercial' },
-    { id: 'focus-client', label: 'Focus client' },
+    { id: 'synthese', label: 'KPIs principaux' },
+    { id: 'focus-commercial', label: 'Pôle commercial' },
+    { id: 'focus-client', label: 'Pôle relations clients' },
   ],
   'commercial-activite': [
     { id: 'sales', label: 'Activité Sales' },

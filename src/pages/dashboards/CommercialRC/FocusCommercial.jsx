@@ -39,11 +39,35 @@ const lineOpts = {
 export default function FocusCommercial() {
   const mounted = useChartMount();
 
+  // Calcul du % pour la répartition revenue
+  const totalRevMissions = d.missions.reduce((sum, m) => sum + m.revenue, 0);
+
   return (
     <div className={styles.page}>
       <SectionLabel badge="Monday CRM">Pipeline & activité commerciale</SectionLabel>
-      <div className={styles.kpiGrid}>
-        {d.kpis.map(k => <KPICard key={k.label} {...k} />)}
+
+      {/* ── Ligne 1 : Deals (gagnés en premier) ── */}
+      <div className={styles.dealsGrid}>
+        {/* Deals gagnés — bloc spécial avec nb + € */}
+        <div className={styles.dealGagneCard}>
+          <div className={styles.dgLabel}>Deals gagnés</div>
+          <div className={styles.dgValues}>
+            <span className={styles.dgNb}>{d.kpis[3].value}</span>
+            <span className={styles.dgUnit}>deals</span>
+            <span className={styles.dgSep}>·</span>
+            <span className={styles.dgEuros}>{fmt(d.valeurDealsGagnes)}</span>
+          </div>
+          <div className={styles.dgTrend}>+12% vs période préc.</div>
+        </div>
+        <KPICard label="Deals en cours"  value={d.kpis[0].value} unit=" deals" trend={null}                                              color="blue" />
+        <KPICard label="Deals stand-by"  value={d.kpis[1].value} unit=" deals" trend={{ dir: 'down', text: '+2 vs mois préc.' }}        color="amber" />
+        <KPICard label="Deals perdus"    value={d.kpis[2].value} unit=" deals" trend={{ dir: 'down', text: '+3 vs mois préc.' }}        color="red" />
+      </div>
+
+      {/* ── Ligne 2 : Indicateurs temporels ── */}
+      <div className={styles.cycleGrid}>
+        <KPICard label="Âge moyen des opportunités" value={d.kpis[4].value} unit=" j" trend={{ dir: 'neutral', text: 'Depuis création' }}         color="blue" />
+        <KPICard label="Durée du cycle de vente"    value={d.kpis[5].value} unit=" j" trend={{ dir: 'neutral', text: 'Création → signature' }}    color="purple" />
       </div>
 
       <div className={styles.twoCol}>
@@ -96,21 +120,23 @@ export default function FocusCommercial() {
       </div>
 
       <div className={styles.twoCol}>
-        <Card title="Motifs de perte">
-          <div className={styles.metaSub} style={{ marginBottom: 12 }}>{d.kpis[2].value} deals perdus sur la période</div>
+        <Card title="Motifs des deals perdus">
           {d.motifsPerte.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
-          <div className={styles.subnote}>Plusieurs motifs possibles par deal — total {'>'} 100%</div>
+          <div className={styles.subnote}>
+            {d.kpis[2].value} deals perdus sur la période · Divers motifs de perte possibles — % du total des deals perdus
+          </div>
         </Card>
-        <Card title="Motifs de stand-by">
-          <div className={styles.metaSub} style={{ marginBottom: 12 }}>{d.kpis[1].value} deals en attente sur la période</div>
+        <Card title="Motifs des deals stand-by">
           {d.motifsStandby.map(m => <MotifBar key={m.label} {...m} fillColor="var(--warn)" />)}
-          <div className={styles.subnote}>Plusieurs motifs possibles par deal — total {'>'} 100%</div>
+          <div className={styles.subnote}>
+            {d.kpis[1].value} deals en attente sur la période · Divers motifs possibles — % du total des deals stand-by
+          </div>
         </Card>
       </div>
 
       <SectionLabel>Performance par segment</SectionLabel>
       <div className={styles.twoCol}>
-        <Card title="Performance par secteur d'activité">
+        <Card title="CA par secteur d'activité">
           {d.secteurs.map((s, i) => (
             <div key={s.label} className={styles.sectorRow}>
               <div className={styles.sectorLbl}>{s.label}</div>
@@ -172,13 +198,14 @@ export default function FocusCommercial() {
                 labels: d.missions.map(m => m.label),
                 datasets: [{ data: d.missions.map(m => m.revenue), backgroundColor: ['rgba(255,249,147,0.75)', 'rgba(227,225,216,0.45)', 'rgba(167,173,170,0.35)'], borderWidth: 0, hoverOffset: 4 }],
               }}
-              options={{ ...doughnutOpts, plugins: { legend: { display: false } } }}
+              options={{ ...doughnutOpts, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label} : ${Math.round(ctx.parsed / totalRevMissions * 100)}%` } } } }}
             />
           </div>
           <div className={styles.donutLegend}>
             {d.missions.map((m, i) => (
               <span key={m.label} className={styles.legItem}>
-                <span className={styles.legDot} style={{ background: ['rgba(255,249,147,0.75)', 'rgba(227,225,216,0.45)', 'rgba(167,173,170,0.35)'][i] }} />{m.label}
+                <span className={styles.legDot} style={{ background: ['rgba(255,249,147,0.75)', 'rgba(227,225,216,0.45)', 'rgba(167,173,170,0.35)'][i] }} />
+                {m.label} — {Math.round(m.revenue / totalRevMissions * 100)}%
               </span>
             ))}
           </div>
@@ -187,6 +214,12 @@ export default function FocusCommercial() {
 
       <SectionLabel>Évolution mensuelle des performances</SectionLabel>
       <Card title="Deals gagnés, perdus & stand-by — évolution mensuelle">
+        <div className={styles.evoKpis}>
+          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--pos)' }}>{d.kpis[3].value}</span><span className={styles.evoLbl}>Gagnés</span></div>
+          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--neg)' }}>{d.kpis[2].value}</span><span className={styles.evoLbl}>Perdus</span></div>
+          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--warn)' }}>{d.kpis[1].value}</span><span className={styles.evoLbl}>Stand-by</span></div>
+          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--text2)' }}>{d.kpis[0].value}</span><span className={styles.evoLbl}>En cours</span></div>
+        </div>
         <div className={styles.lineWrap}>
           <Line
             data={{

@@ -14,20 +14,129 @@ const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'O
 const gridStyle = { color: 'rgba(227,225,216,0.04)' };
 const borderCol = { color: 'rgba(227,225,216,0.08)' };
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
+
+function rdvInsidePlugin(rows) {
+  return {
+    id: 'rdvInside',
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const meta = chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.font = 'bold 9px OverusedGrotesk, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      meta.data.forEach((bar, i) => {
+        const rdv = rows[i]?.rdv;
+        if (!rdv) return;
+        const barHeight = bar.base - bar.y;
+        if (barHeight < 18) return;
+        ctx.fillStyle = 'rgba(142,207,170,0.95)';
+        ctx.fillText(`RDV : ${rdv}`, bar.x, bar.y + 4);
+      });
+      ctx.restore();
+    },
+  };
+}
 const lineAnim = { duration: 900, easing: 'easeOutQuart' };
 
-export default function ActiviteTLM() {
+function getKPIs(collab) {
+  if (collab === 'Tous') return d.kpis;
+  const c = d.collaborateurs.find(x => x.name === collab);
+  if (!c) return d.kpis;
+  return [
+    { label: 'Appels émis', value: c.appels, unit: '', trend: { dir: 'neutral', text: 'Période Jan–Jun 2025' }, color: 'blue' },
+    { label: 'Contacts joints', value: d.kpis[1].value, unit: '', trend: { dir: 'neutral', text: 'Données globales' }, color: 'blue' },
+    { label: 'Appels exploitables', value: c.exploitables, unit: '', trend: { dir: 'neutral', text: `${Math.round(c.exploitables / c.appels * 100)}% du total` }, color: 'green' },
+    { label: 'Appels non exploitables', value: d.kpis[3].value, unit: '', trend: { dir: 'neutral', text: 'Données globales' }, color: 'red' },
+    { label: 'Taux décrochés >30s', value: d.kpis[4].value, unit: '', trend: { dir: 'neutral', text: 'Données globales' }, color: 'accent' },
+    { label: 'Fiches complétées', value: c.fiches, unit: '', trend: { dir: 'neutral', text: `Taux : ${c.tauxCompletion}` }, color: 'green' },
+    { label: 'RDV pris', value: c.rdv, unit: '', trend: { dir: 'neutral', text: 'Période Jan–Jun 2025' }, color: 'green' },
+    { label: 'Taux RDV honorés', value: d.kpis[7].value, unit: '', trend: { dir: 'neutral', text: 'Données globales' }, color: 'purple' },
+    { label: 'Taux transformation nette', value: c.taux, unit: '', trend: { dir: 'neutral', text: 'Taux individuel' }, color: 'accent' },
+    { label: 'Leads à recycler', value: d.kpis[9].value, unit: '', trend: { dir: 'neutral', text: 'Données globales' }, color: 'amber' },
+    { label: 'Leads restants à contacter', value: d.kpis[10].value, unit: '', trend: { dir: 'neutral', text: 'Données globales' }, color: 'amber' },
+    { label: 'Taux fiches exploitables', value: c.tauxCompletion, unit: '', trend: { dir: 'neutral', text: 'Taux individuel' }, color: 'amber' },
+  ];
+}
+
+export default function ActiviteTLM({ selectedCollab = 'Tous' }) {
   const mounted = useChartMount();
+  const kpis = getKPIs(selectedCollab);
+  const trancheRows = d.tranchesHoraires.data[selectedCollab] || d.tranchesHoraires.data['Tous'];
 
   return (
     <div className={styles.page}>
       <SectionLabel badge="KAVKOM — 'EN STAND BY'">Activité TLM — indicateurs clés</SectionLabel>
       <div className={styles.kpiGrid4}>
-        {d.kpis.slice(0, 8).map(k => <KPICard key={k.label} {...k} />)}
+        {kpis.slice(0, 8).map(k => <KPICard key={k.label} {...k} />)}
       </div>
       <div className={styles.kpiGrid4} style={{ marginTop: 0 }}>
-        {d.kpis.slice(8).map(k => <KPICard key={k.label} {...k} />)}
+        {kpis.slice(8).map(k => <KPICard key={k.label} {...k} />)}
       </div>
+
+      <SectionLabel>Appels par tranche horaire</SectionLabel>
+      <Card title={`Joignabilité & RDV par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
+        <div className={styles.chartWrap} style={{ height: 240 }}>
+          <Bar
+            plugins={[rdvInsidePlugin(trancheRows)]}
+            data={{
+              labels: trancheRows.map(r => r.t),
+              datasets: [
+                {
+                  type: 'bar',
+                  label: 'Appels émis',
+                  data: trancheRows.map(r => r.appels),
+                  backgroundColor: 'rgba(255,249,147,0.38)',
+                  borderRadius: 4,
+                  borderSkipped: false,
+                  yAxisID: 'y',
+                  order: 1,
+                },
+                {
+                  type: 'line',
+                  label: 'Joignabilité %',
+                  data: trancheRows.map(r => r.appels > 0 ? r.join : null),
+                  borderColor: 'rgba(196,135,106,0.9)',
+                  backgroundColor: 'rgba(196,135,106,0.04)',
+                  pointBackgroundColor: 'rgba(196,135,106,0.9)',
+                  tension: 0.35,
+                  fill: false,
+                  pointRadius: 4,
+                  borderWidth: 2,
+                  yAxisID: 'y2',
+                  spanGaps: false,
+                  order: 0,
+                },
+              ],
+            }}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: barAnim,
+              plugins: {
+                legend: { display: false },
+                tooltip: {
+                  callbacks: {
+                    label: ctx => ctx.dataset.label === 'Joignabilité %'
+                      ? `${ctx.dataset.label}: ${ctx.parsed.y}%`
+                      : `${ctx.dataset.label}: ${ctx.parsed.y} appels`,
+                  },
+                },
+              },
+              scales: {
+                x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol },
+                y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', title: { display: true, text: 'Nb appels', color: 'rgba(167,173,170,0.4)', font: { size: 9 } } },
+                y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Joignabilité %', color: 'rgba(196,135,106,0.5)', font: { size: 9 } } },
+              },
+            }}
+          />
+        </div>
+        <div className={styles.legend}>
+          <span className={styles.legDot} style={{ background: 'rgba(255,249,147,0.7)' }} />Appels émis (axe gauche)
+          <span style={{ color: 'rgba(142,207,170,0.9)', fontWeight: 600, marginLeft: 14, fontSize: 10 }}>RDV : n</span> affiché dans chaque barre
+          <span className={styles.legDot} style={{ background: 'rgba(196,135,106,0.9)', marginLeft: 14 }} />Joignabilité % (axe droit)
+        </div>
+      </Card>
 
       <div className={styles.twoCol}>
         <Card title="Statut par appels TLM — répartition">
@@ -80,7 +189,7 @@ export default function ActiviteTLM() {
           </tr></thead>
           <tbody>
             {d.collaborateurs.map((c, i) => (
-              <tr key={c.name} className={i === 0 ? styles.topRow : ''}>
+              <tr key={c.name} className={`${i === 0 ? styles.topRow : ''} ${c.name === selectedCollab ? styles.highlightRow : ''}`}>
                 <td className={styles.tdName}>{c.name}</td>
                 <td className={styles.tdNum}>{c.appels}</td>
                 <td className={styles.tdNum}>{c.exploitables}</td>

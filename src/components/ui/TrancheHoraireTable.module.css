@@ -1,0 +1,97 @@
+.wrap { margin-top: 0; }
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.filterLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pills { display: flex; flex-wrap: wrap; gap: 5px; }
+.pill {
+  padding: 4px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text3);
+  font-size: 11px;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pill:hover { color: var(--text2); border-color: var(--accent-border); }
+.pillActive {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-color: var(--accent-border);
+  font-weight: 600;
+}
+
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th {
+  font-size: 9.5px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 7px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.tbl td {
+  font-size: 12px;
+  color: var(--text2);
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(227,225,216,0.04);
+  vertical-align: middle;
+}
+.tbl tr:hover td { background: rgba(255,249,147,0.02); }
+.empty td { opacity: 0.35; }
+
+tfoot td {
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  padding: 9px 10px;
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.tranche { font-weight: 500; color: var(--text); white-space: nowrap; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.totalLbl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); }
+
+.joinBadge { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+.star { color: var(--accent); font-size: 10px; }
+.rdvBadge {
+  display: inline-block;
+  background: rgba(142,207,170,0.12);
+  color: var(--pos);
+  border-radius: 4px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.bar { width: 120px; }
+.barCell { padding: 8px 10px; }
+.barTrack { width: 100%; height: 4px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+.barFill { height: 100%; background: rgba(255,249,147,0.4); border-radius: 2px; transition: width 0.5s cubic-bezier(0.16,1,0.3,1); }
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 10px;
+  color: var(--text3);
+  flex-wrap: wrap;
+}
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }

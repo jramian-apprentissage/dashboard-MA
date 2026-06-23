@@ -1,4 +1,29 @@
 .page { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Grille deals (ligne 1 : 4 cols) ── */
+.dealsGrid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+
+/* Bloc spécial Deals gagnés (nb + € sur la même ligne) */
+.dealGagneCard {
+  background: rgba(142,207,170,0.06);
+  border: 1px solid rgba(142,207,170,0.2);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dgLabel { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+.dgValues { display: flex; align-items: baseline; gap: 6px; flex-wrap: nowrap; }
+.dgNb { font-size: 22px; font-weight: 700; color: var(--pos); letter-spacing: -0.02em; }
+.dgUnit { font-size: 12px; color: var(--text3); }
+.dgSep { font-size: 12px; color: var(--text3); opacity: 0.5; }
+.dgEuros { font-size: 18px; font-weight: 600; color: var(--pos); letter-spacing: -0.02em; }
+.dgTrend { font-size: 10px; color: var(--pos); opacity: 0.8; }
+
+/* ── Grille indicateurs temporels (ligne 2 : 2 cols) ── */
+.cycleGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+
 .kpiGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
 .twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 
@@ -48,6 +73,12 @@
 .revMoyenVal { font-size: 15px; font-weight: 700; color: var(--accent); }
 
 /* Ligne */
+/* Mini-KPIs résumé dans la carte évolution */
+.evoKpis { display: flex; gap: 24px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.evoStat { display: flex; align-items: baseline; gap: 5px; }
+.evoVal { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.evoLbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+
 .lineWrap { position: relative; height: 200px; margin-bottom: 10px; }
 .legend { display: flex; align-items: center; font-size: 10.5px; color: var(--text3); gap: 6px; flex-wrap: wrap; margin-top: 6px; }
 .subnote { font-size: 10px; color: var(--text3); margin-top: 10px; border-top: 1px solid var(--border); padding-top: 8px; }

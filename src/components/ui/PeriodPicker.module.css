@@ -1,0 +1,103 @@
+.wrap { position: relative; }
+
+/* Pill trigger */
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--page-text2);
+  background: rgba(22,5,18,0.04);
+  border: 1px solid rgba(22,5,18,0.08);
+  border-radius: 6px;
+  padding: 5px 10px 5px 12px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.pill:hover { background: rgba(22,5,18,0.07); }
+.pill svg { color: var(--page-text2); flex-shrink: 0; }
+
+.chevron { transition: transform 0.18s; flex-shrink: 0; }
+.chevronOpen { transform: rotate(180deg); }
+
+/* Dropdown */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 210px;
+  background: #FBFBFB;
+  border: 1px solid rgba(22,5,18,0.1);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(22,5,18,0.1);
+  padding: 5px;
+  z-index: 200;
+  animation: fadeIn 0.12s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--page-text2);
+  font-family: var(--font);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s;
+}
+.option:hover { background: rgba(22,5,18,0.05); color: var(--page-text); }
+.optionActive { color: var(--page-text); font-weight: 600; }
+
+.check { color: #160512; font-size: 11px; width: 14px; flex-shrink: 0; }
+
+/* Custom date range section */
+.customRange {
+  border-top: 1px solid rgba(22,5,18,0.07);
+  padding: 10px 8px 6px;
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.customRow { display: flex; align-items: center; gap: 8px; }
+.customLbl { font-size: 10.5px; color: var(--page-text3); width: 18px; flex-shrink: 0; font-family: var(--font); }
+.customInput {
+  flex: 1;
+  background: rgba(22,5,18,0.04);
+  border: 1px solid rgba(22,5,18,0.1);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--page-text2);
+  font-family: var(--font);
+  outline: none;
+  cursor: pointer;
+}
+.customInput:focus { border-color: rgba(22,5,18,0.25); }
+.customInput::-webkit-calendar-picker-indicator { opacity: 0.4; cursor: pointer; }
+
+.applyBtn {
+  align-self: flex-end;
+  padding: 5px 14px;
+  background: #160512;
+  color: #FFF993;
+  border: none;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-top: 2px;
+}
+.applyBtn:hover { opacity: 0.85; }

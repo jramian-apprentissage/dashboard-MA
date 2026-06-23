@@ -38,16 +38,16 @@ export default function Synthese() {
     <div className={styles.page}>
       <SectionLabel badge="Monday CRM">Vue globale — indicateurs clés</SectionLabel>
       <div className={styles.kpiGrid}>
-        <KPICard label="CA Global" value={`${(d.caGlobal / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'up', text: '+18% vs S1 2024' }} color="blue" />
-        <KPICard label="Marge brute globale" value={`${(d.margeGlobale / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'up', text: `Taux : ${d.tauxMarge}%` }} color="green" />
-        <KPICard label="Nb clients actifs" value={d.nbClientsActifs} unit=" clients" trend={{ dir: 'up', text: '+5 vs période préc.' }} color="purple" />
-        <KPICard label="Somme des ventes" value={`${(d.sommesVentes / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'neutral', text: 'Deals gagnés — S1' }} color="blue" />
-        <KPICard label="Somme des achats" value={`${(d.sommesAchats / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'neutral', text: 'Masse salariale collaborateurs' }} color="amber" />
+        <KPICard label="CA" value={`${(d.caGlobal / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'up', text: '+18% vs S1 2024' }} color="blue" />
+        <KPICard label="Marge brute" value={`${(d.margeGlobale / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'up', text: `Taux : ${d.tauxMarge}%` }} color="green" />
+        <KPICard label="Clients actifs" value={d.nbClientsActifs} unit=" clients" trend={{ dir: 'up', text: '+5 vs période préc.' }} color="purple" />
+        <KPICard label="Vente totale" value={`${(d.sommesVentes / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'neutral', text: 'Deals gagnés — S1' }} color="blue" />
+        <KPICard label="Achat total" value={`${(d.sommesAchats / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'neutral', text: 'Masse salariale collaborateurs' }} color="amber" />
         <KPICard label="Deals gagnés" value={d.dealsGagnes} unit=" deals" trend={{ dir: 'up', text: '+12% vs période préc.' }} color="green" />
       </div>
 
       <div className={styles.chartsRow}>
-        <Card title="Évolution mensuelle du CA">
+        <Card title="Évolution mensuelle">
           <div className={styles.chartWrap}>
             <Bar
               data={{

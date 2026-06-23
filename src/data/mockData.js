@@ -18,9 +18,9 @@ export const syntheseData = {
     marge: [30, 32, 37, 38, 35, 42],
   },
   pipeline: [
-    { label: 'Prob. ≥ 75%', amount: 312000, pct: 62, color: 'var(--pos)' },
-    { label: 'Prob. 40–75%', amount: 124000, pct: 25, color: 'var(--warn)' },
-    { label: 'Prob. < 40%', amount: 64000, pct: 13, color: 'var(--neg)' },
+    { label: 'Haute (≥ 75%)', amount: 312000, pct: 62, color: 'var(--pos)' },
+    { label: 'Modérée (40–75%)', amount: 124000, pct: 25, color: 'var(--warn)' },
+    { label: 'Faible (< 40%)', amount: 64000, pct: 13, color: 'var(--neg)' },
   ],
   topClients: [
     { name: 'Acme Corp', ca: 142000, pct: 92 },
@@ -90,10 +90,11 @@ export const focusCommercialData = {
     { label: 'MA Direct', pct: 18 },
     { label: 'Autres', pct: 12 },
   ],
+  valeurDealsGagnes: 842000,
   missions: [
-    { label: 'Sales', revenue: 387000, moy: 34000 },
-    { label: 'Dev', revenue: 312000, moy: 52000 },
-    { label: 'Admin', revenue: 143000, moy: 18000 },
+    { label: 'Commerciales', revenue: 387000, moy: 34000 },
+    { label: 'Développement', revenue: 312000, moy: 52000 },
+    { label: 'Administratif & Support', revenue: 143000, moy: 18000 },
   ],
   revMoyenMission: 30000,
   evolution: {
@@ -139,11 +140,11 @@ export const focusClientData = {
   ],
   healthScore: { sains: 27, warning: 13, risque: 7 },
   healthClients: [
-    { initials: 'AC', name: 'Acme Corp', sub: 'Tech · 142 K€ CA', score: 92, status: 'Sain' },
-    { initials: 'GA', name: 'Groupe Avenir', sub: 'Finance · 108 K€ CA', score: 81, status: 'Sain' },
-    { initials: 'TV', name: 'TechVision SAS', sub: 'Tech · 81 K€ CA', score: 61, status: 'Warning' },
-    { initials: 'DL', name: 'Darby Ltd', sub: 'Retail · 22 K€ CA', score: 38, status: 'Risque' },
-    { initials: 'MX', name: 'Maxim & Co', sub: 'Industrie · 18 K€ CA', score: 24, status: 'Risque' },
+    { initials: 'AC', name: 'Acme Corp', sub: 'Tech · 142 K€ CA', score: 92, status: 'Sain', justificatif: 'Renouvellement signé en mai, 3 échanges actifs ce mois. Aucun retard de paiement sur 12 mois. Engagement fort — projet d\'extension en cours de discussion.' },
+    { initials: 'GA', name: 'Groupe Avenir', sub: 'Finance · 108 K€ CA', score: 81, status: 'Sain', justificatif: 'Dernier contact il y a 8 jours (réunion bilan). Facture réglée sous 15 j. Score en légère hausse vs mois précédent (+4 pts). Pas de signal d\'alerte détecté.' },
+    { initials: 'TV', name: 'TechVision SAS', sub: 'Tech · 81 K€ CA', score: 61, status: 'Warning', justificatif: 'Dernier échange il y a 34 jours — relance sans réponse. Retard de paiement constaté (J+18). Pas de renouvellement planifié à ce stade. À surveiller.' },
+    { initials: 'DL', name: 'Darby Ltd', sub: 'Retail · 22 K€ CA', score: 38, status: 'Risque', justificatif: 'Aucun contact depuis 67 jours. 2 factures en retard (J+30 et J+45). Interlocuteur principal a quitté la société. Risque de churn élevé — escalade recommandée.' },
+    { initials: 'MX', name: 'Maxim & Co', sub: 'Industrie · 18 K€ CA', score: 24, status: 'Risque', justificatif: 'Client inactif depuis 3 mois. Contrat non renouvelé, litige en cours sur dernière facture. A exprimé une insatisfaction via Monday CRM le 14/04. Action urgente requise.' },
   ],
   revenuPerdu: 96000,
   clientsPerdus: [
@@ -191,6 +192,18 @@ export const activiteSalesData = {
     appels: [280, 310, 320, 315, 305, 312],
     rdv: [12, 14, 16, 15, 15, 15],
   },
+  tranchesHoraires: {
+    cols: ['Tous', 'Alexandre B.', 'Sophie L.', 'Marc R.', 'Julie D.', 'Thomas M.', 'Clara C.'],
+    data: {
+      'Tous':         [{ t:'8h–9h',appels:98,join:28,rdv:1},{t:'9h–10h',appels:224,join:48,rdv:9},{t:'10h–11h',appels:312,join:64,rdv:18},{t:'11h–12h',appels:288,join:60,rdv:15},{t:'12h–13h',appels:128,join:29,rdv:3},{t:'13h–14h',appels:176,join:41,rdv:7},{t:'14h–15h',appels:320,join:66,rdv:19},{t:'15h–16h',appels:294,join:61,rdv:14},{t:'16h–17h',appels:212,join:52,rdv:10},{t:'17h–18h',appels:104,join:35,rdv:4},{t:'18h–19h',appels:42,join:24,rdv:2}],
+      'Alexandre B.': [{ t:'8h–9h',appels:24,join:30,rdv:0},{t:'9h–10h',appels:52,join:50,rdv:2},{t:'10h–11h',appels:72,join:67,rdv:5},{t:'11h–12h',appels:66,join:62,rdv:4},{t:'12h–13h',appels:28,join:31,rdv:1},{t:'13h–14h',appels:40,join:44,rdv:2},{t:'14h–15h',appels:74,join:69,rdv:5},{t:'15h–16h',appels:68,join:63,rdv:3},{t:'16h–17h',appels:50,join:54,rdv:2},{t:'17h–18h',appels:24,join:37,rdv:1},{t:'18h–19h',appels:14,join:26,rdv:0}],
+      'Sophie L.':    [{ t:'8h–9h',appels:22,join:29,rdv:0},{t:'9h–10h',appels:48,join:47,rdv:2},{t:'10h–11h',appels:68,join:65,rdv:4},{t:'11h–12h',appels:62,join:59,rdv:3},{t:'12h–13h',appels:24,join:28,rdv:1},{t:'13h–14h',appels:38,join:42,rdv:2},{t:'14h–15h',appels:70,join:67,rdv:4},{t:'15h–16h',appels:62,join:61,rdv:3},{t:'16h–17h',appels:44,join:51,rdv:2},{t:'17h–18h',appels:22,join:34,rdv:1},{t:'18h–19h',appels:9,join:22,rdv:0}],
+      'Marc R.':      [{ t:'8h–9h',appels:18,join:26,rdv:0},{t:'9h–10h',appels:44,join:46,rdv:2},{t:'10h–11h',appels:60,join:63,rdv:4},{t:'11h–12h',appels:56,join:58,rdv:3},{t:'12h–13h',appels:22,join:27,rdv:0},{t:'13h–14h',appels:34,join:40,rdv:1},{t:'14h–15h',appels:64,join:65,rdv:4},{t:'15h–16h',appels:56,join:59,rdv:3},{t:'16h–17h',appels:40,join:50,rdv:2},{t:'17h–18h',appels:18,join:33,rdv:1},{t:'18h–19h',appels:8,join:20,rdv:0}],
+      'Julie D.':     [{ t:'8h–9h',appels:16,join:25,rdv:0},{t:'9h–10h',appels:38,join:44,rdv:1},{t:'10h–11h',appels:54,join:61,rdv:3},{t:'11h–12h',appels:50,join:56,rdv:2},{t:'12h–13h',appels:20,join:26,rdv:0},{t:'13h–14h',appels:30,join:38,rdv:1},{t:'14h–15h',appels:58,join:63,rdv:3},{t:'15h–16h',appels:50,join:57,rdv:2},{t:'16h–17h',appels:36,join:48,rdv:2},{t:'17h–18h',appels:16,join:32,rdv:1},{t:'18h–19h',appels:6,join:18,rdv:0}],
+      'Thomas M.':    [{ t:'8h–9h',appels:12,join:22,rdv:0},{t:'9h–10h',appels:32,join:42,rdv:1},{t:'10h–11h',appels:44,join:58,rdv:2},{t:'11h–12h',appels:40,join:54,rdv:2},{t:'12h–13h',appels:16,join:24,rdv:0},{t:'13h–14h',appels:24,join:36,rdv:1},{t:'14h–15h',appels:46,join:60,rdv:2},{t:'15h–16h',appels:40,join:56,rdv:2},{t:'16h–17h',appels:30,join:45,rdv:1},{t:'17h–18h',appels:14,join:30,rdv:1},{t:'18h–19h',appels:6,join:16,rdv:0}],
+      'Clara C.':     [{ t:'8h–9h',appels:0,join:0,rdv:0},{t:'9h–10h',appels:10,join:40,rdv:1},{t:'10h–11h',appels:14,join:57,rdv:1},{t:'11h–12h',appels:14,join:55,rdv:1},{t:'12h–13h',appels:0,join:0,rdv:0},{t:'13h–14h',appels:10,join:40,rdv:1},{t:'14h–15h',appels:8,join:62,rdv:1},{t:'15h–16h',appels:18,join:61,rdv:1},{t:'16h–17h',appels:12,join:50,rdv:1},{t:'17h–18h',appels:10,join:35,rdv:0},{t:'18h–19h',appels:6,join:25,rdv:0}],
+    },
+  },
 };
 
 export const activiteTLMData = {
@@ -235,6 +248,18 @@ export const activiteTLMData = {
     appels: [520, 540, 555, 540, 545, 540],
     rdv: [22, 25, 28, 26, 27, 28],
     fiches: [96, 108, 115, 110, 112, 107],
+  },
+  tranchesHoraires: {
+    cols: ['Tous', 'Ana M.', 'Léa B.', 'Paul T.', 'Sara K.', 'Tom V.', 'Iris D.'],
+    data: {
+      'Tous':    [{t:'8h–9h',appels:186,join:32,rdv:6},{t:'9h–10h',appels:388,join:46,rdv:16},{t:'10h–11h',appels:482,join:58,rdv:24},{t:'11h–12h',appels:440,join:54,rdv:20},{t:'12h–13h',appels:168,join:26,rdv:5},{t:'13h–14h',appels:298,join:38,rdv:11},{t:'14h–15h',appels:494,join:60,rdv:26},{t:'15h–16h',appels:460,join:56,rdv:22},{t:'16h–17h',appels:376,join:48,rdv:16},{t:'17h–18h',appels:258,join:36,rdv:9},{t:'18h–19h',appels:90,join:22,rdv:1}],
+      'Ana M.':  [{t:'8h–9h',appels:40,join:34,rdv:1},{t:'9h–10h',appels:80,join:48,rdv:4},{t:'10h–11h',appels:100,join:61,rdv:5},{t:'11h–12h',appels:92,join:56,rdv:4},{t:'12h–13h',appels:34,join:28,rdv:1},{t:'13h–14h',appels:62,join:40,rdv:3},{t:'14h–15h',appels:104,join:63,rdv:6},{t:'15h–16h',appels:96,join:58,rdv:5},{t:'16h–17h',appels:78,join:50,rdv:4},{t:'17h–18h',appels:54,join:38,rdv:2},{t:'18h–19h',appels:20,join:24,rdv:0}],
+      'Léa B.':  [{t:'8h–9h',appels:36,join:31,rdv:1},{t:'9h–10h',appels:74,join:46,rdv:3},{t:'10h–11h',appels:92,join:59,rdv:5},{t:'11h–12h',appels:84,join:54,rdv:4},{t:'12h–13h',appels:30,join:26,rdv:1},{t:'13h–14h',appels:58,join:38,rdv:2},{t:'14h–15h',appels:96,join:61,rdv:5},{t:'15h–16h',appels:88,join:57,rdv:4},{t:'16h–17h',appels:72,join:48,rdv:3},{t:'17h–18h',appels:48,join:36,rdv:2},{t:'18h–19h',appels:16,join:22,rdv:0}],
+      'Paul T.': [{t:'8h–9h',appels:34,join:30,rdv:1},{t:'9h–10h',appels:70,join:44,rdv:3},{t:'10h–11h',appels:88,join:57,rdv:4},{t:'11h–12h',appels:80,join:52,rdv:3},{t:'12h–13h',appels:28,join:24,rdv:1},{t:'13h–14h',appels:54,join:37,rdv:2},{t:'14h–15h',appels:90,join:59,rdv:5},{t:'15h–16h',appels:84,join:55,rdv:4},{t:'16h–17h',appels:68,join:46,rdv:3},{t:'17h–18h',appels:46,join:34,rdv:2},{t:'18h–19h',appels:16,join:20,rdv:0}],
+      'Sara K.': [{t:'8h–9h',appels:30,join:29,rdv:1},{t:'9h–10h',appels:62,join:43,rdv:2},{t:'10h–11h',appels:80,join:56,rdv:4},{t:'11h–12h',appels:72,join:51,rdv:3},{t:'12h–13h',appels:26,join:23,rdv:0},{t:'13h–14h',appels:50,join:36,rdv:2},{t:'14h–15h',appels:82,join:58,rdv:4},{t:'15h–16h',appels:76,join:53,rdv:3},{t:'16h–17h',appels:62,join:44,rdv:2},{t:'17h–18h',appels:42,join:32,rdv:2},{t:'18h–19h',appels:14,join:18,rdv:0}],
+      'Tom V.':  [{t:'8h–9h',appels:28,join:28,rdv:1},{t:'9h–10h',appels:58,join:42,rdv:2},{t:'10h–11h',appels:74,join:54,rdv:3},{t:'11h–12h',appels:68,join:50,rdv:3},{t:'12h–13h',appels:24,join:22,rdv:0},{t:'13h–14h',appels:46,join:35,rdv:1},{t:'14h–15h',appels:76,join:56,rdv:4},{t:'15h–16h',appels:70,join:52,rdv:3},{t:'16h–17h',appels:58,join:43,rdv:2},{t:'17h–18h',appels:40,join:30,rdv:2},{t:'18h–19h',appels:14,join:17,rdv:0}],
+      'Iris D.': [{t:'8h–9h',appels:18,join:33,rdv:1},{t:'9h–10h',appels:44,join:50,rdv:2},{t:'10h–11h',appels:48,join:62,rdv:3},{t:'11h–12h',appels:44,join:58,rdv:3},{t:'12h–13h',appels:26,join:30,rdv:1},{t:'13h–14h',appels:28,join:42,rdv:1},{t:'14h–15h',appels:46,join:65,rdv:3},{t:'15h–16h',appels:46,join:62,rdv:3},{t:'16h–17h',appels:38,join:55,rdv:2},{t:'17h–18h',appels:28,join:40,rdv:1},{t:'18h–19h',appels:10,join:30,rdv:0}],
+    },
   },
 };
 

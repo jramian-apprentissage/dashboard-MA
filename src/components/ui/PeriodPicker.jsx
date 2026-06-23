@@ -1,0 +1,167 @@
+import { useState, useRef, useEffect } from 'react';
+import styles from './PeriodPicker.module.css';
+
+const PERIODS = [
+  { key: 'today',       label: "Aujourd'hui" },
+  { key: 'yesterday',   label: 'Hier' },
+  { key: 'week',        label: 'Semaine en cours' },
+  { key: 'month',       label: 'Mois en cours' },
+  { key: 'last-week',   label: 'Semaine dernière' },
+  { key: 'last-month',  label: 'Mois précédent' },
+  { key: 'quarter',     label: 'Trimestre en cours' },
+  { key: 'custom',      label: 'Personnaliser…' },
+];
+
+function dateStr(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+export function getPeriodRange(key, customFrom, customTo) {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth();
+
+  switch (key) {
+    case 'today':
+      return { from: dateStr(today), to: dateStr(today) };
+
+    case 'yesterday': {
+      const d = new Date(today); d.setDate(d.getDate() - 1);
+      return { from: dateStr(d), to: dateStr(d) };
+    }
+
+    case 'week': {
+      const d = new Date(today);
+      const day = today.getDay() || 7; // Mon=1…Sun=7
+      d.setDate(today.getDate() - day + 1);
+      return { from: dateStr(d), to: dateStr(today) };
+    }
+
+    case 'month':
+      return { from: `${y}-${String(m + 1).padStart(2, '0')}-01`, to: dateStr(today) };
+
+    case 'last-week': {
+      const d = new Date(today);
+      const day = today.getDay() || 7;
+      d.setDate(today.getDate() - day + 1 - 7);
+      const end = new Date(d); end.setDate(d.getDate() + 6);
+      return { from: dateStr(d), to: dateStr(end) };
+    }
+
+    case 'last-month': {
+      const lm = m === 0 ? 11 : m - 1;
+      const ly = m === 0 ? y - 1 : y;
+      const lastDay = new Date(ly, lm + 1, 0).getDate();
+      return {
+        from: `${ly}-${String(lm + 1).padStart(2, '0')}-01`,
+        to:   `${ly}-${String(lm + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+      };
+    }
+
+    case 'quarter': {
+      const qStart = Math.floor(m / 3) * 3;
+      return { from: `${y}-${String(qStart + 1).padStart(2, '0')}-01`, to: dateStr(today) };
+    }
+
+    case 'custom':
+      return { from: customFrom, to: customTo };
+
+    default:
+      return { from: dateStr(today), to: dateStr(today) };
+  }
+}
+
+export default function PeriodPicker({ value, customFrom, customTo, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // Close on outside click
+  useEffect(() => {
+    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const current = PERIODS.find(p => p.key === value) || PERIODS[3]; // default mois
+
+  function selectPeriod(key) {
+    if (key !== 'custom') {
+      const range = getPeriodRange(key, customFrom, customTo);
+      onChange({ key, ...range });
+      setOpen(false);
+    } else {
+      onChange({ key: 'custom', from: customFrom, to: customTo });
+      // keep open to show date inputs
+    }
+  }
+
+  function handleCustomDate(field, val) {
+    const next = { from: customFrom, to: customTo, [field]: val };
+    onChange({ key: 'custom', ...next });
+  }
+
+  return (
+    <div className={styles.wrap} ref={ref}>
+      {/* Trigger pill */}
+      <button className={styles.pill} onClick={() => setOpen(o => !o)} type="button">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>{current.label}</span>
+        <svg className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className={styles.dropdown}>
+          {PERIODS.map(p => (
+            <button
+              key={p.key}
+              className={`${styles.option} ${value === p.key ? styles.optionActive : ''}`}
+              onClick={() => selectPeriod(p.key)}
+              type="button"
+            >
+              {value === p.key && <span className={styles.check}>✓</span>}
+              {p.label}
+            </button>
+          ))}
+
+          {/* Date range inputs — visible uniquement si "Personnaliser" */}
+          {value === 'custom' && (
+            <div className={styles.customRange}>
+              <div className={styles.customRow}>
+                <label className={styles.customLbl}>Du</label>
+                <input
+                  type="date"
+                  className={styles.customInput}
+                  value={customFrom}
+                  onChange={e => handleCustomDate('from', e.target.value)}
+                />
+              </div>
+              <div className={styles.customRow}>
+                <label className={styles.customLbl}>Au</label>
+                <input
+                  type="date"
+                  className={styles.customInput}
+                  value={customTo}
+                  onChange={e => handleCustomDate('to', e.target.value)}
+                />
+              </div>
+              <button
+                className={styles.applyBtn}
+                onClick={() => setOpen(false)}
+                type="button"
+              >
+                Appliquer
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

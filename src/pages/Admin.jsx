@@ -1,17 +1,35 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, DASHBOARDS } from '../contexts/AuthContext';
+import { useAuth, DASHBOARDS, ROLES, roleLabel } from '../contexts/AuthContext';
+import { getHistory, clearHistory } from '../services/tracking';
 import styles from './Admin.module.css';
+
+function formatTs(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
 
 export default function Admin() {
   const { user, getAllUsers, createUser, updateUserDashboards, deleteUser } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState(getAllUsers());
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'core_team', dashboards: [] });
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'responsable', dashboards: [] });
   const [formError, setFormError] = useState('');
+  const [historyUser, setHistoryUser] = useState(null);
+  const [historyEvents, setHistoryEvents] = useState([]);
 
-  if (user?.role !== 'admin') {
+  function openHistory(u) {
+    setHistoryUser(u);
+    setHistoryEvents(getHistory(u.id));
+  }
+
+  function handleClearHistory(uid) {
+    clearHistory(uid);
+    setHistoryEvents([]);
+  }
+
+  if (!['admin', 'directeur'].includes(user?.role)) {
     navigate('/');
     return null;
   }
@@ -41,9 +59,10 @@ export default function Admin() {
       setFormError('Tous les champs sont requis.');
       return;
     }
-    createUser({ ...form, dashboards: form.role === 'admin' ? DASHBOARDS.map(d => d.id) : form.dashboards });
+    const autoAllDash = ['admin', 'directeur'].includes(form.role) ? DASHBOARDS.map(d => d.id) : form.dashboards;
+    createUser({ ...form, dashboards: autoAllDash });
     setShowModal(false);
-    setForm({ name: '', email: '', password: '', role: 'core_team', dashboards: [] });
+    setForm({ name: '', email: '', password: '', role: 'responsable', dashboards: [] });
     refresh();
   }
 
@@ -75,23 +94,30 @@ export default function Admin() {
                 </div>
               </div>
               <div className={styles.td}>
-                <span className={`${styles.rolePill} ${u.role === 'admin' ? styles.roleAdmin : styles.roleCore}`}>
-                  {u.role === 'admin' ? 'Admin' : 'Core Team'}
+                <span className={`${styles.rolePill} ${styles['role_' + u.role] || styles.roleCore}`}>
+                  {roleLabel(u.role)}
                 </span>
               </div>
-              {DASHBOARDS.map(d => (
-                <div key={d.id} className={styles.td} style={{ justifyContent: 'center' }}>
-                  <button
-                    className={`${styles.toggle} ${u.dashboards?.includes(d.id) ? styles.toggleOn : ''}`}
-                    onClick={() => u.role !== 'admin' && toggleDashboard(u.id, d.id)}
-                    disabled={u.role === 'admin'}
-                    title={u.role === 'admin' ? 'Admin voit tout' : (u.dashboards?.includes(d.id) ? 'Révoquer' : 'Autoriser')}
-                  >
-                    {u.dashboards?.includes(d.id) ? '✓' : '—'}
-                  </button>
-                </div>
-              ))}
-              <div className={styles.td}>
+              {DASHBOARDS.map(d => {
+                const fullAccess = ['admin', 'directeur'].includes(u.role);
+                const hasAccess  = fullAccess || u.dashboards?.includes(d.id);
+                return (
+                  <div key={d.id} className={styles.td} style={{ justifyContent: 'center' }}>
+                    <button
+                      className={`${styles.toggle} ${hasAccess ? styles.toggleOn : ''}`}
+                      onClick={() => !fullAccess && toggleDashboard(u.id, d.id)}
+                      disabled={fullAccess}
+                      title={fullAccess ? `${roleLabel(u.role)} voit tout` : (hasAccess ? 'Révoquer' : 'Autoriser')}
+                    >
+                      {hasAccess ? '✓' : '—'}
+                    </button>
+                  </div>
+                );
+              })}
+              <div className={styles.td} style={{ gap: 6 }}>
+                {user.role === 'admin' && (
+                  <button className={styles.btnHistory} onClick={() => openHistory(u)}>Historique</button>
+                )}
                 {u.id !== user.id && (
                   <button className={styles.btnDelete} onClick={() => handleDelete(u.id)}>Supprimer</button>
                 )}
@@ -101,6 +127,40 @@ export default function Admin() {
           ))}
         </div>
       </div>
+
+      {/* Panneau historique de connexion — admin uniquement */}
+      {historyUser && (
+        <div className={styles.overlay} onClick={() => setHistoryUser(null)}>
+          <div className={styles.historyPanel} onClick={e => e.stopPropagation()}>
+            <div className={styles.historyHeader}>
+              <div>
+                <div className={styles.historyTitle}>Historique — {historyUser.name}</div>
+                <div className={styles.historySub}>{historyEvents.length} événement{historyEvents.length !== 1 ? 's' : ''} enregistré{historyEvents.length !== 1 ? 's' : ''}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className={styles.btnClear} onClick={() => handleClearHistory(historyUser.id)}>Effacer</button>
+                <button className={styles.btnClose} onClick={() => setHistoryUser(null)}>✕</button>
+              </div>
+            </div>
+            <div className={styles.historyList}>
+              {historyEvents.length === 0 && (
+                <div className={styles.historyEmpty}>Aucun historique disponible</div>
+              )}
+              {historyEvents.map((ev, i) => (
+                <div key={i} className={styles.historyItem}>
+                  <span className={`${styles.historyBadge} ${ev.type === 'login' ? styles.badgeLogin : styles.badgeVisit}`}>
+                    {ev.type === 'login' ? 'Connexion' : 'Visite'}
+                  </span>
+                  <div className={styles.historyInfo}>
+                    <span className={styles.historyPage}>{ev.page || '—'}</span>
+                    <span className={styles.historyTs}>{formatTs(ev.timestamp)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className={styles.overlay} onClick={() => setShowModal(false)}>
@@ -115,10 +175,9 @@ export default function Admin() {
               <input className={styles.input} type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" />
               <label className={styles.fieldLabel}>Rôle</label>
               <select className={styles.input} value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))}>
-                <option value="core_team">Core Team</option>
-                <option value="admin">Admin</option>
+                {ROLES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
               </select>
-              {form.role === 'core_team' && (
+              {form.role === 'responsable' && (
                 <>
                   <label className={styles.fieldLabel}>Dashboards autorisés</label>
                   <div className={styles.checkList}>

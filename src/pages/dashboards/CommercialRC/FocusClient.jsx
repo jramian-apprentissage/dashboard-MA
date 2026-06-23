@@ -18,6 +18,7 @@ const secteurVariant = s => ({ Tech: 'blue', Finance: 'gray', Industrie: 'gray',
 const evolVariant = v => v > 0 ? 'green' : v < 0 ? 'red' : 'gray';
 const healthColor = s => ({ Sain: 'var(--pos)', Warning: 'var(--warn)', Risque: 'var(--neg)' }[s]);
 const healthVariant = s => ({ Sain: 'green', Warning: 'amber', Risque: 'red' }[s]);
+const healthLabel = s => ({ Sain: 'Sain', Warning: 'Sous vigilance', Risque: 'À risque' }[s] || s);
 
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
 const arcAnim = { duration: 1000, easing: 'easeOutQuart' };
@@ -119,42 +120,35 @@ export default function FocusClient() {
           ))}
           <div className={styles.subnote}>Marge brute = Prix de vente – Prix d'achat. Accès restreint Direction.</div>
         </Card>
-        <Card title="Répartition marge brute / collaborateur">
-          <div className={styles.chartWrap} style={{ height: 190 }}>
-            <Doughnut
-              data={{ labels: d.collaborateurs.map(c => c.name), datasets: [{ data: d.collaborateurs.map(c => c.marge / 1000), backgroundColor: ['rgba(255,249,147,0.75)', 'rgba(142,207,170,0.7)', 'rgba(123,170,191,0.7)', 'rgba(212,168,75,0.65)', 'rgba(196,135,106,0.65)', 'rgba(169,141,196,0.65)'], borderWidth: 0, hoverOffset: 4 }] }}
-              options={{ responsive: true, maintainAspectRatio: false, cutout: '65%', animation: arcAnim, plugins: { legend: { display: false } } }}
-            />
-          </div>
-          <div className={styles.donutLegend}>
-            {d.collaborateurs.map(c => <span key={c.name} className={styles.legItem}>{c.name}</span>)}
-          </div>
-        </Card>
-      </div>
-
-      <SectionLabel badge="IA — colonne Monday">Client Health Score</SectionLabel>
-      <div className={styles.col4060}>
-        <Card title="Répartition par niveau de santé">
+        <Card title="Nb de Clients par Niveau de Santé">
           <div className={styles.chartWrap} style={{ height: 160 }}>
             <Doughnut
-              data={{ labels: ['Sains ≥75', 'Warning 50-74', 'Risque <50'], datasets: [{ data: [d.healthScore.sains, d.healthScore.warning, d.healthScore.risque], backgroundColor: ['rgba(142,207,170,0.75)', 'rgba(212,168,75,0.65)', 'rgba(196,135,106,0.65)'], borderWidth: 0, hoverOffset: 4 }] }}
+              data={{ labels: ['Sains ≥75', 'Sous vigilance 50–74', 'À risque <50'], datasets: [{ data: [d.healthScore.sains, d.healthScore.warning, d.healthScore.risque], backgroundColor: ['rgba(142,207,170,0.75)', 'rgba(212,168,75,0.65)', 'rgba(196,135,106,0.65)'], borderWidth: 0, hoverOffset: 4 }] }}
               options={{ responsive: true, maintainAspectRatio: false, cutout: '65%', animation: arcAnim, plugins: { legend: { display: false } } }}
             />
           </div>
           <div className={styles.healthStats}>
             <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--pos)' }}>{d.healthScore.sains}</div><div className={styles.hLbl}>Sains ≥ 75</div></div>
-            <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--warn)' }}>{d.healthScore.warning}</div><div className={styles.hLbl}>Warning 50–74</div></div>
-            <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--neg)' }}>{d.healthScore.risque}</div><div className={styles.hLbl}>Risque {'<'} 50</div></div>
+            <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--warn)' }}>{d.healthScore.warning}</div><div className={styles.hLbl}>Sous vigilance 50–74</div></div>
+            <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--neg)' }}>{d.healthScore.risque}</div><div className={styles.hLbl}>À risque {'<'} 50</div></div>
           </div>
           <div className={styles.subnote}>Score IA basé sur : échanges, renouvellements, retards paiement</div>
         </Card>
-        <Card title="Scorecard clients — détail Health Score">
-          {d.healthClients.map((c, i) => (
-            <div key={c.name} className={styles.hsCard}>
-              <div className={styles.hsAvatar} style={{ background: `${healthColor(c.status)}22`, color: healthColor(c.status) }}>{c.initials}</div>
-              <div className={styles.hsInfo}><div className={styles.hsName}>{c.name}</div><div className={styles.hsSub}>{c.sub}</div></div>
-              <div className={styles.hsRight}>
-                <div className={styles.hsScore} style={{ color: healthColor(c.status) }}>{c.score}</div>
+      </div>
+
+      <SectionLabel badge="IA — colonne Monday">Client Health Score</SectionLabel>
+      <Card title="Détails du niveau de Santé par Client">
+        {d.healthClients.map((c, i) => {
+          const secteur = c.sub.split('·')[0].trim();
+          return (
+            <div key={c.name} className={styles.hsRow}>
+              <div className={styles.hsSecteur} style={{ borderColor: `${healthColor(c.status)}44`, color: healthColor(c.status) }}>{secteur}</div>
+              <div className={styles.hsInfo}>
+                <div className={styles.hsName}>{c.name}</div>
+                <div className={styles.hsSub}>{c.sub.split('·')[1]?.trim()}</div>
+              </div>
+              <div className={styles.hsScore} style={{ color: healthColor(c.status) }}>{c.score}</div>
+              <div className={styles.hsBarCol}>
                 <div className={styles.hsBarRow}>
                   <div className={styles.hsBar}>
                     <div
@@ -166,13 +160,15 @@ export default function FocusClient() {
                       }}
                     />
                   </div>
-                  <Pill variant={healthVariant(c.status)}>{c.status}</Pill>
+                  <Pill variant={healthVariant(c.status)}>{healthLabel(c.status)}</Pill>
                 </div>
               </div>
+              <div className={styles.hsJustif}>{c.justificatif}</div>
             </div>
-          ))}
-        </Card>
-      </div>
+          );
+        })}
+        <div className={styles.subnote} style={{ marginTop: 8 }}>Justificatif généré par l'IA Monday CRM — basé sur activité, paiements et engagements</div>
+      </Card>
 
       <SectionLabel>Churn & pertes clients</SectionLabel>
       <div className={styles.twoCol}>
