@@ -232,6 +232,12 @@ function parseRDVDate(str) {
     const d = new Date(`${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}T00:00:00`);
     return isNaN(d) ? null : d;
   }
+  // DD,MM,YYYY (saisie incorrecte avec virgules au lieu de points)
+  if (/^\d{1,2},\d{1,2},\d{4}$/.test(s)) {
+    const [dd, mm, yyyy] = s.split(',');
+    const d = new Date(`${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}T00:00:00`);
+    return isNaN(d) ? null : d;
+  }
   // DD/MM/YYYY (format français avec slashes)
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) {
     const [dd, mm, yyyy] = s.split('/');
