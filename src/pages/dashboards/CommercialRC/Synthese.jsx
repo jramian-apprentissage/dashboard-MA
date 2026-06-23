@@ -1,78 +1,150 @@
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, CategoryScale, LinearScale, Tooltip, Legend } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
+import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
-import { syntheseData, months } from '../../../data/mockData';
 import styles from './Synthese.module.css';
 
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const fmt = v => v >= 1000 ? `${(v / 1000).toFixed(0)} K€` : `${v}€`;
-
-const BAR_TRANSITION = { transition: 'width 0.85s cubic-bezier(0.16,1,0.3,1)' };
+const fmt = v => {
+  if (!v) return '0 €';
+  if (v >= 1000) return `${(v / 1000).toFixed(0)} K€`;
+  return `${v} €`;
+};
 
 const chartOpts = {
-  responsive: true, maintainAspectRatio: false,
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
   animation: {
     duration: 900,
     easing: 'easeOutQuart',
-    delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0,
+    delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 60 : 0,
   },
-  plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + ctx.parsed.y + 'k€' } } },
+  plugins: {
+    legend: { display: false },
+    tooltip: { callbacks: { label: ctx => fmt(ctx.parsed.x) } },
+  },
   scales: {
-    x: { ticks: { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'OverusedGrotesk' } }, grid: { color: 'rgba(227,225,216,0.04)' }, border: { color: 'rgba(227,225,216,0.08)' } },
-    y: { ticks: { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'OverusedGrotesk' }, callback: v => v + 'k' }, grid: { color: 'rgba(227,225,216,0.04)' }, border: { color: 'rgba(227,225,216,0.08)' } },
+    x: {
+      ticks: { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'OverusedGrotesk' }, callback: v => fmt(v) },
+      grid:  { color: 'rgba(227,225,216,0.04)' },
+      border: { color: 'rgba(227,225,216,0.08)' },
+    },
+    y: {
+      ticks: { color: 'rgba(167,173,170,0.7)', font: { size: 10, family: 'OverusedGrotesk' } },
+      grid:  { display: false },
+    },
   },
 };
 
 export default function Synthese() {
   const mounted = useChartMount();
-  const d = syntheseData;
+  const { result, loading, error } = useSnapshotData();
 
+  if (loading) return (
+    <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--text3)', fontSize: 13 }}>
+      Chargement des données CRM…
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--neg)', fontSize: 13 }}>
+      Erreur de chargement : {error}
+    </div>
+  );
+
+  if (!result) return null;
+
+  const d = result;
   const circumference = 276.5;
   const dashTarget = d.winRate * (circumference / 100);
+
+  // Top clients chart data
+  const topClients = d.topClients;
+  const chartData = {
+    labels: topClients.map(c => c.name),
+    datasets: [{
+      label: 'CA',
+      data:  topClients.map(c => c.ca),
+      backgroundColor: 'rgba(255,249,147,0.5)',
+      borderRadius: 4,
+      borderSkipped: false,
+    }],
+  };
 
   return (
     <div className={styles.page}>
       <SectionLabel badge="Monday CRM">Vue globale — indicateurs clés</SectionLabel>
+
       <div className={styles.kpiGrid}>
-        <KPICard label="CA" value={`${(d.caGlobal / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'up', text: '+18% vs S1 2024' }} color="blue" />
-        <KPICard label="Marge brute" value={`${(d.margeGlobale / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'up', text: `Taux : ${d.tauxMarge}%` }} color="green" />
-        <KPICard label="Clients actifs" value={d.nbClientsActifs} unit=" clients" trend={{ dir: 'up', text: '+5 vs période préc.' }} color="purple" />
-        <KPICard label="Vente totale" value={`${(d.sommesVentes / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'neutral', text: 'Deals gagnés — S1' }} color="blue" />
-        <KPICard label="Achat total" value={`${(d.sommesAchats / 1000).toFixed(0)} K`} unit="€" trend={{ dir: 'neutral', text: 'Masse salariale collaborateurs' }} color="amber" />
-        <KPICard label="Deals gagnés" value={d.dealsGagnes} unit=" deals" trend={{ dir: 'up', text: '+12% vs période préc.' }} color="green" />
+        <KPICard
+          label="CA Global"
+          value={fmt(d.caGlobal)}
+          trend={{ dir: 'neutral', text: `${d.nbClientsActifs} clients actifs` }}
+          color="blue"
+        />
+        <KPICard
+          label="Marge brute globale"
+          value={fmt(d.margeBruteGlobale)}
+          trend={{ dir: d.tauxMarge >= 20 ? 'up' : 'neutral', text: `Taux : ${d.tauxMarge}%` }}
+          color="green"
+        />
+        <KPICard
+          label="Clients actifs"
+          value={d.nbClientsActifs}
+          unit=" clients"
+          trend={{ dir: 'neutral', text: `sur ${d.nbClientsTotal} total` }}
+          color="purple"
+        />
+        <KPICard
+          label="Ventes (deals démarrés)"
+          value={fmt(d.sommeVentesGagnes)}
+          trend={{ dir: 'neutral', text: 'Clients démarrés sur la période' }}
+          color="blue"
+        />
+        <KPICard
+          label="Masse salariale"
+          value={fmt(d.totalAchats)}
+          trend={{ dir: 'neutral', text: 'Achat total clients actifs' }}
+          color="amber"
+        />
+        <KPICard
+          label="Deals gagnés"
+          value={d.nbDealsGagnes}
+          unit=" deals"
+          trend={{ dir: 'neutral', text: 'Date de démarrage sur la période' }}
+          color="green"
+        />
       </div>
 
       <div className={styles.chartsRow}>
-        <Card title="Évolution mensuelle">
-          <div className={styles.chartWrap}>
-            <Bar
-              data={{
-                labels: months,
-                datasets: [
-                  { label: 'CA mensuel (k€)', data: d.evolution.ca, backgroundColor: 'rgba(255,249,147,0.55)', borderRadius: 5, borderSkipped: false },
-                  { label: 'Marge brute (k€)', data: d.evolution.marge, backgroundColor: 'rgba(227,225,216,0.30)', borderRadius: 5, borderSkipped: false },
-                ],
-              }}
-              options={chartOpts}
-            />
-          </div>
-          <div className={styles.legend}>
-            <span className={styles.dot} style={{ background: 'rgba(255,249,147,0.7)' }} />CA mensuel
-            <span className={styles.dot} style={{ background: 'rgba(227,225,216,0.5)', marginLeft: 12 }} />Marge brute
-          </div>
+        <Card title="Top clients — CA">
+          {topClients.length > 0 ? (
+            <div className={styles.chartWrap}>
+              <Bar data={chartData} options={chartOpts} />
+            </div>
+          ) : (
+            <div style={{ color: 'var(--text3)', fontSize: 12, padding: '20px 0' }}>Aucun client actif</div>
+          )}
         </Card>
 
         <Card title="Pipeline pondéré par probabilité">
           <div className={styles.pipelineHeader}>
-            <div><div className={styles.metaSub}>Pipeline total</div><div className={styles.metaVal}>{fmt(d.pipelineTotal)}</div></div>
-            <div><div className={styles.metaSub}>Pipeline pondéré</div><div className={styles.metaVal} style={{ color: 'var(--accent)' }}>{fmt(d.pipelinePondere)}</div></div>
+            <div>
+              <div className={styles.metaSub}>Pipeline total</div>
+              <div className={styles.metaVal}>{fmt(d.montantPipeline)}</div>
+            </div>
+            <div>
+              <div className={styles.metaSub}>Pipeline pondéré</div>
+              <div className={styles.metaVal} style={{ color: 'var(--accent)' }}>{fmt(d.montantPipelinePondere)}</div>
+            </div>
           </div>
           <div className={styles.sep} />
-          {d.pipeline.map((p, i) => (
+          {d.pipelineBreakdown.map((p, i) => (
             <div key={p.label} className={styles.pBar}>
               <div className={styles.pLabel}>{p.label}</div>
               <div className={styles.pTrack}>
@@ -84,11 +156,15 @@ export default function Synthese() {
                     transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 80}ms`,
                   }}
                 >
-                  <span>{fmt(p.amount)}</span><span style={{ opacity: 0.7 }}>{p.pct}%</span>
+                  <span>{fmt(p.amount)}</span>
+                  <span style={{ opacity: 0.7 }}>{p.pct}%</span>
                 </div>
               </div>
             </div>
           ))}
+          {d.pipelineBreakdown.length === 0 && (
+            <div style={{ color: 'var(--text3)', fontSize: 12 }}>Aucune opportunité en pipeline</div>
+          )}
         </Card>
       </div>
 
@@ -99,7 +175,7 @@ export default function Synthese() {
             <svg viewBox="0 0 110 110" width={120} height={120}>
               <defs>
                 <linearGradient id="winGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#FBFBFB" stopOpacity="0.7" />
+                  <stop offset="0%"   stopColor="#FBFBFB" stopOpacity="0.7" />
                   <stop offset="100%" stopColor="#FFF993" stopOpacity="1" />
                 </linearGradient>
               </defs>
@@ -119,16 +195,28 @@ export default function Synthese() {
             </div>
           </div>
           <div className={styles.donutStats}>
-            <div className={styles.dstat}><div className={styles.dv} style={{ color: 'var(--pos)' }}>{d.dealStats.gagnes}</div><div className={styles.dl}>Gagnés</div></div>
-            <div className={styles.dstat}><div className={styles.dv} style={{ color: 'var(--neg)' }}>{d.dealStats.perdus}</div><div className={styles.dl}>Perdus</div></div>
-            <div className={styles.dstat}><div className={styles.dv} style={{ color: 'var(--warn)' }}>{d.dealStats.standby}</div><div className={styles.dl}>Stand-by</div></div>
-            <div className={styles.dstat}><div className={styles.dv} style={{ color: 'var(--text2)' }}>{d.dealStats.enCours}</div><div className={styles.dl}>En cours</div></div>
+            <div className={styles.dstat}>
+              <div className={styles.dv} style={{ color: 'var(--pos)' }}>{d.dealStats.gagnes}</div>
+              <div className={styles.dl}>Gagnés</div>
+            </div>
+            <div className={styles.dstat}>
+              <div className={styles.dv} style={{ color: 'var(--neg)' }}>{d.dealStats.perdus}</div>
+              <div className={styles.dl}>Perdus</div>
+            </div>
+            <div className={styles.dstat}>
+              <div className={styles.dv} style={{ color: 'var(--warn)' }}>{d.dealStats.standby}</div>
+              <div className={styles.dl}>Stand-by</div>
+            </div>
+            <div className={styles.dstat}>
+              <div className={styles.dv} style={{ color: 'var(--text2)' }}>{d.dealStats.enCours}</div>
+              <div className={styles.dl}>En cours</div>
+            </div>
           </div>
-          <div className={styles.subnote}>Win rate = Gagnés ÷ (Gagnés + Perdus + En cours)</div>
+          <div className={styles.subnote}>Win rate = Gagnés ÷ (Gagnés + Perdus)</div>
         </Card>
 
-        <Card title="Top clients — CA">
-          {d.topClients.map((c, i) => (
+        <Card title="Top clients — détail CA">
+          {topClients.map((c, i) => (
             <div key={c.name} className={styles.clientRow}>
               <div className={styles.cName}>{c.name}</div>
               <div className={styles.cRight}>
@@ -148,38 +236,29 @@ export default function Synthese() {
           <div className={styles.subnote}>Détail marge / client → onglet Focus client</div>
         </Card>
 
-        <Card title="Points d'attention">
-          {d.alertes.map((a, i) => (
-            <div key={i} className={`${styles.alert} ${styles[a.type]}`}>
-              <div className={styles.alertBody}>
-                <strong>{a.title}</strong><br />{a.detail}
-              </div>
+        <Card title="Marge brute — nouveaux clients">
+          <div style={{ padding: '8px 0' }}>
+            <div className={styles.metaSub}>Ventes (démarrés période)</div>
+            <div className={styles.metaVal}>{fmt(d.sommeVentesGagnes)}</div>
+          </div>
+          <div className={styles.sep} />
+          <div style={{ padding: '4px 0' }}>
+            <div className={styles.metaSub}>Achats (démarrés période)</div>
+            <div className={styles.metaVal} style={{ fontSize: 16 }}>{fmt(d.sommeAchatsGagnes)}</div>
+          </div>
+          <div className={styles.sep} />
+          <div style={{ padding: '4px 0' }}>
+            <div className={styles.metaSub}>Marge brute nouveaux</div>
+            <div
+              className={styles.metaVal}
+              style={{ color: d.margeBruteNouveaux >= 0 ? 'var(--pos)' : 'var(--neg)' }}
+            >
+              {fmt(d.margeBruteNouveaux)}
             </div>
-          ))}
+          </div>
+          <div className={styles.subnote}>Clients dont la date de démarrage est dans la période</div>
         </Card>
       </div>
-
-      <SectionLabel>Marge brute — décomposition mensuelle</SectionLabel>
-      <Card title="Ventes vs Achats vs Marge brute">
-        <div className={styles.chartWrapLarge}>
-          <Bar
-            data={{
-              labels: months,
-              datasets: [
-                { label: 'Ventes (k€)', data: d.evolution.ca, backgroundColor: 'rgba(255,249,147,0.55)', borderRadius: 4, borderSkipped: false },
-                { label: 'Achats (k€)', data: d.evolution.achats, backgroundColor: 'rgba(167,173,170,0.22)', borderRadius: 4, borderSkipped: false },
-                { label: 'Marge brute (k€)', data: d.evolution.marge, backgroundColor: 'rgba(227,225,216,0.35)', borderRadius: 4, borderSkipped: false },
-              ],
-            }}
-            options={chartOpts}
-          />
-        </div>
-        <div className={styles.legend}>
-          <span className={styles.dot} style={{ background: 'rgba(255,249,147,0.7)' }} />Ventes
-          <span className={styles.dot} style={{ background: 'rgba(167,173,170,0.4)', marginLeft: 12 }} />Achats
-          <span className={styles.dot} style={{ background: 'rgba(227,225,216,0.6)', marginLeft: 12 }} />Marge brute
-        </div>
-      </Card>
     </div>
   );
 }
