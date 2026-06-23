@@ -26,10 +26,10 @@ export function useSalesData() {
     setLoading(true);
     setError(null);
     try {
-      // Fetch Ringover + RDV en parallèle
-      const ringoverUrl = `/api/gsheets/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+      // Fetch Ringover + RDV en parallèle (direct Google Sheets — CORS public)
+      const ringoverUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
       const rdvUrl      = RDV_SHEET_ID
-        ? `/api/gsheets/spreadsheets/d/${RDV_SHEET_ID}/export?format=csv&gid=${RDV_SHEET_GID}`
+        ? `https://docs.google.com/spreadsheets/d/${RDV_SHEET_ID}/export?format=csv&gid=${RDV_SHEET_GID}`
         : null;
 
       const [ringoverRes, rdvRes] = await Promise.all([
