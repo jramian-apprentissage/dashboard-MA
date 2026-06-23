@@ -251,7 +251,7 @@ export function parseRDVSheetCSV(csvText) {
       return {
         date:    cols[RDV_COL.DATE]   || '',
         collab:  (cols[RDV_COL.COLLAB] || '').trim(),
-        honore:  (cols[RDV_COL.HONORE] || '').trim().toLowerCase() === 'honoré',
+        honore:  (cols[RDV_COL.HONORE] || '').trim().toLowerCase() === 'présent',
       };
     })
     .filter(r => r.date && r.collab);
