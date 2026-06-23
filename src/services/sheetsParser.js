@@ -298,5 +298,18 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
     monthlyMap[key] = (monthlyMap[key] || 0) + 1;
   });
 
-  return { rdvPris, rdvHonores, tauxHonores, perCollab: collabMap, monthly: monthlyMap };
+  // ── Par tranche horaire (heure du meeting, extraite de la date RDV) ─────────
+  const byHourMap = {};
+  filtered.forEach(r => {
+    // La date contient l'heure : "22.04.2024 15:00"
+    const parts = r.date.trim().split(' ');
+    if (parts.length < 2) return;
+    const timePart = parts[1]; // "15:00"
+    const [hh, mm] = timePart.split(':');
+    if (!hh) return;
+    const key = `${hh.padStart(2, '0')}:${(mm || '00').padStart(2, '0')}`;
+    byHourMap[key] = (byHourMap[key] || 0) + 1;
+  });
+
+  return { rdvPris, rdvHonores, tauxHonores, perCollab: collabMap, monthly: monthlyMap, byHour: byHourMap };
 }

@@ -107,8 +107,13 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   const kpis = hasRealData ? buildRealKPIs(salesData.result, rdvResult, compareResult) : getMockKPIs(selectedCollab);
 
   // Tranches horaires : réelles si connecté, mock sinon
+  // Les RDV par tranche viennent de la feuille RDV (byHour) si disponible,
+  // sinon on garde les RDV Ringover (tag OK) comme fallback
   const trancheRows = hasRealData
-    ? salesData.result.tranches
+    ? salesData.result.tranches.map(row => ({
+        ...row,
+        rdv: rdvResult?.byHour?.[row.t] ?? row.rdv,
+      }))
     : (d.tranchesHoraires.data[selectedCollab] || d.tranchesHoraires.data['Tous']);
 
   return (
