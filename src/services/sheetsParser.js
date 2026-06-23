@@ -251,7 +251,7 @@ export function parseRDVSheetCSV(csvText) {
       return {
         date:    cols[RDV_COL.DATE]   || '',
         collab:  (cols[RDV_COL.COLLAB] || '').trim(),
-        honore:  (cols[RDV_COL.HONORE] || '').trim().toUpperCase() === 'TRUE',
+        honore:  (cols[RDV_COL.HONORE] || '').trim().toLowerCase() === 'honoré',
       };
     })
     .filter(r => r.date && r.collab);
@@ -297,16 +297,15 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
     monthlyMap[key] = (monthlyMap[key] || 0) + 1;
   });
 
-  // ── Par tranche horaire (heure du meeting, extraite de la date RDV) ─────────
+  // ── Par tranche horaire (heure de création du RDV, arrondie à l'heure pleine)
+  // Format date colonne A : "01.06.2026 16:56" → tranche "16:00" pour matcher Ringover
   const byHourMap = {};
   filtered.forEach(r => {
-    // La date contient l'heure : "22.04.2024 15:00"
     const parts = r.date.trim().split(' ');
     if (parts.length < 2) return;
-    const timePart = parts[1]; // "15:00"
-    const [hh, mm] = timePart.split(':');
+    const [hh] = parts[1].split(':');
     if (!hh) return;
-    const key = `${hh.padStart(2, '0')}:${(mm || '00').padStart(2, '0')}`;
+    const key = `${hh.padStart(2, '0')}:00`;
     byHourMap[key] = (byHourMap[key] || 0) + 1;
   });
 
