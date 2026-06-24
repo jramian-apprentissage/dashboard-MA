@@ -262,17 +262,26 @@ export function parseRDVSheetCSV(csvText) {
     .map(line => {
       const cols = parseCSVLine(line);
       const rawDate = (cols[COL.DATE] || '').trim();
+      const datePart = rawDate.split(' ')[0];
+
+      // Ignorer les lignes sans date valide (texte libre, cellules vides…)
+      if (!parseRDVDate(datePart)) return null;
+
       const rawTime = COL.TIME >= 0
         ? (cols[COL.TIME] || '').trim()
         : (rawDate.includes(' ') ? rawDate.split(' ')[1] : '');
+
+      // Temps absent ou 00:00 → on garde la ligne avec time = "00:00"
+      const time = (!rawTime || /^00:?00/.test(rawTime)) ? '00:00' : rawTime;
+
       return {
-        date:   rawDate.split(' ')[0] || '',
-        time:   rawTime,
+        date:   datePart,
+        time,
         collab: (cols[COL.COLLAB] || '').trim(),
         honore: (cols[COL.HONORE] || '').trim().toLowerCase() === 'présent',
       };
     })
-    .filter(r => r.date && r.collab);
+    .filter(r => r !== null && r.collab);
 }
 
 export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) {
