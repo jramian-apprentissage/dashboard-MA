@@ -13,12 +13,20 @@ const USERS = [
   { id: 4, name: 'Julie D.',           email: 'julie@monambassadeur.com',  password: 'pass123', role: 'responsable', dashboards: ['commercial-rc', 'commercial-activite'] },
 ];
 
+const SESSION_VERSION = 'v2';
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem('ma_user');
-    return stored ? JSON.parse(stored) : null;
+    const version = localStorage.getItem('ma_session_v');
+    if (!stored || version !== SESSION_VERSION) {
+      localStorage.removeItem('ma_user');
+      localStorage.setItem('ma_session_v', SESSION_VERSION);
+      return null;
+    }
+    return JSON.parse(stored);
   });
 
   function login(email, password) {
