@@ -1,72 +1,114 @@
 .shell { display: flex; flex-direction: column; flex: 1; }
 
-/* Barre de filtres — fond blanc, sticky en haut du contenu */
-.filterBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 28px 18px;
-  background: #FBFBFB;
-  border-bottom: 1px solid rgba(22,5,18,0.07);
-  position: sticky;
-  top: 0;
-  z-index: 90;
-  gap: 16px;
-}
-
-.titleBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+/* ─── Hero header ────────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  height: 172px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
+.heroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    rgba(22,5,18,0.84) 0%,
+    rgba(22,5,18,0.65) 55%,
+    rgba(22,5,18,0.48) 100%
+  );
+}
+
+.heroInner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 32px 24px;
+}
+
 .title {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
-  color: var(--page-text);
+  color: rgba(255,255,255,0.95);
   letter-spacing: -0.03em;
-  margin: 0;
+  margin: 0 0 6px;
   line-height: 1;
-  white-space: nowrap;
 }
 
 .subtitle {
   margin: 0;
   font-size: 12.5px;
   font-weight: 400;
-  color: rgba(22,5,18,0.5);
-  letter-spacing: 0;
+  color: rgba(255,255,255,0.5);
   line-height: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .subtitlePeriod {
   font-weight: 600;
-  color: rgba(22,5,18,0.72);
+  color: rgba(255,255,255,0.8);
 }
 
-.filters { display: flex; align-items: center; gap: 8px; }
+/* ─── Barre sticky (onglets + filtres) ──────────────────────────────────────── */
+.stickyBar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  background: var(--bg);
+  border-bottom: 1px solid rgba(22,5,18,0.07);
+  position: sticky;
+  top: 52px; /* hauteur de la TopBar */
+  z-index: 90;
+  padding: 0 24px 0 28px;
+  min-height: 44px;
+  gap: 12px;
+}
 
-.periodPill {
+/* ─── Onglets ─────────────────────────────────────────────────────────────────── */
+.tabList {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.tab {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
+  padding: 0 16px;
+  font-size: 12.5px;
   font-weight: 500;
-  color: var(--page-text2);
-  background: rgba(22,5,18,0.04);
-  border: 1px solid rgba(22,5,18,0.08);
-  border-radius: 6px;
-  padding: 5px 12px;
+  color: rgba(22,5,18,0.45);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: background 0.15s;
+  font-family: var(--font);
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -1px; /* couvre le border-bottom du parent */
 }
-.periodPill:hover { background: rgba(22,5,18,0.07); }
-.periodPill svg { color: var(--page-text2); flex-shrink: 0; }
+.tab:hover { color: rgba(22,5,18,0.75); }
 
+.tabActive {
+  color: rgba(22,5,18,0.9);
+  font-weight: 600;
+  border-bottom-color: rgba(22,5,18,0.75);
+}
+
+/* ─── Zone filtres ───────────────────────────────────────────────────────────── */
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Pills réutilisables (utilisées dans CommercialActivite) */
 .collabPill {
   display: flex;
   align-items: center;
@@ -82,6 +124,7 @@
 }
 .collabPill:hover { background: rgba(22,5,18,0.07); }
 .collabPill svg { color: var(--page-text2); flex-shrink: 0; }
+
 .collabSelect {
   background: transparent;
   border: none;
@@ -95,57 +138,7 @@
   max-width: 130px;
 }
 
-/* Date range filter */
-.dateRangePill {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  color: var(--page-text2);
-  background: rgba(22,5,18,0.04);
-  border: 1px solid rgba(22,5,18,0.08);
-  border-radius: 6px;
-  padding: 4px 10px;
-}
-.dateRangePill svg { color: var(--page-text2); flex-shrink: 0; }
-.dateInput {
-  background: transparent;
-  border: none;
-  color: var(--page-text2);
-  font-size: 11px;
-  font-family: var(--font);
-  cursor: pointer;
-  outline: none;
-  padding: 0;
-  width: 100px;
-}
-.dateInput::-webkit-calendar-picker-indicator { opacity: 0.45; cursor: pointer; }
-.dateSep { color: rgba(22,5,18,0.3); font-size: 10px; padding: 0 2px; }
-
-/* Bouton Actualiser */
-.refreshBtn {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #160512;
-  background: #FFF993;
-  border: 1px solid rgba(22,5,18,0.12);
-  border-radius: 6px;
-  padding: 5px 12px;
-  cursor: pointer;
-  font-family: var(--font);
-  transition: opacity 0.15s, transform 0.1s;
-  white-space: nowrap;
-}
-.refreshBtn:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
-.refreshBtn:disabled { opacity: 0.55; cursor: default; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.refreshBtn svg { flex-shrink: 0; }
-.refreshBtnLoading svg { animation: spin 0.9s linear infinite; }
-
-/* Indicateur de chargement auto */
+/* Indicateur de chargement */
 .loadingPill {
   display: flex;
   align-items: center;
@@ -158,6 +151,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinIcon { animation: spin 0.9s linear infinite; flex-shrink: 0; }
 
+/* Pill "Mock" */
 .mockPill {
   display: flex;
   align-items: center;
@@ -170,7 +164,8 @@
   padding: 5px 10px;
 }
 .dot {
-  width: 5px; height: 5px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: #FFF993;
   box-shadow: 0 0 5px rgba(255,249,147,0.6);
@@ -199,7 +194,7 @@
 }
 .compareBtnX:hover { color: #c43b3b; background: rgba(196,59,59,0.08); }
 
-/* Contenu principal */
+/* ─── Contenu principal ──────────────────────────────────────────────────────── */
 .content {
   padding: 28px 28px 48px;
   max-width: 1440px;

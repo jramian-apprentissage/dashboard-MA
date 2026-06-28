@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { PeriodProvider } from './contexts/PeriodContext';
-import Sidebar from './components/layout/Sidebar';
+import Topbar from './components/layout/Topbar';
 import AIChat from './components/ui/AIChat';
 import PageTracker from './components/PageTracker';
 import Login from './pages/Login';
@@ -32,12 +32,10 @@ function RequireAdmin({ children }) {
 
 function AppShell({ children }) {
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div style={{ paddingTop: '52px', minHeight: '100vh', background: '#F1F0EA', display: 'flex', flexDirection: 'column' }}>
       <PageTracker />
-      <Sidebar />
-      <div style={{ flex: 1, minWidth: 0, background: '#FBFBFB', display: 'flex', flexDirection: 'column' }}>
-        {children}
-      </div>
+      <Topbar />
+      {children}
       <AIChat />
     </div>
   );

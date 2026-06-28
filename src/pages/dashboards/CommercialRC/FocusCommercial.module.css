@@ -1,5 +1,41 @@
 .page { display: flex; flex-direction: column; gap: 0; }
 
+/* ── Section pipeline réel (données CRM) ── */
+.pipelineTopRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
+.pipelineDetailRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.pipelineHeader { display: flex; gap: 24px; margin-bottom: 12px; }
+
+.pBar { margin-bottom: 10px; }
+.pLabel { font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.pTrack { background: rgba(22,5,18,0.06); border-radius: 4px; height: 26px; overflow: hidden; }
+.pFill {
+  height: 100%;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: rgba(22,5,18,0.75);
+  gap: 6px;
+  min-width: 60px;
+}
+
+/* Win rate donut dans FocusCommercial */
+.donutWrap { position: relative; display: flex; align-items: center; justify-content: center; margin: 12px 0; }
+.donutCenter {
+  position: absolute;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.donutVal { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1; }
+.donutLbl { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+.donutStats { display: flex; justify-content: space-around; margin: 8px 0 4px; }
+.dstat { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.dv { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
+.dl { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.04em; }
+
 /* ── Grille deals (ligne 1 : 4 cols) ── */
 .dealsGrid { display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 
@@ -33,7 +69,7 @@
 
 .stageRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .stageLbl { font-size: 11px; color: var(--text2); width: 140px; flex-shrink: 0; }
-.stageTrack { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 21px; overflow: hidden; }
+.stageTrack { flex: 1; background: rgba(22,5,18,0.06); border-radius: 3px; height: 21px; overflow: hidden; }
 .stageFill { height: 100%; background: var(--accent); border-radius: 3px; display: flex; align-items: center; padding: 0 8px; font-size: 10px; font-weight: 600; color: var(--orchidee); justify-content: space-between; min-width: 40px; }
 .stageAmt { font-size: 10.5px; color: var(--text2); width: 62px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
 
@@ -52,7 +88,7 @@
 /* Secteurs */
 .sectorRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .sectorLbl { font-size: 11px; color: var(--text2); width: 110px; flex-shrink: 0; }
-.sectorTrack { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 15px; overflow: hidden; }
+.sectorTrack { flex: 1; background: rgba(22,5,18,0.06); border-radius: 3px; height: 15px; overflow: hidden; }
 .sectorFill { height: 100%; background: var(--accent); border-radius: 3px; opacity: 0.55; }
 .sectorVal { font-size: 11px; color: var(--text2); width: 58px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; }
 
@@ -63,7 +99,7 @@
 .legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
 
 /* Missions */
-.missionCard { background: rgba(255,255,255,0.04); border-radius: 7px; padding: 11px 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); transition: border-color 0.15s; }
+.missionCard { background: rgba(22,5,18,0.03); border-radius: 7px; padding: 11px 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); transition: border-color 0.15s; }
 .missionCard:hover { border-color: var(--border2); }
 .missionName { font-size: 12.5px; color: var(--text2); font-weight: 500; }
 .missionRev { font-size: 14px; font-weight: 700; color: var(--text); text-align: right; letter-spacing: -0.01em; }

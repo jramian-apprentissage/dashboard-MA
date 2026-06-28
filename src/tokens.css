@@ -17,11 +17,11 @@
   --brouillard: #FBFBFB;
 
   /* ─── Surfaces ────────────────────────────────── */
-  --bg:    #FBFBFB;   /* Brouillard — fond global des pages */
+  --bg:    #F1F0EA;   /* Mon Ambassadeur — crème chaude, fond global */
   --bg-sidebar: #26001F; /* Myrtille — sidebar gauche */
-  --bg2:   #1E0119;   /* intermédiaire */
-  --bg3:   #160512;   /* Orchidée — fond des cartes (plus sombre) */
-  --bg4:   #2E0027;   /* intra-carte — éléments internes */
+  --bg2:   #E8E7E0;   /* légèrement plus sombre que bg */
+  --bg3:   #FFFFFF;   /* Cartes — blanc pur sur crème */
+  --bg4:   #F8F7F2;   /* Intra-carte — éléments internes */
 
   /* ─── Texte sur fond blanc (Brouillard) ──────── */
   --page-text:  rgba(22,5,18,0.80);   /* Orchidée 80% */
@@ -29,14 +29,14 @@
   --page-border: rgba(22,5,18,0.08);  /* Orchidée 8% — séparateurs */
 
   /* ─── Bordures ────────────────────────────────── */
-  --border:    rgba(227,225,216,0.07);   /* Sable 7% */
-  --border2:   rgba(227,225,216,0.14);   /* Sable 14% — hover */
-  --border-sol: rgba(255,249,147,0.18);  /* Soleil — focus / actif */
+  --border:    rgba(22,5,18,0.08);   /* Orchidée 8% — cartes sur crème */
+  --border2:   rgba(22,5,18,0.16);   /* Orchidée 16% — hover */
+  --border-sol: rgba(255,249,147,0.40);  /* Soleil — focus / actif */
 
-  /* ─── Typographie ─────────────────────────────── */
-  --text:   #FBFBFB;                    /* Brouillard — valeurs KPI, titres importants */
-  --text2:  rgba(227,225,216,0.72);     /* Sable 72% — libellés, texte secondaire */
-  --text3:  rgba(167,173,170,0.65);     /* Ciment 65% — hints, labels axes */
+  /* ─── Typographie (sur surfaces claires) ─────── */
+  --text:   #160512;                    /* Orchidée — valeurs KPI, titres */
+  --text2:  rgba(22,5,18,0.62);         /* secondaire — libellés */
+  --text3:  rgba(22,5,18,0.38);         /* tertiaire — hints, labels axes */
 
   /* ─── Accent principal ────────────────────────── */
   --accent:        #FFF993;                   /* Soleil */

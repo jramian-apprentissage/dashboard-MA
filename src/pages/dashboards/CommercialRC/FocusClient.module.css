@@ -1,4 +1,7 @@
 .page { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Nouveaux clients démarrés (données réelles) ── */
+.newClientsGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
 .kpiGrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
 .col6040 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; margin-bottom: 20px; }
 .col4060 { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; margin-bottom: 20px; }
@@ -17,7 +20,7 @@
 .miniFill { height: 100%; background: var(--accent); border-radius: 2px; opacity: 0.6; }
 
 /* Collaborateurs */
-.collabRow { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,0.04); border-radius: 7px; margin-bottom: 5px; border: 1px solid transparent; transition: border-color 0.15s; }
+.collabRow { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: rgba(22,5,18,0.03); border-radius: 7px; margin-bottom: 5px; border: 1px solid transparent; transition: border-color 0.15s; }
 .collabRow:hover { border-color: var(--border); }
 .collabLeft { display: flex; align-items: center; gap: 10px; }
 .collabAvatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0; border: 1px solid var(--accent-border); }
@@ -37,7 +40,7 @@
 .hLbl { font-size: 9.5px; color: var(--text3); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
 
 /* Health scorecard — layout pleine largeur avec colonne justificatif */
-.hsRow { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 12px 14px; margin-bottom: 6px; display: grid; grid-template-columns: 72px 160px 40px 160px 1fr; align-items: center; gap: 14px; border: 1px solid transparent; transition: border-color 0.15s; }
+.hsRow { background: rgba(22,5,18,0.03); border-radius: 8px; padding: 12px 14px; margin-bottom: 6px; display: grid; grid-template-columns: 72px 160px 40px 160px 1fr; align-items: center; gap: 14px; border: 1px solid transparent; transition: border-color 0.15s; }
 .hsRow:hover { border-color: var(--border); }
 .hsSecteur { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid; border-radius: 5px; padding: 3px 6px; text-align: center; flex-shrink: 0; }
 .hsInfo { min-width: 0; }

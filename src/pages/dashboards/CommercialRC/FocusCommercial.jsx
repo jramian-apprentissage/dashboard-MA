@@ -1,20 +1,23 @@
+import { useEffect } from 'react';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
+import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Pill from '../../../components/ui/Pill';
 import MotifBar from '../../../components/ui/MotifBar';
 import { focusCommercialData as d, months } from '../../../data/mockData';
+import bgCommercial from '../../../assets/bg-commercial.svg';
 import styles from './FocusCommercial.module.css';
 
 Chart.register(LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
 
 const fmt = v => v >= 1000 ? `${(v / 1000).toFixed(0)} K€` : `${v}€`;
-const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'OverusedGrotesk' } };
-const gridStyle = { color: 'rgba(227,225,216,0.04)' };
-const borderStyle = { color: 'rgba(227,225,216,0.08)' };
+const tickStyle = { color: 'rgba(22,5,18,0.35)', font: { size: 10, family: 'OverusedGrotesk' } };
+const gridStyle = { color: 'rgba(22,5,18,0.06)' };
+const borderStyle = { color: 'rgba(22,5,18,0.08)' };
 
 const urgenceVariant = { Critique: 'red', Haute: 'amber', Normale: 'green' };
 const stageVariant = { Négociation: 'amber', Proposition: 'blue', Qualification: 'blue', Prospection: 'gray' };
@@ -38,12 +41,149 @@ const lineOpts = {
 
 export default function FocusCommercial() {
   const mounted = useChartMount();
+  const { result, loading } = useSnapshotData();
+
+  useEffect(() => {
+    const main = document.querySelector('main');
+    if (!main) return;
+    main.style.backgroundImage = `url(${bgCommercial})`;
+    main.style.backgroundSize = 'cover';
+    main.style.backgroundPosition = 'center top';
+    main.style.backgroundRepeat = 'no-repeat';
+    return () => {
+      main.style.backgroundImage = '';
+      main.style.backgroundSize = '';
+      main.style.backgroundPosition = '';
+      main.style.backgroundRepeat = '';
+    };
+  }, []);
 
   // Calcul du % pour la répartition revenue
   const totalRevMissions = d.missions.reduce((sum, m) => sum + m.revenue, 0);
 
+  const circumference = 276.5;
+  const winRate = result?.winRate ?? 0;
+  const dashTarget = winRate * (circumference / 100);
+
   return (
     <div className={styles.page}>
+
+      {/* ── Pipeline & Win rate — données réelles Monday CRM ──────────────── */}
+      <SectionLabel badge="Monday CRM — données réelles">Pipeline & taux de transformation</SectionLabel>
+      {loading && (
+        <div style={{ padding: '16px 0', color: 'var(--text3)', fontSize: 12 }}>Chargement des données CRM…</div>
+      )}
+      {result && (
+        <>
+          <div className={styles.pipelineTopRow}>
+            <KPICard
+              label="Pipeline total"
+              value={fmt(result.montantPipeline)}
+              trend={{ dir: 'neutral', text: 'Opportunités en cours' }}
+              color="blue"
+            />
+            <KPICard
+              label="Pipeline pondéré"
+              value={fmt(result.montantPipelinePondere)}
+              trend={{ dir: 'neutral', text: 'Seuil ≥ 30% de probabilité' }}
+              color="green"
+            />
+            <KPICard
+              label="Deals gagnés (période)"
+              value={result.nbDealsGagnes}
+              unit=" deals"
+              trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: 'Date de démarrage sur la période' }}
+              color="green"
+            />
+          </div>
+
+          <div className={styles.pipelineDetailRow}>
+            {/* Pipeline pondéré breakdown */}
+            <Card title="Pipeline pondéré par probabilité">
+              <div className={styles.pipelineHeader}>
+                <div>
+                  <div className={styles.metaSub}>Pipeline total</div>
+                  <div className={styles.metaVal}>{fmt(result.montantPipeline)}</div>
+                </div>
+                <div>
+                  <div className={styles.metaSub}>Pipeline pondéré</div>
+                  <div className={styles.metaVal} style={{ color: 'var(--accent)' }}>{fmt(result.montantPipelinePondere)}</div>
+                </div>
+              </div>
+              <div className={styles.sep} />
+              {result.pipelineBreakdown.map((p, i) => (
+                <div key={p.label} className={styles.pBar}>
+                  <div className={styles.pLabel}>{p.label}</div>
+                  <div className={styles.pTrack}>
+                    <div
+                      className={styles.pFill}
+                      style={{
+                        width: mounted ? `${p.pct}%` : '0%',
+                        background: p.color,
+                        transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 80}ms`,
+                      }}
+                    >
+                      <span>{fmt(p.amount)}</span>
+                      <span style={{ opacity: 0.7 }}>{p.pct}%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {result.pipelineBreakdown.length === 0 && (
+                <div style={{ color: 'var(--text3)', fontSize: 12 }}>Aucune opportunité en pipeline</div>
+              )}
+            </Card>
+
+            {/* Win rate */}
+            <Card title="Win rate — Taux de transformation">
+              <div className={styles.donutWrap}>
+                <svg viewBox="0 0 110 110" width={120} height={120}>
+                  <defs>
+                    <linearGradient id="winGradFC" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%"   stopColor="#FBFBFB" stopOpacity="0.7" />
+                      <stop offset="100%" stopColor="#FFF993" stopOpacity="1" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(167,173,170,0.20)" strokeWidth="11" />
+                  <circle
+                    cx="55" cy="55" r="44" fill="none"
+                    stroke="url(#winGradFC)" strokeWidth="11"
+                    strokeDasharray={mounted ? `${dashTarget} ${circumference}` : `0 ${circumference}`}
+                    strokeLinecap="round"
+                    transform="rotate(-90 55 55)"
+                    style={{ transition: 'stroke-dasharray 1.1s cubic-bezier(0.16,1,0.3,1)' }}
+                  />
+                </svg>
+                <div className={styles.donutCenter}>
+                  <div className={styles.donutVal}>{winRate}%</div>
+                  <div className={styles.donutLbl}>Win rate</div>
+                </div>
+              </div>
+              <div className={styles.donutStats}>
+                <div className={styles.dstat}>
+                  <div className={styles.dv} style={{ color: 'var(--pos)' }}>{result.dealStats.gagnes}</div>
+                  <div className={styles.dl}>Gagnés</div>
+                </div>
+                <div className={styles.dstat}>
+                  <div className={styles.dv} style={{ color: 'var(--neg)' }}>{result.dealStats.perdus}</div>
+                  <div className={styles.dl}>Perdus</div>
+                </div>
+                <div className={styles.dstat}>
+                  <div className={styles.dv} style={{ color: 'var(--warn)' }}>{result.dealStats.standby}</div>
+                  <div className={styles.dl}>Stand-by</div>
+                </div>
+                <div className={styles.dstat}>
+                  <div className={styles.dv} style={{ color: 'var(--text2)' }}>{result.dealStats.enCours}</div>
+                  <div className={styles.dl}>En cours</div>
+                </div>
+              </div>
+              <div className={styles.subnote}>Win rate = Gagnés ÷ (Gagnés + Perdus)</div>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {/* ── Activité commerciale — données mock ────────────────────────────── */}
       <SectionLabel badge="Monday CRM">Pipeline & activité commerciale</SectionLabel>
 
       {/* ── Ligne 1 : Deals (gagnés en premier) ── */}

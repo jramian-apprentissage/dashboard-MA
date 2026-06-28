@@ -14,7 +14,7 @@
 
 .pBar { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
 .pLabel { font-size: 11px; color: var(--text2); width: 155px; flex-shrink: 0; }
-.pTrack { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 22px; overflow: hidden; }
+.pTrack { flex: 1; background: rgba(22,5,18,0.06); border-radius: 3px; height: 22px; overflow: hidden; }
 .pFill { height: 100%; border-radius: 3px; display: flex; align-items: center; padding: 0 10px; font-size: 10px; font-weight: 600; color: var(--orchidee); justify-content: space-between; min-width: 80px; gap: 6px; white-space: nowrap; overflow: hidden; }
 
 .bottomRow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
@@ -30,7 +30,7 @@
 .dl { font-size: 9.5px; color: var(--text3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
 
 /* Top clients */
-.clientRow { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: rgba(255,255,255,0.04); border-radius: 6px; margin-bottom: 5px; border: 1px solid transparent; transition: border-color 0.15s; }
+.clientRow { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; background: rgba(22,5,18,0.03); border-radius: 6px; margin-bottom: 5px; border: 1px solid transparent; transition: border-color 0.15s; }
 .clientRow:hover { border-color: var(--border2); }
 .cName { font-size: 12px; color: var(--text2); }
 .cRight { display: flex; align-items: center; gap: 10px; }

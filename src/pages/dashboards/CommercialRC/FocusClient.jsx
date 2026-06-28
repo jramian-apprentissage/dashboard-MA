@@ -1,6 +1,7 @@
 import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import { Chart, BarElement, ArcElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
+import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -11,9 +12,9 @@ import styles from './FocusClient.module.css';
 Chart.register(BarElement, ArcElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler);
 
 const fmt = v => v >= 1000 ? `${(v / 1000).toFixed(0)} K€` : (v ? `${v}€` : '—');
-const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'OverusedGrotesk' } };
-const gridStyle = { color: 'rgba(227,225,216,0.04)' };
-const borderCol = { color: 'rgba(227,225,216,0.08)' };
+const tickStyle = { color: 'rgba(22,5,18,0.35)', font: { size: 10, family: 'OverusedGrotesk' } };
+const gridStyle = { color: 'rgba(22,5,18,0.06)' };
+const borderCol = { color: 'rgba(22,5,18,0.08)' };
 const secteurVariant = s => ({ Tech: 'blue', Finance: 'gray', Industrie: 'gray', Retail: 'gray', Santé: 'gray' }[s] || 'gray');
 const evolVariant = v => v > 0 ? 'green' : v < 0 ? 'red' : 'gray';
 const healthColor = s => ({ Sain: 'var(--pos)', Warning: 'var(--warn)', Risque: 'var(--neg)' }[s]);
@@ -23,11 +24,60 @@ const healthLabel = s => ({ Sain: 'Sain', Warning: 'Sous vigilance', Risque: 'À
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
 const arcAnim = { duration: 1000, easing: 'easeOutQuart' };
 
+const fmtEuros = v => {
+  if (!v) return '0 €';
+  if (v >= 1000) return `${(v / 1000).toFixed(0)} K€`;
+  return `${v} €`;
+};
+
 export default function FocusClient() {
   const mounted = useChartMount();
+  const { result, loading } = useSnapshotData();
 
   return (
     <div className={styles.page}>
+
+      {/* ── Nouveaux clients démarrés — données réelles Monday CRM ───────── */}
+      <SectionLabel badge="Monday CRM — données réelles">Nouveaux clients démarrés sur la période</SectionLabel>
+      {loading && (
+        <div style={{ padding: '16px 0', color: 'var(--text3)', fontSize: 12 }}>Chargement des données CRM…</div>
+      )}
+      {result && (
+        <div className={styles.newClientsGrid}>
+          <KPICard
+            label="Deals gagnés (démarrés)"
+            value={result.nbDealsGagnes}
+            unit=" deals"
+            trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: 'Date de démarrage sur la période' }}
+            color="green"
+          />
+          <KPICard
+            label="CA nouveaux clients"
+            value={fmtEuros(result.sommeVentesGagnes)}
+            trend={{ dir: 'neutral', text: 'Ventes clients démarrés' }}
+            color="blue"
+          />
+          <KPICard
+            label="Achats nouveaux clients"
+            value={fmtEuros(result.sommeAchatsGagnes)}
+            trend={{ dir: 'neutral', text: 'Masse salariale clients démarrés' }}
+            color="amber"
+          />
+          <KPICard
+            label="Marge brute nouveaux"
+            value={fmtEuros(result.margeBruteNouveaux)}
+            trend={{
+              dir: result.margeBruteNouveaux >= 0 ? 'up' : 'down',
+              text: result.sommeVentesGagnes > 0
+                ? `Taux : ${Math.round(result.margeBruteNouveaux / result.sommeVentesGagnes * 100)}%`
+                : '—',
+            }}
+            color={result.margeBruteNouveaux >= 0 ? 'green' : 'red'}
+          />
+        </div>
+      )}
+
+      {/* ── Vue globale clients actifs ─────────────────────────────────────── */}
       <SectionLabel badge="Monday CRM">Vue client — indicateurs clés</SectionLabel>
       <div className={styles.kpiGrid}>
         {d.kpis.map(k => <KPICard key={k.label} {...k} />)}
