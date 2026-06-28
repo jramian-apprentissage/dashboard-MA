@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, DASHBOARDS, ROLES, roleLabel } from '../contexts/AuthContext';
 import { getHistory, clearHistory } from '../services/tracking';
+import heroBg from '../assets/hero-admin.svg';
 import styles from './Admin.module.css';
 
 function formatTs(iso) {
@@ -68,15 +69,27 @@ export default function Admin() {
 
   return (
     <div className={styles.page}>
+      {/* Fond pleine page — même principe que login */}
+      <div className={styles.heroBg} style={{ backgroundImage: `url(${heroBg})` }} />
+      <div className={styles.overlay} />
+
       <div className={styles.content}>
+        {/* Header */}
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>Administration</h1>
-            <p className={styles.sub}>Gestion des utilisateurs et des accès aux dashboards</p>
+            <div className={styles.label}>ADMINISTRATION</div>
+            <h1 className={styles.title}>Gestion des <em className={styles.titleEm}>utilisateurs.</em></h1>
+            <p className={styles.sub}>Accès aux dashboards et historique de connexion</p>
           </div>
-          <button className={styles.btnAdd} onClick={() => setShowModal(true)}>+ Créer un utilisateur</button>
+          <button className={styles.btnAdd} onClick={() => setShowModal(true)}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Créer un utilisateur
+          </button>
         </div>
 
+        {/* Table */}
         <div className={styles.table}>
           <div className={styles.thead}>
             <div className={styles.th}>Utilisateur</div>
@@ -128,9 +141,9 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* Panneau historique de connexion — admin uniquement */}
+      {/* Panneau historique */}
       {historyUser && (
-        <div className={styles.overlay} onClick={() => setHistoryUser(null)}>
+        <div className={styles.modalOverlay} onClick={() => setHistoryUser(null)}>
           <div className={styles.historyPanel} onClick={e => e.stopPropagation()}>
             <div className={styles.historyHeader}>
               <div>
@@ -162,8 +175,9 @@ export default function Admin() {
         </div>
       )}
 
+      {/* Modal créer utilisateur */}
       {showModal && (
-        <div className={styles.overlay} onClick={() => setShowModal(false)}>
+        <div className={styles.modalOverlay} onClick={() => setShowModal(false)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h2 className={styles.modalTitle}>Créer un utilisateur</h2>
             <form onSubmit={handleCreate} className={styles.modalForm}>

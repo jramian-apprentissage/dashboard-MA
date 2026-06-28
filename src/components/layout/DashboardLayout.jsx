@@ -28,6 +28,7 @@ function buildPeriodLabel(key, customFrom, customTo) {
 
 export default function DashboardLayout({
   dashboardName,
+  dashboardNameEmphasis,
   children,
   extraFilters,
   activeFilters = [],
@@ -60,7 +61,10 @@ export default function DashboardLayout({
 
           {/* Titre seul à gauche */}
           <div className={styles.heroTitleBlock}>
-            <h1 className={styles.title}>{dashboardName}</h1>
+            <h1 className={styles.title}>
+              {dashboardName}
+              {dashboardNameEmphasis && <em className={styles.titleEm}> {dashboardNameEmphasis}.</em>}
+            </h1>
             <p className={styles.subtitle}>
               Vous analysez les KPI&nbsp;
               <span className={styles.subtitlePeriod}>{subtitle}</span>

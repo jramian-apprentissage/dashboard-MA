@@ -88,7 +88,7 @@ export default function CommercialActivite() {
   const activeFilters = collab !== 'Tous' ? [collab] : [];
 
   return (
-    <DashboardLayout dashboardId="commercial-activite" dashboardName="Activité commerciale" extraFilters={extraFilters} activeFilters={activeFilters} heroBgSrc={heroActivite} heroBgPosition="center 65%">
+    <DashboardLayout dashboardId="commercial-activite" dashboardName="Activité" dashboardNameEmphasis="commerciale" extraFilters={extraFilters} activeFilters={activeFilters} heroBgSrc={heroActivite} heroBgPosition="center 65%">
       {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} />}
       {tab === 'tlm' && <ActiviteTLM selectedCollab={collab} />}
     </DashboardLayout>

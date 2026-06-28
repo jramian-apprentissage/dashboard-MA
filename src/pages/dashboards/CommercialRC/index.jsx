@@ -9,7 +9,7 @@ export default function CommercialRC() {
   const tab = searchParams.get('tab') || 'synthese';
 
   return (
-    <DashboardLayout dashboardName="Commercial & Relation Client">
+    <DashboardLayout dashboardId="commercial-rc" dashboardName="Commercial &" dashboardNameEmphasis="Relation Client">
       {tab === 'synthese'           && <Synthese />}
       {tab === 'focus-commercial'   && <FocusCommercial />}
       {tab === 'focus-client'       && <FocusClient />}

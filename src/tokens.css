@@ -1,8 +1,14 @@
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Roman.woff2') format('woff2'); font-weight: 400; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Medium.woff2') format('woff2'); font-weight: 500; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-SemiBold.woff2') format('woff2'); font-weight: 600; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Bold.woff2') format('woff2'); font-weight: 700; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Light.woff2') format('woff2'); font-weight: 300; }
+@font-face { font-family: 'InstrumentSerif'; src: url('./assets/fonts/InstrumentSerif-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'InstrumentSerif'; src: url('./assets/fonts/InstrumentSerif-Italic.ttf') format('truetype'); font-weight: 400; font-style: italic; font-display: swap; }
+
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-LightItalic.woff2') format('woff2'); font-weight: 300; font-style: italic; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Roman.woff2') format('woff2'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Book.woff2') format('woff2'); font-weight: 450; font-style: normal; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-BookItalic.woff2') format('woff2'); font-weight: 450; font-style: italic; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -17,26 +23,28 @@
   --brouillard: #FBFBFB;
 
   /* ─── Surfaces ────────────────────────────────── */
-  --bg:    #F1F0EA;   /* Mon Ambassadeur — crème chaude, fond global */
+  --bg:    #FBFBFB;   /* Brouillard — fond global (v4) */
   --bg-sidebar: #26001F; /* Myrtille — sidebar gauche */
-  --bg2:   #E8E7E0;   /* légèrement plus sombre que bg */
-  --bg3:   #FFFFFF;   /* Cartes — blanc pur sur crème */
-  --bg4:   #F8F7F2;   /* Intra-carte — éléments internes */
+  --bg2:   #F0EEE9;   /* Sable light — intra-carte */
+  --bg3:   #FFFFFF;   /* Cartes — blanc pur */
+  --bg4:   #FBFBFB;   /* Fond secondaire */
+  --sable-light: #F0EEE9; /* Lignes paires tables */
 
   /* ─── Texte sur fond blanc (Brouillard) ──────── */
-  --page-text:  rgba(22,5,18,0.80);   /* Orchidée 80% */
-  --page-text2: rgba(22,5,18,0.45);   /* Orchidée 45% — secondaire */
-  --page-border: rgba(22,5,18,0.08);  /* Orchidée 8% — séparateurs */
+  --page-text:  #2C1A27;              /* Encre — texte principal */
+  --page-text2: rgba(44,26,39,0.7);   /* secondaire — était 0.55, trop faible */
+  --page-border: var(--sable);        /* Séparateurs */
 
   /* ─── Bordures ────────────────────────────────── */
-  --border:    rgba(22,5,18,0.08);   /* Orchidée 8% — cartes sur crème */
-  --border2:   rgba(22,5,18,0.16);   /* Orchidée 16% — hover */
+  --border:    #E3E1D8;               /* Sable — cartes */
+  --border2:   rgba(167,173,170,0.5); /* hover */
   --border-sol: rgba(255,249,147,0.40);  /* Soleil — focus / actif */
 
   /* ─── Typographie (sur surfaces claires) ─────── */
-  --text:   #160512;                    /* Orchidée — valeurs KPI, titres */
-  --text2:  rgba(22,5,18,0.62);         /* secondaire — libellés */
-  --text3:  rgba(22,5,18,0.38);         /* tertiaire — hints, labels axes */
+  --encre:  #2C1A27;                    /* texte principal */
+  --text:   #26001F;                    /* Myrtille — valeurs KPI */
+  --text2:  rgba(44,26,39,0.75);        /* secondaire — était 0.65, contraste ~6.6:1 */
+  --text3:  rgba(44,26,39,0.52);        /* hints — était #A7ADAA (2.2:1), maintenant ~3.5:1 */
 
   /* ─── Accent principal ────────────────────────── */
   --accent:        #FFF993;                   /* Soleil */
@@ -61,7 +69,7 @@
   --neu:      rgba(167,173,170,0.55);
 
   /* ─── Typo ────────────────────────────────────── */
-  --font: 'OverusedGrotesk', sans-serif;
+  --font: 'OverusedGrotesk', 'DM Sans', sans-serif;
   --r:  8px;
   --r2: 12px;
   --r3: 16px;
@@ -71,9 +79,9 @@ html { scroll-behavior: smooth; }
 body {
   font-family: var(--font);
   background: var(--bg);
-  color: var(--page-text);
+  color: var(--encre);
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

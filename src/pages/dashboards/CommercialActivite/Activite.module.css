@@ -19,21 +19,21 @@
 .statutTrack { flex: 1; background: rgba(255,255,255,0.06); border-radius: 3px; height: 14px; overflow: hidden; }
 .statutFill { height: 100%; background: var(--accent); border-radius: 3px; opacity: 0.5; }
 .statutVals { display: flex; gap: 6px; font-size: 10.5px; width: 72px; justify-content: flex-end; font-variant-numeric: tabular-nums; }
-.pct { color: var(--text3); }
+.pct { color: var(--text2); }
 
 /* Table tags individuels (sous le graphe catégories) */
 .tagTable { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 3px; max-height: 160px; overflow-y: auto; }
-.tagTableHead { display: grid; grid-template-columns: 1fr 40px 40px; font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 0 4px 0; border-bottom: 1px solid rgba(227,225,216,0.06); }
+.tagTableHead { display: grid; grid-template-columns: 1fr 40px 40px; font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 0 4px 0; border-bottom: 1px solid rgba(227,225,216,0.06); }
 .tagRow { display: grid; grid-template-columns: 1fr 40px 40px; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(227,225,216,0.03); }
 .tagRow:last-child { border-bottom: none; }
 .tagName { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--text2); }
 .tagDot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
 .tagCount { font-size: 10.5px; color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
-.tagPct { font-size: 10px; color: var(--text3); font-variant-numeric: tabular-nums; text-align: right; }
+.tagPct { font-size: 10px; color: var(--text2); font-variant-numeric: tabular-nums; text-align: right; }
 
 /* Table performance */
 .perfTable { width: 100%; border-collapse: collapse; }
-.perfTable th { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.perfTable th { font-size: 9.5px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
 .perfTable td { font-size: 12px; color: var(--text2); padding: 10px 12px; border-bottom: 1px solid rgba(227,225,216,0.04); font-variant-numeric: tabular-nums; }
 .perfTable tr:last-child td { border-bottom: none; }
 .perfTable tr:hover td { background: rgba(255,249,147,0.02); }
@@ -44,8 +44,8 @@
 .tdNum { text-align: right; }
 .tauxPill { font-weight: 700; font-size: 12px; }
 
-.subNote { font-size: 10.5px; color: var(--text3); }
-.legend { display: flex; align-items: center; font-size: 10.5px; color: var(--text3); gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.subNote { font-size: 10.5px; color: var(--text2); }
+.legend { display: flex; align-items: center; font-size: 10.5px; color: var(--text2); gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
 
 /* Bouton Comparer */
@@ -66,7 +66,7 @@
 }
 .compareBtnX {
   margin-left: 4px; font-size: 10px;
-  color: var(--text3); line-height: 1;
+  color: var(--text2); line-height: 1;
   padding: 1px 3px; border-radius: 3px;
 }
 .compareBtnX:hover { color: var(--neg); background: var(--neg-dim); }

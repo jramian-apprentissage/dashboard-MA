@@ -1,32 +1,43 @@
+/* Section header — style éditorial Mon Ambassadeur v4 */
 .label {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--page-text2);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  margin-bottom: 14px;
-  margin-top: 20px;
-}
-.label:first-child {
-  margin-top: 0;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
+  margin-top: 28px;
+  margin-bottom: 14px;
+  padding-top: 10px;
+  border-top: 1.5px solid var(--sable);
 }
-.label::after {
+
+/* Barre verticale colorée gauche — signature v4 */
+.label::before {
   content: '';
-  flex: 1;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(22,5,18,0.10), transparent);
+  display: block;
+  width: 3px;
+  height: 14px;
+  background: var(--myrtille);
+  border-radius: 2px;
+  flex-shrink: 0;
 }
+
+.label > span:first-of-type {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--encre);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Badge source données */
 .badge {
   font-size: 8.5px;
   padding: 2px 7px;
   border-radius: 3px;
-  background: rgba(22,5,18,0.06);
-  color: var(--page-text2);
-  border: 1px solid rgba(22,5,18,0.12);
-  font-weight: 700;
+  background: rgba(38,0,31,0.05);
+  color: var(--encre);
+  border: 1px solid var(--sable);
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
+  margin-left: auto;
 }

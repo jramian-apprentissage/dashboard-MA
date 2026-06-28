@@ -1,64 +1,62 @@
-/* ─── KPI Card — blanc sur crème, typographie Orchidée ─── */
+/* ─── KPI Card — style Mon Ambassadeur v4 ─── */
 .card {
-  background: #FFFFFF;
-  border: 1px solid rgba(22,5,18,0.08);
-  border-radius: var(--r2);
-  padding: 20px 22px 18px;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
-  will-change: transform;
+  background: var(--blanc);
+  border: 1px solid var(--sable);
+  border-radius: var(--r);
+  padding: 16px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: box-shadow 0.22s, transform 0.22s;
+  cursor: default;
+  min-height: 90px;
 }
 
 .card:hover {
-  border-color: rgba(22,5,18,0.16);
-  box-shadow: 0 2px 8px rgba(22,5,18,0.08), 0 8px 24px rgba(22,5,18,0.05);
-  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(38,0,31,0.08), 0 4px 20px rgba(38,0,31,0.06);
+  transform: translateY(-1px);
 }
 
-/* Bracket coins Mon Ambassadeur — top-left */
-.card::before {
-  content: '';
-  position: absolute;
-  top: 8px; left: 8px;
-  width: 14px; height: 14px;
-  border-top: 1.5px solid rgba(22,5,18,0.15);
-  border-left: 1.5px solid rgba(22,5,18,0.15);
-  pointer-events: none;
+/* Variante accent — fond myrtille sombre, valeur soleil */
+.card.accent {
+  background: var(--myrtille);
+  border-color: var(--myrtille);
 }
+.card.accent .label { color: rgba(255,249,147,0.55); }
+.card.accent .value { color: var(--soleil); }
+.card.accent .unit  { color: rgba(255,249,147,0.55); }
+.card.accent .trend { color: rgba(255,255,255,0.4); }
+.card.accent:hover  { box-shadow: 0 4px 20px rgba(38,0,31,0.3); }
 
-/* Bracket coins Mon Ambassadeur — bottom-right */
-.card::after {
-  content: '';
-  position: absolute;
-  bottom: 8px; right: 8px;
-  width: 14px; height: 14px;
-  border-bottom: 1.5px solid rgba(22,5,18,0.15);
-  border-right: 1.5px solid rgba(22,5,18,0.15);
-  pointer-events: none;
+/* Variante accent-soft — fond soleil léger */
+.card.accentSoft {
+  background: rgba(255,249,147,0.12);
+  border-color: rgba(255,249,147,0.4);
 }
+.card.accentSoft .value { color: var(--myrtille); }
 
 .label {
-  font-size: 9.5px;
-  color: var(--text3);
+  font-size: 9px;
   font-weight: 600;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  letter-spacing: 0.09em;
-  margin-bottom: 14px;
-  line-height: 1.4;
+  color: var(--text2);
 }
 
-/* Valeur principale — Orchidée sombre, impact fort */
+/* Valeur principale — myrtille sombre, impact fort */
 .value {
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
-  color: #160512;
+  color: var(--myrtille);
   line-height: 1;
-  margin-bottom: 9px;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  margin-top: 5px;
 }
+.value.sm { font-size: 20px; }
+
 .unit {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   color: var(--text2);
   margin-left: 1px;
@@ -66,12 +64,16 @@
 }
 
 .trend {
-  font-size: 10.5px;
+  font-size: 9.5px;
+  color: var(--text2);
+  font-weight: 400;
+  margin-top: 5px;
+  line-height: 1.5;
   display: flex;
   align-items: center;
   gap: 4px;
-  font-weight: 500;
 }
-.up      { color: var(--pos); }
-.down    { color: var(--neg); }
-.neutral { color: var(--text3); font-weight: 400; }
+.trend b { color: var(--encre); font-weight: 600; }
+.up      { color: #15803d; }
+.down    { color: #b91c1c; }
+.neutral { color: var(--text2); }

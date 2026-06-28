@@ -32,7 +32,7 @@ function RequireAdmin({ children }) {
 
 function AppShell({ children }) {
   return (
-    <div style={{ paddingTop: '52px', minHeight: '100vh', background: '#F1F0EA', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ paddingTop: '52px', minHeight: '100vh', background: '#FBFBFB', display: 'flex', flexDirection: 'column' }}>
       <PageTracker />
       <Topbar />
       {children}

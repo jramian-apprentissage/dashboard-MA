@@ -49,20 +49,29 @@
 
 .heroLabel {
   font-size: 9px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255,249,147,0.45);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  color: rgba(255,249,147,0.4);
+  display: block;
 }
 
 .heroTitle {
-  font-size: 38px;
+  font-size: 42px;
   font-weight: 700;
-  color: var(--soleil);
-  letter-spacing: -0.03em;
-  margin: 0 0 12px;
+  color: #FBFBFB;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
   line-height: 1.05;
+}
+
+.heroTitle em {
+  font-family: 'InstrumentSerif', serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--soleil);
+  letter-spacing: 0;
 }
 
 .heroDesc {

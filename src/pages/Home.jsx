@@ -88,7 +88,7 @@ export default function Home() {
         {/* Hero : texte seul, sans boîte */}
         <div className={styles.hero}>
           <div className={styles.heroLabel}>ANALYTICS · DÉMONSTRATION</div>
-          <h1 className={styles.heroTitle}>Bonjour, {firstName}</h1>
+          <h1 className={styles.heroTitle}>Bonjour, <em>{firstName}.</em></h1>
           <p className={styles.heroDesc}>
             Centralisez vos indicateurs commerciaux, suivez vos performances
             en temps réel et accédez à vos insights IA depuis une interface unique.
