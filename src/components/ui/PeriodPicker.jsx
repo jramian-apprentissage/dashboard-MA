@@ -32,7 +32,7 @@ export function getPeriodRange(key, customFrom, customTo) {
 
     case 'week': {
       const d = new Date(today);
-      const day = today.getDay() || 7; // Mon=1…Sun=7
+      const day = today.getDay() || 7;
       d.setDate(today.getDate() - day + 1);
       return { from: dateStr(d), to: dateStr(today) };
     }
@@ -73,16 +73,38 @@ export function getPeriodRange(key, customFrom, customTo) {
 
 export default function PeriodPicker({ value, customFrom, customTo, onChange }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef(null);
+  // 'down-left' | 'down-right' | 'up-left' | 'up-right'
+  const [placement, setPlacement] = useState('down-left');
+  const wrapRef = useRef(null);
+  const dropRef = useRef(null);
 
-  // Close on outside click
+  // Fermer au clic extérieur
   useEffect(() => {
-    function handler(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }
+    function handler(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const current = PERIODS.find(p => p.key === value) || PERIODS[3]; // default mois
+  // Auto-flip : calcule si le dropdown sort de l'écran
+  useEffect(() => {
+    if (!open || !wrapRef.current) return;
+    const rect = wrapRef.current.getBoundingClientRect();
+    const vpW = window.innerWidth;
+    const vpH = window.innerHeight;
+    const dropW = 220;
+    const dropH = 320; // estimation max
+
+    const goRight = rect.left + dropW <= vpW;   // peut s'ouvrir à droite (left:0)
+    const goDown  = rect.bottom + dropH <= vpH;  // peut s'ouvrir vers le bas
+
+    const h = goRight ? 'left' : 'right';
+    const v = goDown  ? 'down' : 'up';
+    setPlacement(`${v}-${h}`);
+  }, [open]);
+
+  const current = PERIODS.find(p => p.key === value) || PERIODS[3];
 
   function selectPeriod(key) {
     if (key !== 'custom') {
@@ -91,7 +113,6 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
       setOpen(false);
     } else {
       onChange({ key: 'custom', from: customFrom, to: customTo });
-      // keep open to show date inputs
     }
   }
 
@@ -100,24 +121,33 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
     onChange({ key: 'custom', ...next });
   }
 
+  // Style dynamique du dropdown selon le placement calculé
+  const dropStyle = {
+    ...(placement.startsWith('down') ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
+    ...(placement.endsWith('left')   ? { left: 0 }                  : { right: 0 }),
+  };
+
   return (
-    <div className={styles.wrap} ref={ref}>
-      {/* Trigger pill */}
+    <div className={styles.wrap} ref={wrapRef}>
       <button className={styles.pill} onClick={() => setOpen(o => !o)} type="button">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2"/>
-          <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
           <line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
         <span>{current.label}</span>
-        <svg className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
+          width="10" height="10" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+        >
           <polyline points="6 9 12 15 18 9"/>
         </svg>
       </button>
 
-      {/* Dropdown */}
       {open && (
-        <div className={styles.dropdown}>
+        <div className={styles.dropdown} style={dropStyle} ref={dropRef}>
           {PERIODS.map(p => (
             <button
               key={p.key}
@@ -125,12 +155,14 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
               onClick={() => selectPeriod(p.key)}
               type="button"
             >
-              {value === p.key && <span className={styles.check}>✓</span>}
+              {value === p.key
+                ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.check}><polyline points="20 6 9 17 4 12"/></svg>
+                : <span className={styles.checkPlaceholder} />
+              }
               {p.label}
             </button>
           ))}
 
-          {/* Date range inputs — visible uniquement si "Personnaliser" */}
           {value === 'custom' && (
             <div className={styles.customRange}>
               <div className={styles.customRow}>

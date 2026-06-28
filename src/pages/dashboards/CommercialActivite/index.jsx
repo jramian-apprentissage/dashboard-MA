@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
+import heroActivite from '../../../assets/hero-activite.svg';
 import ActiviteSales from './ActiviteSales';
 import ActiviteTLM from './ActiviteTLM';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
@@ -87,7 +88,7 @@ export default function CommercialActivite() {
   const activeFilters = collab !== 'Tous' ? [collab] : [];
 
   return (
-    <DashboardLayout dashboardName="Activité commerciale" extraFilters={extraFilters} activeFilters={activeFilters}>
+    <DashboardLayout dashboardId="commercial-activite" dashboardName="Activité commerciale" extraFilters={extraFilters} activeFilters={activeFilters} heroBgSrc={heroActivite} heroBgPosition="center 65%">
       {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} />}
       {tab === 'tlm' && <ActiviteTLM selectedCollab={collab} />}
     </DashboardLayout>

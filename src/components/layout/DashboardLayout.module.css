@@ -3,23 +3,32 @@
 /* ─── Hero header ────────────────────────────────────────────────────────────── */
 .hero {
   position: relative;
-  height: 172px;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  overflow: hidden;
+  height: 156px;
+  background: var(--myrtille);
+  overflow: visible;
   flex-shrink: 0;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 55%;
+  background-repeat: no-repeat;
+  opacity: 0.18;
+  pointer-events: none;
 }
 
 .heroOverlay {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    115deg,
-    rgba(22,5,18,0.84) 0%,
-    rgba(22,5,18,0.65) 55%,
-    rgba(22,5,18,0.48) 100%
+    100deg,
+    rgba(22,5,18,0.55) 0%,
+    rgba(22,5,18,0.10) 60%,
+    transparent 100%
   );
+  pointer-events: none;
 }
 
 .heroInner {
@@ -28,41 +37,214 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding: 0 32px 24px;
+  justify-content: space-between;
+  padding: 18px 28px 16px;
 }
 
+/* Ligne haute : titre + boutons d'action */
+.heroTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heroTitleBlock { flex: 1; min-width: 0; }
+
 .title {
-  font-size: 28px;
+  font-size: 22px;
   font-weight: 700;
-  color: rgba(255,255,255,0.95);
-  letter-spacing: -0.03em;
-  margin: 0 0 6px;
-  line-height: 1;
+  color: var(--soleil);
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+  line-height: 1.1;
 }
 
 .subtitle {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 400;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,249,147,0.5);
   line-height: 1;
 }
 
 .subtitlePeriod {
   font-weight: 600;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255,249,147,0.8);
 }
 
-/* ─── Barre sticky (onglets + filtres) ──────────────────────────────────────── */
+/* Actions : boutons style dashboard-v4 */
+.heroActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.heroBtn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font);
+  color: rgba(255,249,147,0.75);
+  background: transparent;
+  border: 1px solid rgba(255,249,147,0.28);
+  border-radius: 99px;
+  padding: 5px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  letter-spacing: 0.01em;
+}
+.heroBtn:hover {
+  background: rgba(255,249,147,0.10);
+  border-color: rgba(255,249,147,0.55);
+  color: var(--soleil);
+}
+.heroBtnActive {
+  background: rgba(255,249,147,0.10);
+  border-color: rgba(255,249,147,0.45);
+  color: var(--soleil);
+}
+.heroBtnX {
+  margin-left: 3px;
+  font-size: 9px;
+  color: rgba(255,249,147,0.4);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+.heroBtnX:hover { color: var(--soleil); background: rgba(255,249,147,0.08); }
+
+.mockPill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: rgba(255,249,147,0.35);
+  background: rgba(255,249,147,0.04);
+  border: 1px solid rgba(255,249,147,0.1);
+  border-radius: 99px;
+  padding: 5px 12px;
+  letter-spacing: 0.01em;
+}
+.dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--soleil);
+  box-shadow: 0 0 5px rgba(255,249,147,0.6);
+  flex-shrink: 0;
+}
+
+/* Ligne basse : période (gauche) + tab picker (droite) */
+.heroBottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.periodRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compareWrap { display: flex; align-items: center; gap: 6px; }
+
+/* ─── Tab picker popup ───────────────────────────────────────────────────────── */
+.tabPickerWrap { position: relative; }
+
+.tabPickerBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font);
+  color: rgba(255,249,147,0.75);
+  background: rgba(255,249,147,0.06);
+  border: 1px solid rgba(255,249,147,0.22);
+  border-radius: 99px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  letter-spacing: 0.01em;
+}
+.tabPickerBtn:hover {
+  background: rgba(255,249,147,0.12);
+  border-color: rgba(255,249,147,0.4);
+  color: var(--soleil);
+}
+
+.tabPickerDropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: rgba(28,8,22,0.97);
+  border: 1px solid rgba(255,249,147,0.12);
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: popUp 0.15s ease-out;
+  z-index: 200;
+}
+@keyframes popUp {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.tabPickerLabel {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,249,147,0.3);
+  padding: 4px 10px 6px;
+  font-family: var(--font);
+}
+
+.tabPickerOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: rgba(255,249,147,0.55);
+  font-family: var(--font);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+}
+.tabPickerOption:hover {
+  background: rgba(255,249,147,0.06);
+  color: rgba(255,249,147,0.9);
+}
+.tabPickerOptionActive {
+  color: var(--soleil);
+  font-weight: 600;
+}
+
+/* ─── Ancienne barre sticky — supprimée, conservée pour rétrocompatibilité ─── */
 .stickyBar {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
-  background: var(--bg);
-  border-bottom: 1px solid rgba(22,5,18,0.07);
+  background: var(--myrtille);
+  border-bottom: 1px solid rgba(255,249,147,0.08);
   position: sticky;
-  top: 52px; /* hauteur de la TopBar */
+  top: 52px;
   z-index: 90;
   padding: 0 24px 0 28px;
   min-height: 44px;
@@ -80,9 +262,9 @@
   display: flex;
   align-items: center;
   padding: 0 16px;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
-  color: rgba(22,5,18,0.45);
+  color: rgba(255,249,147,0.45);
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
@@ -90,14 +272,15 @@
   font-family: var(--font);
   white-space: nowrap;
   transition: color 0.15s, border-color 0.15s;
-  margin-bottom: -1px; /* couvre le border-bottom du parent */
+  margin-bottom: -1px;
+  letter-spacing: 0.01em;
 }
-.tab:hover { color: rgba(22,5,18,0.75); }
+.tab:hover { color: rgba(255,249,147,0.75); }
 
 .tabActive {
-  color: rgba(22,5,18,0.9);
+  color: var(--soleil);
   font-weight: 600;
-  border-bottom-color: rgba(22,5,18,0.75);
+  border-bottom-color: var(--soleil);
 }
 
 /* ─── Zone filtres ───────────────────────────────────────────────────────────── */
@@ -108,28 +291,32 @@
   flex-shrink: 0;
 }
 
-/* Pills réutilisables (utilisées dans CommercialActivite) */
+/* Pills agents/collabs — style soleil sur fond sombre */
 .collabPill {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
-  color: var(--page-text2);
-  background: rgba(22,5,18,0.04);
-  border: 1px solid rgba(22,5,18,0.08);
-  border-radius: 6px;
-  padding: 5px 10px 5px 12px;
-  transition: background 0.15s;
+  color: rgba(255,249,147,0.7);
+  background: rgba(255,249,147,0.06);
+  border: 1px solid rgba(255,249,147,0.18);
+  border-radius: 99px;
+  padding: 4px 10px 4px 12px;
+  transition: background 0.15s, border-color 0.15s;
 }
-.collabPill:hover { background: rgba(22,5,18,0.07); }
-.collabPill svg { color: var(--page-text2); flex-shrink: 0; }
+.collabPill:hover {
+  background: rgba(255,249,147,0.12);
+  border-color: rgba(255,249,147,0.35);
+  color: var(--soleil);
+}
+.collabPill svg { color: rgba(255,249,147,0.5); flex-shrink: 0; }
 
 .collabSelect {
   background: transparent;
   border: none;
-  color: var(--page-text2);
-  font-size: 11.5px;
+  color: rgba(255,249,147,0.7);
+  font-size: 11px;
   font-weight: 500;
   font-family: var(--font);
   cursor: pointer;
@@ -137,6 +324,7 @@
   padding: 0;
   max-width: 130px;
 }
+.collabSelect option { background: var(--myrtille); color: var(--soleil); }
 
 /* Indicateur de chargement */
 .loadingPill {
@@ -144,7 +332,7 @@
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  color: rgba(22,5,18,0.4);
+  color: rgba(255,249,147,0.4);
   font-family: var(--font);
   white-space: nowrap;
 }
@@ -157,17 +345,17 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
-  color: rgba(22,5,18,0.35);
-  background: rgba(22,5,18,0.03);
-  border: 1px solid rgba(22,5,18,0.06);
-  border-radius: 6px;
-  padding: 5px 10px;
+  color: rgba(255,249,147,0.35);
+  background: rgba(255,249,147,0.04);
+  border: 1px solid rgba(255,249,147,0.1);
+  border-radius: 99px;
+  padding: 4px 10px;
 }
 .dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #FFF993;
+  background: var(--soleil);
   box-shadow: 0 0 5px rgba(255,249,147,0.6);
   flex-shrink: 0;
 }
@@ -176,23 +364,30 @@
 .compareWrap { display: flex; align-items: center; gap: 6px; }
 .compareBtn {
   display: flex; align-items: center; gap: 5px;
-  font-size: 11.5px; font-weight: 500; font-family: var(--font);
-  color: var(--page-text2); background: rgba(22,5,18,0.04);
-  border: 1px solid rgba(22,5,18,0.08); border-radius: var(--r);
-  padding: 5px 11px; cursor: pointer; white-space: nowrap;
+  font-size: 11px; font-weight: 500; font-family: var(--font);
+  color: rgba(255,249,147,0.7);
+  background: rgba(255,249,147,0.06);
+  border: 1px solid rgba(255,249,147,0.18);
+  border-radius: 99px;
+  padding: 5px 13px; cursor: pointer; white-space: nowrap;
   transition: all 0.15s;
+  letter-spacing: 0.01em;
 }
-.compareBtn:hover { border-color: rgba(22,5,18,0.18); background: rgba(22,5,18,0.07); }
+.compareBtn:hover {
+  background: rgba(255,249,147,0.12);
+  border-color: rgba(255,249,147,0.35);
+  color: var(--soleil);
+}
 .compareBtnActive {
-  background: rgba(22,5,18,0.06);
-  border-color: rgba(22,5,18,0.2);
-  color: var(--page-text);
+  background: rgba(255,249,147,0.12);
+  border-color: rgba(255,249,147,0.4);
+  color: var(--soleil);
 }
 .compareBtnX {
   margin-left: 3px; font-size: 10px; line-height: 1;
-  color: rgba(22,5,18,0.35); padding: 1px 3px; border-radius: 3px;
+  color: rgba(255,249,147,0.4); padding: 1px 3px; border-radius: 3px;
 }
-.compareBtnX:hover { color: #c43b3b; background: rgba(196,59,59,0.08); }
+.compareBtnX:hover { color: var(--soleil); background: rgba(255,249,147,0.08); }
 
 /* ─── Contenu principal ──────────────────────────────────────────────────────── */
 .content {
@@ -201,4 +396,39 @@
   width: 100%;
   margin: 0 auto;
   flex: 1;
+}
+
+/* ─── Responsivité ───────────────────────────────────────────────────────────── */
+
+/* Tablette (≤ 900px) */
+@media (max-width: 900px) {
+  .heroInner { padding: 16px 20px 14px; }
+  .title      { font-size: 19px; }
+  .heroActions { gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .heroBtn,
+  .mockPill   { font-size: 10.5px; padding: 5px 10px; }
+  .content    { padding: 20px 20px 40px; }
+}
+
+/* Mobile (≤ 640px) */
+@media (max-width: 640px) {
+  .hero       { height: auto; min-height: 130px; }
+  .heroInner  { padding: 14px 16px 14px; gap: 10px; }
+
+  .heroTitleBlock { width: 100%; }
+  .title      { font-size: 17px; }
+  .subtitle   { font-size: 11px; }
+
+  .heroBottom {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .heroActions {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  /* Masquer le pill Mock sur mobile — info secondaire */
+  .mockPill   { display: none; }
+
+  .content    { padding: 16px 14px 36px; }
 }

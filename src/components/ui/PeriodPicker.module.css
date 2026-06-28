@@ -1,24 +1,29 @@
 .wrap { position: relative; }
 
-/* Pill trigger */
+/* Pill trigger — style soleil sur fond myrtille */
 .pill {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
-  color: var(--page-text2);
-  background: rgba(22,5,18,0.04);
-  border: 1px solid rgba(22,5,18,0.08);
-  border-radius: 6px;
-  padding: 5px 10px 5px 12px;
+  color: rgba(255,249,147,0.75);
+  background: rgba(255,249,147,0.06);
+  border: 1px solid rgba(255,249,147,0.2);
+  border-radius: 99px;
+  padding: 5px 10px 5px 13px;
   cursor: pointer;
   font-family: var(--font);
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
-.pill:hover { background: rgba(22,5,18,0.07); }
-.pill svg { color: var(--page-text2); flex-shrink: 0; }
+.pill:hover {
+  background: rgba(255,249,147,0.12);
+  border-color: rgba(255,249,147,0.38);
+  color: var(--soleil);
+}
+.pill svg { color: rgba(255,249,147,0.5); flex-shrink: 0; }
 
 .chevron { transition: transform 0.18s; flex-shrink: 0; }
 .chevronOpen { transform: rotate(180deg); }
@@ -26,16 +31,17 @@
 /* Dropdown */
 .dropdown {
   position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
+  /* top/bottom et left/right injectés dynamiquement via style inline (auto-flip) */
   min-width: 210px;
-  background: #FBFBFB;
-  border: 1px solid rgba(22,5,18,0.1);
+  background: rgba(28,8,22,0.97);
+  border: 1px solid rgba(255,249,147,0.1);
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(22,5,18,0.1);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
   padding: 5px;
   z-index: 200;
   animation: fadeIn 0.12s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -49,20 +55,21 @@
   background: transparent;
   border-radius: 6px;
   font-size: 12px;
-  color: var(--page-text2);
+  color: rgba(255,249,147,0.55);
   font-family: var(--font);
   cursor: pointer;
   text-align: left;
-  transition: background 0.1s;
+  transition: background 0.1s, color 0.1s;
 }
-.option:hover { background: rgba(22,5,18,0.05); color: var(--page-text); }
-.optionActive { color: var(--page-text); font-weight: 600; }
+.option:hover { background: rgba(255,249,147,0.06); color: rgba(255,249,147,0.9); }
+.optionActive { color: var(--soleil); font-weight: 600; }
 
-.check { color: #160512; font-size: 11px; width: 14px; flex-shrink: 0; }
+.check { color: var(--soleil); width: 9px; flex-shrink: 0; }
+.checkPlaceholder { width: 9px; flex-shrink: 0; display: inline-block; }
 
 /* Custom date range section */
 .customRange {
-  border-top: 1px solid rgba(22,5,18,0.07);
+  border-top: 1px solid rgba(255,249,147,0.08);
   padding: 10px 8px 6px;
   margin-top: 4px;
   display: flex;
@@ -70,34 +77,36 @@
   gap: 7px;
 }
 .customRow { display: flex; align-items: center; gap: 8px; }
-.customLbl { font-size: 10.5px; color: var(--page-text3); width: 18px; flex-shrink: 0; font-family: var(--font); }
+.customLbl { font-size: 10.5px; color: rgba(255,249,147,0.4); width: 18px; flex-shrink: 0; font-family: var(--font); }
 .customInput {
   flex: 1;
-  background: rgba(22,5,18,0.04);
-  border: 1px solid rgba(22,5,18,0.1);
+  background: rgba(255,249,147,0.05);
+  border: 1px solid rgba(255,249,147,0.15);
   border-radius: 5px;
   padding: 5px 8px;
   font-size: 11px;
-  color: var(--page-text2);
+  color: rgba(255,249,147,0.75);
   font-family: var(--font);
   outline: none;
   cursor: pointer;
+  color-scheme: dark;
 }
-.customInput:focus { border-color: rgba(22,5,18,0.25); }
-.customInput::-webkit-calendar-picker-indicator { opacity: 0.4; cursor: pointer; }
+.customInput:focus { border-color: rgba(255,249,147,0.35); }
+.customInput::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; filter: invert(1); }
 
 .applyBtn {
   align-self: flex-end;
   padding: 5px 14px;
-  background: #160512;
-  color: #FFF993;
+  background: var(--soleil);
+  color: var(--myrtille);
   border: none;
-  border-radius: 5px;
+  border-radius: 99px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: var(--font);
   cursor: pointer;
   transition: opacity 0.15s;
   margin-top: 2px;
+  letter-spacing: 0.01em;
 }
 .applyBtn:hover { opacity: 0.85; }
