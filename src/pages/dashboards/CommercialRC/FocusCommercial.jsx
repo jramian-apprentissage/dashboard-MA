@@ -243,6 +243,34 @@ export default function FocusCommercial() {
         </Card>
       </div>
 
+      <SectionLabel>Évolution mensuelle des performances</SectionLabel>
+      <Card title="Deals gagnés, perdus & stand-by — évolution mensuelle">
+        <div className={styles.evoKpis}>
+          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--pos)' }}>{d.kpis[3].value}</span><span className={styles.evoLbl}>Gagnés</span></div>
+          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--neg)' }}>{d.kpis[2].value}</span><span className={styles.evoLbl}>Perdus</span></div>
+          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--warn)' }}>{d.kpis[1].value}</span><span className={styles.evoLbl}>Stand-by</span></div>
+          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--text2)' }}>{d.kpis[0].value}</span><span className={styles.evoLbl}>En cours</span></div>
+        </div>
+        <div className={styles.lineWrap}>
+          <Line
+            data={{
+              labels: months,
+              datasets: [
+                { label: 'Deals gagnés', data: d.evolution.gagnes, borderColor: '#8ECFAA', backgroundColor: 'rgba(142,207,170,0.06)', pointBackgroundColor: '#8ECFAA', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2 },
+                { label: 'Deals perdus', data: d.evolution.perdus, borderColor: '#C4876A', backgroundColor: 'rgba(196,135,106,0.05)', pointBackgroundColor: '#C4876A', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2 },
+                { label: 'Stand-by', data: d.evolution.standby, borderColor: '#D4A84B', backgroundColor: 'rgba(212,168,75,0.05)', pointBackgroundColor: '#D4A84B', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2 },
+              ],
+            }}
+            options={lineOpts}
+          />
+        </div>
+        <div className={styles.legend}>
+          <span className={styles.legDot} style={{ background: '#8ECFAA' }} />Deals gagnés
+          <span className={styles.legDot} style={{ background: '#C4876A', marginLeft: 12 }} />Deals perdus
+          <span className={styles.legDot} style={{ background: '#D4A84B', marginLeft: 12 }} />Stand-by
+        </div>
+      </Card>
+
       <div className={styles.twoCol}>
         <Card title="Motifs des deals perdus">
           {d.motifsPerte.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
@@ -336,33 +364,6 @@ export default function FocusCommercial() {
         </Card>
       </div>
 
-      <SectionLabel>Évolution mensuelle des performances</SectionLabel>
-      <Card title="Deals gagnés, perdus & stand-by — évolution mensuelle">
-        <div className={styles.evoKpis}>
-          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--pos)' }}>{d.kpis[3].value}</span><span className={styles.evoLbl}>Gagnés</span></div>
-          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--neg)' }}>{d.kpis[2].value}</span><span className={styles.evoLbl}>Perdus</span></div>
-          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--warn)' }}>{d.kpis[1].value}</span><span className={styles.evoLbl}>Stand-by</span></div>
-          <div className={styles.evoStat}><span className={styles.evoVal} style={{ color: 'var(--text2)' }}>{d.kpis[0].value}</span><span className={styles.evoLbl}>En cours</span></div>
-        </div>
-        <div className={styles.lineWrap}>
-          <Line
-            data={{
-              labels: months,
-              datasets: [
-                { label: 'Deals gagnés', data: d.evolution.gagnes, borderColor: '#8ECFAA', backgroundColor: 'rgba(142,207,170,0.06)', pointBackgroundColor: '#8ECFAA', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2 },
-                { label: 'Deals perdus', data: d.evolution.perdus, borderColor: '#C4876A', backgroundColor: 'rgba(196,135,106,0.05)', pointBackgroundColor: '#C4876A', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2 },
-                { label: 'Stand-by', data: d.evolution.standby, borderColor: '#D4A84B', backgroundColor: 'rgba(212,168,75,0.05)', pointBackgroundColor: '#D4A84B', tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2 },
-              ],
-            }}
-            options={lineOpts}
-          />
-        </div>
-        <div className={styles.legend}>
-          <span className={styles.legDot} style={{ background: '#8ECFAA' }} />Deals gagnés
-          <span className={styles.legDot} style={{ background: '#C4876A', marginLeft: 12 }} />Deals perdus
-          <span className={styles.legDot} style={{ background: '#D4A84B', marginLeft: 12 }} />Stand-by
-        </div>
-      </Card>
     </div>
   );
 }
