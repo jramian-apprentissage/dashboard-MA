@@ -77,7 +77,12 @@ export default function GlossaireKPI() {
       {/* Grille de termes */}
       <div className={styles.grid}>
         {filtered.length === 0 && (
-          <div className={styles.empty}>Aucun terme trouvé pour "{search}"</div>
+          <div className={styles.empty}>
+            <svg className={styles.emptyIcon} width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Aucun terme trouvé{search ? ` pour « ${search} »` : ''}
+          </div>
         )}
         {filtered.map(t => (
           <div key={t.terme} className={styles.card}>

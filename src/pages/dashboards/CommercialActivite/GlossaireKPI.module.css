@@ -1,22 +1,72 @@
 .page { display: flex; flex-direction: column; gap: 0; }
-.searchWrap { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
-.search {
-  flex: 1; max-width: 400px;
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--r); padding: 9px 14px;
-  font-size: 13px; color: var(--text); font-family: var(--font);
-  outline: none;
-}
-.search:focus { border-color: var(--accent-border); }
-.search::placeholder { color: var(--text3); }
-.count { font-size: 12px; color: var(--text3); }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
-.card {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--r2); padding: 14px 16px;
+
+/* Barre de recherche */
+.searchWrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 8px 14px;
+  max-width: 400px;
+  margin-bottom: 16px;
   transition: border-color 0.15s;
 }
-.card:hover { border-color: var(--accent-border); }
-.terme { font-size: 13px; font-weight: 600; color: var(--accent); margin-bottom: 6px; }
-.def { font-size: 12px; color: var(--text2); line-height: 1.55; }
-.empty { font-size: 14px; color: var(--text3); text-align: center; padding: 48px; }
+.searchWrap:focus-within { border-color: var(--accent-border); }
+.searchIcon { color: var(--text2); flex-shrink: 0; }
+.search {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font);
+  outline: none;
+}
+.search::placeholder { color: var(--text2); opacity: 0.6; }
+
+.count { font-size: 11.5px; color: var(--text2); margin-bottom: 16px; margin-top: -8px; }
+
+/* Grille */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+
+/* Carte */
+.card {
+  background: var(--blanc);
+  border: 1px solid var(--border);
+  border-radius: var(--r2);
+  padding: 15px 17px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.card:hover {
+  border-color: var(--accent-border);
+  box-shadow: 0 2px 12px rgba(38,0,31,0.07);
+}
+
+.terme {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 7px;
+  line-height: 1.3;
+}
+
+.def {
+  font-size: 12.5px;
+  color: var(--text2);
+  line-height: 1.65;
+}
+
+/* État vide */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 0;
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  grid-column: 1 / -1;
+}
