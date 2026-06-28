@@ -9,8 +9,8 @@ const DASH_LABELS = {
 };
 
 const DASH_COLORS = {
-  'commercial-rc':       { bg: 'rgba(255,249,147,0.08)', color: '#FFF993', border: 'rgba(255,249,147,0.18)' },
-  'commercial-activite': { bg: 'rgba(227,225,216,0.08)', color: 'rgba(227,225,216,0.75)', border: 'rgba(227,225,216,0.18)' },
+  'commercial-rc':       { bg: '#26001F', color: '#FFF993', border: '#26001F' },
+  'commercial-activite': { bg: '#3A0030', color: 'rgba(255,249,147,0.75)', border: '#3A0030' },
 };
 
 export default function GlossaireKPI() {
