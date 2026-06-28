@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Line, Doughnut } from 'react-chartjs-2';
 import { Chart, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
@@ -9,7 +8,6 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Pill from '../../../components/ui/Pill';
 import MotifBar from '../../../components/ui/MotifBar';
 import { focusCommercialData as d, months } from '../../../data/mockData';
-import bgCommercial from '../../../assets/bg-commercial.svg';
 import styles from './FocusCommercial.module.css';
 
 Chart.register(LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
@@ -43,20 +41,6 @@ export default function FocusCommercial() {
   const mounted = useChartMount();
   const { result, loading } = useSnapshotData();
 
-  useEffect(() => {
-    const main = document.querySelector('main');
-    if (!main) return;
-    main.style.backgroundImage = `url(${bgCommercial})`;
-    main.style.backgroundSize = 'cover';
-    main.style.backgroundPosition = 'center top';
-    main.style.backgroundRepeat = 'no-repeat';
-    return () => {
-      main.style.backgroundImage = '';
-      main.style.backgroundSize = '';
-      main.style.backgroundPosition = '';
-      main.style.backgroundRepeat = '';
-    };
-  }, []);
 
   // Calcul du % pour la répartition revenue
   const totalRevMissions = d.missions.reduce((sum, m) => sum + m.revenue, 0);
