@@ -51,5 +51,28 @@ export function useSnapshotData() {
     return computeCRMKPIs(comptesSnap, leadsSnap, from, to);
   }, [leadsRows, comptesRows, periodKey, customFrom, customTo]);
 
-  return { result, loading, error };
+  // Série mensuelle CA / marge — un point par fin de mois sur les 6 derniers mois,
+  // en résolvant le snapshot le plus proche de chaque fin de mois
+  const monthly = useMemo(() => {
+    if (!comptesRows) return null;
+    const points = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+      const endStr = end.toISOString().slice(0, 10);
+      const snap = resolveSnapshot(comptesRows, endStr);
+      const actifs = snap.filter(c => c.statut === 'Actif');
+      const ca     = actifs.reduce((s, c) => s + c.vente_total, 0);
+      const achats = actifs.reduce((s, c) => s + c.achat_total, 0);
+      points.push({
+        label: end.toLocaleDateString('fr-FR', { month: 'short' }),
+        ca,
+        marge: ca - achats,
+        tauxMarge: ca > 0 ? Math.round(((ca - achats) / ca) * 100) : 0,
+      });
+    }
+    return points;
+  }, [comptesRows]);
+
+  return { result, monthly, loading, error };
 }

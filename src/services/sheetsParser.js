@@ -102,7 +102,7 @@ export const TAG_CATEGORIES = [
   { key: 'CNA', label: 'CNA — Contact non argumenté', color: 'rgba(123,170,191,0.6)' },
   { key: 'INJ', label: 'INJ — Injoignable',            color: 'rgba(167,173,170,0.5)' },
   { key: 'HC',  label: 'HC — Hors cible',             color: 'rgba(196,135,106,0.55)' },
-  { key: '',    label: 'Sans tag',                     color: 'rgba(255,255,255,0.12)' },
+  { key: '',    label: 'Sans tag',                     color: 'rgba(227,225,216,0.9)' },
 ];
 
 // ─── Compute KPIs + tranches from parsed rows ────────────────────────────────

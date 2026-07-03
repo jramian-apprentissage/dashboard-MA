@@ -55,7 +55,7 @@ const AI_INSIGHTS = {
   },
 };
 
-const TYPE_COLOR = { up: '#7EB89A', down: '#B87B65', warn: '#C4973A', neutral: 'rgba(167,173,170,0.55)' };
+const TYPE_COLOR = { up: '#15803d', down: '#b91c1c', warn: '#b45309', neutral: 'rgba(38,0,31,0.55)' };
 
 const TYPE_ICONS = {
   up:      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,

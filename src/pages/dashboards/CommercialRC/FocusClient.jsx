@@ -1,18 +1,19 @@
-import { Bar, Doughnut, Line } from 'react-chartjs-2';
-import { Chart, BarElement, ArcElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
+import { Bar, Doughnut } from 'react-chartjs-2';
+import { Chart, BarElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Pill from '../../../components/ui/Pill';
+import Loader from '../../../components/ui/Loader';
 import { focusClientData as d, months } from '../../../data/mockData';
 import styles from './FocusClient.module.css';
 
-Chart.register(BarElement, ArcElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler);
+Chart.register(BarElement, ArcElement, CategoryScale, LinearScale, Tooltip);
 
 const fmt = v => v >= 1000 ? `${(v / 1000).toFixed(0)} K€` : (v ? `${v}€` : '—');
-const tickStyle = { color: 'rgba(22,5,18,0.35)', font: { size: 10, family: 'OverusedGrotesk' } };
+const tickStyle = { color: 'rgba(22,5,18,0.35)', font: { size: 10, family: 'DM Sans' } };
 const gridStyle = { color: 'rgba(22,5,18,0.06)' };
 const borderCol = { color: 'rgba(22,5,18,0.08)' };
 const secteurVariant = s => ({ Tech: 'blue', Finance: 'gray', Industrie: 'gray', Retail: 'gray', Santé: 'gray' }[s] || 'gray');
@@ -37,31 +38,31 @@ export default function FocusClient() {
   return (
     <div className={styles.page}>
 
-      {/* ── Nouveaux clients démarrés — données réelles Monday CRM ───────── */}
-      <SectionLabel badge="Monday CRM — données réelles">Nouveaux clients démarrés sur la période</SectionLabel>
-      {loading && (
-        <div style={{ padding: '16px 0', color: 'var(--text3)', fontSize: 12 }}>Chargement des données CRM…</div>
-      )}
+      {/* ══ Ligne 1 — Le solde net du portefeuille : entrées vs sorties ══ */}
+      <SectionLabel badge="Monday CRM — données réelles">Le solde net — entrées & sorties du portefeuille</SectionLabel>
+      <Loader loading={loading} label="Chargement des données CRM…" size={44} minHeight={110} />
       {result && (
         <div className={styles.newClientsGrid}>
           <KPICard
-            label="Deals gagnés (démarrés)"
+            label="Nouveaux clients (période)"
             value={result.nbDealsGagnes}
-            unit=" deals"
-            trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: 'Date de démarrage sur la période' }}
+            unit=" clients"
+            trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA : ${fmtEuros(result.sommeVentesGagnes)}` }}
             color="green"
           />
           <KPICard
-            label="CA nouveaux clients"
-            value={fmtEuros(result.sommeVentesGagnes)}
-            trend={{ dir: 'neutral', text: 'Ventes clients démarrés' }}
-            color="blue"
+            label="Clients perdus (période)"
+            value={d.clientsPerdus.length}
+            unit=" clients"
+            trend={{ dir: d.clientsPerdus.length > 0 ? 'down' : 'neutral', text: `CA perdu : ${fmt(d.revenuPerdu)}` }}
+            color="red"
           />
           <KPICard
-            label="Achats nouveaux clients"
-            value={fmtEuros(result.sommeAchatsGagnes)}
-            trend={{ dir: 'neutral', text: 'Masse salariale clients démarrés' }}
-            color="amber"
+            label="Portefeuille actif"
+            value={result.nbClientsActifs}
+            unit=" actifs"
+            trend={{ dir: 'neutral', text: `sur ${result.nbClientsTotal} comptes au total` }}
+            color="blue"
           />
           <KPICard
             label="Marge brute nouveaux"
@@ -77,13 +78,8 @@ export default function FocusClient() {
         </div>
       )}
 
-      {/* ── Vue globale clients actifs ─────────────────────────────────────── */}
-      <SectionLabel badge="Monday CRM">Vue client — indicateurs clés</SectionLabel>
-      <div className={styles.kpiGrid}>
-        {d.kpis.map(k => <KPICard key={k.label} {...k} />)}
-      </div>
-
-      <SectionLabel>Classement clients — CA & marge brute</SectionLabel>
+      {/* ══ Ligne 2 — La valeur : qui rapporte quoi ══ */}
+      <SectionLabel>La valeur — classement clients</SectionLabel>
       <div className={styles.col6040}>
         <Card title="CA par client">
           <table className={styles.tbl}>
@@ -91,7 +87,7 @@ export default function FocusClient() {
             <tbody>
               {d.topClients.map((c, i) => (
                 <tr key={c.name}>
-                  <td className={styles.rank} style={{ color: c.rank === 1 ? 'var(--accent)' : 'var(--text2)' }}>{c.rank}</td>
+                  <td className={styles.rank} style={{ color: c.rank === 1 ? 'var(--myrtille)' : 'var(--text2)' }}>{c.rank}</td>
                   <td className={styles.tdName}>{c.name}</td>
                   <td><Pill variant={secteurVariant(c.secteur)}>{c.secteur}</Pill></td>
                   <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>{fmt(c.ca)}</td>
@@ -134,42 +130,13 @@ export default function FocusClient() {
               ))}
             </tbody>
           </table>
-          <div className={styles.chartWrap} style={{ height: 130, marginTop: 12 }}>
-            <Bar
-              data={{ labels: d.margeClients.map(c => c.name.split(' ')[0]), datasets: [{ data: d.margeClients.map(c => c.marge / 1000), backgroundColor: d.margeClients.map(c => c.taux >= 25 ? 'rgba(142,207,170,0.6)' : 'rgba(212,168,75,0.5)'), borderRadius: 4, borderSkipped: false }] }}
-              options={{ responsive: true, maintainAspectRatio: false, animation: barAnim, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y + 'K€' } } }, scales: { x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol }, y: { ticks: { ...tickStyle, callback: v => v + 'k' }, grid: gridStyle, border: borderCol } } }}
-            />
-          </div>
+          <div className={styles.subnote}>Marge brute = Prix de vente – Prix d'achat</div>
         </Card>
       </div>
 
-      <SectionLabel badge="Accès Direction">Marge brute par collaborateur</SectionLabel>
+      {/* ══ Ligne 3 — La santé : où on va, ce que ça a déjà coûté ══ */}
+      <SectionLabel badge="IA — colonne Monday">La santé — risque actuel & pertes constatées</SectionLabel>
       <div className={styles.twoCol}>
-        <Card title="Classement collaborateurs — marge générée">
-          {d.collaborateurs.map((c, i) => (
-            <div key={c.name} className={styles.collabRow}>
-              <div className={styles.collabLeft}>
-                <div className={styles.collabAvatar}>{c.initials}</div>
-                <div className={styles.collabName}>{c.name}</div>
-              </div>
-              <div className={styles.collabRight}>
-                <div className={styles.collabBar}>
-                  <div
-                    className={styles.collabFill}
-                    style={{
-                      width: mounted ? `${c.pct}%` : '0%',
-                      opacity: c.taux >= 25 ? 1 : 0.7,
-                      transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 70}ms`,
-                    }}
-                  />
-                </div>
-                <div className={styles.collabMarge}>{fmt(c.marge)}</div>
-                <Pill variant={c.taux >= 25 ? 'green' : c.taux >= 20 ? 'amber' : 'red'}>{c.taux}%</Pill>
-              </div>
-            </div>
-          ))}
-          <div className={styles.subnote}>Marge brute = Prix de vente – Prix d'achat. Accès restreint Direction.</div>
-        </Card>
         <Card title="Nb de Clients par Niveau de Santé">
           <div className={styles.chartWrap} style={{ height: 160 }}>
             <Doughnut
@@ -184,9 +151,42 @@ export default function FocusClient() {
           </div>
           <div className={styles.subnote}>Score IA basé sur : échanges, renouvellements, retards paiement</div>
         </Card>
+
+        <Card title="Clients perdus — détail">
+          <table className={styles.tbl}>
+            <thead><tr><th>Client</th><th>Secteur</th><th>CA perdu</th><th>Date</th><th>Motif</th></tr></thead>
+            <tbody>
+              {d.clientsPerdus.map(c => (
+                <tr key={c.name}>
+                  <td className={styles.tdName}>{c.name}</td>
+                  <td><Pill variant="gray">{c.secteur}</Pill></td>
+                  <td className={styles.tdRight} style={{ color: 'var(--neg)', fontWeight: 600 }}>{fmt(c.ca)}</td>
+                  <td style={{ color: 'var(--text3)', whiteSpace: 'nowrap' }}>{c.date}</td>
+                  <td><Pill variant={c.motif === 'Prix' || c.motif === 'Budget' ? 'red' : 'amber'}>{c.motif}</Pill></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className={styles.sep} />
+          <div className={styles.infoRow}>ℹ️ Surveiller Darby Ltd & Maxim & Co — Health Score critique</div>
+        </Card>
       </div>
 
-      <SectionLabel badge="IA — colonne Monday">Client Health Score</SectionLabel>
+      {/* Tendance du churn — même sujet que "Clients perdus" ci-dessus, jamais analysé avec le classement collaborateurs */}
+      <Card title="Revenue perdu — évolution mensuelle">
+        <div className={styles.churnHead}>
+          <div><div className={styles.metaSub}>Revenue perdu (période)</div><div className={styles.bigVal} style={{ color: 'var(--neg)' }}>{fmt(d.revenuPerdu)}</div></div>
+          <div><div className={styles.metaSub}>Clients arrêtés</div><div className={styles.bigVal} style={{ color: 'var(--warn)' }}>{d.clientsPerdus.length}</div></div>
+        </div>
+        <div className={styles.chartWrap} style={{ height: 150 }}>
+          <Bar
+            data={{ labels: months, datasets: [{ label: 'Revenue perdu (k€)', data: d.churnMensuel, backgroundColor: 'rgba(196,135,106,0.6)', borderRadius: 4, borderSkipped: false }] }}
+            options={{ responsive: true, maintainAspectRatio: false, animation: barAnim, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y + 'k€' } } }, scales: { x: { ticks: tickStyle, grid: gridStyle, border: borderCol }, y: { ticks: { ...tickStyle, callback: v => v + 'k' }, grid: gridStyle, border: borderCol } } }}
+          />
+        </div>
+      </Card>
+
+      {/* ══ Ligne 4 — Le détail santé client par client ══ */}
       <Card title="Détails du niveau de Santé par Client">
         {d.healthClients.map((c, i) => {
           const secteur = c.sub.split('·')[0].trim();
@@ -220,39 +220,34 @@ export default function FocusClient() {
         <div className={styles.subnote} style={{ marginTop: 8 }}>Justificatif généré par l'IA Monday CRM — basé sur activité, paiements et engagements</div>
       </Card>
 
-      <SectionLabel>Churn & pertes clients</SectionLabel>
-      <div className={styles.twoCol}>
-        <Card title="Revenue perdu — évolution mensuelle">
-          <div className={styles.churnHead}>
-            <div><div className={styles.metaSub}>Revenue perdu (période)</div><div className={styles.bigVal} style={{ color: 'var(--neg)' }}>{fmt(d.revenuPerdu)}</div></div>
-            <div><div className={styles.metaSub}>Clients arrêtés</div><div className={styles.bigVal} style={{ color: 'var(--warn)' }}>{d.clientsPerdus.length}</div></div>
+      {/* ══ Ligne 5 — Pilotage interne : qui génère la marge, indépendant du churn ══ */}
+      <SectionLabel>Pilotage interne — marge par collaborateur</SectionLabel>
+      <Card title="Classement collaborateurs — marge générée">
+        {d.collaborateurs.map((c, i) => (
+          <div key={c.name} className={styles.collabRow}>
+            <div className={styles.collabLeft}>
+              <div className={styles.collabAvatar}>{c.initials}</div>
+              <div className={styles.collabName}>{c.name}</div>
+            </div>
+            <div className={styles.collabRight}>
+              <div className={styles.collabBar}>
+                <div
+                  className={styles.collabFill}
+                  style={{
+                    width: mounted ? `${c.pct}%` : '0%',
+                    opacity: c.taux >= 25 ? 1 : 0.7,
+                    transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 70}ms`,
+                  }}
+                />
+              </div>
+              <div className={styles.collabMarge}>{fmt(c.marge)}</div>
+              <Pill variant={c.taux >= 25 ? 'green' : c.taux >= 20 ? 'amber' : 'red'}>{c.taux}%</Pill>
+            </div>
           </div>
-          <div className={styles.chartWrap} style={{ height: 150 }}>
-            <Bar
-              data={{ labels: months, datasets: [{ label: 'Revenue perdu (k€)', data: d.churnMensuel, backgroundColor: 'rgba(196,135,106,0.6)', borderRadius: 4, borderSkipped: false }] }}
-              options={{ responsive: true, maintainAspectRatio: false, animation: barAnim, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y + 'k€' } } }, scales: { x: { ticks: tickStyle, grid: gridStyle, border: borderCol }, y: { ticks: { ...tickStyle, callback: v => v + 'k' }, grid: gridStyle, border: borderCol } } }}
-            />
-          </div>
-        </Card>
-        <Card title="Clients perdus — détail">
-          <table className={styles.tbl}>
-            <thead><tr><th>Client</th><th>Secteur</th><th>CA perdu</th><th>Date</th><th>Motif</th></tr></thead>
-            <tbody>
-              {d.clientsPerdus.map(c => (
-                <tr key={c.name}>
-                  <td className={styles.tdName}>{c.name}</td>
-                  <td><Pill variant="gray">{c.secteur}</Pill></td>
-                  <td className={styles.tdRight} style={{ color: 'var(--neg)', fontWeight: 600 }}>{fmt(c.ca)}</td>
-                  <td style={{ color: 'var(--text3)', whiteSpace: 'nowrap' }}>{c.date}</td>
-                  <td><Pill variant={c.motif === 'Prix' || c.motif === 'Budget' ? 'red' : 'amber'}>{c.motif}</Pill></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className={styles.sep} />
-          <div className={styles.infoRow}>ℹ️ Surveiller Darby Ltd & Maxim & Co — Health Score critique</div>
-        </Card>
-      </div>
+        ))}
+        <div className={styles.subnote}>Marge brute = Prix de vente – Prix d'achat</div>
+      </Card>
+
     </div>
   );
 }

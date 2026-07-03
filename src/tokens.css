@@ -90,9 +90,14 @@ a { color: inherit; text-decoration: none; }
 
 /* Focus visible — anneau Soleil pour navigation clavier */
 :focus-visible {
-  outline: 2px solid rgba(255,249,147,0.6);
+  outline: 2px solid rgba(38,0,31,0.55);
   outline-offset: 2px;
   border-radius: 4px;
+}
+/* Sur zones sombres (hero, topbar), anneau soleil */
+header :focus-visible,
+[class*="hero"] :focus-visible {
+  outline-color: rgba(255,249,147,0.7);
 }
 
 /* Réduction du mouvement — respecte les préférences système */

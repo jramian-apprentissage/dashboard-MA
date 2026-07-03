@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import logoFull from '../assets/logo/logo-full-white.svg';
+import logoFull from '../assets/logo/logo-full-myrtille.svg';
+import { LoaderMark } from '../components/ui/Loader';
 import heroBg from '../assets/hero-login.svg';
 import styles from './Login.module.css';
 
@@ -121,9 +122,7 @@ export default function Login() {
           <button type="submit" className={styles.btn} disabled={loading}>
             {loading ? (
               <>
-                <svg className={styles.spinner} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
-                </svg>
+                <LoaderMark size={16} />
                 Connexion…
               </>
             ) : 'Se connecter'}

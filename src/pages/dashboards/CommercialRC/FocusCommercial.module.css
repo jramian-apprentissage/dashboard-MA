@@ -1,5 +1,36 @@
 .page { display: flex; flex-direction: column; gap: 0; }
 
+/* ── Nouvelle organisation directeur ── */
+.kpiRow4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+.threeCol { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+
+/* Funnel — barres centrées, déperdition visible */
+.funnelRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.funnelTrack { flex: 1; height: 24px; display: flex; justify-content: center; background: var(--sable-light); border-radius: 4px; overflow: hidden; }
+.funnelFill { height: 100%; background: var(--myrtille); border-radius: 3px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 8px; font-size: 10px; font-weight: 600; color: var(--soleil); min-width: 52px; white-space: nowrap; }
+
+/* Stats de cycle intégrées au funnel */
+.cycleStats { display: flex; gap: 28px; }
+.cycleStats > div { display: flex; flex-direction: column; gap: 2px; }
+.cycleVal { font-size: 18px; font-weight: 700; color: var(--myrtille); letter-spacing: -0.02em; }
+.cycleLbl { font-size: 9.5px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Missions — donut + liste côte à côte */
+.missionSplit { display: flex; gap: 24px; align-items: center; }
+.missionList { flex: 1; display: flex; flex-direction: column; gap: 0; }
+@media (max-width: 900px) { .missionSplit { flex-direction: column; } }
+
+/* Missions — méta inline */
+.missionMeta { display: flex; align-items: baseline; gap: 10px; flex-shrink: 0; width: 170px; justify-content: flex-end; }
+.missionRevInline { font-size: 12.5px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.missionPct { font-size: 11px; color: var(--text2); font-variant-numeric: tabular-nums; }
+.missionAvgInline { font-size: 10px; color: var(--text3); }
+
+@media (max-width: 1100px) {
+  .kpiRow4 { grid-template-columns: 1fr 1fr; }
+  .threeCol { grid-template-columns: 1fr; }
+}
+
 /* ── Section pipeline réel (données CRM) ── */
 .pipelineTopRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }
 .pipelineDetailRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
@@ -80,10 +111,10 @@
 
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th { font-size: 9.5px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border); }
-.tbl td { font-size: 12px; color: var(--text2); padding: 8px 8px; border-bottom: 1px solid rgba(227,225,216,0.04); vertical-align: middle; }
+.tbl td { font-size: 12px; color: var(--text2); padding: 8px 8px; border-bottom: 1px solid rgba(227,225,216,0.5); vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: none; }
 .tbl td strong { color: var(--text); font-weight: 500; }
-.tbl tr:hover td { background: rgba(255,249,147,0.02); }
+.tbl tr:hover td { background: rgba(240,238,233,0.6); }
 
 /* Secteurs */
 .sectorRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -99,14 +130,14 @@
 .legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
 
 /* Missions */
-.missionCard { background: rgba(22,5,18,0.03); border-radius: 7px; padding: 11px 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); transition: border-color 0.15s; }
+.missionCard { background: var(--sable-light); border-radius: 7px; padding: 11px 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--border); transition: border-color 0.15s; }
 .missionCard:hover { border-color: var(--border2); }
 .missionName { font-size: 12.5px; color: var(--text2); font-weight: 500; }
 .missionRev { font-size: 14px; font-weight: 700; color: var(--text); text-align: right; letter-spacing: -0.01em; }
 .missionAvg { font-size: 10px; color: var(--text2); margin-top: 2px; text-align: right; }
 .sep { height: 1px; background: var(--border); margin: 12px 0; }
 .revMoyen { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: var(--text2); }
-.revMoyenVal { font-size: 15px; font-weight: 700; color: var(--accent); }
+.revMoyenVal { font-size: 15px; font-weight: 700; color: var(--myrtille); }
 
 /* Ligne */
 /* Mini-KPIs résumé dans la carte évolution */

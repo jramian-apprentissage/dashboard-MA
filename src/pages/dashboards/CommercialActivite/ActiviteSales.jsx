@@ -1,5 +1,5 @@
-import { Bar, Line } from 'react-chartjs-2';
-import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import { useRef, useMemo } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import KPICard from '../../../components/ui/KPICard';
@@ -10,10 +10,10 @@ import { activiteSalesData as d, months } from '../../../data/mockData';
 import { TAG_CATEGORIES } from '../../../services/sheetsParser';
 import styles from './Activite.module.css';
 
-Chart.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler);
+Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
 
-const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'OverusedGrotesk' } };
-const gridStyle = { color: 'rgba(227,225,216,0.04)' };
+const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'DM Sans' } };
+const gridStyle = { color: 'rgba(227,225,216,0.5)' };
 const borderCol = { color: 'rgba(227,225,216,0.08)' };
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
 
@@ -148,6 +148,58 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       <div className={styles.kpiGrid6}>
         {kpis.map(k => <KPICard key={k.label} {...k} />)}
       </div>
+      <SectionLabel>Performance globale / collaborateur</SectionLabel>
+      <Card title="Comparatif individuel — principaux leviers">
+        <table className={styles.perfTable}>
+          <thead><tr>
+            <th>Collaborateur</th>
+            <th>Appels émis</th>
+            <th>Appels argumentés</th>
+            <th>RDV pris</th>
+            <th>RDV honorés</th>
+            <th>Taux décroché</th>
+          </tr></thead>
+          <tbody>
+            {(() => {
+              if (hasRealData && salesData.result.collabs) {
+                // Lignes depuis données réelles Ringover + RDV
+                const ringoverCollabs = salesData.result.collabs.filter(c => c !== 'Tous');
+                // Agréger les appels par collab depuis les tranches (ou recalculer depuis les rows)
+                // On utilise le comparatif mock pour les colonnes non-RDV si pas de per-collab ringover
+                return ringoverCollabs.map((name, i) => {
+                  const rdvC  = rdvResult?.perCollab?.[name];
+                  const ring  = salesData.result.perCollab?.[name];
+                  const taux  = ring?.taux ?? '—';
+                  const tauxN = parseInt(taux);
+                  const tauxColor = isNaN(tauxN) ? undefined : tauxN >= 35 ? 'var(--pos)' : tauxN >= 25 ? 'var(--warn)' : 'var(--neg)';
+                  return (
+                    <tr key={name} className={name === selectedCollab ? styles.highlightRow : ''}>
+                      <td className={styles.tdName}>{name}</td>
+                      <td className={styles.tdNum}>{ring?.appels ?? '—'}</td>
+                      <td className={styles.tdNum}>{ring?.argues ?? '—'}</td>
+                      <td className={styles.tdNum} style={{ color: rdvC ? 'var(--pos)' : undefined }}>{rdvC?.rdvPris ?? '—'}</td>
+                      <td className={styles.tdNum} style={{ color: rdvC ? 'var(--pos)' : undefined }}>{rdvC?.rdvHonores ?? '—'}</td>
+                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: tauxColor }}>{taux}</span></td>
+                    </tr>
+                  );
+                });
+              }
+              // Fallback mock
+              return d.collaborateurs.map((c, i) => (
+                <tr key={c.name} className={`${i === 0 ? styles.topRow : ''} ${c.name === selectedCollab ? styles.highlightRow : ''}`}>
+                  <td className={styles.tdName}>{c.name}</td>
+                  <td className={styles.tdNum}>{c.appels}</td>
+                  <td className={styles.tdNum}>{c.argues}</td>
+                  <td className={styles.tdNum}>{c.rdv}</td>
+                  <td className={styles.tdNum}>—</td>
+                  <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: parseInt(c.taux) >= 55 ? 'var(--pos)' : parseInt(c.taux) >= 45 ? 'var(--warn)' : 'var(--neg)' }}>{c.taux}</span></td>
+                </tr>
+              ));
+            })()}
+          </tbody>
+        </table>
+      </Card>
+
 
       <SectionLabel>Appels par tranche horaire</SectionLabel>
       <Card title={`Joignabilité & RDV par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
@@ -225,14 +277,22 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               : ['rgba(142,207,170,0.8)','rgba(255,249,147,0.7)','rgba(123,170,191,0.6)','rgba(167,173,170,0.5)','rgba(196,135,106,0.55)'];
             return (
               <>
+                {/* Partie-du-tout (100% des appels) → donut ; la table donne les valeurs exactes */}
                 <div className={styles.chartWrap} style={{ height: 180 }}>
-                  <Bar
+                  <Doughnut
                     data={{
-                      labels: cats.map(c => c.label || c.label),
-                      datasets: [{ data: cats.map(c => c.count), backgroundColor: catColors, borderRadius: 5, borderSkipped: false }],
+                      labels: cats.map(c => c.label),
+                      datasets: [{ data: cats.map(c => c.count), backgroundColor: catColors, borderWidth: 0, hoverOffset: 4 }],
                     }}
-                    options={{ responsive: true, maintainAspectRatio: false, animation: barAnim, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.parsed.y} appels (${cats[ctx.dataIndex]?.pct}%)` } } }, scales: { x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol }, y: { ticks: tickStyle, grid: gridStyle, border: borderCol } } }}
+                    options={{ responsive: true, maintainAspectRatio: false, cutout: '65%', animation: { duration: 1000, easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label} : ${ctx.parsed} appels (${cats[ctx.dataIndex]?.pct}%)` } } } }}
                   />
+                </div>
+                <div className={styles.legend} style={{ justifyContent: 'center' }}>
+                  {cats.map((c, ci) => (
+                    <span key={c.label} className={styles.legItem || ''} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                      <span className={styles.legDot} style={{ background: catColors[ci] }} />{c.label} {c.pct}%
+                    </span>
+                  ))}
                 </div>
 
                 {/* ── Table complète des tags individuels (données réelles uniquement) ── */}
@@ -289,58 +349,6 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
           <div className={styles.subNote} style={{ marginTop: 8 }}>Plusieurs motifs possibles par appel</div>
         </Card>
       </div>
-
-      <SectionLabel>Performance globale / collaborateur</SectionLabel>
-      <Card title="Comparatif individuel — principaux leviers">
-        <table className={styles.perfTable}>
-          <thead><tr>
-            <th>Collaborateur</th>
-            <th>Appels émis</th>
-            <th>Appels argumentés</th>
-            <th>RDV pris</th>
-            <th>RDV honorés</th>
-            <th>Taux décroché</th>
-          </tr></thead>
-          <tbody>
-            {(() => {
-              if (hasRealData && salesData.result.collabs) {
-                // Lignes depuis données réelles Ringover + RDV
-                const ringoverCollabs = salesData.result.collabs.filter(c => c !== 'Tous');
-                // Agréger les appels par collab depuis les tranches (ou recalculer depuis les rows)
-                // On utilise le comparatif mock pour les colonnes non-RDV si pas de per-collab ringover
-                return ringoverCollabs.map((name, i) => {
-                  const rdvC  = rdvResult?.perCollab?.[name];
-                  const ring  = salesData.result.perCollab?.[name];
-                  const taux  = ring?.taux ?? '—';
-                  const tauxN = parseInt(taux);
-                  const tauxColor = isNaN(tauxN) ? undefined : tauxN >= 35 ? 'var(--pos)' : tauxN >= 25 ? 'var(--warn)' : 'var(--neg)';
-                  return (
-                    <tr key={name} className={name === selectedCollab ? styles.highlightRow : ''}>
-                      <td className={styles.tdName}>{name}</td>
-                      <td className={styles.tdNum}>{ring?.appels ?? '—'}</td>
-                      <td className={styles.tdNum}>{ring?.argues ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: rdvC ? 'var(--pos)' : undefined }}>{rdvC?.rdvPris ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: rdvC ? 'var(--pos)' : undefined }}>{rdvC?.rdvHonores ?? '—'}</td>
-                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: tauxColor }}>{taux}</span></td>
-                    </tr>
-                  );
-                });
-              }
-              // Fallback mock
-              return d.collaborateurs.map((c, i) => (
-                <tr key={c.name} className={`${i === 0 ? styles.topRow : ''} ${c.name === selectedCollab ? styles.highlightRow : ''}`}>
-                  <td className={styles.tdName}>{c.name}</td>
-                  <td className={styles.tdNum}>{c.appels}</td>
-                  <td className={styles.tdNum}>{c.argues}</td>
-                  <td className={styles.tdNum}>{c.rdv}</td>
-                  <td className={styles.tdNum}>—</td>
-                  <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: parseInt(c.taux) >= 55 ? 'var(--pos)' : parseInt(c.taux) >= 45 ? 'var(--warn)' : 'var(--neg)' }}>{c.taux}</span></td>
-                </tr>
-              ));
-            })()}
-          </tbody>
-        </table>
-      </Card>
 
       <SectionLabel>Évolution mensuelle</SectionLabel>
       <Card title="Appels émis & RDV pris — évolution mensuelle">

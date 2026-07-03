@@ -140,7 +140,7 @@
   font-family: var(--font);
   transition: background 0.12s, color 0.12s;
 }
-.subItem:hover { background: rgba(227,225,216,0.04); color: rgba(227,225,216,0.70); }
+.subItem:hover { background: rgba(227,225,216,0.5); color: rgba(227,225,216,0.70); }
 
 .subItem.subActive {
   color: #FFF993;
@@ -190,7 +190,7 @@
   padding: 8px 10px;
   border-radius: 8px;
   border: none;
-  background: rgba(227,225,216,0.04);
+  background: rgba(227,225,216,0.5);
   cursor: pointer;
   width: 100%;
   text-align: left;

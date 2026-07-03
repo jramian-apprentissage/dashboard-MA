@@ -1,4 +1,4 @@
-/* ─── Page ── */
+/* ─── Page — test couleur Ciment #A7ADAA ── */
 .page {
   min-height: 100dvh;
   display: flex;
@@ -30,20 +30,19 @@
   pointer-events: none;
 }
 
-/* ─── Carte ── */
+/* ─── Carte — blanche sur ciment ── */
 .card {
   position: relative;
   z-index: 1;
-  background: rgba(28, 8, 22, 0.88);
-  border: 1px solid rgba(255, 249, 147, 0.1);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 18px;
   padding: 40px 36px 32px;
   width: 100%;
   max-width: 400px;
   box-shadow:
-    0 0 0 1px rgba(255,249,147,0.04),
-    0 24px 64px rgba(0,0,0,0.55),
-    0 4px 16px rgba(0,0,0,0.3);
+    0 24px 64px rgba(38,0,31,0.25),
+    0 4px 16px rgba(38,0,31,0.12);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   animation: cardIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
@@ -68,7 +67,7 @@
 .title {
   font-size: 22px;
   font-weight: 700;
-  color: var(--soleil);
+  color: var(--myrtille);
   text-align: center;
   margin: 0 0 4px;
   letter-spacing: -0.02em;
@@ -77,7 +76,7 @@
 
 .subtitle {
   font-size: 12px;
-  color: rgba(255,249,147,0.4);
+  color: rgba(38,0,31,0.5);
   text-align: center;
   margin: 0 0 28px;
   font-weight: 400;
@@ -99,7 +98,7 @@
 .label {
   font-size: 11px;
   font-weight: 600;
-  color: rgba(255,249,147,0.5);
+  color: rgba(38,0,31,0.55);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -114,31 +113,31 @@
 .inputIcon {
   position: absolute;
   left: 13px;
-  color: rgba(255,249,147,0.3);
+  color: var(--ciment);
   pointer-events: none;
   flex-shrink: 0;
 }
 
 .input {
   width: 100%;
-  background: rgba(255,249,147,0.04);
-  border: 1px solid rgba(255,249,147,0.12);
+  background: #FBFBFB;
+  border: 1px solid var(--sable);
   border-radius: 8px;
   padding: 11px 40px 11px 36px;
   font-size: 14px;
   font-family: var(--font);
-  color: rgba(255,249,147,0.9);
+  color: var(--encre);
   outline: none;
   transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
   min-height: 44px;
 }
 .input::placeholder {
-  color: rgba(255,249,147,0.2);
+  color: rgba(167,173,170,0.8);
 }
 .input:focus {
-  border-color: rgba(255,249,147,0.45);
-  background: rgba(255,249,147,0.06);
-  box-shadow: 0 0 0 3px rgba(255,249,147,0.07);
+  border-color: var(--myrtille);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(38,0,31,0.08);
 }
 
 /* Bouton œil show/hide password */
@@ -153,17 +152,17 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  color: rgba(255,249,147,0.3);
+  color: var(--ciment);
   border-radius: 5px;
   transition: color 0.15s, background 0.15s;
   padding: 0;
 }
 .eyeBtn:hover {
-  color: rgba(255,249,147,0.7);
-  background: rgba(255,249,147,0.06);
+  color: var(--myrtille);
+  background: rgba(38,0,31,0.05);
 }
 .eyeBtn:focus-visible {
-  outline: 2px solid rgba(255,249,147,0.4);
+  outline: 2px solid rgba(38,0,31,0.4);
   outline-offset: 1px;
 }
 
@@ -173,24 +172,24 @@
   align-items: center;
   gap: 7px;
   font-size: 12px;
-  color: #f87171;
-  background: rgba(248,113,113,0.08);
-  border: 1px solid rgba(248,113,113,0.2);
+  color: #b91c1c;
+  background: rgba(185,28,28,0.06);
+  border: 1px solid rgba(185,28,28,0.2);
   border-radius: 7px;
   padding: 9px 12px;
   line-height: 1.4;
 }
-.error svg { flex-shrink: 0; color: #f87171; }
+.error svg { flex-shrink: 0; color: #b91c1c; }
 
-/* ─── Bouton submit ── */
+/* ─── Bouton submit — myrtille + texte soleil ── */
 .btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
   margin-top: 6px;
-  background: var(--soleil);
-  color: var(--myrtille);
+  background: var(--myrtille);
+  color: var(--soleil);
   font-family: var(--font);
   font-size: 14px;
   font-weight: 700;
@@ -201,12 +200,12 @@
   min-height: 48px;
   letter-spacing: 0.02em;
   transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
-  box-shadow: 0 4px 16px rgba(255,249,147,0.2);
+  box-shadow: 0 4px 16px rgba(38,0,31,0.3);
 }
 .btn:hover:not(:disabled) {
   opacity: 0.92;
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(255,249,147,0.28);
+  box-shadow: 0 6px 24px rgba(38,0,31,0.38);
 }
 .btn:active:not(:disabled) {
   transform: translateY(0) scale(0.98);
@@ -233,13 +232,13 @@
   gap: 6px;
   margin-top: 20px;
   font-size: 11px;
-  color: rgba(255,249,147,0.25);
+  color: var(--ciment);
   line-height: 1.6;
-  border-top: 1px solid rgba(255,249,147,0.07);
+  border-top: 1px solid var(--sable);
   padding-top: 16px;
 }
 .hint svg { flex-shrink: 0; margin-top: 2px; }
-.hint strong { color: rgba(255,249,147,0.45); font-weight: 600; }
+.hint strong { color: rgba(38,0,31,0.6); font-weight: 600; }
 
 /* ─── Responsive mobile ── */
 @media (max-width: 480px) {

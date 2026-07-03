@@ -1,5 +1,5 @@
-import { Bar, Line } from 'react-chartjs-2';
-import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
+import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
@@ -8,10 +8,10 @@ import MotifBar from '../../../components/ui/MotifBar';
 import { activiteTLMData as d, months } from '../../../data/mockData';
 import styles from './Activite.module.css';
 
-Chart.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Filler);
+Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
 
-const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'OverusedGrotesk' } };
-const gridStyle = { color: 'rgba(227,225,216,0.04)' };
+const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'DM Sans' } };
+const gridStyle = { color: 'rgba(227,225,216,0.5)' };
 const borderCol = { color: 'rgba(227,225,216,0.08)' };
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
 
@@ -73,6 +73,38 @@ export default function ActiviteTLM({ selectedCollab = 'Tous' }) {
       <div className={styles.kpiGrid4} style={{ marginTop: 0 }}>
         {kpis.slice(8).map(k => <KPICard key={k.label} {...k} />)}
       </div>
+      <SectionLabel>Performance globale / collaborateur TLM</SectionLabel>
+      <Card title="Comparatif individuel — principaux leviers TLM">
+        <table className={styles.perfTable}>
+          <thead><tr>
+            <th>Collaborateur</th>
+            <th>Appels émis</th>
+            <th>Exploitables</th>
+            <th>Fiches complétées</th>
+            <th>RDV pris</th>
+            <th>Taux complétion</th>
+            <th>Taux transf.</th>
+          </tr></thead>
+          <tbody>
+            {d.collaborateurs.map((c, i) => (
+              <tr key={c.name} className={`${i === 0 ? styles.topRow : ''} ${c.name === selectedCollab ? styles.highlightRow : ''}`}>
+                <td className={styles.tdName}>{c.name}</td>
+                <td className={styles.tdNum}>{c.appels}</td>
+                <td className={styles.tdNum}>{c.exploitables}</td>
+                <td className={styles.tdNum}>{c.fiches}</td>
+                <td className={styles.tdNum}>{c.rdv}</td>
+                <td className={styles.tdNum}>
+                  <span className={styles.tauxPill} style={{ color: parseInt(c.tauxCompletion) >= 70 ? 'var(--pos)' : 'var(--warn)' }}>{c.tauxCompletion}</span>
+                </td>
+                <td className={styles.tdNum}>
+                  <span className={styles.tauxPill} style={{ color: parseFloat(c.taux) >= 5 ? 'var(--pos)' : 'var(--warn)' }}>{c.taux}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </Card>
+
 
       <SectionLabel>Appels par tranche horaire</SectionLabel>
       <Card title={`Joignabilité & RDV par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
@@ -140,13 +172,14 @@ export default function ActiviteTLM({ selectedCollab = 'Tous' }) {
 
       <div className={styles.twoCol}>
         <Card title="Statut par appels TLM — répartition">
+          {/* Partie-du-tout (100% des appels) → donut ; les barres dessous donnent le détail */}
           <div className={styles.chartWrap} style={{ height: 190 }}>
-            <Bar
+            <Doughnut
               data={{
                 labels: d.statutAppels.map(s => s.label),
-                datasets: [{ data: d.statutAppels.map(s => s.count), backgroundColor: ['rgba(255,249,147,0.7)', 'rgba(167,173,170,0.4)', 'rgba(240,92,92,0.6)', 'rgba(245,166,35,0.6)', 'rgba(74,224,140,0.6)', 'rgba(240,92,92,0.4)'], borderRadius: 5, borderSkipped: false }],
+                datasets: [{ data: d.statutAppels.map(s => s.count), backgroundColor: ['rgba(255,249,147,0.8)', 'rgba(167,173,170,0.5)', 'rgba(240,92,92,0.65)', 'rgba(245,166,35,0.65)', 'rgba(74,224,140,0.65)', 'rgba(240,92,92,0.4)'], borderWidth: 0, hoverOffset: 4 }],
               }}
-              options={{ responsive: true, maintainAspectRatio: false, animation: barAnim, plugins: { legend: { display: false } }, scales: { x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol }, y: { ticks: tickStyle, grid: gridStyle, border: borderCol } } }}
+              options={{ responsive: true, maintainAspectRatio: false, cutout: '65%', animation: { duration: 1000, easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label} : ${ctx.parsed} appels` } } } }}
             />
           </div>
           <div className={styles.statutTable}>
@@ -174,38 +207,6 @@ export default function ActiviteTLM({ selectedCollab = 'Tous' }) {
           <div className={styles.subNote} style={{ marginTop: 8 }}>Plusieurs motifs possibles par appel</div>
         </Card>
       </div>
-
-      <SectionLabel>Performance globale / collaborateur TLM</SectionLabel>
-      <Card title="Comparatif individuel — principaux leviers TLM">
-        <table className={styles.perfTable}>
-          <thead><tr>
-            <th>Collaborateur</th>
-            <th>Appels émis</th>
-            <th>Exploitables</th>
-            <th>Fiches complétées</th>
-            <th>RDV pris</th>
-            <th>Taux complétion</th>
-            <th>Taux transf.</th>
-          </tr></thead>
-          <tbody>
-            {d.collaborateurs.map((c, i) => (
-              <tr key={c.name} className={`${i === 0 ? styles.topRow : ''} ${c.name === selectedCollab ? styles.highlightRow : ''}`}>
-                <td className={styles.tdName}>{c.name}</td>
-                <td className={styles.tdNum}>{c.appels}</td>
-                <td className={styles.tdNum}>{c.exploitables}</td>
-                <td className={styles.tdNum}>{c.fiches}</td>
-                <td className={styles.tdNum}>{c.rdv}</td>
-                <td className={styles.tdNum}>
-                  <span className={styles.tauxPill} style={{ color: parseInt(c.tauxCompletion) >= 70 ? 'var(--pos)' : 'var(--warn)' }}>{c.tauxCompletion}</span>
-                </td>
-                <td className={styles.tdNum}>
-                  <span className={styles.tauxPill} style={{ color: parseFloat(c.taux) >= 5 ? 'var(--pos)' : 'var(--warn)' }}>{c.taux}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Card>
 
       <SectionLabel>Évolution mensuelle TLM</SectionLabel>
       <Card title="Appels, RDV pris & Fiches complétées — évolution mensuelle">

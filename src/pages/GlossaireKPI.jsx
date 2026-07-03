@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth, DASHBOARDS } from '../contexts/AuthContext';
 import { glossaireData } from '../data/mockData';
+import heroBg from '../assets/hero-home.svg';
 import styles from './GlossaireKPI.module.css';
 
 const DASH_LABELS = {
@@ -35,6 +36,9 @@ export default function GlossaireKPI() {
 
   return (
     <div className={styles.page}>
+      {/* Image de fond + overlay ciment — même traitement que l'accueil */}
+      <div className={styles.heroBg} style={{ backgroundImage: `url(${heroBg})` }} />
+      <div className={styles.overlay} />
       {/* Header sticky */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>

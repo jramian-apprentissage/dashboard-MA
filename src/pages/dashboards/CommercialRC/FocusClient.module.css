@@ -9,9 +9,9 @@
 
 .tbl { width: 100%; border-collapse: collapse; }
 .tbl th { font-size: 9.5px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-.tbl td { font-size: 12px; color: var(--text2); padding: 8px 8px; border-bottom: 1px solid rgba(227,225,216,0.04); vertical-align: middle; }
+.tbl td { font-size: 12px; color: var(--text2); padding: 8px 8px; border-bottom: 1px solid rgba(227,225,216,0.5); vertical-align: middle; }
 .tbl tr:last-child td { border-bottom: none; }
-.tbl tr:hover td { background: rgba(255,249,147,0.02); }
+.tbl tr:hover td { background: rgba(240,238,233,0.6); }
 .rank { font-weight: 700; }
 .tdName { color: var(--text); font-weight: 500; }
 .tdRight { text-align: right; }
@@ -23,7 +23,7 @@
 .collabRow { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--sable-light); border-radius: 7px; margin-bottom: 5px; border: 1px solid transparent; transition: border-color 0.15s; }
 .collabRow:hover { border-color: var(--border); }
 .collabLeft { display: flex; align-items: center; gap: 10px; }
-.collabAvatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--accent); flex-shrink: 0; border: 1px solid var(--accent-border); }
+.collabAvatar { width: 30px; height: 30px; border-radius: 50%; background: var(--myrtille); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--soleil); flex-shrink: 0; }
 .collabName { font-size: 12px; color: var(--text2); }
 .collabRight { display: flex; align-items: center; gap: 10px; }
 .collabBar { width: 55px; height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }

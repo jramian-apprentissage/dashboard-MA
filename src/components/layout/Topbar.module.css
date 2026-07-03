@@ -8,7 +8,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: rgba(22,5,18,0.94);
+  background: rgba(38,0,31,0.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(227,225,216,0.08);
@@ -155,12 +155,12 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: rgba(28,8,22,0.97);
-  border: 1px solid rgba(227,225,216,0.1);
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(255,255,255,0.6);
   border-radius: 10px;
   padding: 6px;
   min-width: 210px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 12px 32px rgba(38,0,31,0.25), 0 2px 8px rgba(38,0,31,0.12);
   z-index: 200;
   animation: dropIn 0.15s ease-out;
   backdrop-filter: blur(16px);
@@ -194,12 +194,12 @@
 .dropName {
   font-size: 13px;
   font-weight: 600;
-  color: rgba(227,225,216,0.9);
+  color: var(--myrtille);
   font-family: var(--font);
 }
 .dropRole {
   font-size: 10.5px;
-  color: rgba(227,225,216,0.35);
+  color: rgba(38,0,31,0.45);
   margin-top: 2px;
   font-family: var(--font);
   text-transform: uppercase;
@@ -208,7 +208,7 @@
 
 .dropSep {
   height: 1px;
-  background: rgba(227,225,216,0.07);
+  background: var(--sable);
   margin: 4px 0;
 }
 
@@ -221,7 +221,7 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: rgba(227,225,216,0.6);
+  color: rgba(38,0,31,0.65);
   font-size: 12.5px;
   font-weight: 500;
   font-family: var(--font);
@@ -230,12 +230,12 @@
   text-align: left;
 }
 .dropItem:hover {
-  background: rgba(227,225,216,0.06);
-  color: rgba(227,225,216,0.92);
+  background: rgba(38,0,31,0.06);
+  color: var(--myrtille);
 }
 
-.dropLogout { color: rgba(220,90,80,0.75); }
+.dropLogout { color: #b91c1c; }
 .dropLogout:hover {
-  background: rgba(220,90,80,0.08);
-  color: rgba(220,90,80,1);
+  background: rgba(185,28,28,0.07);
+  color: #b91c1c;
 }

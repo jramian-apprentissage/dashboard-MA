@@ -9,6 +9,7 @@ import { activiteSalesData, activiteTLMData } from '../../../data/mockData';
 import { useSalesData } from '../../../hooks/useSalesData';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import layoutStyles from '../../../components/layout/DashboardLayout.module.css';
+import { LoaderMark } from '../../../components/ui/Loader';
 
 export default function CommercialActivite() {
   const [searchParams] = useSearchParams();
@@ -76,9 +77,7 @@ export default function CommercialActivite() {
 
       {isSales && salesData.loading && (
         <div className={layoutStyles.loadingPill}>
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={layoutStyles.spinIcon}>
-            <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-          </svg>
+          <LoaderMark size={13} />
           Chargement…
         </div>
       )}
