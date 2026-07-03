@@ -1,4 +1,4 @@
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import KPICard from '../../../components/ui/KPICard';
@@ -6,6 +6,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import { activiteTLMData as d, months } from '../../../data/mockData';
+import DonutChart from '../../../components/ui/DonutChart';
 import styles from './Activite.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
@@ -173,15 +174,14 @@ export default function ActiviteTLM({ selectedCollab = 'Tous' }) {
       <div className={styles.twoCol}>
         <Card title="Statut par appels TLM — répartition">
           {/* Partie-du-tout (100% des appels) → donut ; les barres dessous donnent le détail */}
-          <div className={styles.chartWrap} style={{ height: 190 }}>
-            <Doughnut
-              data={{
-                labels: d.statutAppels.map(s => s.label),
-                datasets: [{ data: d.statutAppels.map(s => s.count), backgroundColor: ['rgba(255,249,147,0.8)', 'rgba(167,173,170,0.5)', 'rgba(240,92,92,0.65)', 'rgba(245,166,35,0.65)', 'rgba(74,224,140,0.65)', 'rgba(240,92,92,0.4)'], borderWidth: 0, hoverOffset: 4 }],
-              }}
-              options={{ responsive: true, maintainAspectRatio: false, cutout: '65%', animation: { duration: 1000, easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label} : ${ctx.parsed} appels` } } } }}
-            />
-          </div>
+          <DonutChart
+            variant="half-rose"
+            data={d.statutAppels.map(s => s.count)}
+            labels={d.statutAppels.map(s => s.label)}
+            colors={['rgba(255,249,147,0.95)', 'rgba(167,173,170,0.7)', 'rgba(240,92,92,0.8)', 'rgba(245,166,35,0.8)', 'rgba(74,224,140,0.8)', 'rgba(38,0,31,0.7)']}
+            height={160}
+            tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
+          />
           <div className={styles.statutTable}>
             {d.statutAppels.map((s, i) => (
               <div key={s.label} className={styles.statutRow}>

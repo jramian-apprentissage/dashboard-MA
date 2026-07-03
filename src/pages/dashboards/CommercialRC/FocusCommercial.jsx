@@ -1,4 +1,4 @@
-import { Bar, Doughnut } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
@@ -8,16 +8,12 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Pill from '../../../components/ui/Pill';
 import MotifBar from '../../../components/ui/MotifBar';
 import Loader from '../../../components/ui/Loader';
+import DonutChart from '../../../components/ui/DonutChart';
 import { focusCommercialData as d, months } from '../../../data/mockData';
 import styles from './FocusCommercial.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
 
-const doughnutOpts = {
-  responsive: true, maintainAspectRatio: false, cutout: '68%',
-  animation: { duration: 1000, easing: 'easeOutQuart' },
-  plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.label + ' : ' + ctx.parsed + '%' } } },
-};
 
 const fmt = v => v >= 1000 ? `${(v / 1000).toFixed(0)} K€` : `${v}€`;
 const tickStyle = { color: 'rgba(22,5,18,0.35)', font: { size: 10, family: 'DM Sans' } };
@@ -290,15 +286,15 @@ export default function FocusCommercial() {
         </Card>
         {/* Sources de lead — partie-du-tout à 4 segments → donut (Kosara & Skau) */}
         <Card title="Performance par source de lead">
-          <div className={styles.donutWrap}>
-            <Doughnut
-              data={{
-                labels: d.sources.map(s => s.label),
-                datasets: [{ data: d.sources.map(s => s.pct), backgroundColor: sourceColors, borderWidth: 0, hoverOffset: 4 }],
-              }}
-              options={doughnutOpts}
-            />
-          </div>
+          {/* Modèle "rose" : camembert complet à rayons proportionnels aux valeurs */}
+          <DonutChart
+            variant="rose"
+            data={d.sources.map(s => s.pct)}
+            labels={d.sources.map(s => s.label)}
+            colors={sourceColors}
+            height={210}
+            tooltip={(label, value) => `${label} : ${value}%`}
+          />
           <div className={styles.donutLegend}>
             {d.sources.map((s, i) => (
               <span key={s.label} className={styles.legItem}>
@@ -313,25 +309,22 @@ export default function FocusCommercial() {
       <SectionLabel>Revenue par type de mission MA</SectionLabel>
       <Card title="Répartition du revenue par type de mission">
         <div className={styles.missionSplit}>
-          <div className={styles.donutWrap} style={{ height: 170, flex: '0 0 190px', marginBottom: 0 }}>
-            <Doughnut
-              data={{
-                labels: d.missions.map(m => m.label),
-                datasets: [{
-                  data: d.missions.map(m => m.revenue),
-                  backgroundColor: ['rgba(255,249,147,0.8)', 'rgba(38,0,31,0.45)', 'rgba(167,173,170,0.55)'],
-                  borderWidth: 0,
-                  hoverOffset: 4,
-                }],
-              }}
-              options={{ ...doughnutOpts, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label} : ${fmt(ctx.parsed)} (${Math.round(ctx.parsed / totalRevMissions * 100)}%)` } } } }}
+          {/* Modèle "demi-rose" : éventail semi-circulaire à rayons variables */}
+          <div style={{ flex: '0 0 240px' }}>
+            <DonutChart
+              variant="half-rose"
+              data={d.missions.map(m => m.revenue)}
+              labels={d.missions.map(m => m.label)}
+              colors={['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)']}
+              height={145}
+              tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${pct}%)`}
             />
           </div>
           <div className={styles.missionList}>
             {d.missions.map((m, i) => (
               <div key={m.label} className={styles.missionCard}>
                 <div className={styles.missionName}>
-                  <span className={styles.legDot} style={{ background: ['rgba(255,249,147,0.9)', 'rgba(38,0,31,0.55)', 'rgba(167,173,170,0.7)'][i], marginRight: 7 }} />
+                  <span className={styles.legDot} style={{ background: ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)'][i], marginRight: 7 }} />
                   {m.label}
                 </div>
                 <div>

@@ -1,4 +1,4 @@
-import { Bar, Doughnut } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
@@ -6,6 +6,7 @@ import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
+import DonutChart from '../../../components/ui/DonutChart';
 import { focusClientData as mockClient } from '../../../data/mockData';
 import styles from './Synthese.module.css';
 
@@ -223,29 +224,18 @@ function SyntheseContent({ result, monthly }) {
           {/* Partie-du-tout à 2 segments → camembert (Kosara & Skau 2016) */}
           <div className={styles.donutRow}>
             <div className={styles.donutBox}>
-              <Doughnut
-                data={{
-                  labels: ['Top 5 clients', 'Autres clients'],
-                  datasets: [{
-                    data: [top5CA, Math.max(d.caGlobal - top5CA, 0)],
-                    backgroundColor: [
-                      top5Pct >= 70 ? 'rgba(196,135,106,0.8)' : 'rgba(255,249,147,0.85)',
-                      'rgba(227,225,216,0.6)',
-                    ],
-                    borderWidth: 0,
-                    hoverOffset: 4,
-                  }],
-                }}
-                options={{
-                  responsive: true, maintainAspectRatio: false, cutout: '68%',
-                  animation: { duration: 1000, easing: 'easeOutQuart' },
-                  plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label} : ${fmt(ctx.parsed)}` } } },
-                }}
+              {/* Modèle "pie pull-out" : camembert plein, tranche dominante sortie + arc décoratif */}
+              <DonutChart
+                variant="pie"
+                data={[top5CA, Math.max(d.caGlobal - top5CA, 0)]}
+                labels={['Top 5 clients', 'Autres clients']}
+                colors={[
+                  top5Pct >= 70 ? 'rgba(196,135,106,0.9)' : 'rgba(255,249,147,0.95)',
+                  'rgba(38,0,31,0.75)',
+                ]}
+                height={185}
+                tooltip={(label, value) => `${label} : ${fmt(value)}`}
               />
-              <div className={styles.donutCenterS}>
-                <span className={styles.donutValS}>{top5Pct}%</span>
-                <span className={styles.donutLblS}>Top 5</span>
-              </div>
             </div>
           </div>
           {top5Pct >= 70 && (

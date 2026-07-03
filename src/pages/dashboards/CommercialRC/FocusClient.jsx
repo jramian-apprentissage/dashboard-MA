@@ -1,4 +1,4 @@
-import { Bar, Doughnut } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
@@ -7,6 +7,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Pill from '../../../components/ui/Pill';
 import Loader from '../../../components/ui/Loader';
+import DonutChart from '../../../components/ui/DonutChart';
 import { focusClientData as d, months } from '../../../data/mockData';
 import styles from './FocusClient.module.css';
 
@@ -23,7 +24,6 @@ const healthVariant = s => ({ Sain: 'green', Warning: 'amber', Risque: 'red' }[s
 const healthLabel = s => ({ Sain: 'Sain', Warning: 'Sous vigilance', Risque: 'À risque' }[s] || s);
 
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
-const arcAnim = { duration: 1000, easing: 'easeOutQuart' };
 
 const fmtEuros = v => {
   if (!v) return '0 €';
@@ -138,12 +138,17 @@ export default function FocusClient() {
       <SectionLabel badge="IA — colonne Monday">La santé — risque actuel & pertes constatées</SectionLabel>
       <div className={styles.twoCol}>
         <Card title="Nb de Clients par Niveau de Santé">
-          <div className={styles.chartWrap} style={{ height: 160 }}>
-            <Doughnut
-              data={{ labels: ['Sains ≥75', 'Sous vigilance 50–74', 'À risque <50'], datasets: [{ data: [d.healthScore.sains, d.healthScore.warning, d.healthScore.risque], backgroundColor: ['rgba(142,207,170,0.75)', 'rgba(212,168,75,0.65)', 'rgba(196,135,106,0.65)'], borderWidth: 0, hoverOffset: 4 }] }}
-              options={{ responsive: true, maintainAspectRatio: false, cutout: '65%', animation: arcAnim, plugins: { legend: { display: false } } }}
-            />
-          </div>
+          {/* Modèle "donut détaché + anneau" : segment dominant sorti, contour arc, total au centre */}
+          <DonutChart
+            variant="donut"
+            data={[d.healthScore.sains, d.healthScore.warning, d.healthScore.risque]}
+            labels={['Sains ≥75', 'Sous vigilance 50–74', 'À risque <50']}
+            colors={['rgba(142,207,170,0.85)', 'rgba(212,168,75,0.8)', 'rgba(196,135,106,0.8)']}
+            height={185}
+            centerValue={d.healthScore.sains + d.healthScore.warning + d.healthScore.risque}
+            centerLabel="clients"
+            tooltip={(label, value, pct) => `${label} : ${value} clients (${pct}%)`}
+          />
           <div className={styles.healthStats}>
             <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--pos)' }}>{d.healthScore.sains}</div><div className={styles.hLbl}>Sains ≥ 75</div></div>
             <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--warn)' }}>{d.healthScore.warning}</div><div className={styles.hLbl}>Sous vigilance 50–74</div></div>

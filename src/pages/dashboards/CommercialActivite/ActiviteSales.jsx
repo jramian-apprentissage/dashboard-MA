@@ -1,4 +1,4 @@
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
+import { Bar, Line } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import { useRef, useMemo } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
@@ -8,6 +8,7 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import { activiteSalesData as d, months } from '../../../data/mockData';
 import { TAG_CATEGORIES } from '../../../services/sheetsParser';
+import DonutChart from '../../../components/ui/DonutChart';
 import styles from './Activite.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
@@ -278,15 +279,16 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
             return (
               <>
                 {/* Partie-du-tout (100% des appels) → donut ; la table donne les valeurs exactes */}
-                <div className={styles.chartWrap} style={{ height: 180 }}>
-                  <Doughnut
-                    data={{
-                      labels: cats.map(c => c.label),
-                      datasets: [{ data: cats.map(c => c.count), backgroundColor: catColors, borderWidth: 0, hoverOffset: 4 }],
-                    }}
-                    options={{ responsive: true, maintainAspectRatio: false, cutout: '65%', animation: { duration: 1000, easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label} : ${ctx.parsed} appels (${cats[ctx.dataIndex]?.pct}%)` } } } }}
-                  />
-                </div>
+                <DonutChart
+                  variant="donut"
+                  data={cats.map(c => c.count)}
+                  labels={cats.map(c => c.label)}
+                  colors={catColors}
+                  height={200}
+                  centerValue={cats.reduce((s2, c) => s2 + c.count, 0)}
+                  centerLabel="appels"
+                  tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
+                />
                 <div className={styles.legend} style={{ justifyContent: 'center' }}>
                   {cats.map((c, ci) => (
                     <span key={c.label} className={styles.legItem || ''} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>

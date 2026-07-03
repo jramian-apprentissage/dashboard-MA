@@ -1,7 +1,7 @@
 .page { display: flex; flex-direction: column; gap: 0; }
 .kpiGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
 .donutRow { display: flex; justify-content: center; margin: 6px 0 10px; }
-.donutBox { position: relative; height: 150px; width: 150px; }
+.donutBox { position: relative; width: 100%; max-width: 300px; }
 .donutCenterS { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: flex; flex-direction: column; pointer-events: none; }
 .donutValS { font-size: 20px; font-weight: 700; color: var(--myrtille); letter-spacing: -0.02em; line-height: 1; }
 .donutLblS { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
