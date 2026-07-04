@@ -67,7 +67,13 @@ const labelsPlugin = {
       const pct = Math.round((ds.data[i] / total) * 100);
       const mid = (arc.startAngle + arc.endAngle) / 2;
 
-      if (pct >= (opts.insideMin ?? 8)) {
+      /* Le % ne tient dans la tranche que si elle est assez épaisse
+         radialement — sinon les étiquettes des petites tranches d'un rose
+         s'empilent au centre. On bascule alors en rappel filaire. */
+      const thickness = arc.outerRadius - (arc.innerRadius || 0);
+      const fitsInside = pct >= (opts.insideMin ?? 8) && thickness >= 36;
+
+      if (fitsInside) {
         /* % au cœur de la tranche */
         const pos = arc.tooltipPosition(true);
         ctx.save();
