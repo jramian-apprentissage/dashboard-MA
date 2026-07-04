@@ -183,7 +183,10 @@
   .left   { gap: 8px; min-width: 0; flex: 1; }
   .logo   { height: 20px; }
   .divider { display: none; }
-  .nav    { gap: 0; min-width: 0; overflow: hidden; }
+  /* Pas d'overflow hidden ici : le sous-menu "Choisir une vue" est en
+     position absolute dans la nav et serait masqué. La troncature se
+     fait au niveau de chaque lien. */
+  .nav    { gap: 0; min-width: 0; }
   .link   {
     font-size: 11px;
     padding: 4px 6px;
