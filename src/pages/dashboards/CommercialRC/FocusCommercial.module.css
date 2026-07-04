@@ -30,6 +30,16 @@
   .kpiRow4 { grid-template-columns: 1fr 1fr; }
   .threeCol { grid-template-columns: 1fr; }
 }
+@media (max-width: 900px) {
+  .twoCol { grid-template-columns: 1fr; }
+  .tbl { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .pipelineHeader { flex-wrap: wrap; gap: 14px; }
+}
+@media (max-width: 480px) {
+  .kpiRow4 { grid-template-columns: 1fr; }
+  .stageLbl, .sectorLbl { width: 96px; font-size: 10px; }
+  .missionMeta { width: auto; }
+}
 
 /* ── Section pipeline réel (données CRM) ── */
 .pipelineTopRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 10px; }

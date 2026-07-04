@@ -355,8 +355,10 @@
 @media (max-width: 640px) {
   .content { padding: 24px 14px 36px; }
   .title   { font-size: 22px; }
+  /* Table 5 colonnes → défilement horizontal, colonnes intactes */
+  .table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .thead,
-  .tr { grid-template-columns: 2fr 1fr 1fr; }
+  .tr { min-width: 620px; }
   .header  { flex-direction: column; }
   .btnAdd  { width: 100%; justify-content: center; }
 }

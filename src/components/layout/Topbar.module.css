@@ -179,12 +179,23 @@
 }
 
 @media (max-width: 640px) {
-  .topbar { height: 46px; }
-  /* Masquer les liens nav sauf le logo sur très petit écran */
-  .nav    { gap: 0; }
-  .link   { font-size: 11px; padding: 4px 7px; }
-  /* Raccourcir les labels longs — géré via CSS truncation */
-  .link span { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar { height: 46px; padding: 0 10px; }
+  .left   { gap: 8px; min-width: 0; flex: 1; }
+  .logo   { height: 20px; }
+  .divider { display: none; }
+  .nav    { gap: 0; min-width: 0; overflow: hidden; }
+  .link   {
+    font-size: 11px;
+    padding: 4px 6px;
+    gap: 3px;
+    display: block;
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Le chevron des sous-menus prend trop de place sur mobile */
+  .link .chevron { display: none; }
   .submenu { min-width: 170px; }
 }
 

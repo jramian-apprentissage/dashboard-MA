@@ -70,3 +70,18 @@
   padding: 1px 3px; border-radius: 3px;
 }
 .compareBtnX:hover { color: var(--neg); background: var(--neg-dim); }
+
+/* ─── Responsive ─── */
+@media (max-width: 1100px) {
+  .kpiGrid6 { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 900px) {
+  .twoCol { grid-template-columns: 1fr; }
+  .kpiGrid4 { grid-template-columns: 1fr 1fr; }
+  /* Table comparatif (6-7 colonnes) → défilement horizontal */
+  .perfTable { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+}
+@media (max-width: 480px) {
+  .kpiGrid6 { grid-template-columns: 1fr 1fr; }
+  .kpiGrid4 { grid-template-columns: 1fr; }
+}
