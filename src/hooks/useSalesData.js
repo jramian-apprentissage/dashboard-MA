@@ -1,8 +1,12 @@
 import { useState, useCallback, useRef } from 'react';
-import { parseSheetCSV, computeSalesData, parseRDVSheetCSV, computeRDVData } from '../services/sheetsParser';
+import { computeSalesData, parseRDVSheetCSV, computeRDVData } from '../services/sheetsParser';
+import { fetchAPI } from '../services/api';
 
-const SHEET_ID      = import.meta.env.VITE_SHEET_ID;
-const SHEET_GID     = import.meta.env.VITE_SHEET_GID || '0';
+/* Les appels viennent de l'archive Postgres (/api/ringover/calls), plus du
+   Google Sheet public. Deux raisons : le Sheet exposait publiquement numéros
+   et enregistrements, et surtout l'archive conserve les agents partis — leur
+   compte Ringover étant supprimé, l'API Ringover ne les restitue plus.
+   Les RDV restent sur leur feuille, en source secondaire non bloquante. */
 const RDV_SHEET_ID  = import.meta.env.VITE_RDV_SHEET_ID;
 const RDV_SHEET_GID = import.meta.env.VITE_RDV_SHEET_GID || '0';
 
@@ -11,6 +15,7 @@ export function useSalesData() {
   const [rdvResult,   setRdvResult]   = useState(null);
   const [loading,     setLoading]     = useState(false);
   const [error,       setError]       = useState(null);
+  const [rdvError,    setRdvError]    = useState(null);
   const [lastFetched, setLastFetched] = useState(null);
 
   const appliedFrom   = useRef(null);
@@ -19,29 +24,23 @@ export function useSalesData() {
   const rdvRowsCache  = useRef(null);
 
   const fetchData = useCallback(async (from, to, collab = 'Tous') => {
-    if (!SHEET_ID) {
-      setError('VITE_SHEET_ID manquant dans .env.local');
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
-      // Fetch Ringover + RDV en parallèle (direct Google Sheets — CORS public)
-      const ringoverUrl = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
-      const rdvUrl      = RDV_SHEET_ID
+      const rdvUrl = RDV_SHEET_ID
         ? `https://docs.google.com/spreadsheets/d/${RDV_SHEET_ID}/export?format=csv&gid=${RDV_SHEET_GID}`
         : null;
 
-      const [ringoverRes, rdvRes] = await Promise.all([
-        fetch(ringoverUrl),
-        rdvUrl ? fetch(rdvUrl) : Promise.resolve(null),
+      /* La feuille RDV est secondaire : si elle est inaccessible (partage
+         retiré → 401 sans en-tête CORS, donc fetch rejeté), on affiche quand
+         même toute l'activité Ringover. Sans ce catch, Promise.all rejette
+         et l'onglet entier bascule sur les données mock. */
+      const [rows, rdvRes] = await Promise.all([
+        fetchAPI('/ringover/calls'),
+        rdvUrl ? fetch(rdvUrl).catch(() => null) : Promise.resolve(null),
       ]);
 
-      if (!ringoverRes.ok) throw new Error(`Erreur Google Sheets Ringover (HTTP ${ringoverRes.status})`);
-      const csv = await ringoverRes.text();
-
-      const rows = parseSheetCSV(csv);
-      if (rows.length === 0) throw new Error('Aucune donnée trouvée dans la feuille Ringover');
+      if (!rows.length) throw new Error('Aucun appel dans l\'archive Ringover');
 
       rowsCache.current   = rows;
       appliedFrom.current = from;
@@ -55,8 +54,13 @@ export function useSalesData() {
       );
       setResult(computed);
 
-      // RDV sheet
-      if (rdvRes && rdvRes.ok) {
+      // RDV sheet — échec non bloquant, signalé à part
+      if (rdvUrl && !rdvRes) {
+        setRdvError('Feuille RDV inaccessible — vérifier son partage Google (« Tous les utilisateurs disposant du lien »)');
+      } else if (rdvRes && !rdvRes.ok) {
+        setRdvError(`Feuille RDV : HTTP ${rdvRes.status}`);
+      } else if (rdvRes && rdvRes.ok) {
+        setRdvError(null);
         const rdvCsv  = await rdvRes.text();
         const rdvRows = parseRDVSheetCSV(rdvCsv);
         rdvRowsCache.current = rdvRows;
@@ -122,11 +126,12 @@ export function useSalesData() {
     rdvResult,
     loading,
     error,
+    rdvError,
     lastFetched,
     fetchData,
     recomputeCollab,
     computeFromCache,
-    isConnected: !!SHEET_ID,
+    isConnected: true, // archive Postgres, toujours joignable via l'API
     hasData: !!result,
     hasRDV: !!rdvResult,
     hasCachedRows: !!rowsCache.current,

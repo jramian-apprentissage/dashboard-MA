@@ -4,24 +4,11 @@ import { getPeriodRange } from '../components/ui/PeriodPicker';
 import {
   parseSnapLeads, resolveSnapshot, computeLeadsKPIs, SNAP_LEADS_URL,
 } from '../services/snapshotParser';
+import { fetchAPI } from '../services/api';
 
 /* Comptes : API backend Railway (historique SCD2 injecté depuis le compte
    d'exploitation 2023→2026 + webhooks Monday live).
-   Leads : toujours le snapshot Google Sheets (pipeline / win rate).
-   Par défaut on vise la prod ; en local, .env.local pointe sur localhost:3001. */
-const API_URL   = import.meta.env.VITE_API_URL || 'https://dashboard-ma-backend-production.up.railway.app';
-const API_TOKEN = import.meta.env.VITE_API_READ_TOKEN || '';
-
-async function fetchAPI(path) {
-  const res = await fetch(`${API_URL}/api${path}`, {
-    headers: { Authorization: `Bearer ${API_TOKEN}` },
-  });
-  if (res.status === 401) {
-    throw new Error('API backend : jeton de lecture absent ou invalide (VITE_API_READ_TOKEN)');
-  }
-  if (!res.ok) throw new Error(`API backend: HTTP ${res.status}`);
-  return res.json();
-}
+   Leads : toujours le snapshot Google Sheets (pipeline / win rate). */
 
 export function useSnapshotData() {
   const [leadsRows,   setLeadsRows]   = useState(null);
