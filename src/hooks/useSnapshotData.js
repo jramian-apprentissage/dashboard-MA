@@ -2,77 +2,85 @@ import { useState, useEffect, useMemo } from 'react';
 import { usePeriod } from '../contexts/PeriodContext';
 import { getPeriodRange } from '../components/ui/PeriodPicker';
 import {
-  parseSnapLeads, parseSnapComptes,
-  resolveSnapshot, computeCRMKPIs,
-  SNAP_LEADS_URL, SNAP_COMPTES_URL,
+  parseSnapLeads, resolveSnapshot, computeLeadsKPIs, SNAP_LEADS_URL,
 } from '../services/snapshotParser';
+
+/* Comptes : API backend Railway (historique SCD2 injecté depuis le compte
+   d'exploitation 2023→2026 + webhooks Monday live).
+   Leads : toujours le snapshot Google Sheets (pipeline / win rate).
+   Par défaut on vise la prod ; en local, .env.local pointe sur localhost:3001. */
+const API_URL   = import.meta.env.VITE_API_URL || 'https://dashboard-ma-backend-production.up.railway.app';
+const API_TOKEN = import.meta.env.VITE_API_READ_TOKEN || '';
+
+async function fetchAPI(path) {
+  const res = await fetch(`${API_URL}/api${path}`, {
+    headers: { Authorization: `Bearer ${API_TOKEN}` },
+  });
+  if (res.status === 401) {
+    throw new Error('API backend : jeton de lecture absent ou invalide (VITE_API_READ_TOKEN)');
+  }
+  if (!res.ok) throw new Error(`API backend: HTTP ${res.status}`);
+  return res.json();
+}
 
 export function useSnapshotData() {
   const [leadsRows,   setLeadsRows]   = useState(null);
-  const [comptesRows, setComptesRows] = useState(null);
+  const [compteKpis,  setCompteKpis]  = useState(null);
+  const [monthly,     setMonthly]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
 
   const { periodKey, customFrom, customTo } = usePeriod();
+  const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
 
-  // Fetch both sheets once on mount — data changes only weekly
+  // Leads sheet + série mensuelle : une seule fois au montage
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
 
     Promise.all([
       fetch(SNAP_LEADS_URL).then(r => {
         if (!r.ok) throw new Error(`Leads sheet: HTTP ${r.status}`);
         return r.text();
       }),
-      fetch(SNAP_COMPTES_URL).then(r => {
-        if (!r.ok) throw new Error(`Comptes sheet: HTTP ${r.status}`);
-        return r.text();
-      }),
+      fetchAPI('/monthly?months=6'),
     ])
-      .then(([leadsCsv, comptesCsv]) => {
+      .then(([leadsCsv, monthlyData]) => {
         if (cancelled) return;
         setLeadsRows(parseSnapLeads(leadsCsv));
-        setComptesRows(parseSnapComptes(comptesCsv));
+        setMonthly(monthlyData);
+      })
+      .catch(e => { if (!cancelled) setError(e.message); });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // KPIs comptes : recalculés par le backend à chaque changement de période
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    const qs = new URLSearchParams();
+    if (from) qs.set('from', from);
+    if (to)   qs.set('to', to);
+
+    fetchAPI(`/kpis?${qs}`)
+      .then(data => {
+        if (cancelled) return;
+        setCompteKpis(data);
         setError(null);
       })
       .catch(e => { if (!cancelled) setError(e.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [from, to]);
 
-  // Recompute KPIs when period or data changes (pure in-memory, fast)
+  // Fusion : KPIs comptes (backend) + KPIs leads (snapshot sheet, en mémoire)
   const result = useMemo(() => {
-    if (!leadsRows || !comptesRows) return null;
-    const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
-    const leadsSnap   = resolveSnapshot(leadsRows,   to);
-    const comptesSnap = resolveSnapshot(comptesRows, to);
-    return computeCRMKPIs(comptesSnap, leadsSnap, from, to);
-  }, [leadsRows, comptesRows, periodKey, customFrom, customTo]);
+    if (!compteKpis || !leadsRows) return null;
+    const leadsSnap = resolveSnapshot(leadsRows, to);
+    return { ...compteKpis, ...computeLeadsKPIs(leadsSnap, from, to) };
+  }, [compteKpis, leadsRows, from, to]);
 
-  // Série mensuelle CA / marge — un point par fin de mois sur les 6 derniers mois,
-  // en résolvant le snapshot le plus proche de chaque fin de mois
-  const monthly = useMemo(() => {
-    if (!comptesRows) return null;
-    const points = [];
-    const now = new Date();
-    for (let i = 5; i >= 0; i--) {
-      const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
-      const endStr = end.toISOString().slice(0, 10);
-      const snap = resolveSnapshot(comptesRows, endStr);
-      const actifs = snap.filter(c => c.statut === 'Actif');
-      const ca     = actifs.reduce((s, c) => s + c.vente_total, 0);
-      const achats = actifs.reduce((s, c) => s + c.achat_total, 0);
-      points.push({
-        label: end.toLocaleDateString('fr-FR', { month: 'short' }),
-        ca,
-        marge: ca - achats,
-        tauxMarge: ca > 0 ? Math.round(((ca - achats) / ca) * 100) : 0,
-      });
-    }
-    return points;
-  }, [comptesRows]);
-
-  return { result, monthly, loading, error };
+  return { result, monthly, loading: loading || (!result && !error), error };
 }

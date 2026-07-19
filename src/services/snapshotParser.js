@@ -122,38 +122,11 @@ const PERDUS_GROUPES = new Set([
 // comptesSnap / leadsSnap : rows already resolved to the right snapshot date
 // dateFrom / dateTo       : ISO strings "YYYY-MM-DD" from getPeriodRange
 
-export function computeCRMKPIs(comptesSnap, leadsSnap, dateFrom, dateTo) {
+// Partie LEADS uniquement — la partie COMPTES est désormais calculée par le
+// backend Railway (/api/kpis) sur l'historique SCD2 injecté.
+export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
   const from = dateFrom || '';
   const to   = dateTo   || '';
-
-  // ── COMPTES — état actuel (state KPIs) ────────────────────────────────────
-  const actifs = comptesSnap.filter(c => c.statut === 'Actif');
-
-  const caGlobal          = actifs.reduce((s, c) => s + c.vente_total, 0);
-  const totalAchats       = actifs.reduce((s, c) => s + c.achat_total, 0);
-  const margeBruteGlobale = caGlobal - totalAchats;
-  const tauxMarge         = caGlobal > 0 ? Math.round((margeBruteGlobale / caGlobal) * 100) : 0;
-  const nbClientsActifs   = actifs.length;
-  const nbClientsTotal    = comptesSnap.length;
-
-  // ── COMPTES — filtrés par date de démarrage dans la période (flow KPIs) ───
-  const destarresPeriode = comptesSnap.filter(c =>
-    c.date_demarrage && c.date_demarrage >= from && c.date_demarrage <= to
-  );
-  const sommeVentesGagnes  = destarresPeriode.reduce((s, c) => s + c.vente_total, 0);
-  const sommeAchatsGagnes  = destarresPeriode.reduce((s, c) => s + c.achat_total, 0);
-  const margeBruteNouveaux = sommeVentesGagnes - sommeAchatsGagnes;
-
-  // Top 5 clients par CA (state)
-  const maxCA = actifs.length ? Math.max(...actifs.map(c => c.vente_total)) : 1;
-  const topClients = [...actifs]
-    .sort((a, b) => b.vente_total - a.vente_total)
-    .slice(0, 5)
-    .map(c => ({
-      name: c.nom,
-      ca:   c.vente_total,
-      pct:  maxCA > 0 ? Math.round((c.vente_total / maxCA) * 100) : 0,
-    }));
 
   // ── LEADS — deals gagnés (filtrés par date de démarrage souhaité) ─────────
   const dealsGagnesPeriode = leadsSnap.filter(l =>
@@ -206,17 +179,6 @@ export function computeCRMKPIs(comptesSnap, leadsSnap, dateFrom, dateTo) {
     : 0;
 
   return {
-    // State — tous clients actifs
-    caGlobal,
-    totalAchats,
-    margeBruteGlobale,
-    tauxMarge,
-    nbClientsActifs,
-    nbClientsTotal,
-    // Flow — clients démarrés dans la période
-    sommeVentesGagnes,
-    sommeAchatsGagnes,
-    margeBruteNouveaux,
     // Leads — deals gagnés période
     nbDealsGagnes,
     // Pipeline
@@ -231,6 +193,5 @@ export function computeCRMKPIs(comptesSnap, leadsSnap, dateFrom, dateTo) {
       standby: nbStandbyAll,
       enCours: nbEnCoursAll,
     },
-    topClients,
   };
 }

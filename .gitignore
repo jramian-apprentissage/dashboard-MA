@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Backend — repo Git séparé (dashboard-MA-backend), exclu en bloc du frontend
+server/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
