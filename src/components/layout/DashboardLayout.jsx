@@ -108,11 +108,6 @@ export default function DashboardLayout({
                   />
                 )}
               </div>
-
-              <div className={styles.mockPill}>
-                <span className={styles.dot} />
-                Mock
-              </div>
             </div>
           </div>
 

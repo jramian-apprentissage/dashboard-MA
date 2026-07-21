@@ -115,10 +115,6 @@ export default function Sidebar() {
 
       {/* Bas — user + logout */}
       <div className={styles.bottom}>
-        <div className={styles.mockBadge}>
-          <span className={styles.dot} />
-          <span>Données mock · Jan–Jun 2025</span>
-        </div>
         <button className={styles.userRow} onClick={handleLogout} title="Déconnexion">
           <div className={styles.avatar}>{user?.name?.charAt(0) || 'U'}</div>
           <div className={styles.userInfo}>

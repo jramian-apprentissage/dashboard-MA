@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth, DASHBOARDS } from '../contexts/AuthContext';
-import { glossaireData } from '../data/mockData';
+import { glossaireData } from '../data/glossaire';
 import heroBg from '../assets/hero-home.svg';
 import styles from './GlossaireKPI.module.css';
 

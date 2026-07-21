@@ -5,7 +5,6 @@ import heroActivite from '../../../assets/hero-activite.svg';
 import ActiviteSales from './ActiviteSales';
 import ActiviteTLM from './ActiviteTLM';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
-import { activiteSalesData, activiteTLMData } from '../../../data/mockData';
 import { useSalesData } from '../../../hooks/useSalesData';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import layoutStyles from '../../../components/layout/DashboardLayout.module.css';
@@ -55,9 +54,8 @@ export default function CommercialActivite() {
     }
   }
 
-  const collabs = isSales
-    ? (salesData.result?.collabs || activiteSalesData.tranchesHoraires.cols)
-    : activiteTLMData.tranchesHoraires.cols;
+  // TLM n'a aucune source réelle (KAVKOM en stand-by) : pas de filtre collab.
+  const collabs = isSales ? (salesData.result?.collabs || ['Tous']) : ['Tous'];
 
   const extraFilters = (
     <>

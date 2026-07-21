@@ -7,7 +7,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
-import { focusClientData as mockClient } from '../../../data/mockData';
+import NotConnected from '../../../components/ui/NotConnected';
 import styles from './Synthese.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
@@ -82,7 +82,6 @@ function SyntheseContent({ result, monthly }) {
   // Concentration : part du CA portée par le top 5
   const top5CA  = d.topClients.reduce((s, c) => s + c.ca, 0);
   const top5Pct = d.caGlobal > 0 ? Math.round((top5CA / d.caGlobal) * 100) : 0;
-  const health  = mockClient.healthScore;
 
   return (
     <div className={styles.page}>
@@ -244,13 +243,9 @@ function SyntheseContent({ result, monthly }) {
             </div>
           )}
           <div className={styles.sep} />
-          {/* Résumé santé client (source : Health Score) */}
+          {/* Résumé santé client (source : score de satisfaction Monday) */}
           <div className={styles.metaSub} style={{ marginBottom: 8 }}>Santé du portefeuille (Health Score)</div>
-          <div className={styles.healthRow}>
-            <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{health.sains}</span><span className={styles.hLbl}>Sains</span></div>
-            <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{health.warning}</span><span className={styles.hLbl}>Sous vigilance</span></div>
-            <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{health.risque}</span><span className={styles.hLbl}>À risque</span></div>
-          </div>
+          <NotConnected>colonne « Score satisfaction » à créer sur le board Comptes Monday, puis à historiser côté API</NotConnected>
           <div className={styles.subnote}>
             Détail marge + santé client → onglet <strong>Pôle relations clients</strong>
           </div>

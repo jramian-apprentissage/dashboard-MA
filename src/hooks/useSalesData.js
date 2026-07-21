@@ -34,7 +34,7 @@ export function useSalesData() {
       /* La feuille RDV est secondaire : si elle est inaccessible (partage
          retiré → 401 sans en-tête CORS, donc fetch rejeté), on affiche quand
          même toute l'activité Ringover. Sans ce catch, Promise.all rejette
-         et l'onglet entier bascule sur les données mock. */
+         et l'onglet entier échoue alors que les appels sont disponibles. */
       const [rows, rdvRes] = await Promise.all([
         fetchAPI('/ringover/calls'),
         rdvUrl ? fetch(rdvUrl).catch(() => null) : Promise.resolve(null),

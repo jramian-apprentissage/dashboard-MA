@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth, DASHBOARDS } from '../contexts/AuthContext';
+import NotConnected from '../components/ui/NotConnected';
 import heroBg from '../assets/hero-home.svg';
 import styles from './Home.module.css';
 
@@ -34,35 +35,8 @@ const ARROW = (
   </svg>
 );
 
-const AI_INSIGHTS = {
-  'commercial-rc': {
-    summary: 'Performance en hausse · 3 alertes clients',
-    insights: [
-      { type: 'up',      text: 'Win rate à 64 % — +8 pts vs S1 2024' },
-      { type: 'warn',    text: '3 clients à risque de churn identifiés' },
-      { type: 'up',      text: 'Pipeline pondéré : 687 K€ (+12 % MoM)' },
-      { type: 'neutral', text: 'Marge brute stable à 25,4 % depuis 3 mois' },
-    ],
-  },
-  'commercial-activite': {
-    summary: 'Activité stable · 2 campagnes à surveiller',
-    insights: [
-      { type: 'up',      text: 'Taux de conversion appels : 12,3 % (+2 pts)' },
-      { type: 'warn',    text: '2 campagnes en retard sur objectif mensuel' },
-      { type: 'neutral', text: 'Volume TLM stable — 3 mois consécutifs' },
-      { type: 'up',      text: '18 nouveaux contacts qualifiés ce mois' },
-    ],
-  },
-};
-
-const TYPE_COLOR = { up: '#15803d', down: '#b91c1c', warn: '#b45309', neutral: 'rgba(38,0,31,0.55)' };
-
-const TYPE_ICONS = {
-  up:      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,
-  down:    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
-  warn:    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>,
-  neutral: <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-};
+// L'analyse IA par dashboard n'est pas encore construite — aucune source
+// n'est branchée pour la générer. Voir NotConnected pour l'état affiché.
 
 export default function Home() {
   const { user } = useAuth();
@@ -87,7 +61,7 @@ export default function Home() {
 
         {/* Hero : texte seul, sans boîte */}
         <div className={styles.hero}>
-          <div className={styles.heroLabel}>ANALYTICS · DÉMONSTRATION</div>
+          <div className={styles.heroLabel}>ANALYTICS</div>
           <h1 className={styles.heroTitle}>Bonjour, <em>{firstName}.</em></h1>
           <p className={styles.heroDesc}>
             Centralisez vos indicateurs commerciaux, suivez vos performances
@@ -95,8 +69,6 @@ export default function Home() {
           </p>
           <div className={styles.heroBadges}>
             <span className={styles.heroBadge}>{today}</span>
-            <span className={styles.heroBadgeSep}>·</span>
-            <span className={styles.heroBadge}>Données mock · Jan–Jun 2025</span>
           </div>
         </div>
 
@@ -110,45 +82,29 @@ export default function Home() {
                 </svg>
                 Insights IA
               </div>
-              <span className={styles.sectionNote}>Analyse automatique des données mock</span>
+              <span className={styles.sectionNote}>Synthèse automatique par dashboard</span>
             </div>
 
             <div className={styles.insightsGrid}>
-              {accessible.map(d => {
-                const ins = AI_INSIGHTS[d.id];
-                if (!ins) return null;
-                return (
-                  <div key={d.id} className={styles.insightCard}>
-                    <div className={styles.insightHeader}>
-                      <div className={styles.insightIconWrap}>{DASH_ICONS[d.id]}</div>
-                      <div className={styles.insightMeta}>
-                        <div className={styles.insightDash}>{d.label}</div>
-                        <div className={styles.insightSummary}>{ins.summary}</div>
-                      </div>
+              {accessible.map(d => (
+                <div key={d.id} className={styles.insightCard}>
+                  <div className={styles.insightHeader}>
+                    <div className={styles.insightIconWrap}>{DASH_ICONS[d.id]}</div>
+                    <div className={styles.insightMeta}>
+                      <div className={styles.insightDash}>{d.label}</div>
                     </div>
-
-                    <div className={styles.insightList}>
-                      {ins.insights.map((item, i) => (
-                        <div
-                          key={i}
-                          className={styles.insightItem}
-                          style={{ color: TYPE_COLOR[item.type] }}
-                        >
-                          <span className={styles.insightItemIcon} style={{ color: TYPE_COLOR[item.type] }}>
-                            {TYPE_ICONS[item.type]}
-                          </span>
-                          {item.text}
-                        </div>
-                      ))}
-                    </div>
-
-                    <button className={styles.insightCTA} onClick={() => navigate(ROUTES[d.id])}>
-                      Ouvrir le dashboard
-                      {ARROW}
-                    </button>
                   </div>
-                );
-              })}
+
+                  <div className={styles.insightList}>
+                    <NotConnected>aucune source d'analyse IA branchée pour ce dashboard</NotConnected>
+                  </div>
+
+                  <button className={styles.insightCTA} onClick={() => navigate(ROUTES[d.id])}>
+                    Ouvrir le dashboard
+                    {ARROW}
+                  </button>
+                </div>
+              ))}
 
               {/* Admin card dans la grille */}
               {user?.role === 'admin' && (

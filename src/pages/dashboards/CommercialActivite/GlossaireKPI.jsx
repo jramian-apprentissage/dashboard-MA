@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import SectionLabel from '../../../components/ui/SectionLabel';
-import { glossaireData } from '../../../data/mockData';
+import { glossaireData } from '../../../data/glossaire';
 import styles from './GlossaireKPI.module.css';
 
 export default function GlossaireKPI() {
