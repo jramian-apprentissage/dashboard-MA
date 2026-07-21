@@ -1,17 +1,48 @@
+import { Bar } from 'react-chartjs-2';
+import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
+import { useLeadsAnalytics } from '../../../hooks/useLeadsAnalytics';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
+import Pill from '../../../components/ui/Pill';
+import MotifBar from '../../../components/ui/MotifBar';
+import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected from '../../../components/ui/NotConnected';
 import styles from './FocusCommercial.module.css';
 
+Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
+
 const fmt = v => v >= 1000 ? `${(v / 1000).toFixed(0)} K€` : `${v}€`;
+const tickStyle = { color: 'rgba(22,5,18,0.35)', font: { size: 10, family: 'DM Sans' } };
+const gridStyle = { color: 'rgba(22,5,18,0.06)' };
+const borderStyle = { color: 'rgba(22,5,18,0.08)' };
+
+const evoBarOpts = {
+  responsive: true, maintainAspectRatio: false,
+  animation: { duration: 900, easing: 'easeOutQuart' },
+  plugins: { legend: { display: false } },
+  scales: {
+    x: { ticks: tickStyle, grid: gridStyle, border: borderStyle },
+    y: { ticks: { ...tickStyle, stepSize: 1 }, grid: gridStyle, border: borderStyle, min: 0 },
+  },
+};
+
+const missionLabels = { SO: 'Commercial (SO)', AV: 'Administratif (AV)', CS: 'Customer Success (CS)', IT: 'Informatique (IT)', DS: 'Digital Services (DS)' };
+const missionColors = ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)', 'rgba(123,170,191,0.75)', 'rgba(142,207,170,0.75)'];
+const sourceColors  = ['rgba(255,249,147,0.8)', 'rgba(123,170,191,0.7)', 'rgba(169,141,196,0.7)', 'rgba(167,173,170,0.5)', 'rgba(196,135,106,0.55)', 'rgba(142,207,170,0.6)'];
+
+function moisLabel(m) {
+  const [y, mo] = m.split('-');
+  return new Date(parseInt(y), parseInt(mo) - 1).toLocaleString('fr-FR', { month: 'short' });
+}
 
 export default function FocusCommercial() {
   const mounted = useChartMount();
   const { result, loading, error } = useSnapshotData();
+  const leads = useLeadsAnalytics();
 
   const circumference = 276.5;
   const winRate = result?.winRate ?? 0;
@@ -59,9 +90,39 @@ export default function FocusCommercial() {
           {/* ══ Ligne 2 — Diagnostic du flux : où sont les opps, que valent-elles ══ */}
           <SectionLabel>Diagnostic du pipeline</SectionLabel>
           <div className={styles.threeCol}>
-            {/* Funnel par étape — pas encore de répartition par étape côté API */}
+            {/* Funnel par étape — colonne "Etat" du board Leads/Prospects */}
             <Card title="Funnel par étape commerciale">
-              <NotConnected>le funnel par étape (Prospection → Signature) et l'âge moyen des opportunités ne sont pas encore calculés côté API</NotConnected>
+              {leads.error ? (
+                <NotConnected>{leads.error}</NotConnected>
+              ) : leads.data?.funnel ? (
+                <>
+                  <div className={styles.pipeTotal}>
+                    <div className={styles.metaSub}>Opportunités en cours</div>
+                    <div className={styles.metaVal}>{leads.data.funnel.totalOpportunites}</div>
+                  </div>
+                  {leads.data.funnel.etapes.map((s, i) => (
+                    <div key={s.etat} className={styles.funnelRow}>
+                      <div className={styles.stageLbl}>{s.etat}</div>
+                      <div className={styles.funnelTrack}>
+                        <div
+                          className={styles.funnelFill}
+                          style={{
+                            width: mounted ? `${s.pct}%` : '0%',
+                            opacity: 0.85 - i * 0.05,
+                            transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 80}ms`,
+                          }}
+                        >
+                          {s.count} opps <span>{s.pct}%</span>
+                        </div>
+                      </div>
+                      {s.montant > 0 && <div className={styles.stageAmt}>{fmt(s.montant)}</div>}
+                    </div>
+                  ))}
+                  <div className={styles.subnote} style={{ marginTop: 8 }}>Âge moyen des opps et durée de cycle : non disponibles (à calculer)</div>
+                </>
+              ) : (
+                <NotConnected>chargement…</NotConnected>
+              )}
             </Card>
 
             {/* Pipeline pondéré par probabilité */}
@@ -152,23 +213,105 @@ export default function FocusCommercial() {
       )}
 
       {/* ══ Ligne 3 — Pourquoi on perd : tendance + causes sur la même ligne ══ */}
-      <SectionLabel badge="Monday CRM">Pourquoi on gagne, pourquoi on perd</SectionLabel>
+      <SectionLabel badge="Monday CRM — colonnes Etat / Motif de refus">Pourquoi on gagne, pourquoi on perd</SectionLabel>
       <div className={styles.threeCol}>
         <Card title="Deals gagnés / perdus / stand-by — par mois">
-          <NotConnected>évolution mensuelle des issues de deals non calculée côté API (un seul snapshot par appel actuellement)</NotConnected>
+          {leads.error ? (
+            <NotConnected>{leads.error}</NotConnected>
+          ) : leads.data?.evolutionMensuelle ? (
+            <>
+              <div className={styles.lineWrap} style={{ height: 180 }}>
+                <Bar
+                  data={{
+                    labels: leads.data.evolutionMensuelle.mois.map(m => moisLabel(m.mois)),
+                    datasets: [
+                      { label: 'Gagnés',   data: leads.data.evolutionMensuelle.mois.map(m => m.gagnes),  backgroundColor: 'rgba(142,207,170,0.75)', borderRadius: 3, borderSkipped: false },
+                      { label: 'Perdus',   data: leads.data.evolutionMensuelle.mois.map(m => m.perdus),  backgroundColor: 'rgba(196,135,106,0.75)', borderRadius: 3, borderSkipped: false },
+                      { label: 'Stand-by', data: leads.data.evolutionMensuelle.mois.map(m => m.standby), backgroundColor: 'rgba(212,168,75,0.7)',   borderRadius: 3, borderSkipped: false },
+                    ],
+                  }}
+                  options={evoBarOpts}
+                />
+              </div>
+              <div className={styles.legend}>
+                <span className={styles.legDot} style={{ background: '#8ECFAA' }} />Gagnés
+                <span className={styles.legDot} style={{ background: '#C4876A', marginLeft: 12 }} />Perdus
+                <span className={styles.legDot} style={{ background: '#D4A84B', marginLeft: 12 }} />Stand-by
+              </div>
+              <div className={styles.subnote}>{leads.data.evolutionMensuelle.note_limite}</div>
+            </>
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
         </Card>
         <Card title="Motifs des deals perdus">
-          <NotConnected>colonne « Motif refus » du board Leads non encore agrégée</NotConnected>
+          {leads.error ? (
+            <NotConnected>{leads.error}</NotConnected>
+          ) : leads.data?.motifsPerdu ? (
+            leads.data.motifsPerdu.motifs.length > 0 ? (
+              <>
+                {leads.data.motifsPerdu.motifs.slice(0, 8).map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
+                <div className={styles.subnote}>
+                  {leads.data.motifsPerdu.total} deals perdus au total — {leads.data.motifsPerdu.sansMotif} sans motif renseigné
+                </div>
+              </>
+            ) : (
+              <div style={{ color: 'var(--text3)', fontSize: 12 }}>Aucun motif renseigné sur les deals perdus</div>
+            )
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
         </Card>
         <Card title="Motifs des deals stand-by">
-          <NotConnected>motifs de stand-by non catégorisés côté Monday</NotConnected>
+          {leads.error ? (
+            <NotConnected>{leads.error}</NotConnected>
+          ) : leads.data?.motifsStandby ? (
+            leads.data.motifsStandby.motifs.length > 0 ? (
+              <>
+                {leads.data.motifsStandby.motifs.slice(0, 8).map(m => <MotifBar key={m.label} {...m} fillColor="var(--warn)" />)}
+                <div className={styles.subnote}>
+                  {leads.data.motifsStandby.total} deals en stand-by au total — {leads.data.motifsStandby.sansMotif} sans motif renseigné
+                </div>
+              </>
+            ) : (
+              <div style={{ color: 'var(--text3)', fontSize: 12 }}>Aucun motif renseigné sur les deals stand-by</div>
+            )
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
         </Card>
       </div>
 
       {/* ══ Ligne 4 — L'action immédiate : la to-do de la réunion d'équipe ══ */}
-      <SectionLabel>À traiter cette semaine</SectionLabel>
+      <SectionLabel badge="Monday CRM — Etat + Date de relance">À traiter cette semaine</SectionLabel>
       <Card title="Opportunités sans prochaine action">
-        <NotConnected>nécessite une colonne « prochaine relance » suivie côté Monday pour détecter les affaires sans action planifiée</NotConnected>
+        {leads.error ? (
+          <NotConnected>{leads.error}</NotConnected>
+        ) : leads.data?.opportunitesSansAction ? (
+          <>
+            <div className={styles.alertCount}>
+              <span className={styles.alertNum}>{leads.data.opportunitesSansAction.length}</span>
+              <span className={styles.alertSub}>affaires sans date de relance planifiée (ou passée) — à traiter</span>
+            </div>
+            <table className={styles.tbl}>
+              <thead><tr>
+                <th>Opportunité</th><th>Étape</th><th>Date de relance</th><th>Âge</th>
+              </tr></thead>
+              <tbody>
+                {leads.data.opportunitesSansAction.slice(0, 20).map(o => (
+                  <tr key={o.itemId}>
+                    <td><strong>{o.nom}</strong></td>
+                    <td><Pill variant="gray">{o.etat}</Pill></td>
+                    <td>{o.dateRelance || '—'}</td>
+                    <td>{o.ageJours != null ? `${o.ageJours} j` : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : (
+          <NotConnected>chargement…</NotConnected>
+        )}
       </Card>
 
       {/* ══ Ligne 5 — Segments : lecture stratégique ══ */}
@@ -177,15 +320,69 @@ export default function FocusCommercial() {
         <Card title="CA par secteur d'activité">
           <NotConnected>aucune colonne secteur/activité sur le board Comptes Monday</NotConnected>
         </Card>
+        {/* Sources de lead — colonne "Canaux d'acquisition" du board Leads */}
         <Card title="Performance par source de lead">
-          <NotConnected>la colonne « Canaux d'acquisition » du board Leads n'est pas encore agrégée côté API</NotConnected>
+          {leads.error ? (
+            <NotConnected>{leads.error}</NotConnected>
+          ) : leads.data?.sources?.length > 0 ? (
+            <>
+              <DonutChart
+                variant="rose"
+                data={leads.data.sources.map(s => s.pct)}
+                labels={leads.data.sources.map(s => s.label)}
+                colors={sourceColors}
+                height={210}
+                tooltip={(label, value) => `${label} : ${value}%`}
+              />
+              <div className={styles.donutLegend}>
+                {leads.data.sources.map((s, i) => (
+                  <span key={s.label} className={styles.legItem}>
+                    <span className={styles.legDot} style={{ background: sourceColors[i % sourceColors.length] }} />{s.label} {s.pct}% ({s.count})
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
         </Card>
       </div>
 
       {/* ══ Ligne 6 — Missions MA : part du tout en donut + chiffres exacts à côté ══ */}
-      <SectionLabel>Revenue par type de mission MA</SectionLabel>
+      <SectionLabel badge="Monday CRM — colonne Poste (profils)">Revenue par type de mission MA</SectionLabel>
       <Card title="Répartition du revenue par type de mission">
-        <NotConnected>répartition par type de mission (« Pôles » du compte d'exploitation) non encore branchée côté API</NotConnected>
+        {leads.error ? (
+          <NotConnected>{leads.error}</NotConnected>
+        ) : leads.data?.missions?.length > 0 ? (
+          <div className={styles.missionSplit}>
+            <div style={{ flex: '0 0 240px' }}>
+              <DonutChart
+                variant="half-rose"
+                data={leads.data.missions.map(m => m.revenue)}
+                labels={leads.data.missions.map(m => missionLabels[m.label] || m.label)}
+                colors={missionColors}
+                height={145}
+                tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${pct}%)`}
+              />
+            </div>
+            <div className={styles.missionList}>
+              {leads.data.missions.map((m, i) => (
+                <div key={m.label} className={styles.missionCard}>
+                  <div className={styles.missionName}>
+                    <span className={styles.legDot} style={{ background: missionColors[i % missionColors.length], marginRight: 7 }} />
+                    {missionLabels[m.label] || m.label}
+                  </div>
+                  <div>
+                    <div className={styles.missionRev}>{fmt(m.revenue)} <span className={styles.missionPct}>· {m.pct}%</span></div>
+                    <div className={styles.missionAvg}>Moy. {fmt(m.moyenne)} / profil · {m.count} profil(s)</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <NotConnected>chargement…</NotConnected>
+        )}
       </Card>
 
     </div>

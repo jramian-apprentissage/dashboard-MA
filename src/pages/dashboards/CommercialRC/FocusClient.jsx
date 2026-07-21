@@ -1,11 +1,21 @@
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
+import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
+import Pill from '../../../components/ui/Pill';
+import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import styles from './FocusClient.module.css';
+
+const sentimentInfo = s => {
+  if (s?.includes('Sain'))   return { color: 'var(--pos)',  variant: 'green', label: 'Sain' };
+  if (s?.includes('Risque')) return { color: 'var(--neg)',  variant: 'red',   label: 'Risque de départ' };
+  if (s?.includes('Warning')) return { color: 'var(--warn)', variant: 'amber', label: 'Sous vigilance' };
+  return { color: 'var(--text3)', variant: 'gray', label: 'Non noté' };
+};
 
 const fmtEuros = v => {
   if (!v) return '0 €';
@@ -16,6 +26,7 @@ const fmtEuros = v => {
 export default function FocusClient() {
   const mounted = useChartMount();
   const { result, loading, error } = useSnapshotData();
+  const satisfaction = useSatisfactionClient();
 
   return (
     <div className={styles.page}>
@@ -100,10 +111,36 @@ export default function FocusClient() {
       </div>
 
       {/* ══ Ligne 3 — La santé : où on va, ce que ça a déjà coûté ══ */}
-      <SectionLabel badge="IA — colonne Monday à créer">La santé — risque actuel & pertes constatées</SectionLabel>
+      <SectionLabel badge="IA — colonne Monday « Note de satisfaction »">La santé — risque actuel & pertes constatées</SectionLabel>
       <div className={styles.twoCol}>
         <Card title="Nb de Clients par Niveau de Santé">
-          <NotConnected>colonne « Score satisfaction » à créer sur le board Comptes Monday (voir prompt de scoring déjà préparé)</NotConnected>
+          {satisfaction.error ? (
+            <NotConnected>{satisfaction.error}</NotConnected>
+          ) : satisfaction.data ? (
+            <>
+              <DonutChart
+                variant="donut"
+                data={[satisfaction.data.buckets.sain, satisfaction.data.buckets.warning, satisfaction.data.buckets.risque]}
+                labels={['Sain', 'Sous vigilance', 'À risque']}
+                colors={['rgba(142,207,170,0.85)', 'rgba(212,168,75,0.8)', 'rgba(196,135,106,0.8)']}
+                height={185}
+                centerValue={satisfaction.data.buckets.sain + satisfaction.data.buckets.warning + satisfaction.data.buckets.risque}
+                centerLabel="clients"
+                tooltip={(label, value, pct) => `${label} : ${value} clients (${pct}%)`}
+              />
+              <div className={styles.healthStats}>
+                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</div><div className={styles.hLbl}>Sain</div></div>
+                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</div><div className={styles.hLbl}>Sous vigilance</div></div>
+                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</div><div className={styles.hLbl}>À risque</div></div>
+              </div>
+              {satisfaction.data.buckets.sansNote > 0 && (
+                <div className={styles.subnote}>{satisfaction.data.buckets.sansNote} compte(s) sans note pour l'instant</div>
+              )}
+              <div className={styles.subnote}>Score IA Monday (colonne « Note de satisfaction ») — {satisfaction.data.note_limite}</div>
+            </>
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
         </Card>
 
         <Card title="Clients perdus — détail">
@@ -117,7 +154,43 @@ export default function FocusClient() {
 
       {/* ══ Ligne 4 — Le détail santé client par client ══ */}
       <Card title="Détails du niveau de Santé par Client">
-        <NotConnected>dépend de la colonne « Score satisfaction » Monday (justificatif généré à partir des échanges et e-mails historisés)</NotConnected>
+        {satisfaction.error ? (
+          <NotConnected>{satisfaction.error}</NotConnected>
+        ) : satisfaction.data ? (
+          <>
+            {satisfaction.data.clients.filter(c => c.note != null).map((c, i) => {
+              const s = sentimentInfo(c.sentiment);
+              return (
+                <div key={c.compteId} className={styles.hsRow}>
+                  <div className={styles.hsInfo}>
+                    <div className={styles.hsName}>{c.nom}</div>
+                  </div>
+                  <div className={styles.hsScore} style={{ color: s.color }}>{c.note}</div>
+                  <div className={styles.hsBarCol}>
+                    <div className={styles.hsBarRow}>
+                      <div className={styles.hsBar}>
+                        <div
+                          className={styles.hsBarFill}
+                          style={{
+                            width: mounted ? `${c.note}%` : '0%',
+                            background: s.color,
+                            transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 40}ms`,
+                          }}
+                        />
+                      </div>
+                      <Pill variant={s.variant}>{s.label}</Pill>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div className={styles.subnote} style={{ marginTop: 8 }}>
+              Note générée par l'IA Monday — le raisonnement détaillé (survol dans Monday) n'est pas exposé par l'API, seule la note chiffrée l'est
+            </div>
+          </>
+        ) : (
+          <NotConnected>chargement…</NotConnected>
+        )}
       </Card>
 
       {/* ══ Ligne 5 — Pilotage interne : qui génère la marge, indépendant du churn ══ */}

@@ -2,6 +2,7 @@ import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
+import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -50,6 +51,7 @@ const chartOpts = {
 
 export default function Synthese() {
   const { result, monthly, loading, error } = useSnapshotData();
+  const satisfaction = useSatisfactionClient();
 
   return (
     <Loader loading={loading} label="Chargement des données CRM…" minHeight={220}>
@@ -58,13 +60,13 @@ export default function Synthese() {
           Erreur de chargement : {error}
         </div>
       ) : result ? (
-        <SyntheseContent result={result} monthly={monthly} />
+        <SyntheseContent result={result} monthly={monthly} satisfaction={satisfaction} />
       ) : null}
     </Loader>
   );
 }
 
-function SyntheseContent({ result, monthly }) {
+function SyntheseContent({ result, monthly, satisfaction }) {
   const mounted = useChartMount();
   const d = result;
 
@@ -243,9 +245,19 @@ function SyntheseContent({ result, monthly }) {
             </div>
           )}
           <div className={styles.sep} />
-          {/* Résumé santé client (source : score de satisfaction Monday) */}
+          {/* Résumé santé client (source : colonne "Note de satisfaction" IA, board Comptes Monday) */}
           <div className={styles.metaSub} style={{ marginBottom: 8 }}>Santé du portefeuille (Health Score)</div>
-          <NotConnected>colonne « Score satisfaction » à créer sur le board Comptes Monday, puis à historiser côté API</NotConnected>
+          {satisfaction.error ? (
+            <div style={{ padding: '8px 0', color: 'var(--neg)', fontSize: 12 }}>Erreur de chargement : {satisfaction.error}</div>
+          ) : satisfaction.data ? (
+            <div className={styles.healthRow}>
+              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</span><span className={styles.hLbl}>Sains</span></div>
+              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Sous vigilance</span></div>
+              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</span><span className={styles.hLbl}>À risque</span></div>
+            </div>
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
           <div className={styles.subnote}>
             Détail marge + santé client → onglet <strong>Pôle relations clients</strong>
           </div>
