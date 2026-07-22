@@ -4,6 +4,7 @@ import DashboardLayout from '../../../components/layout/DashboardLayout';
 import heroActivite from '../../../assets/hero-activite.svg';
 import ActiviteSales from './ActiviteSales';
 import ActiviteTLM from './ActiviteTLM';
+import CloudTalkExtract from './CloudTalkExtract';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { useSalesData } from '../../../hooks/useSalesData';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -16,6 +17,7 @@ export default function CommercialActivite() {
   const isSales = tab === 'sales';
 
   const [collab, setCollab] = useState('Tous');
+  const [extractOpen, setExtractOpen] = useState(false);
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
 
   const salesData = useSalesData();
@@ -85,9 +87,22 @@ export default function CommercialActivite() {
   const activeFilters = collab !== 'Tous' ? [collab] : [];
 
   return (
-    <DashboardLayout dashboardId="commercial-activite" dashboardName="Activité" dashboardNameEmphasis="commerciale" extraFilters={extraFilters} activeFilters={activeFilters} heroBgSrc={heroActivite} heroBgPosition="center 65%">
-      {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} />}
-      {tab === 'tlm' && <ActiviteTLM selectedCollab={collab} />}
-    </DashboardLayout>
+    <>
+      <DashboardLayout
+        dashboardId="commercial-activite"
+        dashboardName="Activité"
+        dashboardNameEmphasis="commerciale"
+        extraFilters={extraFilters}
+        activeFilters={activeFilters}
+        heroBgSrc={heroActivite}
+        heroBgPosition="center 65%"
+        onExtraire={() => setExtractOpen(true)}
+      >
+        {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} />}
+        {tab === 'tlm' && <ActiviteTLM selectedCollab={collab} />}
+      </DashboardLayout>
+
+      {extractOpen && <CloudTalkExtract onClose={() => setExtractOpen(false)} />}
+    </>
   );
 }

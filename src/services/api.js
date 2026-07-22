@@ -13,3 +13,26 @@ export async function fetchAPI(path) {
   if (!res.ok) throw new Error(`API backend : HTTP ${res.status}`);
   return res.json();
 }
+
+/* Variante POST qui ne lève pas d'exception : certains flux (CloudTalk)
+   attendent {ok, data} pour afficher l'erreur inline plutôt que de la
+   traiter comme un crash de la page. */
+async function postAPI(path, body) {
+  const res = await fetch(`${API_URL}/api${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${API_TOKEN}`,
+    },
+    body: JSON.stringify(body || {}),
+  });
+  const data = await res.json().catch(() => ({}));
+  return { ok: res.ok, status: res.status, data };
+}
+
+// Reporting CloudTalk — proxy backend vers les webhooks n8n existants.
+export const cloudtalk = {
+  calculer: payload => postAPI('/cloudtalk/calculer', payload),
+  colonnes: client => postAPI('/cloudtalk/colonnes', { client }),
+  ecrire: (client, column, values) => postAPI('/cloudtalk/ecrire', { client, column, values }),
+};

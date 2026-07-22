@@ -1,0 +1,257 @@
+/* ─── Overlay plein écran ─────────────────────────────────────────────────
+   Même famille visuelle que .modalOverlay (Admin.module.css) : fond sombre
+   flouté, mais ici le panneau occupe la quasi-totalité du viewport (contenu
+   riche : formulaire, KPI, tableaux) plutôt qu'une petite carte centrée. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22,5,18,0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.panel {
+  width: 100%;
+  max-width: 1180px;
+  height: 100%;
+  max-height: calc(100vh - 48px);
+  background: var(--brouillard, var(--bg));
+  border: 1px solid rgba(255,255,255,0.6);
+  border-radius: var(--r3);
+  box-shadow: 0 24px 64px rgba(38,0,31,0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: panelIn 0.22s ease-out;
+}
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────── */
+.header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 26px;
+  background: var(--myrtille);
+  color: var(--blanc);
+}
+.headerTitleBlock { display: flex; flex-direction: column; gap: 4px; }
+.headerTitle {
+  font-family: 'InstrumentSerif', serif;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--blanc);
+}
+.headerTitleEm { color: var(--soleil); font-style: italic; }
+.headerSubtitle { font-size: 12.5px; color: rgba(255,255,255,0.6); }
+
+.closeBtn {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 99px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: var(--blanc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.closeBtn:hover { background: rgba(255,255,255,0.16); }
+
+/* ─── Corps scrollable ────────────────────────────────────────────────── */
+.body { flex: 1 1 auto; overflow-y: auto; padding: 24px 26px 32px; }
+.page { display: flex; flex-direction: column; gap: 0; }
+
+/* ─── KPI grid ────────────────────────────────────────────────────────── */
+.kpiGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 8px; }
+
+/* ─── Formulaire ──────────────────────────────────────────────────────── */
+.dateRow { display: flex; gap: 16px; margin-bottom: 20px; }
+.dateField { display: flex; flex-direction: column; gap: 4px; }
+.fieldLabel { font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: 0.03em; }
+.dateInput {
+  padding: 9px 11px;
+  border: 1px solid var(--sable);
+  border-radius: 6px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--encre);
+  background: var(--blanc);
+}
+.dateInput:focus { outline: none; border-color: var(--myrtille); }
+
+.textarea {
+  width: 100%;
+  padding: 12px;
+  margin-top: 6px;
+  border: 1px solid var(--sable);
+  border-radius: 6px;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  color: var(--encre);
+  background: var(--blanc);
+  box-sizing: border-box;
+  resize: vertical;
+}
+.textarea:focus { outline: none; border-color: var(--myrtille); }
+.textarea::placeholder { color: var(--ciment); }
+
+.parseCount { font-size: 11.5px; color: var(--text2); margin-top: 8px; }
+
+.formError {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: var(--neg);
+  background: var(--neg-dim);
+  border: 1px solid rgba(184,123,101,0.3);
+  border-radius: 7px;
+  padding: 9px 12px;
+}
+
+.launchBtn {
+  margin-top: 20px;
+  padding: 12px 28px;
+  background: var(--myrtille);
+  color: var(--soleil);
+  border: none;
+  border-radius: 99px;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s, transform 0.12s;
+}
+.launchBtn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* ─── Tables (Détail par client / RDV) ───────────────────────────────── */
+.tableWrap { overflow-x: auto; }
+.table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+.th {
+  background: var(--myrtille);
+  color: var(--blanc);
+  padding: 9px 12px;
+  text-align: center;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.thLabel {
+  background: var(--myrtille);
+  color: var(--blanc);
+  padding: 9px 12px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.td {
+  padding: 8px 12px;
+  border-top: 1px solid var(--sable);
+  text-align: center;
+  color: var(--encre);
+}
+.tdLabel {
+  padding: 8px 12px;
+  border-top: 1px solid var(--sable);
+  color: var(--encre);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.table tbody tr:nth-child(even) td { background: var(--sable-light); }
+.rowFormulaire td { background: rgba(255,249,147,0.35) !important; }
+
+.toggleBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--sable);
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font);
+  color: var(--myrtille);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.toggleBtn:hover { background: var(--sable-light); border-color: var(--ciment); }
+
+.recordingLink { color: var(--myrtille); font-weight: 600; }
+.recordingLink:hover { text-decoration: underline; }
+
+/* ─── Écriture Google Sheets ──────────────────────────────────────────── */
+.writeList { display: flex; flex-direction: column; gap: 8px; }
+.writeRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border: 1px solid var(--sable);
+  border-radius: 6px;
+  flex-wrap: wrap;
+}
+.checkbox { width: 16px; height: 16px; accent-color: var(--myrtille); }
+.writeClientName { min-width: 160px; font-size: 12.5px; color: var(--encre); font-weight: 600; }
+.writeHint { font-size: 11.5px; color: var(--ciment); }
+.select {
+  padding: 6px 10px;
+  border: 1px solid var(--sable);
+  border-radius: 5px;
+  font-size: 12.5px;
+  font-family: var(--font);
+  background: var(--blanc);
+}
+
+.writeBtn {
+  margin-top: 16px;
+  padding: 11px 24px;
+  background: var(--myrtille);
+  color: var(--blanc);
+  border: none;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+}
+.writeBtn:disabled { background: var(--ciment); cursor: default; }
+
+/* ─── Bas de page ─────────────────────────────────────────────────────── */
+.backRow { margin-top: 28px; }
+.backBtn {
+  padding: 10px 22px;
+  background: transparent;
+  color: var(--myrtille);
+  border: 1px solid var(--myrtille);
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+}
+.backBtn:hover { background: rgba(38,0,31,0.05); }
+
+/* ─── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .kpiGrid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .overlay { padding: 0; }
+  .panel { max-height: 100vh; border-radius: 0; }
+  .dateRow { flex-direction: column; gap: 12px; }
+  .kpiGrid { grid-template-columns: 1fr; }
+}
