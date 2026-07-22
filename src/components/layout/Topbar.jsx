@@ -6,7 +6,7 @@ import logoSun from '../../assets/logo/logo-full-sun.svg';
 import styles from './Topbar.module.css';
 
 export default function Topbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, hasAccessToDashboard } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -59,13 +59,15 @@ export default function Topbar() {
         <img src={logoSun} alt="Mon Ambassadeur" className={styles.logo} />
         <div className={styles.divider} />
         <nav className={styles.nav}>
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
-          >
-            Accueil
-          </NavLink>
+          {hasAccessToDashboard(user, 'home') && (
+            <NavLink
+              to="/"
+              end
+              className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
+            >
+              Accueil
+            </NavLink>
+          )}
 
           {accessible.map(d => {
             const tabs = DASHBOARD_TABS[d.id] || [];

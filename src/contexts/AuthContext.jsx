@@ -6,11 +6,16 @@ import { trackEvent } from '../services/tracking';
 // directeur   — accès à tout sauf historique connexion
 // responsable — accès aux dashboards autorisés uniquement
 
+// 'home' vit dans le même tableau `dashboards` que les vrais dashboards :
+// c'est un id comme un autre pour hasAccessToDashboard(). Les utilisateurs
+// 'responsable' existants l'ont explicitement pour ne rien changer à leur
+// comportement actuel (Accueil était visible pour tous jusqu'ici) — Jimmy
+// peut le décocher depuis l'admin si besoin.
 const USERS = [
-  { id: 1, name: 'Jimmy Ramiandrisoa', email: 'j.ramian@cepremium.fr', password: 'admin123', role: 'admin',       dashboards: ['commercial-rc', 'commercial-activite'] },
-  { id: 2, name: 'Sophie L.',          email: 'sophie@monambassadeur.com', password: 'pass123', role: 'directeur',   dashboards: ['commercial-rc', 'commercial-activite'] },
-  { id: 3, name: 'Marc R.',            email: 'marc@monambassadeur.com',   password: 'pass123', role: 'responsable', dashboards: ['commercial-activite'] },
-  { id: 4, name: 'Julie D.',           email: 'julie@monambassadeur.com',  password: 'pass123', role: 'responsable', dashboards: ['commercial-rc', 'commercial-activite'] },
+  { id: 1, name: 'Jimmy Ramiandrisoa', email: 'j.ramian@cepremium.fr', password: 'admin123', role: 'admin',       dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
+  { id: 2, name: 'Sophie L.',          email: 'sophie@monambassadeur.com', password: 'pass123', role: 'directeur',   dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
+  { id: 3, name: 'Marc R.',            email: 'marc@monambassadeur.com',   password: 'pass123', role: 'responsable', dashboards: ['home', 'commercial-activite'] },
+  { id: 4, name: 'Julie D.',           email: 'julie@monambassadeur.com',  password: 'pass123', role: 'responsable', dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
 ];
 
 const SESSION_VERSION = 'v2';
@@ -88,6 +93,12 @@ export const DASHBOARDS = [
   { id: 'commercial-rc',       label: 'Commercial & Relation Client' },
   { id: 'commercial-activite', label: 'Activité commerciale' },
 ];
+
+// Accueil suit exactement le même mécanisme d'autorisation que DASHBOARDS
+// (id dans user.dashboards, vérifié par hasAccessToDashboard) mais reste à
+// part : ce n'est pas un dashboard à onglets, la Sidebar ne doit pas le
+// boucler avec DASHBOARD_TABS/DASHBOARD_ROUTES sous peine de casser son rendu.
+export const HOME_PAGE = { id: 'home', label: 'Accueil' };
 
 export const ROLES = [
   { value: 'admin',       label: 'Admin' },

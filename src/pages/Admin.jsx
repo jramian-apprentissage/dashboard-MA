@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, DASHBOARDS, ROLES, roleLabel } from '../contexts/AuthContext';
+import { useAuth, DASHBOARDS, HOME_PAGE, ROLES, roleLabel } from '../contexts/AuthContext';
+
+// Accueil + dashboards : même mécanisme de toggle, une seule liste pour
+// piloter à la fois les colonnes du tableau et la checklist de création.
+const TOGGLEABLE_PAGES = [HOME_PAGE, ...DASHBOARDS];
 import { getHistory, clearHistory } from '../services/tracking';
 import heroBg from '../assets/hero-admin.svg';
 import styles from './Admin.module.css';
@@ -60,7 +64,7 @@ export default function Admin() {
       setFormError('Tous les champs sont requis.');
       return;
     }
-    const autoAllDash = ['admin', 'directeur'].includes(form.role) ? DASHBOARDS.map(d => d.id) : form.dashboards;
+    const autoAllDash = ['admin', 'directeur'].includes(form.role) ? TOGGLEABLE_PAGES.map(d => d.id) : form.dashboards;
     createUser({ ...form, dashboards: autoAllDash });
     setShowModal(false);
     setForm({ name: '', email: '', password: '', role: 'responsable', dashboards: [] });
@@ -79,7 +83,7 @@ export default function Admin() {
           <div>
             <div className={styles.label}>ADMINISTRATION</div>
             <h1 className={styles.title}>Gestion des <em className={styles.titleEm}>utilisateurs.</em></h1>
-            <p className={styles.sub}>Accès aux dashboards et historique de connexion</p>
+            <p className={styles.sub}>Accès aux pages et historique de connexion</p>
           </div>
           <button className={styles.btnAdd} onClick={() => setShowModal(true)}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -94,7 +98,7 @@ export default function Admin() {
           <div className={styles.thead}>
             <div className={styles.th}>Utilisateur</div>
             <div className={styles.th}>Rôle</div>
-            {DASHBOARDS.map(d => <div key={d.id} className={styles.th}>{d.label}</div>)}
+            {TOGGLEABLE_PAGES.map(d => <div key={d.id} className={styles.th}>{d.label}</div>)}
             <div className={styles.th}>Actions</div>
           </div>
           {users.map(u => (
@@ -111,7 +115,7 @@ export default function Admin() {
                   {roleLabel(u.role)}
                 </span>
               </div>
-              {DASHBOARDS.map(d => {
+              {TOGGLEABLE_PAGES.map(d => {
                 const fullAccess = ['admin', 'directeur'].includes(u.role);
                 const hasAccess  = fullAccess || u.dashboards?.includes(d.id);
                 return (
@@ -193,9 +197,9 @@ export default function Admin() {
               </select>
               {form.role === 'responsable' && (
                 <>
-                  <label className={styles.fieldLabel}>Dashboards autorisés</label>
+                  <label className={styles.fieldLabel}>Pages autorisées</label>
                   <div className={styles.checkList}>
-                    {DASHBOARDS.map(d => (
+                    {TOGGLEABLE_PAGES.map(d => (
                       <label key={d.id} className={styles.checkRow}>
                         <input
                           type="checkbox"

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth, DASHBOARDS } from './contexts/AuthContext';
+import { DASHBOARD_ROUTES } from './data/dashboardTabs';
 import { PeriodProvider } from './contexts/PeriodContext';
 import Topbar from './components/layout/Topbar';
 import AIChat from './components/ui/AIChat';
@@ -21,6 +22,18 @@ function RequireDashboard({ id, children }) {
   const { user, hasAccessToDashboard } = useAuth();
   if (!hasAccessToDashboard(user, id)) return <Navigate to="/" replace />;
   return children;
+}
+
+/* Garde de la route "/" elle-même : contrairement à RequireDashboard, on ne
+   peut pas se rabattre sur "/" en cas de refus (boucle infinie). On redirige
+   vers le premier dashboard auquel l'utilisateur a accès, ou vers le
+   Glossaire (seule page jamais soumise à un toggle d'accès) en dernier
+   recours. */
+function RequireHome({ children }) {
+  const { user, hasAccessToDashboard } = useAuth();
+  if (hasAccessToDashboard(user, 'home')) return children;
+  const fallback = DASHBOARDS.find(d => hasAccessToDashboard(user, d.id));
+  return <Navigate to={fallback ? DASHBOARD_ROUTES[fallback.id] : '/glossaire'} replace />;
 }
 
 // Admin et Directeur peuvent gérer les utilisateurs
@@ -48,7 +61,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<RequireAuth><AppShell><Home /></AppShell></RequireAuth>} />
+          <Route path="/" element={<RequireAuth><RequireHome><AppShell><Home /></AppShell></RequireHome></RequireAuth>} />
           <Route path="/glossaire" element={<RequireAuth><AppShell><GlossaireKPI /></AppShell></RequireAuth>} />
           <Route path="/admin" element={<RequireAuth><RequireAdmin><AppShell><Admin /></AppShell></RequireAdmin></RequireAuth>} />
           <Route path="/commercial-rc" element={<RequireAuth><RequireDashboard id="commercial-rc"><AppShell><CommercialRC /></AppShell></RequireDashboard></RequireAuth>} />

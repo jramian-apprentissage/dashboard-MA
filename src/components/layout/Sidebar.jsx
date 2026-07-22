@@ -5,7 +5,7 @@ import logoSun from '../../assets/logo/logo-full-sun.svg';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar() {
-  const { user, logout } = useAuth();
+  const { user, logout, hasAccessToDashboard } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -29,15 +29,17 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className={styles.nav}>
-        {/* Accueil */}
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          <span>Accueil</span>
-        </NavLink>
+        {/* Accueil — soumis au même toggle d'accès que les dashboards (id "home") */}
+        {hasAccessToDashboard(user, 'home') && (
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Accueil</span>
+          </NavLink>
+        )}
 
         {/* Dashboards avec sous-menus */}
         {accessible.length > 0 && (

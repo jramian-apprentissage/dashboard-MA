@@ -115,7 +115,9 @@
 
 .thead, .tr {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  /* Utilisateur, Rôle, puis une colonne par page togglable (Accueil +
+     DASHBOARDS — TOGGLEABLE_PAGES dans Admin.jsx), puis Actions. */
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
   border-bottom: 1px solid rgba(255,255,255,0.3);
 }
 .tr:last-child { border-bottom: none; }
