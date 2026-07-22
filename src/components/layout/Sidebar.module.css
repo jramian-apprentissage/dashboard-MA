@@ -167,14 +167,6 @@
   flex-shrink: 0;
 }
 
-.mockBadge {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 10px;
-  color: rgba(167,173,170,0.35);
-  padding: 0 6px;
-}
 .dot {
   width: 5px; height: 5px;
   border-radius: 50%;

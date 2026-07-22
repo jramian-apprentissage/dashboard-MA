@@ -126,18 +126,6 @@
 }
 .heroBtnX:hover { color: var(--soleil); background: rgba(255,249,147,0.08); }
 
-.mockPill {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: rgba(255,249,147,0.35);
-  background: rgba(255,249,147,0.04);
-  border: 1px solid rgba(255,249,147,0.1);
-  border-radius: 99px;
-  padding: 5px 12px;
-  letter-spacing: 0.01em;
-}
 .dot {
   width: 5px;
   height: 5px;
@@ -348,18 +336,6 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinIcon { animation: spin 0.9s linear infinite; flex-shrink: 0; }
 
-/* Pill "Mock" */
-.mockPill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: rgba(255,249,147,0.35);
-  background: rgba(255,249,147,0.04);
-  border: 1px solid rgba(255,249,147,0.1);
-  border-radius: 99px;
-  padding: 4px 10px;
-}
 .dot {
   width: 5px;
   height: 5px;
@@ -414,8 +390,7 @@
   .heroInner { padding: 16px 20px 14px; }
   .title      { font-size: 19px; }
   .heroActions { gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .heroBtn,
-  .mockPill   { font-size: 10.5px; padding: 5px 10px; }
+  .heroBtn    { font-size: 10.5px; padding: 5px 10px; }
   .content    { padding: 20px 20px 40px; }
 }
 
@@ -436,8 +411,5 @@
     gap: 6px;
     flex-wrap: wrap;
   }
-  /* Masquer le pill Mock sur mobile — info secondaire */
-  .mockPill   { display: none; }
-
   .content    { padding: 16px 14px 36px; }
 }

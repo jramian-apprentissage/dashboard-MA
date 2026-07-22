@@ -4,10 +4,13 @@
 .kpiRow4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
 .threeCol { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 
-/* Funnel — barres centrées, déperdition visible */
-.funnelRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-.funnelTrack { flex: 1; height: 24px; display: flex; justify-content: center; background: var(--sable-light); border-radius: 4px; overflow: hidden; }
-.funnelFill { height: 100%; background: var(--myrtille); border-radius: 3px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 0 8px; font-size: 10px; font-weight: 600; color: var(--soleil); min-width: 52px; white-space: nowrap; }
+/* Funnel simplifié — barres horizontales alignées à gauche, mises à l'échelle sur l'étape max */
+.barRow { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+.barLbl { font-size: 11px; color: var(--text2); width: 140px; flex-shrink: 0; }
+.barTrack { flex: 1; height: 10px; background: var(--sable-light); border-radius: 5px; overflow: hidden; }
+.barFill { height: 100%; background: var(--myrtille); border-radius: 5px; }
+.barVal { font-size: 11px; font-weight: 600; color: var(--text); width: 66px; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 6px; font-variant-numeric: tabular-nums; }
+.barVal span { color: var(--text3); font-weight: 500; }
 
 /* Stats de cycle intégrées au funnel */
 .cycleStats { display: flex; gap: 28px; }
@@ -158,6 +161,6 @@
 }
 @media (max-width: 480px) {
   .kpiRow4 { grid-template-columns: 1fr; }
-  .stageLbl, .sectorLbl { width: 96px; font-size: 10px; }
+  .barLbl, .sectorLbl { width: 96px; font-size: 10px; }
   .missionMeta { width: auto; }
 }

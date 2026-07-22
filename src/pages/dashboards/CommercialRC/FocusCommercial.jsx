@@ -100,25 +100,19 @@ export default function FocusCommercial() {
                     <div className={styles.metaSub}>Opportunités en cours</div>
                     <div className={styles.metaVal}>{leads.data.funnel.totalOpportunites}</div>
                   </div>
-                  {leads.data.funnel.etapes.map((s, i) => (
-                    <div key={s.etat} className={styles.funnelRow}>
-                      <div className={styles.stageLbl}>{s.etat}</div>
-                      <div className={styles.funnelTrack}>
-                        <div
-                          className={styles.funnelFill}
-                          style={{
-                            width: mounted ? `${s.pct}%` : '0%',
-                            opacity: 0.85 - i * 0.05,
-                            transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 80}ms`,
-                          }}
-                        >
-                          {s.count} opps <span>{s.pct}%</span>
+                  {(() => {
+                    const maxCount = Math.max(...leads.data.funnel.etapes.map(s => s.count), 1);
+                    return leads.data.funnel.etapes.map(s => (
+                      <div key={s.etat} className={styles.barRow}>
+                        <div className={styles.barLbl}>{s.etat}</div>
+                        <div className={styles.barTrack}>
+                          <div className={styles.barFill} style={{ width: `${(s.count / maxCount) * 100}%` }} />
                         </div>
+                        <div className={styles.barVal}>{s.count}<span>{s.pct}%</span></div>
                       </div>
-                      {s.montant > 0 && <div className={styles.stageAmt}>{fmt(s.montant)}</div>}
-                    </div>
-                  ))}
-                  <div className={styles.subnote} style={{ marginTop: 8 }}>Âge moyen des opps et durée de cycle : non disponibles (à calculer)</div>
+                    ));
+                  })()}
+                  <div className={styles.subnote} style={{ marginTop: 8 }}>Part du total des opps ouvertes par étape · âge moyen et durée de cycle non disponibles</div>
                 </>
               ) : (
                 <NotConnected>chargement…</NotConnected>
