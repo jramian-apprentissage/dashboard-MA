@@ -204,6 +204,63 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   return { total, decroche, argues, rdv, tranches, collabs, categStats, tagStats, perCollab };
 }
 
+// ─── ASUS (client) ───────────────────────────────────────────────────────────
+// Périmètre dédié : agents Ando/Miantsa/Hasina, archive Ringover filtrée côté
+// backend (/api/ringover/asus). Les tags sont utilisés tels quels — pas de
+// préfixe "CAT - sous-type" à parser comme pour l'équipe Mon Ambassadeur,
+// Jimmy a confirmé qu'ils sont déjà nommés comme les indicateurs voulus.
+
+export const ASUS_TAGS_SORTANT = [
+  'Rappel', 'Répondeur', 'NRP', 'Vente gagnée', 'Pas intéressé',
+  'Vente perdue', 'Envoi catalogue', 'Rendez-vous',
+];
+export const ASUS_TAGS_ENTRANT = [
+  'Vente gagnée', 'Pas intéressé', 'Vente perdue', 'Envoi catalogue',
+  'Rendez-vous', 'Rappel',
+];
+
+const BON_APPEL_SECONDES = 300; // 5 min — seuil convenu avec Jimmy
+
+function normTag(s) {
+  return (s || '').trim().toLowerCase();
+}
+
+function statsDirection(rows, direction, labels) {
+  const set = rows.filter(r => r.direction === direction);
+  const parTag = labels.map(label => ({
+    label,
+    count: set.filter(r => normTag(r.tag) === normTag(label)).length,
+  }));
+  return { total: set.length, parTag };
+}
+
+export function computeAsusData(rows, dateFrom, dateTo, collab = 'Tous') {
+  const from = dateFrom ? toMidnight(dateFrom) : null;
+  const to   = dateTo   ? toMidnight(dateTo)   : null;
+
+  const filtered = rows.filter(row => {
+    const d = parseDate(row.date);
+    if (!d) return false;
+    const day = toMidnight(d);
+    if (from && day < from) return false;
+    if (to   && day > to)   return false;
+    if (collab && collab !== 'Tous' && row.collab !== collab) return false;
+    return true;
+  });
+
+  const sortant = statsDirection(filtered, 'out', ASUS_TAGS_SORTANT);
+  const entrant = statsDirection(filtered, 'in',  ASUS_TAGS_ENTRANT);
+
+  const totalAppels    = filtered.length;
+  const dureeMoyenneS  = totalAppels ? Math.round(filtered.reduce((s, r) => s + (r.duration || 0), 0) / totalAppels) : 0;
+  const bonsAppels     = filtered.filter(r => (r.duration || 0) >= BON_APPEL_SECONDES).length;
+  const tauxBons       = totalAppels ? Math.round((bonsAppels / totalAppels) * 100) : 0;
+
+  const collabs = ['Tous', ...Array.from(new Set(rows.map(r => r.collab).filter(Boolean))).sort()];
+
+  return { sortant, entrant, totalAppels, dureeMoyenneS, bonsAppels, tauxBons, collabs };
+}
+
 // ─── RDV Sheet ───────────────────────────────────────────────────────────────
 // Ancienne structure (avant Apps Script) :
 //   A(0)=date+heure, H(7)=BDR, I(8)=Présent

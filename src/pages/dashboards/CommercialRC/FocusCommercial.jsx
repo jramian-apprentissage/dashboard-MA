@@ -32,7 +32,29 @@ const evoBarOpts = {
 
 const missionLabels = { SO: 'Commercial (SO)', AV: 'Administratif (AV)', CS: 'Customer Success (CS)', IT: 'Informatique (IT)', DS: 'Digital Services (DS)' };
 const missionColors = ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)', 'rgba(123,170,191,0.75)', 'rgba(142,207,170,0.75)'];
-const sourceColors  = ['rgba(255,249,147,0.8)', 'rgba(123,170,191,0.7)', 'rgba(169,141,196,0.7)', 'rgba(167,173,170,0.5)', 'rgba(196,135,106,0.55)', 'rgba(142,207,170,0.6)'];
+const sourceColors  = ['rgba(255,249,147,0.8)', 'rgba(123,170,191,0.7)', 'rgba(169,141,196,0.7)', 'rgba(196,135,106,0.55)', 'rgba(142,207,170,0.6)'];
+const AUTRES_SOURCE_COLOR = 'rgba(167,173,170,0.5)';
+
+// Ordre du funnel commercial — sert à trier "Opportunités sans prochaine
+// action" par étape plutôt que par opportunité, et à colorer chaque étape de
+// façon stable (même code visuel partout, étapes d'attente regroupées).
+const ETAPE_ORDER = ['Recherche profil', 'Présentation profil', 'Point de cadrage', 'Relance en cours', 'Relance à faire', 'Attente retour client', 'ATRC après prez'];
+const ETAPE_PILL_VARIANT = {
+  'Recherche profil':      'blue',
+  'Présentation profil':   'accent',
+  'Point de cadrage':      'gray',
+  'Relance en cours':      'amber',
+  'Relance à faire':       'red',
+  'Attente retour client': 'gray',
+  'ATRC après prez':       'green',
+};
+
+function fmtDateRelance(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
 
 function moisLabel(m) {
   const [y, mo] = m.split('-');
@@ -52,7 +74,7 @@ export default function FocusCommercial() {
     <div className={styles.page}>
 
       {/* ══ Ligne 1 — L'entonnoir en chiffres : entrée → conversion → sortie ══ */}
-      <SectionLabel badge="Monday CRM — données réelles">L'entonnoir — pipeline, conversion, signatures</SectionLabel>
+      <SectionLabel badge="Monday">Pipeline, conversion, signatures</SectionLabel>
       <Loader loading={loading} label="Chargement des données CRM…" size={44} minHeight={110} />
       {error && (
         <div style={{ padding: '20px 0', color: 'var(--neg)', fontSize: 13 }}>Erreur de chargement : {error}</div>
@@ -79,7 +101,7 @@ export default function FocusCommercial() {
               color={winRate >= 50 ? 'green' : 'amber'}
             />
             <KPICard
-              label="Deals gagnés (période)"
+              label="Deals gagnés"
               value={result.nbDealsGagnes}
               unit=" deals"
               trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA associé : ${fmt(result.sommeVentesGagnes)}` }}
@@ -156,7 +178,7 @@ export default function FocusCommercial() {
             </Card>
 
             {/* Win rate — jauge + détail des issues */}
-            <Card title="Win rate — détail des issues">
+            <Card title="Win rate — détail des résultats">
               <div className={styles.donutWrap} style={{ height: 'auto' }}>
                 <svg viewBox="0 0 110 110" width={120} height={120}>
                   <defs>
@@ -185,29 +207,31 @@ export default function FocusCommercial() {
               <div className={styles.donutStats}>
                 <div className={styles.dstat}>
                   <div className={styles.dv} style={{ color: 'var(--pos)' }}>{result.dealStats.gagnes}</div>
-                  <div className={styles.dl}>Gagnés</div>
+                  <div className={styles.dl}>Deals gagnés</div>
                 </div>
                 <div className={styles.dstat}>
                   <div className={styles.dv} style={{ color: 'var(--neg)' }}>{result.dealStats.perdus}</div>
-                  <div className={styles.dl}>Perdus</div>
+                  <div className={styles.dl}>Deals perdus</div>
                 </div>
                 <div className={styles.dstat}>
                   <div className={styles.dv} style={{ color: 'var(--warn)' }}>{result.dealStats.standby}</div>
-                  <div className={styles.dl}>Stand-by</div>
+                  <div className={styles.dl}>Deals stand-by</div>
                 </div>
                 <div className={styles.dstat}>
                   <div className={styles.dv} style={{ color: 'var(--text2)' }}>{result.dealStats.enCours}</div>
-                  <div className={styles.dl}>En cours</div>
+                  <div className={styles.dl}>Deals en cours</div>
                 </div>
               </div>
-              <div className={styles.subnote}>Repère vertical = cible 50% · Win rate = Gagnés ÷ (Gagnés + Perdus)</div>
+              <div className={styles.subnote}>
+                {result.dealStats.gagnes} affaire{result.dealStats.gagnes > 1 ? 's' : ''} signée{result.dealStats.gagnes > 1 ? 's' : ''} sur {result.dealStats.gagnes + result.dealStats.perdus} affaire{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''} totale{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''}
+              </div>
             </Card>
           </div>
         </>
       )}
 
       {/* ══ Ligne 3 — Pourquoi on perd : tendance + causes sur la même ligne ══ */}
-      <SectionLabel badge="Monday CRM — colonnes Etat / Motif de refus">Pourquoi on gagne, pourquoi on perd</SectionLabel>
+      <SectionLabel badge="Monday — colonnes Etat / Motif de refus">Évolution mensuelle des deals</SectionLabel>
       <div className={styles.threeCol}>
         <Card title="Deals gagnés / perdus / stand-by — par mois">
           {leads.error ? (
@@ -277,7 +301,7 @@ export default function FocusCommercial() {
       </div>
 
       {/* ══ Ligne 4 — L'action immédiate : la to-do de la réunion d'équipe ══ */}
-      <SectionLabel badge="Monday CRM — Etat + Date de relance">À traiter cette semaine</SectionLabel>
+      <SectionLabel badge="Monday — Etat + Date de relance">À traiter cette semaine</SectionLabel>
       <Card title="Opportunités sans prochaine action">
         {leads.error ? (
           <NotConnected>{leads.error}</NotConnected>
@@ -292,14 +316,21 @@ export default function FocusCommercial() {
                 <th>Opportunité</th><th>Étape</th><th>Date de relance</th><th>Âge</th>
               </tr></thead>
               <tbody>
-                {leads.data.opportunitesSansAction.slice(0, 20).map(o => (
-                  <tr key={o.itemId}>
-                    <td><strong>{o.nom}</strong></td>
-                    <td><Pill variant="gray">{o.etat}</Pill></td>
-                    <td>{o.dateRelance || '—'}</td>
-                    <td>{o.ageJours != null ? `${o.ageJours} j` : '—'}</td>
-                  </tr>
-                ))}
+                {[...leads.data.opportunitesSansAction]
+                  .sort((a, b) => {
+                    const ia = ETAPE_ORDER.indexOf(a.etat);
+                    const ib = ETAPE_ORDER.indexOf(b.etat);
+                    return (ia === -1 ? ETAPE_ORDER.length : ia) - (ib === -1 ? ETAPE_ORDER.length : ib);
+                  })
+                  .slice(0, 20)
+                  .map(o => (
+                    <tr key={o.itemId}>
+                      <td><strong>{o.nom}</strong></td>
+                      <td><Pill variant={ETAPE_PILL_VARIANT[o.etat] || 'gray'}>{o.etat}</Pill></td>
+                      <td>{fmtDateRelance(o.dateRelance) || '—'}</td>
+                      <td>{o.ageJours != null ? `${o.ageJours} j` : '—'}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </>
@@ -319,23 +350,43 @@ export default function FocusCommercial() {
           {leads.error ? (
             <NotConnected>{leads.error}</NotConnected>
           ) : leads.data?.sources?.length > 0 ? (
-            <>
-              <DonutChart
-                variant="rose"
-                data={leads.data.sources.map(s => s.pct)}
-                labels={leads.data.sources.map(s => s.label)}
-                colors={sourceColors}
-                height={210}
-                tooltip={(label, value) => `${label} : ${value}%`}
-              />
-              <div className={styles.donutLegend}>
-                {leads.data.sources.map((s, i) => (
-                  <span key={s.label} className={styles.legItem}>
-                    <span className={styles.legDot} style={{ background: sourceColors[i % sourceColors.length] }} />{s.label} {s.pct}% ({s.count})
-                  </span>
-                ))}
-              </div>
-            </>
+            (() => {
+              // Illisible sur mobile avec 9-10 sources détaillées en légende.
+              // On ne garde que les 5 premières + "Autres" — le détail (%,
+              // valeur) passe dans le tooltip au clic plutôt que d'être
+              // affiché en permanence sur le graphe.
+              const sorted = [...leads.data.sources].sort((a, b) => b.pct - a.pct);
+              const top    = sorted.slice(0, 5);
+              const reste  = sorted.slice(5);
+              const autres = reste.length > 0 ? [{
+                label: 'Autres',
+                pct:   reste.reduce((s, r) => s + r.pct, 0),
+                count: reste.reduce((s, r) => s + r.count, 0),
+              }] : [];
+              const shown  = [...top, ...autres];
+              const colors = [...sourceColors.slice(0, top.length), ...(autres.length ? [AUTRES_SOURCE_COLOR] : [])];
+              const countByLabel = Object.fromEntries(shown.map(s => [s.label, s.count]));
+
+              return (
+                <>
+                  <DonutChart
+                    variant="rose"
+                    data={shown.map(s => s.pct)}
+                    labels={shown.map(s => s.label)}
+                    colors={colors}
+                    height={210}
+                    tooltip={(label, value) => `${label} : ${value}% (${countByLabel[label] ?? '—'})`}
+                  />
+                  <div className={styles.donutLegend}>
+                    {shown.map((s, i) => (
+                      <span key={s.label} className={styles.legItem}>
+                        <span className={styles.legDot} style={{ background: colors[i] }} />{s.label}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              );
+            })()
           ) : (
             <NotConnected>chargement…</NotConnected>
           )}
@@ -343,7 +394,7 @@ export default function FocusCommercial() {
       </div>
 
       {/* ══ Ligne 6 — Missions MA : part du tout en donut + chiffres exacts à côté ══ */}
-      <SectionLabel badge="Monday CRM — colonne Poste (profils)">Revenue par type de mission MA</SectionLabel>
+      <SectionLabel badge="Monday — colonne Poste (profils)">Revenue par type de mission MA</SectionLabel>
       <Card title="Répartition du revenue par type de mission">
         {leads.error ? (
           <NotConnected>{leads.error}</NotConnected>

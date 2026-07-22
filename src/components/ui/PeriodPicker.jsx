@@ -2,15 +2,17 @@ import { useState, useRef, useEffect } from 'react';
 import styles from './PeriodPicker.module.css';
 
 const PERIODS = [
-  { key: 'today',       label: "Aujourd'hui" },
-  { key: 'yesterday',   label: 'Hier' },
-  { key: 'week',        label: 'Semaine en cours' },
-  { key: 'month',       label: 'Mois en cours' },
-  { key: 'last-week',   label: 'Semaine dernière' },
-  { key: 'last-month',  label: 'Mois précédent' },
-  { key: 'quarter',     label: 'Trimestre en cours' },
-  { key: 'custom',      label: 'Personnaliser…' },
+  { key: 'today',         label: "Aujourd'hui" },
+  { key: 'yesterday',     label: 'Hier' },
+  { key: 'month',         label: 'Mois en cours' },
+  { key: 'last-month',    label: 'Mois précédent' },
+  { key: 'week',          label: 'Semaine en cours' },
+  { key: 'last-week',     label: 'Semaine précédente' },
+  { key: 'quarter',       label: 'Trimestre en cours' },
+  { key: 'last-quarter',  label: 'Trimestre précédent' },
 ];
+const CUSTOM_PERIOD = { key: 'custom', label: 'Personnaliser…' };
+const ALL_PERIODS = [...PERIODS, CUSTOM_PERIOD];
 
 function dateStr(d) {
   return d.toISOString().slice(0, 10);
@@ -63,6 +65,19 @@ export function getPeriodRange(key, customFrom, customTo) {
       return { from: `${y}-${String(qStart + 1).padStart(2, '0')}-01`, to: dateStr(today) };
     }
 
+    case 'last-quarter': {
+      const qStart = Math.floor(m / 3) * 3;
+      const lqStartAbs = qStart - 3; // peut être négatif → bascule année précédente
+      const lqYear  = lqStartAbs < 0 ? y - 1 : y;
+      const lqStart = lqStartAbs < 0 ? lqStartAbs + 12 : lqStartAbs;
+      const lqEnd   = lqStart + 2;
+      const lastDay = new Date(lqYear, lqEnd + 1, 0).getDate();
+      return {
+        from: `${lqYear}-${String(lqStart + 1).padStart(2, '0')}-01`,
+        to:   `${lqYear}-${String(lqEnd + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`,
+      };
+    }
+
     case 'custom':
       return { from: customFrom, to: customTo };
 
@@ -104,7 +119,7 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
     setPlacement(`${v}-${h}`);
   }, [open]);
 
-  const current = PERIODS.find(p => p.key === value) || PERIODS[3];
+  const current = ALL_PERIODS.find(p => p.key === value) || ALL_PERIODS.find(p => p.key === 'month');
 
   function selectPeriod(key) {
     if (key !== 'custom') {
@@ -162,6 +177,19 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
               {p.label}
             </button>
           ))}
+
+          <div className={styles.optionSep} />
+          <button
+            className={`${styles.option} ${value === CUSTOM_PERIOD.key ? styles.optionActive : ''}`}
+            onClick={() => selectPeriod(CUSTOM_PERIOD.key)}
+            type="button"
+          >
+            {value === CUSTOM_PERIOD.key
+              ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.check}><polyline points="20 6 9 17 4 12"/></svg>
+              : <span className={styles.checkPlaceholder} />
+            }
+            {CUSTOM_PERIOD.label}
+          </button>
 
           {value === 'custom' && (
             <div className={styles.customRange}>

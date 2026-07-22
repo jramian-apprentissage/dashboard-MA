@@ -14,7 +14,7 @@ const BASE_LABELS = {
 const TAB_LABELS = {
   synthese:          'KPIs principaux',
   commercial:        'Pôle commercial',
-  client:            'Pôle relations clients',
+  client:            'Pôle relation client',
   sales:             'Activité Sales',
   tlm:               'Activité TLM',
 };

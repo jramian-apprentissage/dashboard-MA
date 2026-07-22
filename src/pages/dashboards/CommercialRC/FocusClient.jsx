@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
@@ -23,16 +24,19 @@ const fmtEuros = v => {
   return `${v} €`;
 };
 
+const HEALTH_LIST_STEP = 8;
+
 export default function FocusClient() {
   const mounted = useChartMount();
   const { result, loading, error } = useSnapshotData();
   const satisfaction = useSatisfactionClient();
+  const [healthVisible, setHealthVisible] = useState(HEALTH_LIST_STEP);
 
   return (
     <div className={styles.page}>
 
       {/* ══ Ligne 1 — Le solde net du portefeuille : entrées vs sorties ══ */}
-      <SectionLabel badge="Monday CRM — données réelles">Le solde net — entrées & sorties du portefeuille</SectionLabel>
+      <SectionLabel badge="Monday">Vision client</SectionLabel>
       <Loader loading={loading} label="Chargement des données CRM…" size={44} minHeight={110} />
       {error && (
         <div style={{ padding: '20px 0', color: 'var(--neg)', fontSize: 13 }}>Erreur de chargement : {error}</div>
@@ -40,18 +44,18 @@ export default function FocusClient() {
       {result && (
         <div className={styles.newClientsGrid}>
           <KPICard
-            label="Nouveaux clients (période)"
+            label="Nouveaux clients"
             value={result.nbDealsGagnes}
             unit=" clients"
             trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA : ${fmtEuros(result.sommeVentesGagnes)}` }}
             color="green"
           />
-          <KPICard {...notConnectedKPI('Clients perdus (période)', 'aucun suivi des départs de clients côté Monday', 'red')} />
+          <KPICard {...notConnectedKPI('Clients perdus', 'aucun suivi des départs de clients côté Monday', 'red')} />
           <KPICard
-            label="Portefeuille actif"
+            label="Portefeuille de clients actifs"
             value={result.nbClientsActifs}
             unit=" actifs"
-            trend={{ dir: 'neutral', text: `sur ${result.nbClientsTotal} comptes au total` }}
+            trend={{ dir: 'neutral', text: `Facturés sur la période · ${result.nbClientsTotal} comptes au total` }}
             color="blue"
           />
           <KPICard
@@ -118,21 +122,23 @@ export default function FocusClient() {
             <NotConnected>{satisfaction.error}</NotConnected>
           ) : satisfaction.data ? (
             <>
+              {/* Chiffres en tête, camembert en dessous — même représentation
+                  que la synthèse (les nombres se lisent avant le %). */}
+              <div className={styles.healthStats}>
+                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</div><div className={styles.hLbl}>Clients sains</div></div>
+                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</div><div className={styles.hLbl}>Clients sous vigilance</div></div>
+                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</div><div className={styles.hLbl}>Clients à risque</div></div>
+              </div>
               <DonutChart
                 variant="donut"
                 data={[satisfaction.data.buckets.sain, satisfaction.data.buckets.warning, satisfaction.data.buckets.risque]}
-                labels={['Sain', 'Sous vigilance', 'À risque']}
+                labels={['Clients sains', 'Clients sous vigilance', 'Clients à risque']}
                 colors={['rgba(142,207,170,0.85)', 'rgba(212,168,75,0.8)', 'rgba(196,135,106,0.8)']}
                 height={185}
                 centerValue={satisfaction.data.buckets.sain + satisfaction.data.buckets.warning + satisfaction.data.buckets.risque}
                 centerLabel="clients"
                 tooltip={(label, value, pct) => `${label} : ${value} clients (${pct}%)`}
               />
-              <div className={styles.healthStats}>
-                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</div><div className={styles.hLbl}>Sain</div></div>
-                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</div><div className={styles.hLbl}>Sous vigilance</div></div>
-                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</div><div className={styles.hLbl}>À risque</div></div>
-              </div>
               {satisfaction.data.buckets.sansNote > 0 && (
                 <div className={styles.subnote}>{satisfaction.data.buckets.sansNote} compte(s) sans note pour l'instant</div>
               )}
@@ -157,37 +163,53 @@ export default function FocusClient() {
         {satisfaction.error ? (
           <NotConnected>{satisfaction.error}</NotConnected>
         ) : satisfaction.data ? (
-          <>
-            {satisfaction.data.clients.filter(c => c.note != null).map((c, i) => {
-              const s = sentimentInfo(c.sentiment);
-              return (
-                <div key={c.compteId} className={styles.hsRow}>
-                  <div className={styles.hsInfo}>
-                    <div className={styles.hsName}>{c.nom}</div>
-                  </div>
-                  <div className={styles.hsScore} style={{ color: s.color }}>{c.note}</div>
-                  <div className={styles.hsBarCol}>
-                    <div className={styles.hsBarRow}>
-                      <div className={styles.hsBar}>
-                        <div
-                          className={styles.hsBarFill}
-                          style={{
-                            width: mounted ? `${c.note}%` : '0%',
-                            background: s.color,
-                            transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 40}ms`,
-                          }}
-                        />
+          (() => {
+            // Classement du moins bon score au meilleur — les comptes à
+            // risque remontent en premier, c'est ce qui doit être traité.
+            const sorted = satisfaction.data.clients
+              .filter(c => c.note != null)
+              .sort((a, b) => a.note - b.note);
+            const visible = sorted.slice(0, healthVisible);
+            const reste = sorted.length - visible.length;
+            return (
+              <>
+                {visible.map((c, i) => {
+                  const s = sentimentInfo(c.sentiment);
+                  return (
+                    <div key={c.compteId} className={styles.hsRow}>
+                      <div className={styles.hsInfo}>
+                        <div className={styles.hsName}>{c.nom}</div>
                       </div>
-                      <Pill variant={s.variant}>{s.label}</Pill>
+                      <div className={styles.hsScore} style={{ color: s.color }}>{c.note}</div>
+                      <div className={styles.hsBarCol}>
+                        <div className={styles.hsBarRow}>
+                          <div className={styles.hsBar}>
+                            <div
+                              className={styles.hsBarFill}
+                              style={{
+                                width: mounted ? `${c.note}%` : '0%',
+                                background: s.color,
+                                transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 40}ms`,
+                              }}
+                            />
+                          </div>
+                          <Pill variant={s.variant}>{s.label}</Pill>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  );
+                })}
+                {reste > 0 && (
+                  <button type="button" className={styles.hsMore} onClick={() => setHealthVisible(v => v + HEALTH_LIST_STEP)}>
+                    Voir plus ({reste} restant{reste > 1 ? 's' : ''})
+                  </button>
+                )}
+                <div className={styles.subnote} style={{ marginTop: 8 }}>
+                  Classé du score le plus bas au plus élevé · note générée par l'IA Monday — le raisonnement détaillé (survol dans Monday) n'est pas exposé par l'API, seule la note chiffrée l'est
                 </div>
-              );
-            })}
-            <div className={styles.subnote} style={{ marginTop: 8 }}>
-              Note générée par l'IA Monday — le raisonnement détaillé (survol dans Monday) n'est pas exposé par l'API, seule la note chiffrée l'est
-            </div>
-          </>
+              </>
+            );
+          })()
         ) : (
           <NotConnected>chargement…</NotConnected>
         )}

@@ -64,6 +64,8 @@
 .option:hover { background: rgba(255,249,147,0.06); color: rgba(255,249,147,0.9); }
 .optionActive { color: var(--soleil); font-weight: 600; }
 
+.optionSep { height: 1px; background: rgba(255,249,147,0.1); margin: 4px 4px; }
+
 .check { color: var(--soleil); width: 9px; flex-shrink: 0; }
 .checkPlaceholder { width: 9px; flex-shrink: 0; display: inline-block; }
 

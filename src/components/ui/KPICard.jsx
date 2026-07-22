@@ -18,14 +18,19 @@ export default function KPICard({ label, value, unit, trend, color = 'default', 
       </div>
       {trend && (
         <div className={`${styles.trend} ${styles[trend.dir] || ''}`}>
+          {/* Icônes "tendance graphique" (trending-up/down) plutôt qu'un chevron,
+              qui se lit comme un contrôle cliquable (expand/collapse) et non
+              comme un indicateur de hausse/baisse. */}
           {trend.dir === 'up' && (
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="18 15 12 9 6 15"/>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+              <polyline points="16 7 22 7 22 13"/>
             </svg>
           )}
           {trend.dir === 'down' && (
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="6 9 12 15 18 9"/>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/>
+              <polyline points="16 17 22 17 22 11"/>
             </svg>
           )}
           {trend.text}

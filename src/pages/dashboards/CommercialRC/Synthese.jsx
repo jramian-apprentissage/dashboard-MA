@@ -1,4 +1,5 @@
 import { Bar } from 'react-chartjs-2';
+import { useNavigate } from 'react-router-dom';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
@@ -68,6 +69,7 @@ export default function Synthese() {
 
 function SyntheseContent({ result, monthly, satisfaction }) {
   const mounted = useChartMount();
+  const navigate = useNavigate();
   const d = result;
 
   const chartData = {
@@ -89,22 +91,22 @@ function SyntheseContent({ result, monthly, satisfaction }) {
     <div className={styles.page}>
 
       {/* ── Ligne 1 — Le résultat : les 4 chiffres du lundi matin ─────────── */}
-      <SectionLabel badge="Monday CRM">Le résultat — vue consolidée</SectionLabel>
+      <SectionLabel badge="Monday">Le résultat — vue consolidée</SectionLabel>
       <div className={styles.kpiGrid}>
         <KPICard
-          label="CA Global"
+          label="CA"
           value={fmt(d.caGlobal)}
           trend={{ dir: 'neutral', text: `Clients actifs : ${d.nbClientsActifs}` }}
           color="blue"
         />
         <KPICard
-          label="Marge brute globale"
+          label="Marge brute"
           value={fmt(d.margeBruteGlobale)}
-          trend={{ dir: d.tauxMarge >= 20 ? 'up' : 'neutral', text: `Taux : ${d.tauxMarge}%` }}
+          trend={{ dir: 'neutral', text: `Taux de marge brute : ${d.tauxMarge}%` }}
           color="green"
         />
         <KPICard
-          label="Deals gagnés (période)"
+          label="Deals gagnés"
           value={d.nbDealsGagnes}
           unit=" deals"
           trend={{ dir: d.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA associé : ${fmt(d.sommeVentesGagnes)}` }}
@@ -120,7 +122,7 @@ function SyntheseContent({ result, monthly, satisfaction }) {
 
       {/* ── Ligne 2 — La trajectoire : évolution CA + marge ────────────────── */}
       <SectionLabel>La trajectoire — 6 derniers mois</SectionLabel>
-      <Card title="Évolution mensuelle — CA & taux de marge">
+      <Card title="Évolution mensuelle du CA et de la marge">
         {monthly && monthly.length > 0 ? (
           <>
             <div className={styles.chartWrapLarge}>
@@ -188,19 +190,18 @@ function SyntheseContent({ result, monthly, satisfaction }) {
             <div className={styles.legend}>
               <span className={styles.dot} style={{ background: 'rgba(255,249,147,0.7)' }} />CA
               <span className={styles.dot} style={{ background: 'rgba(38,0,31,0.45)', marginLeft: 12 }} />Marge brute
-              <span className={styles.dot} style={{ background: 'rgba(196,135,106,0.9)', marginLeft: 12 }} />Taux de marge % (axe droit)
+              <span className={styles.dot} style={{ background: 'rgba(196,135,106,0.9)', marginLeft: 12 }} />Taux de marge %
             </div>
           </>
         ) : (
           <div style={{ color: 'var(--text3)', fontSize: 12, padding: '20px 0' }}>Historique de snapshots insuffisant</div>
         )}
-        <div className={styles.subnote}>Un point par fin de mois — snapshot CRM le plus proche</div>
       </Card>
 
       {/* ── Ligne 3 — Santé du portefeuille : qui fait le CA + dépendance ──── */}
-      <SectionLabel>Santé du portefeuille — concentration & risque</SectionLabel>
+      <SectionLabel>Santé du portefeuille</SectionLabel>
       <div className={styles.chartsRow}>
-        <Card title="Top clients — CA (état actuel)">
+        <Card title="Top 5 clients par CA">
           {d.topClients.length > 0 ? (
             <div className={styles.chartWrap}>
               <Bar data={chartData} options={chartOpts} />
@@ -211,55 +212,47 @@ function SyntheseContent({ result, monthly, satisfaction }) {
         </Card>
 
         <Card title="Concentration du CA & santé client">
-          {/* Concentration top 5 */}
-          <div className={styles.pipelineHeader}>
-            <div>
-              <div className={styles.metaSub}>Top 5 clients</div>
-              <div className={styles.metaVal}>{top5Pct}% du CA</div>
-            </div>
-            <div>
-              <div className={styles.metaSub}>Soit</div>
-              <div className={styles.metaVal}>{fmt(top5CA)} / {fmt(d.caGlobal)}</div>
-            </div>
-          </div>
-          {/* Partie-du-tout à 2 segments → camembert (Kosara & Skau 2016) */}
-          <div className={styles.donutRow}>
-            <div className={styles.donutBox}>
-              {/* Modèle "pie pull-out" : camembert plein, tranche dominante sortie + arc décoratif */}
-              <DonutChart
-                variant="pie"
-                data={[top5CA, Math.max(d.caGlobal - top5CA, 0)]}
-                labels={['Top 5 clients', 'Autres clients']}
-                colors={[
-                  top5Pct >= 70 ? 'rgba(196,135,106,0.9)' : 'rgba(255,249,147,0.95)',
-                  'rgba(38,0,31,0.75)',
-                ]}
-                height={185}
-                tooltip={(label, value) => `${label} : ${fmt(value)}`}
-              />
-            </div>
-          </div>
-          {top5Pct >= 70 && (
-            <div className={`${styles.alert} ${styles.warn}`}>
-              <strong>Concentration élevée</strong> — plus de 70% du CA repose sur 5 clients
-            </div>
-          )}
-          <div className={styles.sep} />
-          {/* Résumé santé client (source : colonne "Note de satisfaction" IA, board Comptes Monday) */}
+          {/* Résumé santé client en tête, chiffres avant le camembert — plus
+              parlant qu'un pourcentage (source : colonne "Note de
+              satisfaction" IA, board Comptes Monday) */}
           <div className={styles.metaSub} style={{ marginBottom: 8 }}>Santé du portefeuille (Health Score)</div>
           {satisfaction.error ? (
             <div style={{ padding: '8px 0', color: 'var(--neg)', fontSize: 12 }}>Erreur de chargement : {satisfaction.error}</div>
           ) : satisfaction.data ? (
             <div className={styles.healthRow}>
-              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</span><span className={styles.hLbl}>Sains</span></div>
-              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Sous vigilance</span></div>
-              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</span><span className={styles.hLbl}>À risque</span></div>
+              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</span><span className={styles.hLbl}>Clients sains</span></div>
+              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Clients sous vigilance</span></div>
+              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</span><span className={styles.hLbl}>Clients à risque</span></div>
             </div>
           ) : (
             <NotConnected>chargement…</NotConnected>
           )}
+
+          <div className={styles.sep} />
+
+          {/* Concentration top 5 — camembert sous les chiffres, détail exact
+              au clic sur les tranches (pas besoin de le doubler en texte) */}
+          <div className={styles.metaSub} style={{ marginBottom: 8 }}>Top 5 clients — {top5Pct}% du CA</div>
+          <div className={styles.donutRow}>
+            <div className={styles.donutBox}>
+              {/* Modèle "pie pull-out" : camembert plein, tranche dominante sortie + arc décoratif.
+                  Jaune constant pour "Top 5 clients" — pas de notion de risque ici. */}
+              <DonutChart
+                variant="pie"
+                data={[top5CA, Math.max(d.caGlobal - top5CA, 0)]}
+                labels={['Top 5 clients', 'Autres clients']}
+                colors={['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.75)']}
+                height={185}
+                tooltip={(label, value) => `${label} : ${fmt(value)}`}
+              />
+            </div>
+          </div>
+
           <div className={styles.subnote}>
-            Détail marge + santé client → onglet <strong>Pôle relations clients</strong>
+            Détail marge + santé client →{' '}
+            <button type="button" className={styles.linkBtn} onClick={() => navigate('/commercial-rc?tab=focus-client')}>
+              Pôle relation client
+            </button>
           </div>
         </Card>
       </div>

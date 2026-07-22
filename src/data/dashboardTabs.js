@@ -7,10 +7,11 @@ export const DASHBOARD_TABS = {
   'commercial-rc': [
     { id: 'synthese', label: 'KPIs principaux' },
     { id: 'focus-commercial', label: 'Pôle commercial' },
-    { id: 'focus-client', label: 'Pôle relations clients' },
+    { id: 'focus-client', label: 'Pôle relation client' },
   ],
   'commercial-activite': [
     { id: 'sales', label: 'Activité Sales' },
+    { id: 'asus', label: 'ASUS' },
     { id: 'tlm', label: 'Activité TLM' },
   ],
 };

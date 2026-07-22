@@ -5,13 +5,14 @@ import defaultHeroBg from '../../assets/bg.svg';
 import styles from './DashboardLayout.module.css';
 
 const PERIOD_LABELS = {
-  today:        "aujourd'hui",
-  yesterday:    "hier",
-  week:         "la semaine en cours",
-  month:        "le mois en cours",
-  'last-week':  "la semaine dernière",
-  'last-month': "le mois précédent",
-  quarter:      "le trimestre en cours",
+  today:          "d'aujourd'hui",
+  yesterday:      "d'hier",
+  month:          "du mois en cours",
+  'last-month':   "du mois précédent",
+  week:           "de la semaine en cours",
+  'last-week':    "de la semaine précédente",
+  quarter:        "du trimestre en cours",
+  'last-quarter': "du trimestre précédent",
 };
 
 function fmtDate(iso) {
@@ -23,12 +24,13 @@ function fmtDate(iso) {
 function buildPeriodLabel(key, customFrom, customTo) {
   if (key === 'custom' && customFrom && customTo)
     return `du ${fmtDate(customFrom)} au ${fmtDate(customTo)}`;
-  return PERIOD_LABELS[key] || 'la période sélectionnée';
+  return PERIOD_LABELS[key] || 'de la période sélectionnée';
 }
 
 export default function DashboardLayout({
   dashboardName,
   dashboardNameEmphasis,
+  tabLabel,
   children,
   extraFilters,
   activeFilters = [],
@@ -67,9 +69,10 @@ export default function DashboardLayout({
               {dashboardNameEmphasis && <em className={styles.titleEm}> {dashboardNameEmphasis}.</em>}
             </h1>
             <p className={styles.subtitle}>
-              Vous analysez les KPI&nbsp;
+              Vous analysez les KPIs&nbsp;
               <span className={styles.subtitlePeriod}>{subtitle}</span>
             </p>
+            {tabLabel && <p className={styles.tabBadge}>{tabLabel}</p>}
           </div>
 
           {/* Tous les contrôles regroupés à droite en bas */}

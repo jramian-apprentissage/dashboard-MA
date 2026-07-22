@@ -100,6 +100,12 @@ export const DASHBOARDS = [
 // boucler avec DASHBOARD_TABS/DASHBOARD_ROUTES sous peine de casser son rendu.
 export const HOME_PAGE = { id: 'home', label: 'Accueil' };
 
+// Même mécanisme que HOME_PAGE : un id de plus dans user.dashboards, mais qui
+// ne contrôle pas un dashboard entier — seulement l'onglet ASUS à l'intérieur
+// d'Activité commerciale (accès à un périmètre client restreint, distinct de
+// l'autorisation générale sur le dashboard).
+export const ASUS_TAB = { id: 'commercial-activite-asus', label: 'Act. Commerciale — onglet ASUS' };
+
 export const ROLES = [
   { value: 'admin',       label: 'Admin' },
   { value: 'directeur',   label: 'Directeur' },

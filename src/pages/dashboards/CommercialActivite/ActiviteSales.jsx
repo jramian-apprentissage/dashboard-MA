@@ -7,6 +7,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
+import Loader from '../../../components/ui/Loader';
 import { TAG_CATEGORIES } from '../../../services/sheetsParser';
 import DonutChart from '../../../components/ui/DonutChart';
 import styles from './Activite.module.css';
@@ -102,7 +103,16 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   trancheRowsRef.current = trancheRows;
   const rdvPlugin = useMemo(() => makeRdvPlugin(trancheRowsRef), []); // eslint-disable-line
 
+  // Tant que le tout premier chargement n'a pas de données, on affiche le
+  // logo animé plutôt que la mosaïque de blocs "Non connecté" — sinon un
+  // chargement un peu lent se lit comme une panne. Les rafraîchissements
+  // suivants (changement de période/collab) gardent le contenu déjà là,
+  // signalés par la pastille "Chargement…" du bandeau de filtres.
+  const firstLoad = !hasData && salesData?.loading && !salesData?.error;
+
   return (
+    <Loader loading={firstLoad} label="Récupération de l'archive Ringover…" minHeight={480}>
+      {() => (
     <div className={styles.page}>
       <SectionLabel badge="RINGOVER">Activité Sales — indicateurs clés</SectionLabel>
 
@@ -121,11 +131,6 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
         <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
           <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — {salesData.result.total.toLocaleString('fr-FR')} appels chargés · MAJ {salesData.lastFetched.toLocaleTimeString('fr-FR')}
           {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
-        </div>
-      )}
-      {!hasData && !salesData?.error && (
-        <div className={styles.dataAlert}>
-          <span style={{ color: 'var(--text3)' }}>Chargement…</span> — récupération de l'archive Ringover
         </div>
       )}
 
@@ -150,7 +155,10 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               <th>Taux décroché</th>
             </tr></thead>
             <tbody>
-              {salesData.result.collabs.filter(c => c !== 'Tous').map(name => {
+              {salesData.result.collabs
+                .filter(c => c !== 'Tous')
+                .filter(name => (salesData.result.perCollab?.[name]?.appels ?? 0) > 0)
+                .map(name => {
                 const rdvC  = rdvResult?.perCollab?.[name];
                 const ring  = salesData.result.perCollab?.[name];
                 const taux  = ring?.taux ?? '—';
@@ -349,5 +357,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
         )}
       </Card>
     </div>
+      )}
+    </Loader>
   );
 }
