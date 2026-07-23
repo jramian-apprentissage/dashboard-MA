@@ -121,7 +121,15 @@ export function AuthProvider({ children }) {
   function hasAccessToDashboard(u, dashId) {
     if (!u) return false;
     if (['admin', 'directeur'].includes(u.role)) return true;
-    return u.dashboards?.includes(dashId) ?? false;
+    if (u.dashboards?.includes(dashId)) return true;
+    // L'onglet ASUS est un périmètre restreint À L'INTÉRIEUR d'Activité
+    // commerciale (voir ASUS_TAB plus bas) : un compte qui n'a QUE ce
+    // sous-accès doit quand même pouvoir atteindre la page (et son lien de
+    // nav), simplement limité à ce seul onglet une fois dedans — géré par
+    // CommercialActivite/index.jsx, qui relit dashboards directement pour
+    // distinguer "accès complet" de "ASUS seul".
+    if (dashId === 'commercial-activite' && u.dashboards?.includes('commercial-activite-asus')) return true;
+    return false;
   }
 
   return (

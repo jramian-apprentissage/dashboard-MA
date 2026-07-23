@@ -19,14 +19,19 @@ export default function CommercialActivite() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user, hasAccessToDashboard } = useAuth();
-  const tabParam = searchParams.get('tab') || 'sales';
-  // L'onglet ASUS suit son propre toggle — un accès direct par URL sans
-  // autorisation retombe sur Activité Sales plutôt que d'exposer la page.
+  // "commercial-activite" seul dans dashboards = accès complet (Sales/TLM/
+  // ASUS si autorisé) ; "commercial-activite-asus" seul = périmètre restreint
+  // à ce seul onglet, sans jamais voir Sales/TLM (hasAccessToDashboard traite
+  // les deux comme équivalents pour ATTEINDRE la page — la distinction pour
+  // savoir QUELS onglets montrer se fait ici, en lisant dashboards en direct).
+  const isPrivileged = ['admin', 'directeur'].includes(user?.role);
+  const generalAllowed = isPrivileged || !!user?.dashboards?.includes('commercial-activite');
   const asusAllowed = hasAccessToDashboard(user, 'commercial-activite-asus');
-  const tab = tabParam === 'asus' && !asusAllowed ? 'sales' : tabParam;
+  const subTabs = DASHBOARD_TABS['commercial-activite'].filter(t => t.id === 'asus' ? asusAllowed : generalAllowed);
+  const tabParam = searchParams.get('tab');
+  const tab = subTabs.some(t => t.id === tabParam) ? tabParam : (subTabs[0]?.id || 'sales');
   const isSales = tab === 'sales';
   const isAsus  = tab === 'asus';
-  const subTabs = DASHBOARD_TABS['commercial-activite'].filter(t => t.id !== 'asus' || asusAllowed);
 
   const [collab, setCollab] = useState('Tous');
   const [extractOpen, setExtractOpen] = useState(false);
@@ -39,9 +44,12 @@ export default function CommercialActivite() {
   const collabRef = useRef(collab);
   collabRef.current = collab;
 
+  // Garde l'URL synchronisée avec le tab réellement affiché — couvre le cas
+  // d'un ?tab= absent, invalide, ou plus autorisé (ex. accès révoqué pendant
+  // que la page était déjà ouverte).
   useEffect(() => {
-    if (tabParam === 'asus' && !asusAllowed) navigate('/commercial-activite?tab=sales', { replace: true });
-  }, [tabParam, asusAllowed]); // eslint-disable-line
+    if (tabParam !== tab) navigate(`/commercial-activite?tab=${tab}`, { replace: true });
+  }, [tabParam, tab]); // eslint-disable-line
 
   // Auto-fetch quand la période principale change
   useEffect(() => {
