@@ -12,6 +12,7 @@
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid rgba(227,225,216,0.08);
+  transition: transform 0.25s ease;
 }
 
 .left { display: flex; align-items: center; gap: 14px; }
@@ -112,31 +113,6 @@
   flex-shrink: 0;
 }
 
-/* ─── Sélecteur mobile (remplace .nav en dessous de 640px) ──────────────────── */
-.mobileNavWrap { position: relative; display: none; }
-
-.mobileNavBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: rgba(227,225,216,0.85);
-  background: rgba(227,225,216,0.06);
-  border: 1px solid rgba(227,225,216,0.15);
-  border-radius: 7px;
-  padding: 5px 9px;
-  cursor: pointer;
-  font-family: var(--font);
-  max-width: 55vw;
-}
-.mobileNavBtn span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.mobileNavBtn svg:first-child { flex-shrink: 0; color: rgba(227,225,216,0.5); }
-
 /* ─── Avatar button + dropdown ───────────────────────────────────────────────── */
 .right { position: relative; }
 
@@ -210,10 +186,17 @@
   .logo   { height: 20px; }
   .divider { display: none; }
   /* Rangée de liens illisible une fois tronquée, et ne passe pas à l'échelle
-     à 4-5 dashboards : remplacée par le sélecteur dropdown ci-dessous. */
-  .nav         { display: none; }
-  .mobileNavWrap { display: block; }
+     à 4-5 dashboards : la navigation entre pages passe par BottomNav
+     (bouton "Page") sur mobile. */
+  .nav   { display: none; }
+  /* Idem pour le menu compte : repris par BottomNav (bouton "Menu"). */
+  .right { display: none; }
   .submenu { min-width: 170px; }
+
+  /* Masquée tant que le hero (titre + période analysée) est visible ; ne
+     réapparaît qu'au scroll (cf. AppShell/scrolled dans App.jsx). */
+  .topbar        { transform: translateY(-100%); }
+  .topbarVisible { transform: translateY(0); }
 }
 
 .dropUser {

@@ -91,6 +91,9 @@
   color: rgba(255,249,147,0.4);
 }
 
+/* Strip d'onglets scrollable — mobile uniquement (voir media query 640px) */
+.subTabStrip { display: none; }
+
 /* Actions : boutons style dashboard-v4 */
 .heroActions {
   display: flex;
@@ -384,6 +387,21 @@
 .compareBtnX:hover { color: var(--soleil); background: rgba(255,249,147,0.08); }
 
 /* ─── Contenu principal ──────────────────────────────────────────────────────── */
+.contentSlide { min-width: 0; }
+
+@media (max-width: 640px) {
+  .contentSlide {
+    animation: contentSlideIn 0.45s cubic-bezier(0.16,1,0.3,1);
+  }
+}
+@keyframes contentSlideIn {
+  from { transform: translateX(calc(var(--slide-dir, 1) * 36px)); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contentSlide { animation: none; }
+}
+
 .content {
   padding: 28px 28px 48px;
   max-width: 1440px;
@@ -421,4 +439,46 @@
     flex-wrap: wrap;
   }
   .content    { padding: 16px 14px 36px; }
+
+  /* Période/Comparer repris par BottomNav (boutons Filtre/Comparer) */
+  .mobileHidden { display: none; }
+
+  .subTabStrip {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-top: 8px;
+    /* Marge latérale généreuse : même le premier/dernier onglet doit pouvoir
+       atteindre le centre exact de l'écran au clic (scrollIntoView center),
+       pas juste "aussi centré que possible" limité par le bord du scroll. */
+    padding: 0 40vw 2px;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 40vw;
+    /* Dégradé sur les bords : signale qu'il y a plus à voir en scrollant,
+       plutôt qu'une liste qui semble juste s'arrêter net. */
+    -webkit-mask-image: linear-gradient(to right, transparent, black 14px, black calc(100% - 22px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 14px, black calc(100% - 22px), transparent);
+  }
+  .subTabStrip::-webkit-scrollbar { display: none; }
+  .subTabPill {
+    flex-shrink: 0;
+    scroll-snap-align: start;
+    padding: 6px 14px;
+    border-radius: 99px;
+    border: 1px solid rgba(255,249,147,0.2);
+    background: rgba(255,249,147,0.05);
+    color: rgba(255,249,147,0.55);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .subTabPillActive {
+    background: var(--soleil);
+    color: var(--myrtille);
+    border-color: var(--soleil);
+  }
 }

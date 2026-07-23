@@ -5,16 +5,14 @@ import { DASHBOARD_ROUTES, DASHBOARD_TABS, DASHBOARD_DEFAULT_TAB } from '../../d
 import logoSun from '../../assets/logo/logo-full-sun.svg';
 import styles from './Topbar.module.css';
 
-export default function Topbar() {
+export default function Topbar({ scrolled = false }) {
   const { user, logout, hasAccessToDashboard } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState(null); // dashboardId du submenu ouvert
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const dropRef = useRef(null);
   const submenuRef = useRef(null);
-  const mobileNavRef = useRef(null);
   const accessible = DASHBOARDS.filter(d => user?.dashboards?.includes(d.id));
 
   // Fermer dropdown utilisateur si clic extérieur
@@ -22,21 +20,10 @@ export default function Topbar() {
     function handler(e) {
       if (dropRef.current && !dropRef.current.contains(e.target)) setDropdownOpen(false);
       if (submenuRef.current && !submenuRef.current.contains(e.target)) setOpenSubmenu(null);
-      if (mobileNavRef.current && !mobileNavRef.current.contains(e.target)) setMobileNavOpen(false);
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  // Liste plate Accueil + dashboards accessibles — utilisée par le sélecteur
-  // mobile : sur petit écran, la rangée horizontale de liens devient illisible
-  // (tronquée) et ne passe pas à l'échelle à 4-5 dashboards. On reprend le
-  // même principe que le dropdown "Choisir une vue" des onglets, éprouvé.
-  const mobileNavItems = [
-    ...(hasAccessToDashboard(user, 'home') ? [{ id: 'home', label: 'Accueil', to: '/' }] : []),
-    ...accessible.map(d => ({ id: d.id, label: d.label, to: `${DASHBOARD_ROUTES[d.id]}?tab=${DASHBOARD_DEFAULT_TAB[d.id] || ''}` })),
-  ];
-  const currentMobileItem = mobileNavItems.find(it => it.id === 'home' ? location.pathname === '/' : location.pathname === DASHBOARD_ROUTES[it.id]) || mobileNavItems[0];
 
   function handleLogout() {
     logout();
@@ -67,7 +54,7 @@ export default function Topbar() {
     : 'U';
 
   return (
-    <header className={styles.topbar}>
+    <header className={`${styles.topbar} ${scrolled ? styles.topbarVisible : ''}`}>
       <div className={styles.left}>
         <img src={logoSun} alt="Mon Ambassadeur" className={styles.logo} />
         <div className={styles.divider} />
@@ -143,55 +130,6 @@ export default function Topbar() {
             );
           })}
         </nav>
-
-        {/* Sélecteur mobile : remplace la rangée de liens (tronquée, illisible
-            en dessous de 640px et non scalable à 4-5 dashboards) par un bouton
-            + dropdown, même principe que "Choisir une vue" ci-dessus. */}
-        <div className={styles.mobileNavWrap} ref={mobileNavRef}>
-          <button
-            className={styles.mobileNavBtn}
-            onClick={() => setMobileNavOpen(o => !o)}
-            type="button"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-              <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
-            </svg>
-            <span>{currentMobileItem?.label || 'Menu'}</span>
-            <svg
-              width="9" height="9" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2.5"
-              strokeLinecap="round" strokeLinejoin="round"
-              className={mobileNavOpen ? styles.chevronOpen : styles.chevron}
-            >
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-
-          {mobileNavOpen && (
-            <div className={styles.submenu} style={{ left: 0 }}>
-              <div className={styles.submenuLabel}>Tableaux de bord</div>
-              {mobileNavItems.map(it => {
-                const isItemActive = currentMobileItem?.id === it.id;
-                return (
-                  <NavLink
-                    key={it.id}
-                    to={it.to}
-                    end={it.id === 'home'}
-                    className={`${styles.submenuItem} ${isItemActive ? styles.submenuItemActive : ''}`}
-                    onClick={() => setMobileNavOpen(false)}
-                  >
-                    {isItemActive
-                      ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      : <span className={styles.submenuDot} />
-                    }
-                    {it.label}
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
-        </div>
       </div>
 
       <div className={styles.right} ref={dropRef}>

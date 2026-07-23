@@ -203,3 +203,10 @@
 }
 .sendBtn:hover:not(:disabled) { background: rgba(255,249,147,0.14); }
 .sendBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Sur mobile, la barre de navigation fixe en bas (BottomNav, 58px) passerait
+   sous le FAB/panel sans ce décalage. */
+@media (max-width: 640px) {
+  .fab   { bottom: 74px; }
+  .panel { bottom: 132px; right: 12px; left: 12px; width: auto; }
+}

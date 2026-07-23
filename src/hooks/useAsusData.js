@@ -56,5 +56,9 @@ export function useAsusData() {
     recomputeCollab,
     hasData: !!result,
     hasCachedRows: !!rowsCache.current,
+    // Lignes brutes — utilisées par le graphe d'évolution, qui a sa propre
+    // fenêtre glissante (7j/4sem/6mois) indépendante du filtre de période
+    // de la page.
+    rows: rowsCache.current,
   };
 }

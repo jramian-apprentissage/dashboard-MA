@@ -1,10 +1,14 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth, DASHBOARDS } from './contexts/AuthContext';
 import { DASHBOARD_ROUTES } from './data/dashboardTabs';
 import { PeriodProvider } from './contexts/PeriodContext';
+import { ExtraFiltersProvider } from './contexts/ExtraFiltersContext';
 import Topbar from './components/layout/Topbar';
+import BottomNav from './components/layout/BottomNav';
 import AIChat from './components/ui/AIChat';
 import PageTracker from './components/PageTracker';
+import styles from './App.module.css';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
@@ -43,13 +47,31 @@ function RequireAdmin({ children }) {
   return children;
 }
 
+// Seuil (px) au-delà duquel on considère que le hero (titre + période
+// analysée) a défilé hors de vue. Approximatif — pas d'IntersectionObserver
+// par page pour rester simple — mais suffisant : toutes les heroes mobiles
+// font environ cette hauteur (min-height: 130px, cf. DashboardLayout.module.css).
+const HERO_SCROLL_THRESHOLD = 90;
+
 function AppShell({ children }) {
+  // Sur mobile, l'entête (logo) reste masqué tant que le hero est visible,
+  // et ne réapparaît qu'une fois qu'on a scrollé au-delà — laisse le hero
+  // respirer au premier affichage plutôt que de lui voler de la hauteur.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    function onScroll() { setScrolled(window.scrollY > HERO_SCROLL_THRESHOLD); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <div style={{ paddingTop: '52px', minHeight: '100vh', background: '#FBFBFB', display: 'flex', flexDirection: 'column' }}>
+    <div className={`${styles.shell} ${scrolled ? styles.shellScrolled : ''}`}>
       <PageTracker />
-      <Topbar />
+      <Topbar scrolled={scrolled} />
       {children}
       <AIChat />
+      <BottomNav />
     </div>
   );
 }
@@ -58,6 +80,7 @@ export default function App() {
   return (
     <AuthProvider>
       <PeriodProvider>
+      <ExtraFiltersProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -69,6 +92,7 @@ export default function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
+      </ExtraFiltersProvider>
       </PeriodProvider>
     </AuthProvider>
   );

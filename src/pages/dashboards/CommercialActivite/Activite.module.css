@@ -45,6 +45,48 @@
 .tdNum { text-align: right; }
 .tauxPill { font-weight: 700; font-size: 12px; }
 
+/* Stat cliquable dans un tableau — ouvre le détail des qualifications */
+.clickableStat {
+  background: none; border: none; padding: 0; margin: 0; font: inherit;
+  color: var(--myrtille); font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+  text-decoration: underline; text-decoration-color: transparent;
+  transition: text-decoration-color 0.15s;
+}
+.clickableStat:hover { text-decoration-color: var(--myrtille); }
+.clickableStat svg { opacity: 0.55; flex-shrink: 0; }
+.clickableStat:hover svg { opacity: 0.9; }
+
+/* Popup détail qualifications */
+.qualifOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  z-index: 400; display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.qualifPanel {
+  background: #FBFBFB; border: 1px solid rgba(255,255,255,0.6); border-radius: 14px;
+  width: 100%; max-width: 460px; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 24px 64px rgba(38,0,31,0.28); padding: 20px 22px;
+}
+.qualifHeader { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+.qualifTitle { font-size: 15px; font-weight: 700; color: var(--myrtille); }
+.qualifSub { font-size: 11px; color: var(--text2); margin-top: 2px; }
+.qualifClose {
+  background: rgba(38,0,31,0.05); border: 1px solid var(--sable); color: rgba(38,0,31,0.6);
+  border-radius: 8px; padding: 4px 10px; cursor: pointer; font-family: var(--font); font-size: 13px; flex-shrink: 0;
+}
+
+/* Toggle granularité du graphe d'évolution */
+.evoToggle { display: flex; gap: 4px; background: var(--sable-light); border-radius: 99px; padding: 3px; }
+.evoToggleBtn {
+  border: none; background: none; padding: 5px 13px; border-radius: 99px;
+  font-size: 11px; font-weight: 600; color: var(--text2); cursor: pointer; font-family: var(--font);
+  transition: background 0.15s, color 0.15s;
+}
+.evoToggleBtn:hover { color: var(--text); }
+.evoToggleBtnActive { background: var(--myrtille); color: var(--soleil); }
+.cardHeadRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+
 /* Funnel (Taux de transformation nette) */
 .funnelWrap { display: flex; flex-direction: column; gap: 10px; }
 .funnelRow { display: flex; align-items: center; gap: 10px; }

@@ -28,17 +28,21 @@
 .chevron { transition: transform 0.18s; flex-shrink: 0; }
 .chevronOpen { transform: rotate(180deg); }
 
-/* Dropdown */
+/* Dropdown — en portail dans document.body (voir PeriodPicker.jsx), donc
+   position:fixed avec coordonnées viewport calculées en JS plutôt que
+   absolute relatif à .wrap. Sinon un ancêtre avec overflow:auto (ex. la
+   feuille "Filtre" de BottomNav sur mobile) le tronquerait. */
 .dropdown {
-  position: absolute;
-  /* top/bottom et left/right injectés dynamiquement via style inline (auto-flip) */
+  position: fixed;
+  max-height: min(320px, calc(100vh - 20px));
+  overflow-y: auto;
   min-width: 210px;
   background: rgba(28,8,22,0.97);
   border: 1px solid rgba(255,249,147,0.1);
   border-radius: 10px;
   box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
   padding: 5px;
-  z-index: 200;
+  z-index: 500;
   animation: fadeIn 0.12s ease;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);

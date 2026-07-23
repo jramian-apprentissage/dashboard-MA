@@ -1,0 +1,20 @@
+.shell {
+  padding-top: 52px;
+  min-height: 100vh;
+  background: #FBFBFB;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Espace pour ne pas passer sous BottomNav (fixe, 58px + zone sûre iOS).
+   padding-top réactif : l'entête (Topbar) est masquée tant que le hero est
+   visible sur mobile — pas besoin de réserver sa hauteur avant qu'elle
+   réapparaisse au scroll (cf. .shellScrolled et Topbar.module.css). */
+@media (max-width: 640px) {
+  .shell {
+    padding-top: 0;
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0));
+    transition: padding-top 0.25s ease;
+  }
+  .shellScrolled { padding-top: 46px; }
+}

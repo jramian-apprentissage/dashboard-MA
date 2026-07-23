@@ -258,7 +258,93 @@ export function computeAsusData(rows, dateFrom, dateTo, collab = 'Tous') {
 
   const collabs = ['Tous', ...Array.from(new Set(rows.map(r => r.collab).filter(Boolean))).sort()];
 
-  return { sortant, entrant, totalAppels, dureeMoyenneS, bonsAppels, tauxBons, collabs };
+  // Statistiques par collaborateur — tableau du bas + détail au clic sur
+  // "Appels sortants/entrants" (répartition par qualification, réutilise
+  // buildTagCards côté page).
+  const perCollab = {};
+  Array.from(new Set(filtered.map(r => r.collab).filter(Boolean))).forEach(name => {
+    const rowsC = filtered.filter(r => r.collab === name);
+    const totalC = rowsC.length;
+    perCollab[name] = {
+      sortant:       statsDirection(rowsC, 'out', ASUS_TAGS_SORTANT),
+      entrant:       statsDirection(rowsC, 'in',  ASUS_TAGS_ENTRANT),
+      totalAppels:   totalC,
+      dureeMoyenneS: totalC ? Math.round(rowsC.reduce((s, r) => s + (r.duration || 0), 0) / totalC) : 0,
+      bonsAppels:    rowsC.filter(r => (r.duration || 0) >= BON_APPEL_SECONDES).length,
+    };
+  });
+
+  return { sortant, entrant, totalAppels, dureeMoyenneS, bonsAppels, tauxBons, collabs, perCollab };
+}
+
+function dateKeyOf(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function mondayOf(d) {
+  const day = d.getDay() || 7; // dimanche (0) -> 7
+  const m = new Date(d);
+  m.setDate(d.getDate() - day + 1);
+  return m;
+}
+
+// Évolution du nombre d'appels — fenêtre glissante propre au graphe (7
+// derniers jours / 4 dernières semaines / 6 derniers mois), indépendante du
+// sélecteur de période de la page.
+// Dernier jour réellement présent dans l'archive (format DD/MM) — reflète la
+// fraîcheur réelle des données, indépendamment de l'heure de la requête
+// (qui ne dit rien sur la fraîcheur, l'archive n'étant synchronisée qu'1x/j)
+// et du filtre de période courant (qui peut être vide, ex. "Aujourd'hui"
+// avant la synchro du soir).
+export function dernierJourArchive(rows) {
+  if (!rows || !rows.length) return null;
+  const max = rows.reduce((m, r) => (r.date > m ? r.date : m), rows[0].date);
+  const [, mo, d] = max.split('-');
+  return `${d}/${mo}`;
+}
+
+export function computeAsusEvolution(rows, granularity, collab = 'Tous') {
+  const base = collab && collab !== 'Tous' ? rows.filter(r => r.collab === collab) : rows;
+  const today = toMidnight(new Date());
+
+  if (granularity === 'semaine') {
+    const monday = mondayOf(today);
+    const weeks = [];
+    for (let i = 3; i >= 0; i--) {
+      const start = new Date(monday); start.setDate(start.getDate() - i * 7);
+      const end = new Date(start); end.setDate(start.getDate() + 6);
+      weeks.push({ start, end });
+    }
+    return {
+      labels: weeks.map(w => `${String(w.start.getDate()).padStart(2, '0')}/${String(w.start.getMonth() + 1).padStart(2, '0')}`),
+      counts: weeks.map(w => base.filter(r => {
+        const d = parseDate(r.date);
+        return d && d >= w.start && d <= w.end;
+      }).length),
+    };
+  }
+
+  if (granularity === 'mois') {
+    const months = [];
+    for (let i = 5; i >= 0; i--) months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
+    return {
+      labels: months.map(m => m.toLocaleString('fr-FR', { month: 'short' })),
+      counts: months.map(m => base.filter(r => {
+        const d = parseDate(r.date);
+        return d && d.getFullYear() === m.getFullYear() && d.getMonth() === m.getMonth();
+      }).length),
+    };
+  }
+
+  // 'jour' (défaut) — 7 derniers jours, aujourd'hui inclus
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today); d.setDate(d.getDate() - i);
+    days.push(d);
+  }
+  return {
+    labels: days.map(d => d.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' })),
+    counts: days.map(d => base.filter(r => r.date === dateKeyOf(d)).length),
+  };
 }
 
 // ─── RDV Sheet ───────────────────────────────────────────────────────────────

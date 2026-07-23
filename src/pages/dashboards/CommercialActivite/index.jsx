@@ -26,7 +26,7 @@ export default function CommercialActivite() {
   const tab = tabParam === 'asus' && !asusAllowed ? 'sales' : tabParam;
   const isSales = tab === 'sales';
   const isAsus  = tab === 'asus';
-  const tabLabel = DASHBOARD_TABS['commercial-activite'].find(t => t.id === tab)?.label;
+  const subTabs = DASHBOARD_TABS['commercial-activite'].filter(t => t.id !== 'asus' || asusAllowed);
 
   const [collab, setCollab] = useState('Tous');
   const [extractOpen, setExtractOpen] = useState(false);
@@ -118,12 +118,14 @@ export default function CommercialActivite() {
         dashboardId="commercial-activite"
         dashboardName="Activité"
         dashboardNameEmphasis="commerciale"
-        tabLabel={tabLabel}
+        subTabs={subTabs}
+        activeSubTab={tab}
+        onSubTabChange={id => navigate(`/commercial-activite?tab=${id}`)}
         extraFilters={extraFilters}
         activeFilters={activeFilters}
         heroBgSrc={heroActivite}
         heroBgPosition="center 65%"
-        onExtraire={() => setExtractOpen(true)}
+        onExtraire={tab === 'tlm' ? () => setExtractOpen(true) : undefined}
       >
         {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} />}
         {isAsus && <ActiviteASUS selectedCollab={collab} asusData={asusData} />}

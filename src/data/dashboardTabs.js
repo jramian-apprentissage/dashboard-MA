@@ -11,8 +11,8 @@ export const DASHBOARD_TABS = {
   ],
   'commercial-activite': [
     { id: 'sales', label: 'Activité Sales' },
-    { id: 'asus', label: 'ASUS' },
     { id: 'tlm', label: 'Activité TLM' },
+    { id: 'asus', label: 'ASUS' },
   ],
 };
 

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './PeriodPicker.module.css';
 
 const PERIODS = [
@@ -88,21 +89,28 @@ export function getPeriodRange(key, customFrom, customTo) {
 
 export default function PeriodPicker({ value, customFrom, customTo, onChange }) {
   const [open, setOpen] = useState(false);
-  // 'down-left' | 'down-right' | 'up-left' | 'up-right'
-  const [placement, setPlacement] = useState('down-left');
+  // Coordonnées viewport (position:fixed) calculées à l'ouverture
+  const [coords, setCoords] = useState(null);
   const wrapRef = useRef(null);
   const dropRef = useRef(null);
 
-  // Fermer au clic extérieur
+  // Fermer au clic extérieur — le dropdown est en portail (voir plus bas),
+  // donc physiquement hors de wrapRef dans le DOM : il faut aussi vérifier
+  // dropRef, sinon un clic dedans se referme instantanément.
   useEffect(() => {
     function handler(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+      const insideWrap = wrapRef.current?.contains(e.target);
+      const insideDrop = dropRef.current?.contains(e.target);
+      if (!insideWrap && !insideDrop) setOpen(false);
     }
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Auto-flip : calcule si le dropdown sort de l'écran
+  // Position en portail dans document.body (position:fixed, coordonnées
+  // calculées ici) plutôt qu'absolute dans son parent : évite que le menu
+  // soit tronqué par le overflow:auto d'un conteneur ancêtre (ex. la feuille
+  // "Filtre" de BottomNav sur mobile).
   useEffect(() => {
     if (!open || !wrapRef.current) return;
     const rect = wrapRef.current.getBoundingClientRect();
@@ -111,12 +119,15 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
     const dropW = 220;
     const dropH = 320; // estimation max
 
-    const goRight = rect.left + dropW <= vpW;   // peut s'ouvrir à droite (left:0)
+    const goRight = rect.left + dropW <= vpW;   // peut s'ouvrir à droite (left du bouton)
     const goDown  = rect.bottom + dropH <= vpH;  // peut s'ouvrir vers le bas
 
-    const h = goRight ? 'left' : 'right';
-    const v = goDown  ? 'down' : 'up';
-    setPlacement(`${v}-${h}`);
+    setCoords({
+      top:    goDown  ? rect.bottom + 6 : undefined,
+      bottom: !goDown ? vpH - rect.top + 6 : undefined,
+      left:   goRight ? rect.left : undefined,
+      right:  !goRight ? vpW - rect.right : undefined,
+    });
   }, [open]);
 
   const current = ALL_PERIODS.find(p => p.key === value) || ALL_PERIODS.find(p => p.key === 'month');
@@ -136,11 +147,68 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
     onChange({ key: 'custom', ...next });
   }
 
-  // Style dynamique du dropdown selon le placement calculé
-  const dropStyle = {
-    ...(placement.startsWith('down') ? { top: 'calc(100% + 6px)' } : { bottom: 'calc(100% + 6px)' }),
-    ...(placement.endsWith('left')   ? { left: 0 }                  : { right: 0 }),
-  };
+  const dropdown = open && coords && createPortal(
+    <div className={styles.dropdown} style={coords} ref={dropRef}>
+      {PERIODS.map(p => (
+        <button
+          key={p.key}
+          className={`${styles.option} ${value === p.key ? styles.optionActive : ''}`}
+          onClick={() => selectPeriod(p.key)}
+          type="button"
+        >
+          {value === p.key
+            ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.check}><polyline points="20 6 9 17 4 12"/></svg>
+            : <span className={styles.checkPlaceholder} />
+          }
+          {p.label}
+        </button>
+      ))}
+
+      <div className={styles.optionSep} />
+      <button
+        className={`${styles.option} ${value === CUSTOM_PERIOD.key ? styles.optionActive : ''}`}
+        onClick={() => selectPeriod(CUSTOM_PERIOD.key)}
+        type="button"
+      >
+        {value === CUSTOM_PERIOD.key
+          ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.check}><polyline points="20 6 9 17 4 12"/></svg>
+          : <span className={styles.checkPlaceholder} />
+        }
+        {CUSTOM_PERIOD.label}
+      </button>
+
+      {value === 'custom' && (
+        <div className={styles.customRange}>
+          <div className={styles.customRow}>
+            <label className={styles.customLbl}>Du</label>
+            <input
+              type="date"
+              className={styles.customInput}
+              value={customFrom}
+              onChange={e => handleCustomDate('from', e.target.value)}
+            />
+          </div>
+          <div className={styles.customRow}>
+            <label className={styles.customLbl}>Au</label>
+            <input
+              type="date"
+              className={styles.customInput}
+              value={customTo}
+              onChange={e => handleCustomDate('to', e.target.value)}
+            />
+          </div>
+          <button
+            className={styles.applyBtn}
+            onClick={() => setOpen(false)}
+            type="button"
+          >
+            Appliquer
+          </button>
+        </div>
+      )}
+    </div>,
+    document.body,
+  );
 
   return (
     <div className={styles.wrap} ref={wrapRef}>
@@ -161,67 +229,7 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
         </svg>
       </button>
 
-      {open && (
-        <div className={styles.dropdown} style={dropStyle} ref={dropRef}>
-          {PERIODS.map(p => (
-            <button
-              key={p.key}
-              className={`${styles.option} ${value === p.key ? styles.optionActive : ''}`}
-              onClick={() => selectPeriod(p.key)}
-              type="button"
-            >
-              {value === p.key
-                ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.check}><polyline points="20 6 9 17 4 12"/></svg>
-                : <span className={styles.checkPlaceholder} />
-              }
-              {p.label}
-            </button>
-          ))}
-
-          <div className={styles.optionSep} />
-          <button
-            className={`${styles.option} ${value === CUSTOM_PERIOD.key ? styles.optionActive : ''}`}
-            onClick={() => selectPeriod(CUSTOM_PERIOD.key)}
-            type="button"
-          >
-            {value === CUSTOM_PERIOD.key
-              ? <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.check}><polyline points="20 6 9 17 4 12"/></svg>
-              : <span className={styles.checkPlaceholder} />
-            }
-            {CUSTOM_PERIOD.label}
-          </button>
-
-          {value === 'custom' && (
-            <div className={styles.customRange}>
-              <div className={styles.customRow}>
-                <label className={styles.customLbl}>Du</label>
-                <input
-                  type="date"
-                  className={styles.customInput}
-                  value={customFrom}
-                  onChange={e => handleCustomDate('from', e.target.value)}
-                />
-              </div>
-              <div className={styles.customRow}>
-                <label className={styles.customLbl}>Au</label>
-                <input
-                  type="date"
-                  className={styles.customInput}
-                  value={customTo}
-                  onChange={e => handleCustomDate('to', e.target.value)}
-                />
-              </div>
-              <button
-                className={styles.applyBtn}
-                onClick={() => setOpen(false)}
-                type="button"
-              >
-                Appliquer
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      {dropdown}
     </div>
   );
 }

@@ -135,5 +135,9 @@ export function useSalesData() {
     hasData: !!result,
     hasRDV: !!rdvResult,
     hasCachedRows: !!rowsCache.current,
+    // Lignes brutes — sert à afficher la vraie fraîcheur de l'archive
+    // (dernier jour synchronisé), indépendante de l'heure de la requête
+    // et du filtre de période courant (qui peut légitimement être vide).
+    rows: rowsCache.current,
   };
 }

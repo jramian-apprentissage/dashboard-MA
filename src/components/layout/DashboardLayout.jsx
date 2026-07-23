@@ -1,6 +1,7 @@
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import PeriodPicker from '../ui/PeriodPicker';
 import { usePeriod } from '../../contexts/PeriodContext';
+import { useExtraFilters } from '../../contexts/ExtraFiltersContext';
 import defaultHeroBg from '../../assets/bg.svg';
 import styles from './DashboardLayout.module.css';
 
@@ -30,7 +31,9 @@ function buildPeriodLabel(key, customFrom, customTo) {
 export default function DashboardLayout({
   dashboardName,
   dashboardNameEmphasis,
-  tabLabel,
+  subTabs = [],
+  activeSubTab,
+  onSubTabChange,
   children,
   extraFilters,
   activeFilters = [],
@@ -38,7 +41,39 @@ export default function DashboardLayout({
   heroBgPosition = 'center 55%',
   onExtraire,
 }) {
-  const [searchParams] = useSearchParams();
+  const tabLabel = subTabs.find(t => t.id === activeSubTab)?.label;
+
+  // Sur mobile, extraFilters (ex. le sélecteur collaborateur) migre vers la
+  // feuille "Filtre" de BottomNav plutôt que d'encombrer le hero — on
+  // l'enregistre ici pour que BottomNav (rendu hors de cet arbre) puisse le
+  // restituer.
+  const { setNode: setExtraFiltersNode } = useExtraFilters();
+  useEffect(() => {
+    setExtraFiltersNode(extraFilters ?? null);
+    return () => setExtraFiltersNode(null);
+  }, [extraFilters, setExtraFiltersNode]);
+
+  // Centre l'onglet actif dans la strip scrollable — renforce "on peut
+  // scroller" en laissant apparaître un bout des onglets voisins des deux
+  // côtés, plutôt que de coller l'onglet actif contre un bord.
+  const activePillRef = useRef(null);
+  useEffect(() => {
+    activePillRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [activeSubTab]);
+
+  // Direction du glissement de contenu (droite→gauche si on avance dans la
+  // liste d'onglets, inverse si on recule) — reprend la métaphore "swipe"
+  // déjà posée par la strip scrollable, pour le corps de la page aussi.
+  const prevSubTabRef = useRef(activeSubTab);
+  const [slideDir, setSlideDir] = useState(1);
+  useEffect(() => {
+    if (prevSubTabRef.current !== activeSubTab) {
+      const prevIdx = subTabs.findIndex(t => t.id === prevSubTabRef.current);
+      const nextIdx = subTabs.findIndex(t => t.id === activeSubTab);
+      if (prevIdx !== -1 && nextIdx !== -1) setSlideDir(nextIdx > prevIdx ? 1 : -1);
+      prevSubTabRef.current = activeSubTab;
+    }
+  }, [activeSubTab, subTabs]);
 
   const {
     periodKey, customFrom, customTo, onChange,
@@ -73,19 +108,45 @@ export default function DashboardLayout({
               <span className={styles.subtitlePeriod}>{subtitle}</span>
             </p>
             {tabLabel && <p className={styles.tabBadge}>{tabLabel}</p>}
+
+            {/* Onglets scrollables horizontalement — mobile uniquement, sur
+                desktop c'est le popup "Choisir une vue" du Topbar qui gère
+                la bascule entre onglets. Remplace le dropdown de page qui,
+                lui, ne descendait jamais jusqu'au choix du sous-onglet. */}
+            {subTabs.length > 1 && (
+              <div className={styles.subTabStrip}>
+                {subTabs.map(t => (
+                  <button
+                    key={t.id}
+                    ref={t.id === activeSubTab ? activePillRef : null}
+                    type="button"
+                    className={`${styles.subTabPill} ${t.id === activeSubTab ? styles.subTabPillActive : ''}`}
+                    onClick={() => onSubTabChange?.(t.id)}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Tous les contrôles regroupés à droite en bas */}
+          {/* Tous les contrôles regroupés à droite en bas — période et
+              comparaison masquées sur mobile, reprises par BottomNav
+              (boutons Filtre/Comparer) où elles ont plus de place. */}
           <div className={styles.heroBottom}>
             <div className={styles.heroActions}>
-              {extraFilters}
+              <div className={styles.mobileHidden}>
+                {extraFilters}
+              </div>
 
-              <PeriodPicker
-                value={periodKey}
-                customFrom={customFrom}
-                customTo={customTo}
-                onChange={onChange}
-              />
+              <div className={styles.mobileHidden}>
+                <PeriodPicker
+                  value={periodKey}
+                  customFrom={customFrom}
+                  customTo={customTo}
+                  onChange={onChange}
+                />
+              </div>
 
               {onExtraire && (
                 <button
@@ -102,7 +163,7 @@ export default function DashboardLayout({
                 </button>
               )}
 
-              <div className={styles.compareWrap}>
+              <div className={`${styles.compareWrap} ${styles.mobileHidden}`}>
                 <button
                   className={`${styles.heroBtn} ${compareActive ? styles.heroBtnActive : ''}`}
                   onClick={toggleCompare}
@@ -135,7 +196,9 @@ export default function DashboardLayout({
 
       {/* ── Contenu principal ── */}
       <main className={styles.content}>
-        {children}
+        <div key={activeSubTab} className={styles.contentSlide} style={{ '--slide-dir': slideDir }}>
+          {children}
+        </div>
       </main>
     </div>
   );

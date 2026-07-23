@@ -8,7 +8,7 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import Loader from '../../../components/ui/Loader';
-import { TAG_CATEGORIES } from '../../../services/sheetsParser';
+import { TAG_CATEGORIES, dernierJourArchive } from '../../../services/sheetsParser';
 import DonutChart from '../../../components/ui/DonutChart';
 import styles from './Activite.module.css';
 
@@ -92,12 +92,11 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   const rdvResult = salesData?.rdvResult ?? null;
 
   const kpis = hasData ? buildKPIs(salesData.result, rdvResult, compareResult) : null;
-  const trancheRows = hasData
-    ? salesData.result.tranches.map(row => ({
-        ...row,
-        rdv: rdvResult?.byHour != null ? (rdvResult.byHour[row.t] ?? 0) : row.rdv,
-      }))
-    : [];
+  // RDV par tranche horaire : uniquement le tag Ringover "OK" (row.rdv, déjà
+  // calculé par computeSalesData) — pas le fichier RDV externe. Décision
+  // explicite : la fiabilité de ce chiffre dépend du bon tagging Ringover
+  // par les collaborateurs, pas d'une source externe à maintenir.
+  const trancheRows = hasData ? salesData.result.tranches : [];
 
   const trancheRowsRef = useRef(trancheRows);
   trancheRowsRef.current = trancheRows;
@@ -129,7 +128,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       )}
       {hasData && salesData.lastFetched && (
         <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — {salesData.result.total.toLocaleString('fr-FR')} appels chargés · MAJ {salesData.lastFetched.toLocaleTimeString('fr-FR')}
+          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — {salesData.result.total.toLocaleString('fr-FR')} appels chargés · MAJ arrêtée au {dernierJourArchive(salesData.rows) || '—'}
           {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
         </div>
       )}
