@@ -87,10 +87,16 @@ export function AuthProvider({ children }) {
     return USERS.map(({ password: _, ...u }) => u);
   }
 
-  // admin et directeur ont accès à tous les dashboards implicitement
+  // admin et directeur ont accès à tous les dashboards implicitement.
+  // On relit toujours USERS (le roster vivant) plutôt que u.dashboards : `u`
+  // est souvent le `user` de session, figé au login et stocké dans
+  // localStorage — sans ça, un compte déjà connecté ne voit jamais un accès
+  // révoqué après coup par l'admin, même après un rechargement de page.
   function hasAccessToDashboard(u, dashId) {
-    if (['admin', 'directeur'].includes(u?.role)) return true;
-    return u?.dashboards?.includes(dashId) ?? false;
+    if (!u) return false;
+    if (['admin', 'directeur'].includes(u.role)) return true;
+    const live = USERS.find(x => x.id === u.id);
+    return live?.dashboards?.includes(dashId) ?? false;
   }
 
   function createUser(userData) {

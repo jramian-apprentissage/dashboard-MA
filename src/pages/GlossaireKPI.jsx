@@ -15,11 +15,11 @@ const DASH_COLORS = {
 };
 
 export default function GlossaireKPI() {
-  const { user } = useAuth();
+  const { user, hasAccessToDashboard } = useAuth();
   const [search, setSearch] = useState('');
   const [filterDash, setFilterDash] = useState('all');
 
-  const accessible = DASHBOARDS.filter(d => user?.dashboards?.includes(d.id));
+  const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
   const accessibleIds = accessible.map(d => d.id);
 
   // Termes visibles = ceux dont au moins un dashboard est accessible à l'utilisateur

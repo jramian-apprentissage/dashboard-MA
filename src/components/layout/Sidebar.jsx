@@ -9,7 +9,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const accessible = DASHBOARDS.filter(d => user?.dashboards?.includes(d.id));
+  const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
 
   const currentTab = searchParams.get('tab');
 

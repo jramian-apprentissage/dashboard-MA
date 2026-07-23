@@ -13,7 +13,7 @@ export default function Topbar({ scrolled = false }) {
   const [openSubmenu, setOpenSubmenu] = useState(null); // dashboardId du submenu ouvert
   const dropRef = useRef(null);
   const submenuRef = useRef(null);
-  const accessible = DASHBOARDS.filter(d => user?.dashboards?.includes(d.id));
+  const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
 
   // Fermer dropdown utilisateur si clic extérieur
   useEffect(() => {

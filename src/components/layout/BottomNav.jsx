@@ -45,7 +45,7 @@ export default function BottomNav() {
 
   if (!user) return null; // page de login
 
-  const accessible = DASHBOARDS.filter(d => user?.dashboards?.includes(d.id));
+  const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
   const pageItems = [
     ...(hasAccessToDashboard(user, 'home') ? [{ id: 'home', label: 'Accueil', to: '/' }] : []),
     ...accessible.map(d => ({ id: d.id, label: d.label, to: `${DASHBOARD_ROUTES[d.id]}?tab=${DASHBOARD_DEFAULT_TAB[d.id] || ''}` })),

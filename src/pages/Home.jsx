@@ -39,9 +39,9 @@ const ARROW = (
 // n'est branchée pour la générer. Voir NotConnected pour l'état affiché.
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, hasAccessToDashboard } = useAuth();
   const navigate = useNavigate();
-  const accessible = DASHBOARDS.filter(d => user?.dashboards?.includes(d.id));
+  const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
 
   const today = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
