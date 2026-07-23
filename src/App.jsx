@@ -8,6 +8,7 @@ import Topbar from './components/layout/Topbar';
 import BottomNav from './components/layout/BottomNav';
 import AIChat from './components/ui/AIChat';
 import PageTracker from './components/PageTracker';
+import { LoaderMark } from './components/ui/Loader';
 import styles from './App.module.css';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -76,21 +77,39 @@ function AppShell({ children }) {
   );
 }
 
+// Le temps que /me réponde (vérification du token existant contre le
+// backend), on n'affiche rien de définitif : ni les routes protégées (le
+// user n'est pas encore connu → redirection prématurée vers /login), ni la
+// page elle-même (flash de contenu qui disparaît aussitôt).
+function AuthGate({ children }) {
+  const { ready } = useAuth();
+  if (!ready) {
+    return (
+      <div className={styles.authGate}>
+        <LoaderMark size={48} />
+      </div>
+    );
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <PeriodProvider>
       <ExtraFiltersProvider>
       <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<RequireAuth><RequireHome><AppShell><Home /></AppShell></RequireHome></RequireAuth>} />
-          <Route path="/glossaire" element={<RequireAuth><AppShell><GlossaireKPI /></AppShell></RequireAuth>} />
-          <Route path="/admin" element={<RequireAuth><RequireAdmin><AppShell><Admin /></AppShell></RequireAdmin></RequireAuth>} />
-          <Route path="/commercial-rc" element={<RequireAuth><RequireDashboard id="commercial-rc"><AppShell><CommercialRC /></AppShell></RequireDashboard></RequireAuth>} />
-          <Route path="/commercial-activite" element={<RequireAuth><RequireDashboard id="commercial-activite"><AppShell><CommercialActivite /></AppShell></RequireDashboard></RequireAuth>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AuthGate>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<RequireAuth><RequireHome><AppShell><Home /></AppShell></RequireHome></RequireAuth>} />
+            <Route path="/glossaire" element={<RequireAuth><AppShell><GlossaireKPI /></AppShell></RequireAuth>} />
+            <Route path="/admin" element={<RequireAuth><RequireAdmin><AppShell><Admin /></AppShell></RequireAdmin></RequireAuth>} />
+            <Route path="/commercial-rc" element={<RequireAuth><RequireDashboard id="commercial-rc"><AppShell><CommercialRC /></AppShell></RequireDashboard></RequireAuth>} />
+            <Route path="/commercial-activite" element={<RequireAuth><RequireDashboard id="commercial-activite"><AppShell><CommercialActivite /></AppShell></RequireDashboard></RequireAuth>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AuthGate>
       </BrowserRouter>
       </ExtraFiltersProvider>
       </PeriodProvider>

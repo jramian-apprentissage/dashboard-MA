@@ -1,124 +1,135 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { trackEvent } from '../services/tracking';
 
-// Rôles : admin > directeur > responsable
-// admin       — accès à tout (y compris historique connexion à venir)
-// directeur   — accès à tout sauf historique connexion
-// responsable — accès aux dashboards autorisés uniquement
+/* Comptes et droits gérés par le backend (table `users`, routes /api/auth
+   et /api/users) — plus aucun mock en mémoire/localStorage côté frontend.
+   Avant ce changement, la gestion des utilisateurs vivait entièrement dans
+   ce fichier (tableau JS + bricolage localStorage) : un accès révoqué par
+   l'admin sur son poste ne changeait rien pour la personne concernée sur
+   le sien, faute de source de vérité partagée. */
+const API_URL = import.meta.env.VITE_API_URL || 'https://dashboard-ma-backend-production.up.railway.app';
 
-// 'home' vit dans le même tableau `dashboards` que les vrais dashboards :
-// c'est un id comme un autre pour hasAccessToDashboard(). Les utilisateurs
-// 'responsable' existants l'ont explicitement pour ne rien changer à leur
-// comportement actuel (Accueil était visible pour tous jusqu'ici) — Jimmy
-// peut le décocher depuis l'admin si besoin.
-const DEFAULT_USERS = [
-  { id: 1, name: 'Jimmy Ramiandrisoa', email: 'j.ramian@cepremium.fr', password: 'admin123', role: 'admin',       dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
-  { id: 2, name: 'Sophie L.',          email: 'sophie@monambassadeur.com', password: 'pass123', role: 'directeur',   dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
-  { id: 3, name: 'Marc R.',            email: 'marc@monambassadeur.com',   password: 'pass123', role: 'responsable', dashboards: ['home', 'commercial-activite'] },
-  { id: 4, name: 'Julie D.',           email: 'julie@monambassadeur.com',  password: 'pass123', role: 'responsable', dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
-  { id: 5, name: 'ASUS',               email: 'asus@monambassadeur.com',   password: 'admin123', role: 'responsable', dashboards: ['commercial-activite', 'commercial-activite-asus'] },
-];
+const TOKEN_KEY = 'ma_token';
 
-// USERS n'était auparavant qu'une constante en mémoire : les bascules faites
-// dans l'admin (Admin.jsx → updateUserDashboards) semblaient fonctionner
-// (l'UI se met à jour) mais étaient perdues au moindre rechargement de page,
-// qui repartait toujours de DEFAULT_USERS — d'où le décalage "c'est décoché
-// dans le panneau mais le compte a quand même accès". On persiste donc le
-// roster comme la session individuelle (ma_user) l'est déjà.
-const USERS_VERSION = 'v3';
-
-function loadUsers() {
-  try {
-    const stored = localStorage.getItem('ma_users');
-    const version = localStorage.getItem('ma_users_v');
-    if (stored && version === USERS_VERSION) return JSON.parse(stored);
-  } catch {
-    // localStorage indisponible ou JSON corrompu → on repart des défauts
-  }
-  return DEFAULT_USERS.map(u => ({ ...u }));
+function authFetch(path, token, options = {}) {
+  return fetch(`${API_URL}/api${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
 }
-
-function persistUsers() {
-  localStorage.setItem('ma_users', JSON.stringify(USERS));
-  localStorage.setItem('ma_users_v', USERS_VERSION);
-}
-
-const USERS = loadUsers();
-
-const SESSION_VERSION = 'v2';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('ma_user');
-    const version = localStorage.getItem('ma_session_v');
-    if (!stored || version !== SESSION_VERSION) {
-      localStorage.removeItem('ma_user');
-      localStorage.setItem('ma_session_v', SESSION_VERSION);
-      return null;
-    }
-    return JSON.parse(stored);
-  });
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
+  // `ready` distingue "pas encore vérifié" de "pas connecté" — évite un
+  // flash de redirection vers /login le temps que /me réponde alors qu'un
+  // token valide existe déjà.
+  const [ready, setReady] = useState(false);
 
-  function login(email, password) {
-    const found = USERS.find(u => u.email === email && u.password === password);
-    if (!found) return false;
-    const { password: _, ...safe } = found;
-    setUser(safe);
-    localStorage.setItem('ma_user', JSON.stringify(safe));
-    trackEvent(safe.id, safe.name, 'login');
+  // Revérifie systématiquement via /me plutôt que de faire confiance à une
+  // copie locale : c'est ce qui garantit qu'un accès révoqué par l'admin
+  // s'applique dès le prochain chargement de page, sur n'importe quel
+  // appareil, sans reconnexion manuelle.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!token) { setReady(true); return; }
+      try {
+        const res = await authFetch('/auth/me', token);
+        if (cancelled) return;
+        if (res.ok) {
+          setUser(await res.json());
+        } else {
+          setToken(null);
+          localStorage.removeItem(TOKEN_KEY);
+        }
+      } catch {
+        // Backend injoignable : on garde le token, on retentera au prochain montage.
+      } finally {
+        if (!cancelled) setReady(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token]);
+
+  async function login(email, password) {
+    let res;
+    try {
+      res = await authFetch('/auth/login', null, {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+    } catch {
+      return false;
+    }
+    if (!res.ok) return false;
+    const { token: t, user: u } = await res.json();
+    localStorage.setItem(TOKEN_KEY, t);
+    setToken(t);
+    setUser(u);
+    trackEvent(u.id, u.name, 'login');
     return true;
   }
 
   function logout() {
     setUser(null);
-    localStorage.removeItem('ma_user');
+    setToken(null);
+    localStorage.removeItem(TOKEN_KEY);
   }
 
-  function updateUsers(updatedList) {
-    // In a real app this would call an API
-    USERS.length = 0;
-    updatedList.forEach(u => USERS.push(u));
-    persistUsers();
+  async function getAllUsers() {
+    const res = await authFetch('/users', token);
+    if (!res.ok) throw new Error('Impossible de charger les utilisateurs');
+    return res.json();
   }
 
-  function getAllUsers() {
-    return USERS.map(({ password: _, ...u }) => u);
+  async function createUser(userData) {
+    const res = await authFetch('/users', token, { method: 'POST', body: JSON.stringify(userData) });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || 'Création impossible');
+    }
+    return res.json();
   }
 
-  // admin et directeur ont accès à tous les dashboards implicitement.
-  // On relit toujours USERS (le roster vivant) plutôt que u.dashboards : `u`
-  // est souvent le `user` de session, figé au login et stocké dans
-  // localStorage — sans ça, un compte déjà connecté ne voit jamais un accès
-  // révoqué après coup par l'admin, même après un rechargement de page.
+  async function updateUserDashboards(userId, dashboards) {
+    const res = await authFetch(`/users/${userId}`, token, {
+      method: 'PATCH',
+      body: JSON.stringify({ dashboards }),
+    });
+    if (!res.ok) throw new Error('Mise à jour impossible');
+    return res.json();
+  }
+
+  async function deleteUser(userId) {
+    const res = await authFetch(`/users/${userId}`, token, { method: 'DELETE' });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || 'Suppression impossible');
+    }
+  }
+
+  // admin et directeur ont accès à tous les dashboards implicitement. `u`
+  // est toujours l'utilisateur tel que retourné par /me (jamais une copie
+  // figée), donc pas besoin de relire une autre source ici.
   function hasAccessToDashboard(u, dashId) {
     if (!u) return false;
     if (['admin', 'directeur'].includes(u.role)) return true;
-    const live = USERS.find(x => x.id === u.id);
-    return live?.dashboards?.includes(dashId) ?? false;
-  }
-
-  function createUser(userData) {
-    const newUser = { ...userData, id: Date.now() };
-    USERS.push(newUser);
-    persistUsers();
-  }
-
-  function updateUserDashboards(userId, dashboards) {
-    const u = USERS.find(u => u.id === userId);
-    if (u) u.dashboards = dashboards;
-    persistUsers();
-  }
-
-  function deleteUser(userId) {
-    const idx = USERS.findIndex(u => u.id === userId);
-    if (idx !== -1) USERS.splice(idx, 1);
-    persistUsers();
+    return u.dashboards?.includes(dashId) ?? false;
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, getAllUsers, createUser, updateUserDashboards, deleteUser, hasAccessToDashboard }}>
+    <AuthContext.Provider value={{
+      user, ready, login, logout,
+      getAllUsers, createUser, updateUserDashboards, deleteUser,
+      hasAccessToDashboard,
+    }}>
       {children}
     </AuthContext.Provider>
   );

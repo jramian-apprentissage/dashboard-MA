@@ -6,6 +6,15 @@
   flex-direction: column;
 }
 
+.authGate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FBFBFB;
+  color: #26001F;
+}
+
 /* Espace pour ne pas passer sous BottomNav (fixe, 58px + zone sûre iOS).
    padding-top réactif : l'entête (Topbar) est masquée tant que le hero est
    visible sur mobile — pas besoin de réserver sa hauteur avant qu'elle

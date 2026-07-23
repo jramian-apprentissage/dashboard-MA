@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, DASHBOARDS, HOME_PAGE, ASUS_TAB, ROLES, roleLabel } from '../contexts/AuthContext';
 
@@ -18,7 +18,9 @@ function formatTs(iso) {
 export default function Admin() {
   const { user, getAllUsers, createUser, updateUserDashboards, deleteUser } = useAuth();
   const navigate = useNavigate();
-  const [users, setUsers] = useState(getAllUsers());
+  const [users, setUsers] = useState([]);
+  const [loadError, setLoadError] = useState('');
+  const [actionError, setActionError] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'responsable', dashboards: [] });
   const [formError, setFormError] = useState('');
@@ -35,30 +37,52 @@ export default function Admin() {
     setHistoryEvents([]);
   }
 
+  useEffect(() => {
+    if (!['admin', 'directeur'].includes(user?.role)) return;
+    refresh();
+  }, [user]);
+
   if (!['admin', 'directeur'].includes(user?.role)) {
     navigate('/');
     return null;
   }
 
-  function refresh() { setUsers(getAllUsers()); }
+  async function refresh() {
+    try {
+      setUsers(await getAllUsers());
+      setLoadError('');
+    } catch (err) {
+      setLoadError(err.message);
+    }
+  }
 
-  function toggleDashboard(userId, dashId) {
+  async function toggleDashboard(userId, dashId) {
     const u = users.find(u => u.id === userId);
     const current = u?.dashboards || [];
     const updated = current.includes(dashId)
       ? current.filter(d => d !== dashId)
       : [...current, dashId];
-    updateUserDashboards(userId, updated);
-    refresh();
+    try {
+      await updateUserDashboards(userId, updated);
+      await refresh();
+      setActionError('');
+    } catch (err) {
+      setActionError(err.message);
+    }
   }
 
-  function handleDelete(userId) {
+  async function handleDelete(userId) {
     if (userId === user.id) return;
-    deleteUser(userId);
-    refresh();
+    try {
+      await deleteUser(userId);
+      await refresh();
+      setActionError('');
+    } catch (err) {
+      setActionError(err.message);
+    }
   }
 
-  function handleCreate(e) {
+  async function handleCreate(e) {
     e.preventDefault();
     setFormError('');
     if (!form.name || !form.email || !form.password) {
@@ -66,10 +90,14 @@ export default function Admin() {
       return;
     }
     const autoAllDash = ['admin', 'directeur'].includes(form.role) ? TOGGLEABLE_PAGES.map(d => d.id) : form.dashboards;
-    createUser({ ...form, dashboards: autoAllDash });
-    setShowModal(false);
-    setForm({ name: '', email: '', password: '', role: 'responsable', dashboards: [] });
-    refresh();
+    try {
+      await createUser({ ...form, dashboards: autoAllDash });
+      setShowModal(false);
+      setForm({ name: '', email: '', password: '', role: 'responsable', dashboards: [] });
+      await refresh();
+    } catch (err) {
+      setFormError(err.message);
+    }
   }
 
   return (
@@ -93,6 +121,10 @@ export default function Admin() {
             Créer un utilisateur
           </button>
         </div>
+
+        {(loadError || actionError) && (
+          <div className={styles.formError} style={{ marginBottom: 12 }}>{loadError || actionError}</div>
+        )}
 
         {/* Table */}
         <div className={styles.table}>
