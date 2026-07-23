@@ -16,6 +16,7 @@ const USERS = [
   { id: 2, name: 'Sophie L.',          email: 'sophie@monambassadeur.com', password: 'pass123', role: 'directeur',   dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
   { id: 3, name: 'Marc R.',            email: 'marc@monambassadeur.com',   password: 'pass123', role: 'responsable', dashboards: ['home', 'commercial-activite'] },
   { id: 4, name: 'Julie D.',           email: 'julie@monambassadeur.com',  password: 'pass123', role: 'responsable', dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
+  { id: 5, name: 'ASUS',               email: 'asus@monambassadeur.com',   password: 'admin123', role: 'responsable', dashboards: ['home', 'commercial-activite', 'commercial-activite-asus'] },
 ];
 
 const SESSION_VERSION = 'v2';
