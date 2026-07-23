@@ -75,6 +75,53 @@ export default function DashboardLayout({
     }
   }, [activeSubTab, subTabs]);
 
+  // Swipe horizontal sur le corps de la page pour changer d'onglet, sur
+  // mobile — même logique que la strip du haut. Purement passif : on ne fait
+  // que lire les positions de début/fin du toucher, sans jamais appeler
+  // preventDefault, donc le scroll vertical normal n'est pas affecté. On
+  // ignore le geste s'il démarre sur un élément qui a lui-même du scroll
+  // horizontal (tableaux avec overflow-x, etc.) pour ne pas leur voler le
+  // toucher.
+  const mainRef = useRef(null);
+  const touchStartRef = useRef(null);
+  const SWIPE_THRESHOLD = 60;
+
+  function startsInsideHorizontalScroller(target) {
+    let node = target;
+    while (node && node !== mainRef.current) {
+      if (node.scrollWidth > node.clientWidth + 1) {
+        const overflowX = window.getComputedStyle(node).overflowX;
+        if (overflowX === 'auto' || overflowX === 'scroll') return true;
+      }
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  function handleTouchStart(e) {
+    if (subTabs.length < 2 || window.innerWidth > 640) return;
+    if (startsInsideHorizontalScroller(e.target)) return;
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+  }
+
+  function handleTouchEnd(e) {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    const dt = Date.now() - start.time;
+    const isHorizontal = Math.abs(dx) > Math.abs(dy) * 1.5;
+    if (!isHorizontal || Math.abs(dx) < SWIPE_THRESHOLD || dt > 600) return;
+
+    const curIdx = subTabs.findIndex(t => t.id === activeSubTab);
+    if (curIdx === -1) return;
+    if (dx < 0 && curIdx < subTabs.length - 1) onSubTabChange?.(subTabs[curIdx + 1].id); // swipe vers la gauche → onglet suivant
+    else if (dx > 0 && curIdx > 0) onSubTabChange?.(subTabs[curIdx - 1].id); // swipe vers la droite → onglet précédent
+  }
+
   const {
     periodKey, customFrom, customTo, onChange,
     compareActive, comparePeriodKey, compareFrom, compareTo,
@@ -195,7 +242,12 @@ export default function DashboardLayout({
       </div>
 
       {/* ── Contenu principal ── */}
-      <main className={styles.content}>
+      <main
+        className={styles.content}
+        ref={mainRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div key={activeSubTab} className={styles.contentSlide} style={{ '--slide-dir': slideDir }}>
           {children}
         </div>
