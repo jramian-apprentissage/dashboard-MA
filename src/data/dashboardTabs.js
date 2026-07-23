@@ -1,6 +1,7 @@
 export const DASHBOARD_ROUTES = {
   'commercial-rc': '/commercial-rc',
   'commercial-activite': '/commercial-activite',
+  asus: '/asus',
 };
 
 export const DASHBOARD_TABS = {
@@ -12,8 +13,8 @@ export const DASHBOARD_TABS = {
   'commercial-activite': [
     { id: 'sales', label: 'Activité Sales' },
     { id: 'tlm', label: 'Activité TLM' },
-    { id: 'asus', label: 'ASUS' },
   ],
+  // asus : pas d'entrée ici — page unique sans sous-onglets (voir Asus.jsx).
 };
 
 export const DASHBOARD_DEFAULT_TAB = {

@@ -3,60 +3,46 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
 import heroActivite from '../../../assets/hero-activite.svg';
 import ActiviteSales from './ActiviteSales';
-import ActiviteASUS from './ActiviteASUS';
 import ActiviteTLM from './ActiviteTLM';
 import CloudTalkExtract from './CloudTalkExtract';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { DASHBOARD_TABS } from '../../../data/dashboardTabs';
 import { useSalesData } from '../../../hooks/useSalesData';
-import { useAsusData } from '../../../hooks/useAsusData';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { useAuth } from '../../../contexts/AuthContext';
 import layoutStyles from '../../../components/layout/DashboardLayout.module.css';
 import { LoaderMark } from '../../../components/ui/Loader';
+
+const subTabs = DASHBOARD_TABS['commercial-activite'];
 
 export default function CommercialActivite() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user, hasAccessToDashboard } = useAuth();
-  // "commercial-activite" seul dans dashboards = accès complet (Sales/TLM/
-  // ASUS si autorisé) ; "commercial-activite-asus" seul = périmètre restreint
-  // à ce seul onglet, sans jamais voir Sales/TLM (hasAccessToDashboard traite
-  // les deux comme équivalents pour ATTEINDRE la page — la distinction pour
-  // savoir QUELS onglets montrer se fait ici, en lisant dashboards en direct).
-  const isPrivileged = ['admin', 'directeur'].includes(user?.role);
-  const generalAllowed = isPrivileged || !!user?.dashboards?.includes('commercial-activite');
-  const asusAllowed = hasAccessToDashboard(user, 'commercial-activite-asus');
-  const subTabs = DASHBOARD_TABS['commercial-activite'].filter(t => t.id === 'asus' ? asusAllowed : generalAllowed);
   const tabParam = searchParams.get('tab');
-  const tab = subTabs.some(t => t.id === tabParam) ? tabParam : (subTabs[0]?.id || 'sales');
+  const tab = subTabs.some(t => t.id === tabParam) ? tabParam : subTabs[0].id;
   const isSales = tab === 'sales';
-  const isAsus  = tab === 'asus';
 
   const [collab, setCollab] = useState('Tous');
   const [extractOpen, setExtractOpen] = useState(false);
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
 
   const salesData = useSalesData();
-  const asusData  = useAsusData();
   const [compareResult, setCompareResult] = useState(null);
 
   const collabRef = useRef(collab);
   collabRef.current = collab;
 
   // Garde l'URL synchronisée avec le tab réellement affiché — couvre le cas
-  // d'un ?tab= absent, invalide, ou plus autorisé (ex. accès révoqué pendant
-  // que la page était déjà ouverte).
+  // d'un ?tab= absent ou invalide.
   useEffect(() => {
     if (tabParam !== tab) navigate(`/commercial-activite?tab=${tab}`, { replace: true });
   }, [tabParam, tab]); // eslint-disable-line
 
   // Auto-fetch quand la période principale change
   useEffect(() => {
+    if (!isSales) return;
     const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
-    if (isSales) salesData.fetchData(from, to, collabRef.current);
-    if (isAsus)  asusData.fetchData(from, to, collabRef.current);
-  }, [periodKey, customFrom, customTo, isSales, isAsus]); // eslint-disable-line
+    salesData.fetchData(from, to, collabRef.current);
+  }, [periodKey, customFrom, customTo, isSales]); // eslint-disable-line
 
   // Recalcul comparaison depuis le cache
   useEffect(() => {
@@ -79,19 +65,10 @@ export default function CommercialActivite() {
         salesData.fetchData(from, to, v);
       }
     }
-    if (isAsus) {
-      if (asusData.hasData) asusData.recomputeCollab(v);
-      else {
-        const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
-        asusData.fetchData(from, to, v);
-      }
-    }
   }
 
   // TLM n'a aucune source réelle (KAVKOM en stand-by) : pas de filtre collab.
-  const collabs = isSales ? (salesData.result?.collabs || ['Tous'])
-    : isAsus ? (asusData.result?.collabs || ['Tous'])
-    : ['Tous'];
+  const collabs = isSales ? (salesData.result?.collabs || ['Tous']) : ['Tous'];
 
   const extraFilters = (
     <>
@@ -109,7 +86,7 @@ export default function CommercialActivite() {
         </select>
       </div>
 
-      {((isSales && salesData.loading) || (isAsus && asusData.loading)) && (
+      {isSales && salesData.loading && (
         <div className={layoutStyles.loadingPill}>
           <LoaderMark size={13} />
           Chargement…
@@ -136,7 +113,6 @@ export default function CommercialActivite() {
         onExtraire={tab === 'tlm' ? () => setExtractOpen(true) : undefined}
       >
         {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} />}
-        {isAsus && <ActiviteASUS selectedCollab={collab} asusData={asusData} />}
         {tab === 'tlm' && <ActiviteTLM selectedCollab={collab} />}
       </DashboardLayout>
 

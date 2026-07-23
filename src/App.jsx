@@ -16,6 +16,7 @@ import Admin from './pages/Admin';
 import GlossaireKPI from './pages/GlossaireKPI';
 import CommercialRC from './pages/dashboards/CommercialRC';
 import CommercialActivite from './pages/dashboards/CommercialActivite';
+import Asus from './pages/dashboards/Asus';
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -107,6 +108,7 @@ export default function App() {
             <Route path="/admin" element={<RequireAuth><RequireAdmin><AppShell><Admin /></AppShell></RequireAdmin></RequireAuth>} />
             <Route path="/commercial-rc" element={<RequireAuth><RequireDashboard id="commercial-rc"><AppShell><CommercialRC /></AppShell></RequireDashboard></RequireAuth>} />
             <Route path="/commercial-activite" element={<RequireAuth><RequireDashboard id="commercial-activite"><AppShell><CommercialActivite /></AppShell></RequireDashboard></RequireAuth>} />
+            <Route path="/asus" element={<RequireAuth><RequireDashboard id="asus"><AppShell><Asus /></AppShell></RequireDashboard></RequireAuth>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthGate>

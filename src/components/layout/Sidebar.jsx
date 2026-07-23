@@ -56,7 +56,7 @@ export default function Sidebar() {
               {/* Lien principal du dashboard */}
               <button
                 className={`${styles.navItem} ${isOnDash ? styles.dashActive : ''}`}
-                onClick={() => navigate(`${DASHBOARD_ROUTES[d.id]}?tab=${defaultTab}`)}
+                onClick={() => navigate(defaultTab ? `${DASHBOARD_ROUTES[d.id]}?tab=${defaultTab}` : DASHBOARD_ROUTES[d.id])}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
                 <span>{d.label}</span>
@@ -68,8 +68,8 @@ export default function Sidebar() {
                 </svg>
               </button>
 
-              {/* Sous-menus — visibles uniquement sur ce dashboard */}
-              {isOnDash && (
+              {/* Sous-menus — visibles uniquement sur ce dashboard (absents pour un dashboard à page unique, ex. ASUS) */}
+              {isOnDash && tabs.length > 0 && (
                 <div className={styles.subMenu}>
                   {tabs.map(t => {
                     const isTabActive = (currentTab === t.id) || (!currentTab && t.id === defaultTab);

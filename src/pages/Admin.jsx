@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth, DASHBOARDS, HOME_PAGE, ASUS_TAB, ROLES, roleLabel } from '../contexts/AuthContext';
+import { useAuth, DASHBOARDS, HOME_PAGE, ROLES, roleLabel } from '../contexts/AuthContext';
 
-// Accueil + dashboards + onglets à accès restreint : même mécanisme de
-// toggle, une seule liste pour piloter à la fois les colonnes du tableau et
-// la checklist de création.
-const TOGGLEABLE_PAGES = [HOME_PAGE, ...DASHBOARDS, ASUS_TAB];
+// Accueil + dashboards : même mécanisme de toggle, une seule liste pour
+// piloter à la fois les colonnes du tableau et la checklist de création.
+const TOGGLEABLE_PAGES = [HOME_PAGE, ...DASHBOARDS];
 import { getHistory, clearHistory } from '../services/tracking';
 import heroBg from '../assets/hero-admin.svg';
 import styles from './Admin.module.css';

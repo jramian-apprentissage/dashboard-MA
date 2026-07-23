@@ -48,7 +48,11 @@ export default function BottomNav() {
   const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
   const pageItems = [
     ...(hasAccessToDashboard(user, 'home') ? [{ id: 'home', label: 'Accueil', to: '/' }] : []),
-    ...accessible.map(d => ({ id: d.id, label: d.label, to: `${DASHBOARD_ROUTES[d.id]}?tab=${DASHBOARD_DEFAULT_TAB[d.id] || ''}` })),
+    ...accessible.map(d => ({
+      id: d.id,
+      label: d.label,
+      to: DASHBOARD_DEFAULT_TAB[d.id] ? `${DASHBOARD_ROUTES[d.id]}?tab=${DASHBOARD_DEFAULT_TAB[d.id]}` : DASHBOARD_ROUTES[d.id],
+    })),
   ];
   const currentPageItem = pageItems.find(it => it.id === 'home' ? location.pathname === '/' : location.pathname === DASHBOARD_ROUTES[it.id]);
 

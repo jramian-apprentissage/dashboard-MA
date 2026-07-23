@@ -70,20 +70,16 @@ export default function Topbar({ scrolled = false }) {
           )}
 
           {accessible.map(d => {
-            // L'onglet ASUS suit son propre toggle (accès à un périmètre
-            // client restreint), distinct de l'autorisation générale sur
-            // le dashboard Activité commerciale.
-            const tabs = (DASHBOARD_TABS[d.id] || []).filter(
-              t => t.id !== 'asus' || hasAccessToDashboard(user, 'commercial-activite-asus'),
-            );
+            const tabs = DASHBOARD_TABS[d.id] || [];
             const hasTabs = tabs.length > 1;
             const isActive = isRouteActive(d.id);
             const isOpen = openSubmenu === d.id;
+            const defaultTab = DASHBOARD_DEFAULT_TAB[d.id];
 
             return (
               <div key={d.id} className={styles.navItem} ref={isOpen ? submenuRef : null}>
                 <NavLink
-                  to={`${DASHBOARD_ROUTES[d.id]}?tab=${DASHBOARD_DEFAULT_TAB[d.id] || ''}`}
+                  to={defaultTab ? `${DASHBOARD_ROUTES[d.id]}?tab=${defaultTab}` : DASHBOARD_ROUTES[d.id]}
                   className={() => `${styles.link} ${isActive ? styles.active : ''} ${hasTabs ? styles.linkWithSub : ''}`}
                   onClick={hasTabs ? (e) => handleDashboardClick(e, d.id) : () => setOpenSubmenu(null)}
                 >

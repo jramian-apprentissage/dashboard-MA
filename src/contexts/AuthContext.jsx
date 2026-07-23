@@ -121,15 +121,7 @@ export function AuthProvider({ children }) {
   function hasAccessToDashboard(u, dashId) {
     if (!u) return false;
     if (['admin', 'directeur'].includes(u.role)) return true;
-    if (u.dashboards?.includes(dashId)) return true;
-    // L'onglet ASUS est un périmètre restreint À L'INTÉRIEUR d'Activité
-    // commerciale (voir ASUS_TAB plus bas) : un compte qui n'a QUE ce
-    // sous-accès doit quand même pouvoir atteindre la page (et son lien de
-    // nav), simplement limité à ce seul onglet une fois dedans — géré par
-    // CommercialActivite/index.jsx, qui relit dashboards directement pour
-    // distinguer "accès complet" de "ASUS seul".
-    if (dashId === 'commercial-activite' && u.dashboards?.includes('commercial-activite-asus')) return true;
-    return false;
+    return u.dashboards?.includes(dashId) ?? false;
   }
 
   return (
@@ -148,6 +140,7 @@ export const useAuth = () => useContext(AuthContext);
 export const DASHBOARDS = [
   { id: 'commercial-rc',       label: 'Commercial & Relation Client' },
   { id: 'commercial-activite', label: 'Activité commerciale' },
+  { id: 'asus',                label: 'ASUS' },
 ];
 
 // Accueil suit exactement le même mécanisme d'autorisation que DASHBOARDS
@@ -155,12 +148,6 @@ export const DASHBOARDS = [
 // part : ce n'est pas un dashboard à onglets, la Sidebar ne doit pas le
 // boucler avec DASHBOARD_TABS/DASHBOARD_ROUTES sous peine de casser son rendu.
 export const HOME_PAGE = { id: 'home', label: 'Accueil' };
-
-// Même mécanisme que HOME_PAGE : un id de plus dans user.dashboards, mais qui
-// ne contrôle pas un dashboard entier — seulement l'onglet ASUS à l'intérieur
-// d'Activité commerciale (accès à un périmètre client restreint, distinct de
-// l'autorisation générale sur le dashboard).
-export const ASUS_TAB = { id: 'commercial-activite-asus', label: 'Act. Commerciale — onglet ASUS' };
 
 export const ROLES = [
   { value: 'admin',       label: 'Admin' },
