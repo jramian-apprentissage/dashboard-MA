@@ -11,13 +11,39 @@ import { trackEvent } from '../services/tracking';
 // 'responsable' existants l'ont explicitement pour ne rien changer à leur
 // comportement actuel (Accueil était visible pour tous jusqu'ici) — Jimmy
 // peut le décocher depuis l'admin si besoin.
-const USERS = [
+const DEFAULT_USERS = [
   { id: 1, name: 'Jimmy Ramiandrisoa', email: 'j.ramian@cepremium.fr', password: 'admin123', role: 'admin',       dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
   { id: 2, name: 'Sophie L.',          email: 'sophie@monambassadeur.com', password: 'pass123', role: 'directeur',   dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
   { id: 3, name: 'Marc R.',            email: 'marc@monambassadeur.com',   password: 'pass123', role: 'responsable', dashboards: ['home', 'commercial-activite'] },
   { id: 4, name: 'Julie D.',           email: 'julie@monambassadeur.com',  password: 'pass123', role: 'responsable', dashboards: ['home', 'commercial-rc', 'commercial-activite'] },
-  { id: 5, name: 'ASUS',               email: 'asus@monambassadeur.com',   password: 'admin123', role: 'responsable', dashboards: ['home', 'commercial-activite', 'commercial-activite-asus'] },
+  { id: 5, name: 'ASUS',               email: 'asus@monambassadeur.com',   password: 'admin123', role: 'responsable', dashboards: ['commercial-activite', 'commercial-activite-asus'] },
 ];
+
+// USERS n'était auparavant qu'une constante en mémoire : les bascules faites
+// dans l'admin (Admin.jsx → updateUserDashboards) semblaient fonctionner
+// (l'UI se met à jour) mais étaient perdues au moindre rechargement de page,
+// qui repartait toujours de DEFAULT_USERS — d'où le décalage "c'est décoché
+// dans le panneau mais le compte a quand même accès". On persiste donc le
+// roster comme la session individuelle (ma_user) l'est déjà.
+const USERS_VERSION = 'v3';
+
+function loadUsers() {
+  try {
+    const stored = localStorage.getItem('ma_users');
+    const version = localStorage.getItem('ma_users_v');
+    if (stored && version === USERS_VERSION) return JSON.parse(stored);
+  } catch {
+    // localStorage indisponible ou JSON corrompu → on repart des défauts
+  }
+  return DEFAULT_USERS.map(u => ({ ...u }));
+}
+
+function persistUsers() {
+  localStorage.setItem('ma_users', JSON.stringify(USERS));
+  localStorage.setItem('ma_users_v', USERS_VERSION);
+}
+
+const USERS = loadUsers();
 
 const SESSION_VERSION = 'v2';
 
@@ -54,6 +80,7 @@ export function AuthProvider({ children }) {
     // In a real app this would call an API
     USERS.length = 0;
     updatedList.forEach(u => USERS.push(u));
+    persistUsers();
   }
 
   function getAllUsers() {
@@ -69,16 +96,19 @@ export function AuthProvider({ children }) {
   function createUser(userData) {
     const newUser = { ...userData, id: Date.now() };
     USERS.push(newUser);
+    persistUsers();
   }
 
   function updateUserDashboards(userId, dashboards) {
     const u = USERS.find(u => u.id === userId);
     if (u) u.dashboards = dashboards;
+    persistUsers();
   }
 
   function deleteUser(userId) {
     const idx = USERS.findIndex(u => u.id === userId);
     if (idx !== -1) USERS.splice(idx, 1);
+    persistUsers();
   }
 
   return (
