@@ -2,6 +2,8 @@ import { Bar, Line } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import { useRef, useMemo } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
+import { usePeriod } from '../../../contexts/PeriodContext';
+import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -44,28 +46,8 @@ function makeRdvPlugin(rowsRef) {
   };
 }
 
-// Calcul delta pour comparaison
-function delta(current, ref) {
-  if (!ref || ref === 0) return null;
-  const pct = Math.round(((current - ref) / ref) * 100);
-  return { pct, dir: pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral' };
-}
-function trendCompare(current, ref, fallback) {
-  const d = delta(current, ref);
-  if (!d) return { dir: 'neutral', text: fallback };
-  const sign = d.pct > 0 ? '+' : '';
-  return { dir: d.dir, text: `${sign}${d.pct}% vs période comparée` };
-}
-function trendComparePts(currentPct, refPct, fallback) {
-  if (refPct == null) return { dir: 'neutral', text: fallback };
-  const diff = currentPct - refPct;
-  if (diff === 0) return { dir: 'neutral', text: `= vs période comparée` };
-  const sign = diff > 0 ? '+' : '';
-  return { dir: diff > 0 ? 'up' : 'down', text: `${sign}${diff} pts vs période comparée` };
-}
-
 // KPIs depuis l'archive Ringover (seule source pour cet onglet)
-function buildKPIs(result, rdvResult, compareResult) {
+function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
   const { total, argues, decroche } = result;
   const tauxDec = total > 0 ? Math.round((decroche / total) * 100) : 0;
   const argPct  = total > 0 ? Math.round((argues  / total) * 100) : 0;
@@ -77,9 +59,9 @@ function buildKPIs(result, rdvResult, compareResult) {
   const cmpTauxDec = cmp && cmp.total > 0 ? Math.round((cmp.decroche / cmp.total) * 100) : null;
 
   return [
-    { label: 'Appels émis',              value: total,          unit: '', trend: cmp ? trendCompare(total,   cmp.total,   'Archive Ringover') : { dir: 'neutral', text: 'Archive Ringover' }, color: 'blue' },
-    { label: 'Appels argumentés',        value: argues,         unit: '', trend: cmp ? trendCompare(argues,  cmp.argues,  `${argPct}% du total`)      : { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
-    { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', trend: cmp ? trendComparePts(tauxDec, cmpTauxDec, 'Durée > 30 secondes')    : { dir: 'neutral', text: 'Durée > 30 secondes' },     color: 'accent' },
+    { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Archive Ringover' },        color: 'blue' },
+    { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
+    { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmp ? comparePtsText(tauxDec, cmpTauxDec, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' },     color: 'accent' },
     notConnectedKPI('Taux fiches exploitables', 'aucune notion de fiche qualité côté Ringover', 'amber'),
     { label: 'RDV pris',                 value: rdvPris,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'green' },
     { label: 'Taux RDV honorés',         value: tauxHon,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'purple' },
@@ -90,8 +72,9 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   const mounted = useChartMount();
   const hasData = salesData?.hasData && salesData?.result;
   const rdvResult = salesData?.rdvResult ?? null;
+  const { comparePeriodKey } = usePeriod();
 
-  const kpis = hasData ? buildKPIs(salesData.result, rdvResult, compareResult) : null;
+  const kpis = hasData ? buildKPIs(salesData.result, rdvResult, compareResult, comparePeriodKey) : null;
   // RDV par tranche horaire : uniquement le tag Ringover "OK" (row.rdv, déjà
   // calculé par computeSalesData) — pas le fichier RDV externe. Décision
   // explicite : la fiabilité de ce chiffre dépend du bon tagging Ringover

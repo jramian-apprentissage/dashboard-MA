@@ -4,6 +4,7 @@ import heroActivite from '../../assets/hero-activite.svg';
 import ActiviteASUS from './CommercialActivite/ActiviteASUS';
 import { getPeriodRange } from '../../components/ui/PeriodPicker';
 import { useAsusData } from '../../hooks/useAsusData';
+import { computeAsusData } from '../../services/sheetsParser';
 import { usePeriod } from '../../contexts/PeriodContext';
 import layoutStyles from '../../components/layout/DashboardLayout.module.css';
 import { LoaderMark } from '../../components/ui/Loader';
@@ -13,8 +14,9 @@ import { LoaderMark } from '../../components/ui/Loader';
 // direct (lien de nav propre, plus besoin de passer par Activité commerciale).
 export default function Asus() {
   const [collab, setCollab] = useState('Tous');
-  const { periodKey, customFrom, customTo } = usePeriod();
+  const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const asusData = useAsusData();
+  const [compareResult, setCompareResult] = useState(null);
 
   const collabRef = useRef(collab);
   collabRef.current = collab;
@@ -23,6 +25,20 @@ export default function Asus() {
     const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
     asusData.fetchData(from, to, collabRef.current);
   }, [periodKey, customFrom, customTo]); // eslint-disable-line
+
+  // Recalcul comparaison depuis le cache (même pattern qu'Activité commerciale)
+  useEffect(() => {
+    if (!compareActive || !compareRange || !asusData.hasCachedRows) {
+      setCompareResult(null);
+      return;
+    }
+    setCompareResult(computeAsusData(
+      asusData.rows,
+      new Date(compareRange.from),
+      new Date(compareRange.to),
+      collabRef.current,
+    ));
+  }, [compareActive, compareRange, asusData.hasCachedRows]); // eslint-disable-line
 
   function handleCollabChange(e) {
     const v = e.target.value;
@@ -72,7 +88,7 @@ export default function Asus() {
       heroBgSrc={heroActivite}
       heroBgPosition="center 65%"
     >
-      <ActiviteASUS selectedCollab={collab} asusData={asusData} />
+      <ActiviteASUS selectedCollab={collab} asusData={asusData} compareResult={compareResult} />
     </DashboardLayout>
   );
 }

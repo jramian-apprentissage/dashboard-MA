@@ -63,6 +63,18 @@
   letter-spacing: 0;
 }
 
+/* Ligne comparaison — au-dessus de la définition, plus affirmée (poids,
+   couleur) puisque c'est la donnée "active" que l'œil doit capter en premier. */
+.compare {
+  font-size: 10.5px;
+  font-weight: 600;
+  margin-top: 6px;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .trend {
   font-size: 9.5px;
   color: var(--text2);
@@ -77,3 +89,7 @@
 .up      { color: #15803d; }
 .down    { color: #b91c1c; }
 .neutral { color: var(--text2); }
+
+.card.accent .compare.up      { color: #8ECFAA; }
+.card.accent .compare.down    { color: #E0A9A9; }
+.card.accent .compare.neutral { color: rgba(255,255,255,0.55); }

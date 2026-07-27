@@ -6,6 +6,8 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import NotConnected from '../../../components/ui/NotConnected';
 import Loader from '../../../components/ui/Loader';
+import { usePeriod } from '../../../contexts/PeriodContext';
+import { compareValueText } from '../../../utils/compareText';
 import { computeAsusEvolution, dernierJourArchive } from '../../../services/sheetsParser';
 import styles from './Activite.module.css';
 
@@ -29,10 +31,14 @@ function fmtDuree(s) {
 
 // Une carte par tag, dans l'ordre transmis par Jimmy — la première (total)
 // reçoit la variante accent, c'est l'indicateur "plus important".
-function buildTagCards(directionStats, totalLabel) {
+function buildTagCards(directionStats, totalLabel, compareStats, comparePeriodKey) {
+  const cmpTotal = compareStats ? compareValueText(directionStats.total, compareStats.total, comparePeriodKey) : null;
   const cards = [
-    { label: totalLabel, value: directionStats.total, unit: '', color: 'accent' },
-    ...directionStats.parTag.map(t => ({ label: t.label, value: t.count, unit: '', color: 'default' })),
+    { label: totalLabel, value: directionStats.total, unit: '', compare: cmpTotal, color: 'accent' },
+    ...directionStats.parTag.map(t => {
+      const ct = compareStats?.parTag.find(x => x.label === t.label);
+      return { label: t.label, value: t.count, unit: '', compare: ct ? compareValueText(t.count, ct.count, comparePeriodKey) : null, color: 'default' };
+    }),
   ];
   return cards;
 }
@@ -45,9 +51,10 @@ function ClickIcon() {
   );
 }
 
-export default function ActiviteASUS({ selectedCollab = 'Tous', asusData }) {
+export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compareResult }) {
   const hasData = asusData?.hasData && asusData?.result;
   const r = asusData?.result;
+  const { comparePeriodKey } = usePeriod();
   const [qualifOpen, setQualifOpen] = useState(null); // { collab, direction }
   const [evoGranularity, setEvoGranularity] = useState('jour');
 
@@ -85,7 +92,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData }) {
       <Card>
         {hasData ? (
           <div className={styles.kpiGridAuto}>
-            {buildTagCards(r.sortant, 'Appels sortants').map(k => <KPICard key={k.label} {...k} />)}
+            {buildTagCards(r.sortant, 'Appels sortants', compareResult?.sortant, comparePeriodKey).map(k => <KPICard key={k.label} {...k} />)}
           </div>
         ) : (
           <NotConnected>en attente de l'archive Ringover</NotConnected>
@@ -96,7 +103,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData }) {
       <Card>
         {hasData ? (
           <div className={styles.kpiGridAuto}>
-            {buildTagCards(r.entrant, 'Appels entrants').map(k => <KPICard key={k.label} {...k} />)}
+            {buildTagCards(r.entrant, 'Appels entrants', compareResult?.entrant, comparePeriodKey).map(k => <KPICard key={k.label} {...k} />)}
           </div>
         ) : (
           <NotConnected>en attente de l'archive Ringover</NotConnected>
@@ -107,8 +114,8 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData }) {
       <Card>
         {hasData ? (
           <div className={styles.kpiGridAuto}>
-            <KPICard label="Durée moyenne (TMC)" value={fmtDuree(r.dureeMoyenneS)} unit="min" color="default" />
-            <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" trend={{ dir: 'neutral', text: `${r.tauxBons}% du total` }} color="default" />
+            <KPICard label="Durée moyenne (TMC)" value={fmtDuree(r.dureeMoyenneS)} unit="min" compare={compareResult ? compareValueText(r.dureeMoyenneS, compareResult.dureeMoyenneS, comparePeriodKey) : null} color="default" />
+            <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null} trend={{ dir: 'neutral', text: `${r.tauxBons}% du total` }} color="default" />
           </div>
         ) : (
           <NotConnected>en attente de l'archive Ringover</NotConnected>

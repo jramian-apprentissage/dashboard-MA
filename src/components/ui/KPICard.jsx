@@ -1,6 +1,30 @@
 import styles from './KPICard.module.css';
 
-export default function KPICard({ label, value, unit, trend, color = 'default', variant }) {
+// Icônes "tendance graphique" (trending-up/down) plutôt qu'un chevron, qui se
+// lit comme un contrôle cliquable (expand/collapse) et non comme un
+// indicateur de hausse/baisse. Partagées entre la ligne comparaison et la
+// ligne définition (toutes deux peuvent porter un up/down).
+function TrendIcon({ dir }) {
+  if (dir === 'up') {
+    return (
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+        <polyline points="16 7 22 7 22 13"/>
+      </svg>
+    );
+  }
+  if (dir === 'down') {
+    return (
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/>
+        <polyline points="16 17 22 17 22 11"/>
+      </svg>
+    );
+  }
+  return null;
+}
+
+export default function KPICard({ label, value, unit, trend, compare, color = 'default', variant }) {
   const cls = [
     styles.card,
     variant === 'accent'      ? styles.accent      : '',
@@ -16,23 +40,18 @@ export default function KPICard({ label, value, unit, trend, color = 'default', 
       <div className={`${styles.value}${valueLen > 8 ? ' ' + styles.sm : ''}`}>
         {value}<span className={styles.unit}>{unit}</span>
       </div>
+      {/* Ligne 1 (si dispo) : comparaison vs période précédente/année précédente.
+          Ligne 2 : la petite définition du KPI, toujours affichée — la
+          comparaison vient s'ajouter au-dessus, elle ne la remplace jamais. */}
+      {compare && (
+        <div className={`${styles.compare} ${styles[compare.dir] || ''}`}>
+          <TrendIcon dir={compare.dir} />
+          {compare.text}
+        </div>
+      )}
       {trend && (
         <div className={`${styles.trend} ${styles[trend.dir] || ''}`}>
-          {/* Icônes "tendance graphique" (trending-up/down) plutôt qu'un chevron,
-              qui se lit comme un contrôle cliquable (expand/collapse) et non
-              comme un indicateur de hausse/baisse. */}
-          {trend.dir === 'up' && (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-              <polyline points="16 7 22 7 22 13"/>
-            </svg>
-          )}
-          {trend.dir === 'down' && (
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/>
-              <polyline points="16 17 22 17 22 11"/>
-            </svg>
-          )}
+          <TrendIcon dir={trend.dir} />
           {trend.text}
         </div>
       )}

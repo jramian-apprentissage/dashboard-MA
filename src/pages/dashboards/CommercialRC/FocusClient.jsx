@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
+import { usePeriod } from '../../../contexts/PeriodContext';
+import { compareValueText } from '../../../utils/compareText';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -28,9 +30,12 @@ const HEALTH_LIST_STEP = 8;
 
 export default function FocusClient() {
   const mounted = useChartMount();
-  const { result, loading, error } = useSnapshotData();
+  const { result, compareResult, loading, error } = useSnapshotData();
   const satisfaction = useSatisfactionClient();
+  const { comparePeriodKey } = usePeriod();
   const [healthVisible, setHealthVisible] = useState(HEALTH_LIST_STEP);
+  const c = compareResult;
+  const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
 
   return (
     <div className={styles.page}>
@@ -47,6 +52,7 @@ export default function FocusClient() {
             label="Nouveaux clients"
             value={result.nbDealsGagnes}
             unit=" clients"
+            compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
             trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA : ${fmtEuros(result.sommeVentesGagnes)}` }}
             color="green"
           />
@@ -55,12 +61,14 @@ export default function FocusClient() {
             label="Portefeuille de clients actifs"
             value={result.nbClientsActifs}
             unit=" actifs"
+            compare={cmp(result.nbClientsActifs, c?.nbClientsActifs)}
             trend={{ dir: 'neutral', text: `Facturés sur la période · ${result.nbClientsTotal} comptes au total` }}
             color="blue"
           />
           <KPICard
             label="Marge brute nouveaux"
             value={fmtEuros(result.margeBruteNouveaux)}
+            compare={cmp(result.margeBruteNouveaux, c?.margeBruteNouveaux)}
             trend={{
               dir: result.margeBruteNouveaux >= 0 ? 'up' : 'down',
               text: result.sommeVentesGagnes > 0

@@ -4,6 +4,8 @@ import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useLeadsAnalytics } from '../../../hooks/useLeadsAnalytics';
+import { usePeriod } from '../../../contexts/PeriodContext';
+import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -83,10 +85,14 @@ const RELANCES_VISIBLE = 8;
 
 export default function FocusCommercial() {
   const mounted = useChartMount();
-  const { result, loading, error } = useSnapshotData();
+  const { result, compareResult, loading, error } = useSnapshotData();
   const leads = useLeadsAnalytics();
+  const { comparePeriodKey } = usePeriod();
   const [relanceSort, setRelanceSort] = useState({ col: 'etat', dir: 'asc' });
   const [showAllRelances, setShowAllRelances] = useState(false);
+  const c = compareResult;
+  const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
+  const cmpPts = (current, ref) => c ? comparePtsText(current, ref, comparePeriodKey) : null;
 
   function toggleRelanceSort(col) {
     setRelanceSort(s => (s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' }));
@@ -114,18 +120,21 @@ export default function FocusCommercial() {
             <KPICard
               label="Pipeline total"
               value={fmt(result.montantPipeline)}
+              compare={cmp(result.montantPipeline, c?.montantPipeline)}
               trend={{ dir: 'neutral', text: 'Opportunités en cours' }}
               color="blue"
             />
             <KPICard
               label="Pipeline pondéré"
               value={fmt(result.montantPipelinePondere)}
+              compare={cmp(result.montantPipelinePondere, c?.montantPipelinePondere)}
               trend={{ dir: 'neutral', text: 'Seuil ≥ 30% de probabilité' }}
               color="green"
             />
             <KPICard
               label="Win rate"
               value={`${winRate}%`}
+              compare={cmpPts(winRate, c?.winRate)}
               trend={{ dir: winRate >= 50 ? 'up' : 'down', text: 'Gagnés ÷ (Gagnés + Perdus)' }}
               color={winRate >= 50 ? 'green' : 'amber'}
             />
@@ -133,6 +142,7 @@ export default function FocusCommercial() {
               label="Deals gagnés"
               value={result.nbDealsGagnes}
               unit=" deals"
+              compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
               trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA associé : ${fmt(result.sommeVentesGagnes)}` }}
               color="green"
             />

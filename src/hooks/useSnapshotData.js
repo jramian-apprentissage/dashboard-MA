@@ -16,8 +16,9 @@ export function useSnapshotData() {
   const [monthly,     setMonthly]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
+  const [compareCompteKpis, setCompareCompteKpis] = useState(null);
 
-  const { periodKey, customFrom, customTo } = usePeriod();
+  const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
 
   // Leads sheet + série mensuelle : une seule fois au montage
@@ -62,6 +63,24 @@ export function useSnapshotData() {
     return () => { cancelled = true; };
   }, [from, to]);
 
+  // KPIs comptes de la période de comparaison — même route backend, juste
+  // rejouée avec compareRange. Les KPIs leads, eux, se recalculent en mémoire
+  // (leadsRows déjà chargé), pas besoin d'un second fetch.
+  useEffect(() => {
+    let cancelled = false;
+    if (!compareActive || !compareRange) {
+      setCompareCompteKpis(null);
+      return;
+    }
+    const qs = new URLSearchParams();
+    qs.set('from', compareRange.from);
+    qs.set('to', compareRange.to);
+    fetchAPI(`/kpis?${qs}`)
+      .then(data => { if (!cancelled) setCompareCompteKpis(data); })
+      .catch(() => { if (!cancelled) setCompareCompteKpis(null); });
+    return () => { cancelled = true; };
+  }, [compareActive, compareRange?.from, compareRange?.to]); // eslint-disable-line
+
   // Fusion : KPIs comptes (backend) + KPIs leads (snapshot sheet, en mémoire)
   const result = useMemo(() => {
     if (!compteKpis || !leadsRows) return null;
@@ -69,5 +88,11 @@ export function useSnapshotData() {
     return { ...compteKpis, ...computeLeadsKPIs(leadsSnap, from, to) };
   }, [compteKpis, leadsRows, from, to]);
 
-  return { result, monthly, loading: loading || (!result && !error), error };
+  const compareResult = useMemo(() => {
+    if (!compareActive || !compareRange || !compareCompteKpis || !leadsRows) return null;
+    const leadsSnap = resolveSnapshot(leadsRows, compareRange.to);
+    return { ...compareCompteKpis, ...computeLeadsKPIs(leadsSnap, compareRange.from, compareRange.to) };
+  }, [compareActive, compareRange, compareCompteKpis, leadsRows]);
+
+  return { result, compareResult, monthly, loading: loading || (!result && !error), error };
 }

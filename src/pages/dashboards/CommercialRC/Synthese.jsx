@@ -4,6 +4,8 @@ import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
+import { usePeriod } from '../../../contexts/PeriodContext';
+import { compareValueText } from '../../../utils/compareText';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -51,8 +53,9 @@ const chartOpts = {
 };
 
 export default function Synthese() {
-  const { result, monthly, loading, error } = useSnapshotData();
+  const { result, compareResult, monthly, loading, error } = useSnapshotData();
   const satisfaction = useSatisfactionClient();
+  const { comparePeriodKey } = usePeriod();
 
   return (
     <Loader loading={loading} label="Chargement des données CRM…" minHeight={220}>
@@ -61,16 +64,18 @@ export default function Synthese() {
           Erreur de chargement : {error}
         </div>
       ) : result ? (
-        <SyntheseContent result={result} monthly={monthly} satisfaction={satisfaction} />
+        <SyntheseContent result={result} compareResult={compareResult} comparePeriodKey={comparePeriodKey} monthly={monthly} satisfaction={satisfaction} />
       ) : null}
     </Loader>
   );
 }
 
-function SyntheseContent({ result, monthly, satisfaction }) {
+function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, satisfaction }) {
   const mounted = useChartMount();
   const navigate = useNavigate();
   const d = result;
+  const c = compareResult;
+  const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
 
   const chartData = {
     labels: d.topClients.map(c => c.name),
@@ -95,12 +100,14 @@ function SyntheseContent({ result, monthly, satisfaction }) {
         <KPICard
           label="CA"
           value={fmt(d.caGlobal)}
+          compare={cmp(d.caGlobal, c?.caGlobal)}
           trend={{ dir: 'neutral', text: `Clients actifs : ${d.nbClientsActifs}` }}
           color="blue"
         />
         <KPICard
           label="Marge brute"
           value={fmt(d.margeBruteGlobale)}
+          compare={cmp(d.margeBruteGlobale, c?.margeBruteGlobale)}
           trend={{ dir: 'neutral', text: `Taux de marge brute : ${d.tauxMarge}%` }}
           color="green"
         />
@@ -108,12 +115,14 @@ function SyntheseContent({ result, monthly, satisfaction }) {
           label="Deals gagnés"
           value={d.nbDealsGagnes}
           unit=" deals"
+          compare={cmp(d.nbDealsGagnes, c?.nbDealsGagnes)}
           trend={{ dir: d.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA associé : ${fmt(d.sommeVentesGagnes)}` }}
           color="green"
         />
         <KPICard
           label="Pipeline pondéré"
           value={fmt(d.montantPipelinePondere)}
+          compare={cmp(d.montantPipelinePondere, c?.montantPipelinePondere)}
           trend={{ dir: 'neutral', text: 'Le CA de demain — opportunités en cours' }}
           color="purple"
         />

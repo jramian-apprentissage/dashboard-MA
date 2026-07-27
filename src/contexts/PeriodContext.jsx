@@ -45,7 +45,9 @@ export function PeriodProvider({ children }) {
   // référence (pas de sélection de dates libre) : "période précédente"
   // (intervalle immédiatement antérieur, même durée) ou "année précédente"
   // (mêmes dates, un an plus tôt).
-  const [compareActive,    setCompareActive]    = useState(false);
+  // Comparaison activée par défaut — décision du 27/07 : on veut voir en
+  // permanence l'effet "vs période précédente" sur tous les KPIs.
+  const [compareActive,    setCompareActive]    = useState(true);
   const [comparePeriodKey, setComparePeriodKey] = useState('previous-period');
 
   function onChange({ key, from, to }) {
