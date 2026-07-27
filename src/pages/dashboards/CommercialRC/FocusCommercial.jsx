@@ -30,7 +30,7 @@ const evoBarOpts = {
   },
 };
 
-const missionLabels = { SO: 'Commercial (SO)', AV: 'Administratif (AV)', CS: 'Customer Success (CS)', IT: 'Informatique (IT)', DS: 'Digital Services (DS)' };
+const missionLabels = { SO: 'Commercial', AV: 'Administratif', CS: 'Customer Success', IT: 'Informatique', DS: 'Digital Services' };
 const missionColors = ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)', 'rgba(123,170,191,0.75)', 'rgba(142,207,170,0.75)'];
 const sourceColors  = ['rgba(255,249,147,0.8)', 'rgba(123,170,191,0.7)', 'rgba(169,141,196,0.7)', 'rgba(196,135,106,0.55)', 'rgba(142,207,170,0.6)'];
 const AUTRES_SOURCE_COLOR = 'rgba(167,173,170,0.5)';
@@ -419,7 +419,7 @@ export default function FocusCommercial() {
                   </div>
                   <div>
                     <div className={styles.missionRev}>{fmt(m.revenue)} <span className={styles.missionPct}>· {m.pct}%</span></div>
-                    <div className={styles.missionAvg}>Moy. {fmt(m.moyenne)} / profil · {m.count} profil(s)</div>
+                    <div className={styles.missionAvg}>Revenu moyen par profil {fmt(m.moyenne)} · {m.count} profils</div>
                   </div>
                 </div>
               ))}
