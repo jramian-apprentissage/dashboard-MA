@@ -13,4 +13,7 @@
 .amber  { background: rgba(196,151,58,0.10);  color: #C4973A; border: 1px solid rgba(196,151,58,0.2);  }
 .blue   { background: rgba(123,170,191,0.10); color: #7BAABF; border: 1px solid rgba(123,170,191,0.2); }
 .gray   { background: rgba(167,173,170,0.08); color: var(--text2); border: 1px solid var(--border); }
-.accent { background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent-border); }
+/* --accent (#FFF993) est trop clair pour servir de couleur de texte — même
+   principe que les autres variantes (teinte foncée sur fond clair), pas
+   couleur pâle sur fond pâle qui devient illisible. */
+.accent { background: rgba(196,151,58,0.14); color: #A47F1E; border: 1px solid rgba(196,151,58,0.28); }
