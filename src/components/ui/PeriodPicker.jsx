@@ -15,8 +15,25 @@ const PERIODS = [
 const CUSTOM_PERIOD = { key: 'custom', label: 'Personnaliser…' };
 const ALL_PERIODS = [...PERIODS, CUSTOM_PERIOD];
 
+// Valeur affichée directement sur le bouton (desktop et nav basse mobile) —
+// pas de libellé générique type "Filtre" : l'utilisateur voit tout de suite
+// la période active sans ouvrir le sélecteur.
+export function getPeriodLabel(key, customFrom, customTo) {
+  if (key === 'custom' && customFrom && customTo) {
+    const short = d => { const [, m, dd] = d.split('-'); return `${dd}/${m}`; };
+    return `${short(customFrom)} – ${short(customTo)}`;
+  }
+  return ALL_PERIODS.find(p => p.key === key)?.label || PERIODS[2].label;
+}
+
+// Jamais toISOString() pour une date calendaire : ça convertit en UTC, et
+// pour un fuseau en avance sur UTC (Europe/Paris) minuit local retomberait
+// sur la veille au moment de la sérialisation.
 function dateStr(d) {
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 export function getPeriodRange(key, customFrom, customTo) {
@@ -219,7 +236,7 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
           <line x1="8" y1="2" x2="8" y2="6"/>
           <line x1="3" y1="10" x2="21" y2="10"/>
         </svg>
-        <span>{current.label}</span>
+        <span>{getPeriodLabel(value, customFrom, customTo)}</span>
         <svg
           className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`}
           width="10" height="10" viewBox="0 0 24 24" fill="none"

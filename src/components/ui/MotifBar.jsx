@@ -15,7 +15,9 @@ export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)' }
         <div
           className={styles.fill}
           style={{
-            width: `${w}%`,
+            // Seuil mini pour rester visible même sous 5% — au-delà de zéro,
+            // une valeur reste une valeur, pas une barre invisible.
+            width: `${w > 0 ? Math.max(w, 4) : 0}%`,
             background: fillColor,
             opacity: 0.7,
             transition: 'width 0.85s cubic-bezier(0.16,1,0.3,1)',

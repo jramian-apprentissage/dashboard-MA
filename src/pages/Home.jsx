@@ -9,6 +9,13 @@ const ROUTES = {
   'commercial-activite': '/commercial-activite',
 };
 
+// Titres longs pour les cartes de l'accueil — distincts des libellés de nav
+// (courts, utilisés dans le header/la barre basse) pour rester lisibles là-bas.
+const CARD_LABELS = {
+  'commercial-rc':       'Dashboard Commercial et Relation Client',
+  'commercial-activite': 'Dashboard Activité commerciale',
+};
+
 const DASH_ICONS = {
   'commercial-rc': (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -91,7 +98,7 @@ export default function Home() {
                   <div className={styles.insightHeader}>
                     <div className={styles.insightIconWrap}>{DASH_ICONS[d.id]}</div>
                     <div className={styles.insightMeta}>
-                      <div className={styles.insightDash}>{d.label}</div>
+                      <div className={styles.insightDash}>{CARD_LABELS[d.id] || d.label}</div>
                     </div>
                   </div>
 

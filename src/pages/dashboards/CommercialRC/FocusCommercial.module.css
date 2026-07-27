@@ -20,6 +20,7 @@
 
 /* Missions — donut + liste côte à côte */
 .missionSplit { display: flex; gap: 24px; align-items: center; }
+.missionDonutBox { flex: 0 0 240px; }
 .missionList { flex: 1; display: flex; flex-direction: column; gap: 0; }
 
 /* Missions — méta inline */
@@ -114,6 +115,22 @@
 .tbl td strong { color: var(--text); font-weight: 500; }
 .tbl tr:hover td { background: rgba(240,238,233,0.6); }
 
+.linkBtn {
+  display: block;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.linkBtn:hover { color: var(--myrtille); }
+
 /* Secteurs */
 .sectorRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .sectorLbl { font-size: 11px; color: var(--text2); width: 110px; flex-shrink: 0; }
@@ -157,7 +174,11 @@
   .twoCol { grid-template-columns: 1fr; }
   .tbl { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .pipelineHeader { flex-wrap: wrap; gap: 14px; }
-  .missionSplit { flex-direction: column; }
+  /* flex-basis (240px) s'applique à la hauteur une fois l'axe basculé en
+     colonne — sans ce reset, ça réservait ~95px de vide sous le donut avant
+     que la légende commence ("grand espace entre le graphe et sa légende"). */
+  .missionSplit { flex-direction: column; gap: 4px; }
+  .missionDonutBox { flex: none; width: 100%; }
 }
 @media (max-width: 480px) {
   .kpiRow4 { grid-template-columns: 1fr; }

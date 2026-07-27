@@ -89,3 +89,16 @@
   cursor: pointer;
 }
 .compareToggleActive { background: var(--soleil); color: var(--myrtille); border-color: var(--soleil); }
+
+.compareModeGroup {
+  display: flex; width: 100%;
+  border: 1px solid rgba(255,249,147,0.2); border-radius: 10px;
+  overflow: hidden;
+}
+.compareModeBtn {
+  flex: 1; padding: 12px; border: none; background: transparent;
+  color: rgba(255,249,147,0.65); font-family: var(--font); font-size: 13px; font-weight: 600;
+  cursor: pointer;
+}
+.compareModeBtn:first-child { border-right: 1px solid rgba(255,249,147,0.15); }
+.compareModeBtnActive { background: var(--soleil); color: var(--myrtille); }

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
@@ -35,10 +36,7 @@ const missionColors = ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,
 const sourceColors  = ['rgba(255,249,147,0.8)', 'rgba(123,170,191,0.7)', 'rgba(169,141,196,0.7)', 'rgba(196,135,106,0.55)', 'rgba(142,207,170,0.6)'];
 const AUTRES_SOURCE_COLOR = 'rgba(167,173,170,0.5)';
 
-// Ordre du funnel commercial — sert à trier "Opportunités sans prochaine
-// action" par étape plutôt que par opportunité, et à colorer chaque étape de
-// façon stable (même code visuel partout, étapes d'attente regroupées).
-const ETAPE_ORDER = ['Recherche profil', 'Présentation profil', 'Point de cadrage', 'Relance en cours', 'Relance à faire', 'Attente retour client', 'ATRC après prez'];
+// Couleur stable par étape (même code visuel partout dans le dashboard).
 const ETAPE_PILL_VARIANT = {
   'Recherche profil':      'blue',
   'Présentation profil':   'accent',
@@ -53,7 +51,9 @@ function fmtDateRelance(iso) {
   if (!iso) return null;
   const d = new Date(iso);
   if (isNaN(d)) return iso;
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  // Sans l'année : sur mobile, "Date de relance" + "Âge" côte à côte
+  // n'avaient pas la place pour "22/07/2026" en entier.
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
 function moisLabel(m) {
@@ -61,10 +61,39 @@ function moisLabel(m) {
   return new Date(parseInt(y), parseInt(mo) - 1).toLocaleString('fr-FR', { month: 'short' });
 }
 
+// Tri par défaut : étape (alphabétique) puis client (alphabétique) — repère
+// mnémotechnique, cf. le funnel plus haut. L'utilisateur peut cliquer une
+// colonne pour trier autrement (étape, date de relance, âge).
+function compareRelances(a, b, sort) {
+  let cmp = 0;
+  if (sort.col === 'dateRelance') {
+    const da = a.dateRelance ? new Date(a.dateRelance).getTime() : -Infinity;
+    const db = b.dateRelance ? new Date(b.dateRelance).getTime() : -Infinity;
+    cmp = da - db;
+  } else if (sort.col === 'age') {
+    cmp = (a.ageJours ?? -Infinity) - (b.ageJours ?? -Infinity);
+  } else {
+    cmp = (a.etat || '').localeCompare(b.etat || '', 'fr');
+    if (cmp === 0) cmp = (a.nom || '').localeCompare(b.nom || '', 'fr');
+  }
+  return sort.dir === 'asc' ? cmp : -cmp;
+}
+
+const RELANCES_VISIBLE = 8;
+
 export default function FocusCommercial() {
   const mounted = useChartMount();
   const { result, loading, error } = useSnapshotData();
   const leads = useLeadsAnalytics();
+  const [relanceSort, setRelanceSort] = useState({ col: 'etat', dir: 'asc' });
+  const [showAllRelances, setShowAllRelances] = useState(false);
+
+  function toggleRelanceSort(col) {
+    setRelanceSort(s => (s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' }));
+  }
+  function sortArrow(col) {
+    return relanceSort.col === col ? (relanceSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+  }
 
   const circumference = 276.5;
   const winRate = result?.winRate ?? 0;
@@ -123,14 +152,21 @@ export default function FocusCommercial() {
                     <div className={styles.metaVal}>{leads.data.funnel.totalOpportunites}</div>
                   </div>
                   {(() => {
-                    const maxCount = Math.max(...leads.data.funnel.etapes.map(s => s.count), 1);
-                    return leads.data.funnel.etapes.map(s => (
+                    // Échelle fixe à 100% (pas au max de la série) — sinon
+                    // l'étape la plus fournie affiche toujours une barre
+                    // pleine même à 71%, ce qui trompe sur sa vraie part.
+                    // Seuil mini de largeur pour que les petites valeurs
+                    // (ex. 1%) restent visibles à l'œil.
+                    // Étapes triées alphabétiquement — repère mnémotechnique
+                    // constant plutôt qu'un ordre arbitraire.
+                    const sorted = [...leads.data.funnel.etapes].sort((a, b) => a.etat.localeCompare(b.etat, 'fr'));
+                    return sorted.map(s => (
                       <div key={s.etat} className={styles.barRow}>
                         <div className={styles.barLbl}>{s.etat}</div>
                         <div className={styles.barTrack}>
-                          <div className={styles.barFill} style={{ width: `${(s.count / maxCount) * 100}%` }} />
+                          <div className={styles.barFill} style={{ width: `${Math.max(s.pct, 4)}%` }} />
                         </div>
-                        <div className={styles.barVal}>{s.count}<span>{s.pct}%</span></div>
+                        <div className={styles.barVal}>{s.pct}%<span>→ {s.count}</span></div>
                       </div>
                     ));
                   })()}
@@ -178,7 +214,7 @@ export default function FocusCommercial() {
             </Card>
 
             {/* Win rate — jauge + détail des issues */}
-            <Card title="Win rate — détail des résultats">
+            <Card title="Détail des résultats">
               <div className={styles.donutWrap} style={{ height: 'auto' }}>
                 <svg viewBox="0 0 110 110" width={120} height={120}>
                   <defs>
@@ -231,7 +267,7 @@ export default function FocusCommercial() {
       )}
 
       {/* ══ Ligne 3 — Pourquoi on perd : tendance + causes sur la même ligne ══ */}
-      <SectionLabel badge="Monday — colonnes Etat / Motif de refus">Évolution mensuelle des deals</SectionLabel>
+      <SectionLabel badge="Monday — colonnes Etat / Motif de refus">Évolution mensuelle des deals — 6 derniers mois</SectionLabel>
       <div className={styles.threeCol}>
         <Card title="Deals gagnés / perdus / stand-by — par mois">
           {leads.error ? (
@@ -301,7 +337,7 @@ export default function FocusCommercial() {
       </div>
 
       {/* ══ Ligne 4 — L'action immédiate : la to-do de la réunion d'équipe ══ */}
-      <SectionLabel badge="Monday — Etat + Date de relance">À traiter cette semaine</SectionLabel>
+      <SectionLabel badge="Monday — Etat + Date de relance">À relancer</SectionLabel>
       <Card title="Opportunités sans prochaine action">
         {leads.error ? (
           <NotConnected>{leads.error}</NotConnected>
@@ -309,20 +345,19 @@ export default function FocusCommercial() {
           <>
             <div className={styles.alertCount}>
               <span className={styles.alertNum}>{leads.data.opportunitesSansAction.length}</span>
-              <span className={styles.alertSub}>affaires sans date de relance planifiée (ou passée) — à traiter</span>
+              <span className={styles.alertSub}>Affaires sans date de relance planifiée ou passée</span>
             </div>
             <table className={styles.tbl}>
               <thead><tr>
-                <th>Opportunité</th><th>Étape</th><th>Date de relance</th><th>Âge</th>
+                <th>Client</th>
+                <th onClick={() => toggleRelanceSort('etat')} style={{ cursor: 'pointer' }}>Étape{sortArrow('etat')}</th>
+                <th onClick={() => toggleRelanceSort('dateRelance')} style={{ cursor: 'pointer' }}>Date de relance{sortArrow('dateRelance')}</th>
+                <th onClick={() => toggleRelanceSort('age')} style={{ cursor: 'pointer' }}>Âge{sortArrow('age')}</th>
               </tr></thead>
               <tbody>
                 {[...leads.data.opportunitesSansAction]
-                  .sort((a, b) => {
-                    const ia = ETAPE_ORDER.indexOf(a.etat);
-                    const ib = ETAPE_ORDER.indexOf(b.etat);
-                    return (ia === -1 ? ETAPE_ORDER.length : ia) - (ib === -1 ? ETAPE_ORDER.length : ib);
-                  })
-                  .slice(0, 20)
+                  .sort((a, b) => compareRelances(a, b, relanceSort))
+                  .slice(0, showAllRelances ? undefined : RELANCES_VISIBLE)
                   .map(o => (
                     <tr key={o.itemId}>
                       <td><strong>{o.nom}</strong></td>
@@ -333,6 +368,13 @@ export default function FocusCommercial() {
                   ))}
               </tbody>
             </table>
+            {leads.data.opportunitesSansAction.length > RELANCES_VISIBLE && (
+              <button type="button" className={styles.linkBtn} onClick={() => setShowAllRelances(s => !s)}>
+                {showAllRelances
+                  ? 'Voir moins'
+                  : `Voir les ${leads.data.opportunitesSansAction.length - RELANCES_VISIBLE} autres`}
+              </button>
+            )}
           </>
         ) : (
           <NotConnected>chargement…</NotConnected>
@@ -400,7 +442,7 @@ export default function FocusCommercial() {
           <NotConnected>{leads.error}</NotConnected>
         ) : leads.data?.missions?.length > 0 ? (
           <div className={styles.missionSplit}>
-            <div style={{ flex: '0 0 240px' }}>
+            <div className={styles.missionDonutBox}>
               <DonutChart
                 variant="half-rose"
                 data={leads.data.missions.map(m => m.revenue)}

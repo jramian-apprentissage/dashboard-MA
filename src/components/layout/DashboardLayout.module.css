@@ -94,6 +94,9 @@
 /* Strip d'onglets scrollable — mobile uniquement (voir media query 640px) */
 .subTabStrip { display: none; }
 
+/* Bandeau contextuel compact — mobile uniquement (voir media query 640px) */
+.compactHeader { display: none; }
+
 /* Actions : boutons style dashboard-v4 */
 .heroActions {
   display: flex;
@@ -162,6 +165,32 @@
 }
 
 .compareWrap { display: flex; align-items: center; gap: 6px; }
+
+/* ─── Mode de comparaison : 2 choix fixes, pas de sélection de dates libre ──── */
+.compareModeGroup {
+  display: flex;
+  border: 1px solid rgba(255,249,147,0.28);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.compareModeBtn {
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font);
+  color: rgba(255,249,147,0.6);
+  background: transparent;
+  border: none;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.compareModeBtn:not(:last-child) { border-right: 1px solid rgba(255,249,147,0.2); }
+.compareModeBtn:hover { color: var(--soleil); }
+.compareModeBtnActive {
+  background: rgba(255,249,147,0.16);
+  color: var(--soleil);
+}
 
 /* ─── Tab picker popup ───────────────────────────────────────────────────────── */
 .tabPickerWrap { position: relative; }
@@ -443,29 +472,21 @@
   /* Période/Comparer repris par BottomNav (boutons Filtre/Comparer) */
   .mobileHidden { display: none; }
 
+  /* Règle de conception : max 3 sous-pages par dashboard sur mobile, donc
+     elles doivent toutes tenir sans scroll — fini le scroll/peek/snap qui
+     cachait le 3e onglet et créait des zones blanches latérales (retour
+     direct : "je ne veux pas avoir à scroller pour voir Pôle relation
+     client"). Chaque pill se partage la largeur disponible à parts égales,
+     sans espace perdu. */
   .subTabStrip {
     display: flex;
     gap: 6px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
     margin-top: 8px;
-    /* Marge latérale généreuse : même le premier/dernier onglet doit pouvoir
-       atteindre le centre exact de l'écran au clic (scrollIntoView center),
-       pas juste "aussi centré que possible" limité par le bord du scroll. */
-    padding: 0 40vw 2px;
-    scroll-snap-type: x proximity;
-    scroll-padding-inline: 40vw;
-    /* Dégradé sur les bords : signale qu'il y a plus à voir en scrollant,
-       plutôt qu'une liste qui semble juste s'arrêter net. */
-    -webkit-mask-image: linear-gradient(to right, transparent, black 14px, black calc(100% - 22px), transparent);
-    mask-image: linear-gradient(to right, transparent, black 14px, black calc(100% - 22px), transparent);
   }
-  .subTabStrip::-webkit-scrollbar { display: none; }
   .subTabPill {
-    flex-shrink: 0;
-    scroll-snap-align: start;
-    padding: 6px 14px;
+    flex: 1;
+    text-align: center;
+    padding: 7px 8px;
     border-radius: 99px;
     border: 1px solid rgba(255,249,147,0.2);
     background: rgba(255,249,147,0.05);
@@ -474,6 +495,8 @@
     font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     cursor: pointer;
   }
   .subTabPillActive {
@@ -481,4 +504,44 @@
     color: var(--myrtille);
     border-color: var(--soleil);
   }
+
+  /* Bandeau contextuel compact — reste au-dessus du contenu au scroll (sous
+     le Topbar, révélé au même seuil que lui) : nom du dashboard + sous-page
+     + période de référence + mode de comparaison, toujours visibles sans
+     avoir à remonter ni à ouvrir une feuille. */
+  .compactHeader {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    position: fixed;
+    top: 46px;
+    left: 0;
+    right: 0;
+    z-index: 90;
+    padding: 6px 16px 7px;
+    background: var(--myrtille);
+    border-bottom: 1px solid rgba(255,249,147,0.15);
+    transform: translateY(-150%);
+    transition: transform 0.25s ease;
+  }
+  .compactHeaderVisible { transform: translateY(0); }
+  .compactHeaderTitle {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--soleil);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .compactHeaderTab { font-weight: 500; color: rgba(255,249,147,0.7); }
+  .compactHeaderPeriod {
+    font-family: var(--font);
+    font-size: 10.5px;
+    color: rgba(255,249,147,0.65);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .compactHeaderCompare { color: rgba(255,249,147,0.5); }
 }

@@ -84,8 +84,7 @@ function SyntheseContent({ result, monthly, satisfaction }) {
   };
 
   // Concentration : part du CA portée par le top 5
-  const top5CA  = d.topClients.reduce((s, c) => s + c.ca, 0);
-  const top5Pct = d.caGlobal > 0 ? Math.round((top5CA / d.caGlobal) * 100) : 0;
+  const top5CA = d.topClients.reduce((s, c) => s + c.ca, 0);
 
   return (
     <div className={styles.page}>
@@ -232,16 +231,17 @@ function SyntheseContent({ result, monthly, satisfaction }) {
 
           {/* Concentration top 5 — camembert sous les chiffres, détail exact
               au clic sur les tranches (pas besoin de le doubler en texte) */}
-          <div className={styles.metaSub} style={{ marginBottom: 8 }}>Top 5 clients — {top5Pct}% du CA</div>
+          <div className={styles.metaSub} style={{ marginBottom: 8 }}>Chiffre d'affaires Top 5 clients versus les autres</div>
           <div className={styles.donutRow}>
             <div className={styles.donutBox}>
               {/* Modèle "pie pull-out" : camembert plein, tranche dominante sortie + arc décoratif.
-                  Jaune constant pour "Top 5 clients" — pas de notion de risque ici. */}
+                  Couleurs pastel dédiées — le jaune est déjà utilisé pour "CA global"
+                  ailleurs dans le dashboard, le réutiliser ici prêtait à confusion. */}
               <DonutChart
                 variant="pie"
                 data={[top5CA, Math.max(d.caGlobal - top5CA, 0)]}
                 labels={['Top 5 clients', 'Autres clients']}
-                colors={['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.75)']}
+                colors={['rgba(123,170,191,0.85)', 'rgba(196,135,106,0.75)']}
                 height={185}
                 tooltip={(label, value) => `${label} : ${fmt(value)}`}
               />
@@ -251,7 +251,7 @@ function SyntheseContent({ result, monthly, satisfaction }) {
           <div className={styles.subnote}>
             Détail marge + santé client →{' '}
             <button type="button" className={styles.linkBtn} onClick={() => navigate('/commercial-rc?tab=focus-client')}>
-              Pôle relation client
+              Pôle Relation Client
             </button>
           </div>
         </Card>

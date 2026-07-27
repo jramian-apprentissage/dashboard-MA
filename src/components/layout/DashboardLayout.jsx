@@ -43,6 +43,19 @@ export default function DashboardLayout({
 }) {
   const tabLabel = subTabs.find(t => t.id === activeSubTab)?.label;
 
+  // Bandeau contextuel compact (mobile) : reste visible au scroll une fois le
+  // hero passé, pour qu'on sache toujours dans quel dashboard/onglet/période
+  // on se trouve sans avoir à remonter — retour direct : la période de
+  // référence "part" quand on scrolle, ce n'est pas pratique si quelqu'un
+  // d'autre reçoit le dashboard et doit comprendre le contexte d'un coup d'œil.
+  const [compactVisible, setCompactVisible] = useState(false);
+  useEffect(() => {
+    function onScroll() { setCompactVisible(window.scrollY > 90); }
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   // Sur mobile, extraFilters (ex. le sélecteur collaborateur) migre vers la
   // feuille "Filtre" de BottomNav plutôt que d'encombrer le hero — on
   // l'enregistre ici pour que BottomNav (rendu hors de cet arbre) puisse le
@@ -52,14 +65,6 @@ export default function DashboardLayout({
     setExtraFiltersNode(extraFilters ?? null);
     return () => setExtraFiltersNode(null);
   }, [extraFilters, setExtraFiltersNode]);
-
-  // Centre l'onglet actif dans la strip scrollable — renforce "on peut
-  // scroller" en laissant apparaître un bout des onglets voisins des deux
-  // côtés, plutôt que de coller l'onglet actif contre un bord.
-  const activePillRef = useRef(null);
-  useEffect(() => {
-    activePillRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [activeSubTab]);
 
   // Direction du glissement de contenu (droite→gauche si on avance dans la
   // liste d'onglets, inverse si on recule) — reprend la métaphore "swipe"
@@ -124,8 +129,8 @@ export default function DashboardLayout({
 
   const {
     periodKey, customFrom, customTo, onChange,
-    compareActive, comparePeriodKey, compareFrom, compareTo,
-    toggleCompare, onCompareChange,
+    compareActive, comparePeriodKey,
+    toggleCompare, setCompareMode,
   } = usePeriod();
 
   const periodLabel = buildPeriodLabel(periodKey, customFrom, customTo);
@@ -165,7 +170,6 @@ export default function DashboardLayout({
                 {subTabs.map(t => (
                   <button
                     key={t.id}
-                    ref={t.id === activeSubTab ? activePillRef : null}
                     type="button"
                     className={`${styles.subTabPill} ${t.id === activeSubTab ? styles.subTabPillActive : ''}`}
                     onClick={() => onSubTabChange?.(t.id)}
@@ -227,17 +231,43 @@ export default function DashboardLayout({
                   )}
                 </button>
                 {compareActive && (
-                  <PeriodPicker
-                    value={comparePeriodKey}
-                    customFrom={compareFrom}
-                    customTo={compareTo}
-                    onChange={onCompareChange}
-                  />
+                  <div className={styles.compareModeGroup}>
+                    <button
+                      type="button"
+                      className={`${styles.compareModeBtn} ${comparePeriodKey === 'previous-period' ? styles.compareModeBtnActive : ''}`}
+                      onClick={() => setCompareMode('previous-period')}
+                    >
+                      Période précédente
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.compareModeBtn} ${comparePeriodKey === 'previous-year' ? styles.compareModeBtnActive : ''}`}
+                      onClick={() => setCompareMode('previous-year')}
+                    >
+                      Année précédente
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
           </div>
 
+        </div>
+      </div>
+
+      {/* ── Bandeau contextuel compact (mobile, apparaît au scroll) ── */}
+      <div className={`${styles.compactHeader} ${compactVisible ? styles.compactHeaderVisible : ''}`}>
+        <div className={styles.compactHeaderTitle}>
+          {dashboardName}{dashboardNameEmphasis ? ` ${dashboardNameEmphasis}` : ''}
+          {tabLabel && <span className={styles.compactHeaderTab}> · {tabLabel}</span>}
+        </div>
+        <div className={styles.compactHeaderPeriod}>
+          {periodLabel}
+          {compareActive && (
+            <span className={styles.compactHeaderCompare}>
+              {' '}vs {comparePeriodKey === 'previous-year' ? 'année précédente' : 'période précédente'}
+            </span>
+          )}
         </div>
       </div>
 

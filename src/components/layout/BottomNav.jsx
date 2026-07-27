@@ -4,17 +4,18 @@ import { useAuth, DASHBOARDS } from '../../contexts/AuthContext';
 import { usePeriod } from '../../contexts/PeriodContext';
 import { useExtraFilters } from '../../contexts/ExtraFiltersContext';
 import { DASHBOARD_ROUTES, DASHBOARD_DEFAULT_TAB } from '../../data/dashboardTabs';
-import PeriodPicker from '../ui/PeriodPicker';
+import PeriodPicker, { getPeriodLabel } from '../ui/PeriodPicker';
 import styles from './BottomNav.module.css';
 
 /* Barre de navigation mobile — remplace le dropdown du haut, illisible et non
    scalable à 4-5 dashboards (voir Topbar.jsx). 4 boutons fixes en bas, dans
-   l'esprit d'une bottom-bar TikTok/Instagram : Page (changer de dashboard),
-   Filtre (période), Comparer, Menu (compte). Chaque bouton ouvre une feuille
-   qui glisse depuis le bas plutôt qu'un dropdown flottant, plus adapté au
-   pouce. Repose sur PeriodContext, déjà global — fonctionne donc même si
-   la page courante n'est pas un dashboard (Filtre/Comparer sont alors
-   simplement sans effet visible, aucun consommateur ne lit l'état). */
+   l'esprit d'une bottom-bar TikTok/Instagram : Dashboard (changer de page),
+   Période de référence, Comparer, Comptes (fonctions liées au compte).
+   Chaque bouton ouvre une feuille qui glisse depuis le bas plutôt qu'un
+   dropdown flottant, plus adapté au pouce. Repose sur PeriodContext, déjà
+   global — fonctionne donc même si la page courante n'est pas un dashboard
+   (Période/Comparer sont alors simplement sans effet visible, aucun
+   consommateur ne lit l'état). */
 export default function BottomNav() {
   const { user, logout, hasAccessToDashboard } = useAuth();
   const navigate = useNavigate();
@@ -24,8 +25,8 @@ export default function BottomNav() {
 
   const {
     periodKey, customFrom, customTo, onChange,
-    compareActive, comparePeriodKey, compareFrom, compareTo,
-    toggleCompare, onCompareChange,
+    compareActive, comparePeriodKey,
+    toggleCompare, setCompareMode,
   } = usePeriod();
   const { node: extraFiltersNode } = useExtraFilters();
 
@@ -73,7 +74,7 @@ export default function BottomNav() {
             <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
             <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
           </svg>
-          <span>Page</span>
+          <span>Dashboard</span>
         </button>
 
         <button data-bn-btn className={`${styles.btn} ${sheet === 'filtre' ? styles.btnActive : ''}`} onClick={() => toggle('filtre')} type="button">
@@ -82,7 +83,7 @@ export default function BottomNav() {
             <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/>
             <line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="currentColor" stroke="none"/>
           </svg>
-          <span>Filtre</span>
+          <span>{getPeriodLabel(periodKey, customFrom, customTo)}</span>
         </button>
 
         <button data-bn-btn className={`${styles.btn} ${sheet === 'comparer' ? styles.btnActive : ''} ${compareActive ? styles.btnHint : ''}`} onClick={() => toggle('comparer')} type="button">
@@ -98,7 +99,7 @@ export default function BottomNav() {
           <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
           </svg>
-          <span>Menu</span>
+          <span>Comptes</span>
         </button>
       </nav>
 
@@ -149,8 +150,21 @@ export default function BottomNav() {
                   {compareActive ? 'Comparaison activée — désactiver' : 'Activer la comparaison'}
                 </button>
                 {compareActive && (
-                  <div className={styles.sheetCentered} style={{ marginTop: 10 }}>
-                    <PeriodPicker value={comparePeriodKey} customFrom={compareFrom} customTo={compareTo} onChange={onCompareChange} />
+                  <div className={styles.compareModeGroup} style={{ marginTop: 10 }}>
+                    <button
+                      type="button"
+                      className={`${styles.compareModeBtn} ${comparePeriodKey === 'previous-period' ? styles.compareModeBtnActive : ''}`}
+                      onClick={() => setCompareMode('previous-period')}
+                    >
+                      Période précédente
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.compareModeBtn} ${comparePeriodKey === 'previous-year' ? styles.compareModeBtnActive : ''}`}
+                      onClick={() => setCompareMode('previous-year')}
+                    >
+                      Année précédente
+                    </button>
                   </div>
                 )}
               </>

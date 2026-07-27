@@ -3,6 +3,36 @@ import { getPeriodRange } from '../components/ui/PeriodPicker';
 
 const PeriodContext = createContext(null);
 
+// toISOString() convertit en UTC : pour un fuseau en avance sur UTC (Europe/
+// Paris, UTC+1/+2), minuit local sérialisé ainsi retombe sur la veille — d'où
+// ce formatage qui reste en heure locale du début à la fin, jamais de
+// passage par toISOString() pour une date calendaire.
+function fmtLocal(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function shiftYears(dateStr, years) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setFullYear(d.getFullYear() + years);
+  return fmtLocal(d);
+}
+
+// Intervalle immédiatement antérieur, de même durée que [fromStr, toStr].
+// Ex. 01→15 juillet (15 jours) → comparé aux 15 jours précédents (16→30 juin).
+function previousPeriodRange(fromStr, toStr) {
+  const from = new Date(`${fromStr}T00:00:00`);
+  const to   = new Date(`${toStr}T00:00:00`);
+  const days = Math.round((to - from) / 86400000) + 1;
+  const prevTo = new Date(from);
+  prevTo.setDate(prevTo.getDate() - 1);
+  const prevFrom = new Date(prevTo);
+  prevFrom.setDate(prevFrom.getDate() - days + 1);
+  return { from: fmtLocal(prevFrom), to: fmtLocal(prevTo) };
+}
+
 export function PeriodProvider({ children }) {
   const [periodKey, setPeriodKey] = useState('month');
   const [customFrom, setCustomFrom] = useState(() => {
@@ -11,11 +41,12 @@ export function PeriodProvider({ children }) {
   });
   const [customTo, setCustomTo] = useState(() => new Date().toISOString().slice(0, 10));
 
-  // ── Comparaison ──────────────────────────────────────────────────────────────
+  // ── Comparaison ── deux modes seulement, tous deux dérivés de la période de
+  // référence (pas de sélection de dates libre) : "période précédente"
+  // (intervalle immédiatement antérieur, même durée) ou "année précédente"
+  // (mêmes dates, un an plus tôt).
   const [compareActive,    setCompareActive]    = useState(false);
-  const [comparePeriodKey, setComparePeriodKey] = useState('last-month');
-  const [compareFrom,      setCompareFrom]      = useState('');
-  const [compareTo,        setCompareTo]        = useState('');
+  const [comparePeriodKey, setComparePeriodKey] = useState('previous-period');
 
   function onChange({ key, from, to }) {
     setPeriodKey(key);
@@ -26,26 +57,23 @@ export function PeriodProvider({ children }) {
     setCompareActive(a => !a);
   }
 
-  function onCompareChange({ key, from, to }) {
+  function setCompareMode(key) {
     setComparePeriodKey(key);
-    if (key === 'custom') { setCompareFrom(from); setCompareTo(to); }
-    else {
-      const range = getPeriodRange(key, from, to);
-      setCompareFrom(range.from);
-      setCompareTo(range.to);
-    }
   }
 
-  // Plage de dates de la période de comparaison (pré-calculée)
+  const referenceRange = getPeriodRange(periodKey, customFrom, customTo);
+
   const compareRange = compareActive
-    ? getPeriodRange(comparePeriodKey, compareFrom, compareTo)
+    ? (comparePeriodKey === 'previous-year'
+        ? { from: shiftYears(referenceRange.from, -1), to: shiftYears(referenceRange.to, -1) }
+        : previousPeriodRange(referenceRange.from, referenceRange.to))
     : null;
 
   return (
     <PeriodContext.Provider value={{
-      periodKey, customFrom, customTo, onChange,
-      compareActive, comparePeriodKey, compareFrom, compareTo, compareRange,
-      toggleCompare, onCompareChange,
+      periodKey, customFrom, customTo, onChange, referenceRange,
+      compareActive, comparePeriodKey, compareRange,
+      toggleCompare, setCompareMode,
     }}>
       {children}
     </PeriodContext.Provider>
