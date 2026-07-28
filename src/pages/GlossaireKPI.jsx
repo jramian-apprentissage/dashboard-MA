@@ -6,7 +6,7 @@ import styles from './GlossaireKPI.module.css';
 
 const DASH_LABELS = {
   'commercial-rc':       'Commercial & RC',
-  'commercial-activite': 'Activité commerciale',
+  'commercial-activite': 'Activités commerciales',
 };
 
 const DASH_COLORS = {

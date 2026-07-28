@@ -6,7 +6,7 @@ import { trackEvent } from '../services/tracking';
 const BASE_LABELS = {
   '/':                    'Accueil',
   '/commercial-rc':       'Commercial & Relation Client',
-  '/commercial-activite': 'Activité commerciale',
+  '/commercial-activite': 'Activités commerciales',
   '/glossaire':           'Glossaire KPI',
   '/admin':               'Administration',
 };

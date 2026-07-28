@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import PeriodPicker from '../ui/PeriodPicker';
 import { usePeriod } from '../../contexts/PeriodContext';
 import { useExtraFilters } from '../../contexts/ExtraFiltersContext';
+import { DASHBOARD_EXCLUDED_PERIODS } from '../../data/dashboardTabs';
 import defaultHeroBg from '../../assets/bg.svg';
 import styles from './DashboardLayout.module.css';
 
@@ -29,6 +30,7 @@ function buildPeriodLabel(key, customFrom, customTo) {
 }
 
 export default function DashboardLayout({
+  dashboardId,
   dashboardName,
   dashboardNameEmphasis,
   subTabs = [],
@@ -42,6 +44,7 @@ export default function DashboardLayout({
   onExtraire,
 }) {
   const tabLabel = subTabs.find(t => t.id === activeSubTab)?.label;
+  const excludePeriods = DASHBOARD_EXCLUDED_PERIODS[dashboardId] || [];
 
   // Bandeau contextuel compact (mobile) : reste visible au scroll une fois le
   // hero passé, pour qu'on sache toujours dans quel dashboard/onglet/période
@@ -196,6 +199,7 @@ export default function DashboardLayout({
                   customFrom={customFrom}
                   customTo={customTo}
                   onChange={onChange}
+                  excludeKeys={excludePeriods}
                 />
               </div>
 

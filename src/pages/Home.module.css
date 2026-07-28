@@ -222,11 +222,15 @@
   border-color: var(--myrtille);
 }
 
-/* ─── Carte admin ────────────────────────────────────────────────────────── */
+/* ─── Section admin — décorrélée des cartes dashboards ──────────────────── */
+.adminSection { margin-top: 8px; }
+.adminDivider { height: 1px; background: rgba(38,0,31,0.08); margin-bottom: 20px; }
+
 .adminCard {
   background: rgba(255,255,255,0.9);
   border-color: rgba(38,0,31,0.08);
   cursor: pointer;
+  max-width: 320px;
 }
 .adminCard:hover { border-color: rgba(38,0,31,0.18); }
 .adminIcon {

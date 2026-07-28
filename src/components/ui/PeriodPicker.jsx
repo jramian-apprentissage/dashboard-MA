@@ -104,7 +104,8 @@ export function getPeriodRange(key, customFrom, customTo) {
   }
 }
 
-export default function PeriodPicker({ value, customFrom, customTo, onChange }) {
+export default function PeriodPicker({ value, customFrom, customTo, onChange, excludeKeys = [] }) {
+  const visiblePeriods = excludeKeys.length ? PERIODS.filter(p => !excludeKeys.includes(p.key)) : PERIODS;
   const [open, setOpen] = useState(false);
   // Coordonnées viewport (position:fixed) calculées à l'ouverture
   const [coords, setCoords] = useState(null);
@@ -166,7 +167,7 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange }) 
 
   const dropdown = open && coords && createPortal(
     <div className={styles.dropdown} style={coords} ref={dropRef}>
-      {PERIODS.map(p => (
+      {visiblePeriods.map(p => (
         <button
           key={p.key}
           className={`${styles.option} ${value === p.key ? styles.optionActive : ''}`}

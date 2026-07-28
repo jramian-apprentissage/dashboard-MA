@@ -101,8 +101,8 @@ export default function CommercialActivite() {
     <>
       <DashboardLayout
         dashboardId="commercial-activite"
-        dashboardName="Activité"
-        dashboardNameEmphasis="commerciale"
+        dashboardName="Activités"
+        dashboardNameEmphasis="commerciales"
         subTabs={subTabs}
         activeSubTab={tab}
         onSubTabChange={id => navigate(`/commercial-activite?tab=${id}`)}

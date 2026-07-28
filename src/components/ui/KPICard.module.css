@@ -64,7 +64,11 @@
 }
 
 /* Ligne comparaison — au-dessus de la définition, plus affirmée (poids,
-   couleur) puisque c'est la donnée "active" que l'œil doit capter en premier. */
+   couleur) puisque c'est la donnée "active" que l'œil doit capter en premier.
+   Sur les cartes étroites (grille 2 colonnes mobile), un texte comme "-37%
+   vs période précédente" passait sur 2 lignes et devenait plus visible que
+   le KPI lui-même — forcé sur une seule ligne, tronqué en dernier recours
+   (la fin la moins importante, "précédente", saute avant le chiffre). */
 .compare {
   font-size: 10.5px;
   font-weight: 600;
@@ -73,6 +77,13 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  min-width: 0;
+}
+.compare .lineText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .trend {

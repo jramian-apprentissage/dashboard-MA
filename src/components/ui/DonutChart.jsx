@@ -63,6 +63,11 @@ const labelsPlugin = {
     const total = ds.data.reduce((s, v) => s + (v || 0), 0);
     if (!total) return;
 
+    // Tranches fines consécutives (ex. les 2 dernières d'un "rose" trié
+    // décroissant) → rappels filaires à des rayons croissants, sinon leurs
+    // étiquettes % se chevauchent (illisible, surtout sur mobile).
+    let calloutSeq = 0;
+
     meta.data.forEach((arc, i) => {
       const pct = Math.round((ds.data[i] / total) * 100);
       const mid = (arc.startAngle + arc.endAngle) / 2;
@@ -86,7 +91,8 @@ const labelsPlugin = {
       } else if (opts.callouts && pct >= 1) {
         /* Rappel filaire : trait depuis la tranche vers le libellé extérieur */
         const r1 = arc.outerRadius + 3;
-        const r2 = arc.outerRadius + 12;
+        const r2 = arc.outerRadius + 12 + calloutSeq * 11;
+        calloutSeq += 1;
         const x1 = arc.x + Math.cos(mid) * r1;
         const y1 = arc.y + Math.sin(mid) * r1;
         const x2 = arc.x + Math.cos(mid) * r2;
@@ -107,8 +113,10 @@ const labelsPlugin = {
         ctx.fillStyle = '#2C1A27';
         ctx.textAlign = goRight ? 'left' : 'right';
         ctx.textBaseline = 'middle';
-        const label = `${pct}% · ${chart.data.labels[i]}`;
-        ctx.fillText(label, x3 + (goRight ? 3 : -3), y2);
+        // Pourcentage seul — le nom complet, en plus sur un petit rappel
+        // filaire, se chevauchait sur mobile pour les tranches serrées. La
+        // légende (couleur + libellé) et le survol restent la source de détail.
+        ctx.fillText(`${pct}%`, x3 + (goRight ? 3 : -3), y2);
         ctx.restore();
       }
     });

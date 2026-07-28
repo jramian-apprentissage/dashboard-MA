@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
@@ -90,6 +90,7 @@ export default function FocusCommercial() {
   const { comparePeriodKey } = usePeriod();
   const [relanceSort, setRelanceSort] = useState({ col: 'etat', dir: 'asc' });
   const [showAllRelances, setShowAllRelances] = useState(false);
+  const relanceSectionRef = useRef(null);
   const c = compareResult;
   const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
   const cmpPts = (current, ref) => c ? comparePtsText(current, ref, comparePeriodKey) : null;
@@ -109,7 +110,7 @@ export default function FocusCommercial() {
     <div className={styles.page}>
 
       {/* ══ Ligne 1 — L'entonnoir en chiffres : entrée → conversion → sortie ══ */}
-      <SectionLabel badge="Monday">Pipeline, conversion, signatures</SectionLabel>
+      <SectionLabel badge="Monday">Tunnel de vente</SectionLabel>
       <Loader loading={loading} label="Chargement des données CRM…" size={44} minHeight={110} />
       {error && (
         <div style={{ padding: '20px 0', color: 'var(--neg)', fontSize: 13 }}>Erreur de chargement : {error}</div>
@@ -135,7 +136,7 @@ export default function FocusCommercial() {
               label="Win rate"
               value={`${winRate}%`}
               compare={cmpPts(winRate, c?.winRate)}
-              trend={{ dir: winRate >= 50 ? 'up' : 'down', text: 'Gagnés ÷ (Gagnés + Perdus)' }}
+              trend={{ dir: 'neutral', text: 'Gagnés ÷ (Gagnés + Perdus)' }}
               color={winRate >= 50 ? 'green' : 'amber'}
             />
             <KPICard
@@ -143,14 +144,14 @@ export default function FocusCommercial() {
               value={result.nbDealsGagnes}
               unit=" deals"
               compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
-              trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA associé : ${fmt(result.sommeVentesGagnes)}` }}
+              trend={{ dir: 'neutral', text: `CA associé : ${fmt(result.sommeVentesGagnes)}` }}
               color="green"
             />
           </div>
 
           {/* ══ Ligne 2 — Diagnostic du flux : où sont les opps, que valent-elles ══ */}
           <SectionLabel>Diagnostic du pipeline</SectionLabel>
-          <div className={styles.threeCol}>
+          <div className={styles.twoCol}>
             {/* Funnel par étape — colonne "Etat" du board Leads/Prospects */}
             <Card title="Funnel par étape commerciale">
               {leads.error ? (
@@ -222,63 +223,65 @@ export default function FocusCommercial() {
                 <div style={{ color: 'var(--text3)', fontSize: 12 }}>Aucune opportunité en pipeline</div>
               )}
             </Card>
-
-            {/* Win rate — jauge + détail des issues */}
-            <Card title="Détail des résultats">
-              <div className={styles.donutWrap} style={{ height: 'auto' }}>
-                <svg viewBox="0 0 110 110" width={120} height={120}>
-                  <defs>
-                    <linearGradient id="winGradFC" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%"   stopColor="#26001F" stopOpacity="0.55" />
-                      <stop offset="100%" stopColor="#26001F" stopOpacity="1" />
-                    </linearGradient>
-                  </defs>
-                  <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(167,173,170,0.25)" strokeWidth="11" />
-                  {/* Repère cible 50% */}
-                  <line x1="55" y1="4" x2="55" y2="16" stroke="rgba(38,0,31,0.3)" strokeWidth="2" transform="rotate(180 55 55)" />
-                  <circle
-                    cx="55" cy="55" r="44" fill="none"
-                    stroke="url(#winGradFC)" strokeWidth="11"
-                    strokeDasharray={mounted ? `${dashTarget} ${circumference}` : `0 ${circumference}`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 55 55)"
-                    style={{ transition: 'stroke-dasharray 1.1s cubic-bezier(0.16,1,0.3,1)' }}
-                  />
-                </svg>
-                <div className={styles.donutCenter}>
-                  <div className={styles.donutVal}>{winRate}%</div>
-                  <div className={styles.donutLbl}>Win rate</div>
-                </div>
-              </div>
-              <div className={styles.donutStats}>
-                <div className={styles.dstat}>
-                  <div className={styles.dv} style={{ color: 'var(--pos)' }}>{result.dealStats.gagnes}</div>
-                  <div className={styles.dl}>Deals gagnés</div>
-                </div>
-                <div className={styles.dstat}>
-                  <div className={styles.dv} style={{ color: 'var(--neg)' }}>{result.dealStats.perdus}</div>
-                  <div className={styles.dl}>Deals perdus</div>
-                </div>
-                <div className={styles.dstat}>
-                  <div className={styles.dv} style={{ color: 'var(--warn)' }}>{result.dealStats.standby}</div>
-                  <div className={styles.dl}>Deals stand-by</div>
-                </div>
-                <div className={styles.dstat}>
-                  <div className={styles.dv} style={{ color: 'var(--text2)' }}>{result.dealStats.enCours}</div>
-                  <div className={styles.dl}>Deals en cours</div>
-                </div>
-              </div>
-              <div className={styles.subnote}>
-                {result.dealStats.gagnes} affaire{result.dealStats.gagnes > 1 ? 's' : ''} signée{result.dealStats.gagnes > 1 ? 's' : ''} sur {result.dealStats.gagnes + result.dealStats.perdus} affaire{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''} totale{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''}
-              </div>
-            </Card>
           </div>
         </>
       )}
 
-      {/* ══ Ligne 3 — Pourquoi on perd : tendance + causes sur la même ligne ══ */}
-      <SectionLabel badge="Monday — colonnes Etat / Motif de refus">Évolution mensuelle des deals — 6 derniers mois</SectionLabel>
-      <div className={styles.threeCol}>
+      {/* ══ Ligne 3 — Détail des deals + évolution : regroupés dans la même
+          sous-partie (le résultat consolidé et sa tendance se lisent ensemble) ══ */}
+      <SectionLabel badge="Monday">Évolution mensuelle des deals — 6 derniers mois</SectionLabel>
+      <div className={styles.twoCol}>
+        {/* Win rate — jauge + détail des issues */}
+        {result && (
+          <Card title="Détail des deals">
+            <div className={styles.donutWrap} style={{ height: 'auto' }}>
+              <svg viewBox="0 0 110 110" width={120} height={120}>
+                <defs>
+                  <linearGradient id="winGradFC" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%"   stopColor="#26001F" stopOpacity="0.55" />
+                    <stop offset="100%" stopColor="#26001F" stopOpacity="1" />
+                  </linearGradient>
+                </defs>
+                <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(167,173,170,0.25)" strokeWidth="11" />
+                {/* Repère cible 50% */}
+                <line x1="55" y1="4" x2="55" y2="16" stroke="rgba(38,0,31,0.3)" strokeWidth="2" transform="rotate(180 55 55)" />
+                <circle
+                  cx="55" cy="55" r="44" fill="none"
+                  stroke="url(#winGradFC)" strokeWidth="11"
+                  strokeDasharray={mounted ? `${dashTarget} ${circumference}` : `0 ${circumference}`}
+                  strokeLinecap="round"
+                  transform="rotate(-90 55 55)"
+                  style={{ transition: 'stroke-dasharray 1.1s cubic-bezier(0.16,1,0.3,1)' }}
+                />
+              </svg>
+              <div className={styles.donutCenter}>
+                <div className={styles.donutVal}>{winRate}%</div>
+                <div className={styles.donutLbl}>Win rate</div>
+              </div>
+            </div>
+            <div className={styles.donutStats}>
+              <div className={styles.dstat}>
+                <div className={styles.dv} style={{ color: 'var(--pos)' }}>{result.dealStats.gagnes}</div>
+                <div className={styles.dl}>Deals gagnés</div>
+              </div>
+              <div className={styles.dstat}>
+                <div className={styles.dv} style={{ color: 'var(--neg)' }}>{result.dealStats.perdus}</div>
+                <div className={styles.dl}>Deals perdus</div>
+              </div>
+              <div className={styles.dstat}>
+                <div className={styles.dv} style={{ color: 'var(--warn)' }}>{result.dealStats.standby}</div>
+                <div className={styles.dl}>Deals stand-by</div>
+              </div>
+              <div className={styles.dstat}>
+                <div className={styles.dv} style={{ color: 'var(--text2)' }}>{result.dealStats.enCours}</div>
+                <div className={styles.dl}>Deals en cours</div>
+              </div>
+            </div>
+            <div className={styles.subnote}>
+              {result.dealStats.gagnes} affaire{result.dealStats.gagnes > 1 ? 's' : ''} signée{result.dealStats.gagnes > 1 ? 's' : ''} sur {result.dealStats.gagnes + result.dealStats.perdus} affaire{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''} totale{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''}
+            </div>
+          </Card>
+        )}
         <Card title="Deals gagnés / perdus / stand-by — par mois">
           {leads.error ? (
             <NotConnected>{leads.error}</NotConnected>
@@ -308,6 +311,8 @@ export default function FocusCommercial() {
             <NotConnected>chargement…</NotConnected>
           )}
         </Card>
+      </div>
+      <div className={styles.twoCol} style={{ marginTop: 12 }}>
         <Card title="Motifs des deals perdus">
           {leads.error ? (
             <NotConnected>{leads.error}</NotConnected>
@@ -347,7 +352,8 @@ export default function FocusCommercial() {
       </div>
 
       {/* ══ Ligne 4 — L'action immédiate : la to-do de la réunion d'équipe ══ */}
-      <SectionLabel badge="Monday — Etat + Date de relance">À relancer</SectionLabel>
+      <div ref={relanceSectionRef} />
+      <SectionLabel badge="Monday">À relancer</SectionLabel>
       <Card title="Opportunités sans prochaine action">
         {leads.error ? (
           <NotConnected>{leads.error}</NotConnected>
@@ -379,7 +385,17 @@ export default function FocusCommercial() {
               </tbody>
             </table>
             {leads.data.opportunitesSansAction.length > RELANCES_VISIBLE && (
-              <button type="button" className={styles.linkBtn} onClick={() => setShowAllRelances(s => !s)}>
+              <button
+                type="button"
+                className={styles.linkBtn}
+                onClick={() => {
+                  // "Voir moins" : la liste se réduit, mais si on avait scrollé
+                  // en bas du tableau déployé, on restait coincé loin du début
+                  // — on remonte explicitement au début de la section.
+                  if (showAllRelances) relanceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  setShowAllRelances(s => !s);
+                }}
+              >
                 {showAllRelances
                   ? 'Voir moins'
                   : `Voir les ${leads.data.opportunitesSansAction.length - RELANCES_VISIBLE} autres`}
@@ -446,7 +462,7 @@ export default function FocusCommercial() {
       </div>
 
       {/* ══ Ligne 6 — Missions MA : part du tout en donut + chiffres exacts à côté ══ */}
-      <SectionLabel badge="Monday — colonne Poste (profils)">Revenue par type de mission MA</SectionLabel>
+      <SectionLabel badge="Monday">Type de mission MA</SectionLabel>
       <Card title="Répartition du revenue par type de mission">
         {leads.error ? (
           <NotConnected>{leads.error}</NotConnected>

@@ -27,6 +27,12 @@ const fmtEuros = v => {
 };
 
 const HEALTH_LIST_STEP = 8;
+const BUCKET_MATCH = {
+  sain:    c => c.sentiment?.includes('Sain'),
+  warning: c => c.sentiment?.includes('Warning'),
+  risque:  c => c.sentiment?.includes('Risque'),
+};
+const BUCKET_LABEL = { sain: 'Clients sains', warning: 'Clients sous vigilance', risque: 'Clients à risque' };
 
 export default function FocusClient() {
   const mounted = useChartMount();
@@ -34,6 +40,7 @@ export default function FocusClient() {
   const satisfaction = useSatisfactionClient();
   const { comparePeriodKey } = usePeriod();
   const [healthVisible, setHealthVisible] = useState(HEALTH_LIST_STEP);
+  const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
   const c = compareResult;
   const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
 
@@ -53,7 +60,7 @@ export default function FocusClient() {
             value={result.nbDealsGagnes}
             unit=" clients"
             compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
-            trend={{ dir: result.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA : ${fmtEuros(result.sommeVentesGagnes)}` }}
+            trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.sommeVentesGagnes)}` }}
             color="green"
           />
           <KPICard {...notConnectedKPI('Clients perdus', 'aucun suivi des départs de clients côté Monday', 'red')} />
@@ -70,7 +77,7 @@ export default function FocusClient() {
             value={fmtEuros(result.margeBruteNouveaux)}
             compare={cmp(result.margeBruteNouveaux, c?.margeBruteNouveaux)}
             trend={{
-              dir: result.margeBruteNouveaux >= 0 ? 'up' : 'down',
+              dir: 'neutral',
               text: result.sommeVentesGagnes > 0
                 ? `Taux : ${Math.round(result.margeBruteNouveaux / result.sommeVentesGagnes * 100)}%`
                 : '—',
@@ -81,12 +88,12 @@ export default function FocusClient() {
       )}
 
       {/* ══ Ligne 2 — La valeur : qui rapporte quoi ══ */}
-      <SectionLabel>La valeur — classement clients</SectionLabel>
+      <SectionLabel>Performance client</SectionLabel>
       <div className={styles.col6040}>
         <Card title="CA par client">
           {result?.topClients?.length > 0 ? (
             <table className={styles.tbl}>
-              <thead><tr><th>#</th><th>Client</th><th>CA</th><th>Part</th></tr></thead>
+              <thead><tr><th></th><th></th><th>CA</th><th>Part du CA</th></tr></thead>
               <tbody>
                 {result.topClients.map((c, i) => (
                   <tr key={c.name}>
@@ -123,20 +130,46 @@ export default function FocusClient() {
       </div>
 
       {/* ══ Ligne 3 — La santé : où on va, ce que ça a déjà coûté ══ */}
-      <SectionLabel badge="IA — colonne Monday « Note de satisfaction »">La santé — risque actuel & pertes constatées</SectionLabel>
+      <SectionLabel badge="IA">Santé du portefeuille client</SectionLabel>
       <div className={styles.twoCol}>
-        <Card title="Nb de Clients par Niveau de Santé">
+        <Card title="Niveau de santé client">
           {satisfaction.error ? (
             <NotConnected>{satisfaction.error}</NotConnected>
           ) : satisfaction.data ? (
             <>
               {/* Chiffres en tête, camembert en dessous — même représentation
-                  que la synthèse (les nombres se lisent avant le %). */}
+                  que la synthèse (les nombres se lisent avant le %). Cliquer
+                  une catégorie déploie son Top 5 clients concernés. */}
               <div className={styles.healthStats}>
-                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</div><div className={styles.hLbl}>Clients sains</div></div>
-                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</div><div className={styles.hLbl}>Clients sous vigilance</div></div>
-                <div className={styles.hStat}><div className={styles.hVal} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</div><div className={styles.hLbl}>Clients à risque</div></div>
+                <button type="button" className={styles.hStat} onClick={() => setSelectedBucket(b => b === 'sain' ? null : 'sain')}>
+                  <div className={styles.hVal} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</div><div className={styles.hLbl}>Clients sains</div>
+                </button>
+                <button type="button" className={styles.hStat} onClick={() => setSelectedBucket(b => b === 'warning' ? null : 'warning')}>
+                  <div className={styles.hVal} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</div><div className={styles.hLbl}>Clients sous vigilance</div>
+                </button>
+                <button type="button" className={styles.hStat} onClick={() => setSelectedBucket(b => b === 'risque' ? null : 'risque')}>
+                  <div className={styles.hVal} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</div><div className={styles.hLbl}>Clients à risque</div>
+                </button>
               </div>
+              {selectedBucket && (() => {
+                const top5 = satisfaction.data.clients
+                  .filter(BUCKET_MATCH[selectedBucket])
+                  .filter(c => c.note != null)
+                  .sort((a, b) => a.note - b.note)
+                  .slice(0, 5);
+                return (
+                  <div className={styles.bucketTop5}>
+                    <div className={styles.metaSub}>Top 5 — {BUCKET_LABEL[selectedBucket]}</div>
+                    {top5.length > 0 ? top5.map(c => (
+                      <div key={c.compteId} className={styles.bucketTop5Row}>
+                        <span>{c.nom}</span><span>{c.note}</span>
+                      </div>
+                    )) : (
+                      <div className={styles.subnote}>Aucun client dans cette catégorie</div>
+                    )}
+                  </div>
+                );
+              })()}
               <DonutChart
                 variant="donut"
                 data={[satisfaction.data.buckets.sain, satisfaction.data.buckets.warning, satisfaction.data.buckets.risque]}
@@ -150,23 +183,20 @@ export default function FocusClient() {
               {satisfaction.data.buckets.sansNote > 0 && (
                 <div className={styles.subnote}>{satisfaction.data.buckets.sansNote} compte(s) sans note pour l'instant</div>
               )}
-              <div className={styles.subnote}>Score IA Monday (colonne « Note de satisfaction ») — {satisfaction.data.note_limite}</div>
+              <div className={styles.subnote}>Score IA Monday — {satisfaction.data.note_limite}</div>
             </>
           ) : (
             <NotConnected>chargement…</NotConnected>
           )}
         </Card>
 
-        <Card title="Clients perdus — détail">
+        <Card title="Détail des clients perdus">
           <NotConnected>aucun suivi des départs de clients côté Monday — nécessite un statut/date de fin de contrat compte</NotConnected>
         </Card>
       </div>
 
-      <Card title="Revenue perdu — évolution mensuelle">
-        <NotConnected>dépend du suivi des départs de clients ci-dessus</NotConnected>
-      </Card>
-
-      {/* ══ Ligne 4 — Le détail santé client par client ══ */}
+      {/* Détail par client — regroupé juste sous "Niveau de santé client", en
+          l'absence de KPI clients/revenus perdus à intercaler pour l'instant. */}
       <Card title="Détails du niveau de Santé par Client">
         {satisfaction.error ? (
           <NotConnected>{satisfaction.error}</NotConnected>
@@ -222,6 +252,12 @@ export default function FocusClient() {
           <NotConnected>chargement…</NotConnected>
         )}
       </Card>
+
+      <div style={{ marginTop: 20 }}>
+        <Card title="Évolution mensuelle des revenus perdus">
+          <NotConnected>dépend du suivi des départs de clients ci-dessus</NotConnected>
+        </Card>
+      </div>
 
       {/* ══ Ligne 5 — Pilotage interne : qui génère la marge, indépendant du churn ══ */}
       <SectionLabel>Pilotage interne — marge par collaborateur</SectionLabel>

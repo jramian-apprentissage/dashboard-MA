@@ -46,13 +46,13 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
       {compare && (
         <div className={`${styles.compare} ${styles[compare.dir] || ''}`}>
           <TrendIcon dir={compare.dir} />
-          {compare.text}
+          <span className={styles.lineText}>{compare.text}</span>
         </div>
       )}
       {trend && (
         <div className={`${styles.trend} ${styles[trend.dir] || ''}`}>
           <TrendIcon dir={trend.dir} />
-          {trend.text}
+          <span className={styles.lineText}>{trend.text}</span>
         </div>
       )}
     </div>

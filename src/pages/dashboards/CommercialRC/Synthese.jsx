@@ -82,7 +82,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
     datasets: [{
       label: 'CA',
       data:  d.topClients.map(c => c.ca),
-      backgroundColor: 'rgba(255,249,147,0.5)',
+      backgroundColor: 'rgba(213,208,123,0.85)',
       borderRadius: 4,
       borderSkipped: false,
     }],
@@ -95,7 +95,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
     <div className={styles.page}>
 
       {/* ── Ligne 1 — Le résultat : les 4 chiffres du lundi matin ─────────── */}
-      <SectionLabel badge="Monday">Le résultat — vue consolidée</SectionLabel>
+      <SectionLabel badge="Monday">Vue consolidée</SectionLabel>
       <div className={styles.kpiGrid}>
         <KPICard
           label="CA"
@@ -116,7 +116,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
           value={d.nbDealsGagnes}
           unit=" deals"
           compare={cmp(d.nbDealsGagnes, c?.nbDealsGagnes)}
-          trend={{ dir: d.nbDealsGagnes > 0 ? 'up' : 'neutral', text: `CA associé : ${fmt(d.sommeVentesGagnes)}` }}
+          trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.sommeVentesGagnes)}` }}
           color="green"
         />
         <KPICard
@@ -142,7 +142,10 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
                       type: 'bar',
                       label: 'CA',
                       data: monthly.map(m => m.ca),
-                      backgroundColor: 'rgba(255,249,147,0.5)',
+                      // Jaune soleil d'origine (#FFF993) trop pâle pour distinguer
+                      // les mois adjacents sans zoomer — teinte 60% de la même
+                      // famille (#D5D07B, palette fournie) pour plus de contraste.
+                      backgroundColor: 'rgba(213,208,123,0.85)',
                       borderRadius: 4,
                       borderSkipped: false,
                       yAxisID: 'y',
@@ -196,7 +199,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               />
             </div>
             <div className={styles.legend}>
-              <span className={styles.dot} style={{ background: 'rgba(255,249,147,0.7)' }} />CA
+              <span className={styles.dot} style={{ background: 'rgba(213,208,123,0.95)' }} />CA
               <span className={styles.dot} style={{ background: 'rgba(38,0,31,0.45)', marginLeft: 12 }} />Marge brute
               <span className={styles.dot} style={{ background: 'rgba(196,135,106,0.9)', marginLeft: 12 }} />Taux de marge %
             </div>
@@ -207,7 +210,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
       </Card>
 
       {/* ── Ligne 3 — Santé du portefeuille : qui fait le CA + dépendance ──── */}
-      <SectionLabel>Santé du portefeuille</SectionLabel>
+      <SectionLabel>Santé du portefeuille client</SectionLabel>
       <div className={styles.chartsRow}>
         <Card title="Top 5 clients par CA">
           {d.topClients.length > 0 ? (

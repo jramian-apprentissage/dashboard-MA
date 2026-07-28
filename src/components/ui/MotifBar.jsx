@@ -15,18 +15,20 @@ export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)' }
         <div
           className={styles.fill}
           style={{
-            // Seuil mini pour rester visible même sous 5% — au-delà de zéro,
-            // une valeur reste une valeur, pas une barre invisible.
+            // Même représentation que le funnel par étape juste au-dessus :
+            // barre à l'échelle 0-100%, valeur affichée à droite plutôt que
+            // dans la barre (évitait un grand espace blanc visuellement peu
+            // clair entre deux valeurs proches, ex. 13% et 35%).
             width: `${w > 0 ? Math.max(w, 4) : 0}%`,
             background: fillColor,
             opacity: 0.7,
             transition: 'width 0.85s cubic-bezier(0.16,1,0.3,1)',
           }}
-        >
-          <span className={styles.val}>{pct}%</span>
-        </div>
+        />
       </div>
-      {count !== undefined && <div className={styles.count}>{count}</div>}
+      <div className={styles.val}>
+        {pct}%{count !== undefined && <span> → {count}</span>}
+      </div>
     </div>
   );
 }

@@ -141,32 +141,48 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
   const pipelineItems  = leadsSnap.filter(l => PIPELINE_ETATS.has(l.etat));
   const montantPipeline = pipelineItems.reduce((s, l) => s + l.vente_p, 0);
 
-  // Pipeline pondéré : seuil 30%, répartition Modérée 30-75% / Forte ≥ 75%
+  // Pipeline pondéré (KPI headline) : seuil 30%, répartition Modérée 30-75% /
+  // Forte ≥ 75% — inchangé, décision produit d'origine (Staline ne voulait que
+  // les affaires ≥ 30% de probabilité dans ce chiffre).
   let pondereFort   = 0;
   let pondereModere = 0;
+  let pondereFaible = 0;
   pipelineItems.forEach(l => {
     const prob = l.probabilite;
     const val  = l.vente_p;
     if (prob >= 75)      pondereFort   += val * (prob / 100);
     else if (prob >= 30) pondereModere += val * (prob / 100);
+    else if (prob >= 1)  pondereFaible += val * (prob / 100);
   });
   const montantPipelinePondere = Math.round(pondereFort + pondereModere);
   const totalPondere = montantPipelinePondere || 1;
 
+  // Répartition affichée dans le widget "Pondéré par probabilité" : les 3
+  // tranches sont toujours montrées (même à 0€) pour une lecture complète de
+  // la distribution — pourcentages calculés sur leur propre total (Faible
+  // incluse), distinct du chiffre "Pipeline pondéré" ci-dessus qui reste
+  // volontairement limité aux affaires ≥ 30%.
+  const totalPondereAvecFaible = (pondereFort + pondereModere + pondereFaible) || 1;
   const pipelineBreakdown = [
     {
-      label:  'Haute (≥ 75%)',
+      label:  'Forte (76–99%)',
       amount: Math.round(pondereFort),
-      pct:    Math.round((pondereFort / totalPondere) * 100),
+      pct:    Math.round((pondereFort / totalPondereAvecFaible) * 100),
       color:  'var(--pos)',
     },
     {
       label:  'Modérée (30–75%)',
       amount: Math.round(pondereModere),
-      pct:    Math.round((pondereModere / totalPondere) * 100),
+      pct:    Math.round((pondereModere / totalPondereAvecFaible) * 100),
       color:  'var(--warn)',
     },
-  ].filter(p => p.amount > 0);
+    {
+      label:  'Faible (1–29%)',
+      amount: Math.round(pondereFaible),
+      pct:    Math.round((pondereFaible / totalPondereAvecFaible) * 100),
+      color:  'var(--text3)',
+    },
+  ];
 
   // ── LEADS — win rate (all-time, par groupe) ────────────────────────────────
   const nbGagnesAll  = leadsSnap.filter(l => GAGNES_GROUPES.has(l.groupe)).length;

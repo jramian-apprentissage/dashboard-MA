@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth, DASHBOARDS } from '../../contexts/AuthContext';
 import { usePeriod } from '../../contexts/PeriodContext';
 import { useExtraFilters } from '../../contexts/ExtraFiltersContext';
-import { DASHBOARD_ROUTES, DASHBOARD_DEFAULT_TAB } from '../../data/dashboardTabs';
+import { DASHBOARD_ROUTES, DASHBOARD_DEFAULT_TAB, DASHBOARD_EXCLUDED_PERIODS } from '../../data/dashboardTabs';
 import PeriodPicker, { getPeriodLabel } from '../ui/PeriodPicker';
 import styles from './BottomNav.module.css';
 
@@ -56,6 +56,8 @@ export default function BottomNav() {
     })),
   ];
   const currentPageItem = pageItems.find(it => it.id === 'home' ? location.pathname === '/' : location.pathname === DASHBOARD_ROUTES[it.id]);
+  const currentDashboardId = Object.entries(DASHBOARD_ROUTES).find(([, route]) => location.pathname === route)?.[0];
+  const excludePeriods = DASHBOARD_EXCLUDED_PERIODS[currentDashboardId] || [];
 
   function toggle(name) {
     setSheet(s => (s === name ? null : name));
@@ -125,6 +127,10 @@ export default function BottomNav() {
                     {it.label}
                   </button>
                 ))}
+                <button type="button" className={styles.sheetItem} onClick={() => { navigate('/glossaire'); setSheet(null); }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                  Glossaire KPI
+                </button>
               </>
             )}
 
@@ -138,7 +144,7 @@ export default function BottomNav() {
                 )}
                 <div className={styles.sheetTitle}>Période de référence</div>
                 <div className={styles.sheetCentered}>
-                  <PeriodPicker value={periodKey} customFrom={customFrom} customTo={customTo} onChange={onChange} />
+                  <PeriodPicker value={periodKey} customFrom={customFrom} customTo={customTo} onChange={onChange} excludeKeys={excludePeriods} />
                 </div>
               </>
             )}
@@ -173,10 +179,6 @@ export default function BottomNav() {
             {sheet === 'menu' && (
               <>
                 <div className={styles.sheetTitle}>{user?.name}</div>
-                <button type="button" className={styles.sheetItem} onClick={() => { navigate('/glossaire'); setSheet(null); }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                  Glossaire KPI
-                </button>
                 {user?.role === 'admin' && (
                   <button type="button" className={styles.sheetItem} onClick={() => { navigate('/admin'); setSheet(null); }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>

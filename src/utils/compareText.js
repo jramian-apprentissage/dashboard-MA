@@ -22,8 +22,9 @@ export function comparePtsText(current, ref, comparePeriodKey) {
   if (ref == null) return null;
   const diff = current - ref;
   const sign = diff > 0 ? '+' : '';
+  const unit = Math.abs(diff) === 1 ? 'pt' : 'pts';
   return {
     dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral',
-    text: `${diff === 0 ? '=' : sign + diff + ' pts'} vs ${compareLabel(comparePeriodKey)}`,
+    text: `${diff === 0 ? '=' : sign + diff + ' ' + unit} vs ${compareLabel(comparePeriodKey)}`,
   };
 }

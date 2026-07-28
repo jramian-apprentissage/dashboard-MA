@@ -521,7 +521,12 @@
     padding: 6px 16px 7px;
     background: var(--myrtille);
     border-bottom: 1px solid rgba(255,249,147,0.15);
-    transform: translateY(-150%);
+    /* -150% de sa propre hauteur ne suffisait pas à masquer complètement les
+       2 lignes (titre+onglet, période+comparaison) : il restait un bout de
+       texte visible en haut au premier chargement, avant tout scroll. Calcul
+       exact = sa hauteur pleine + son décalage top (46px), pour que le bord
+       bas colle pile à 0 quand il est masqué, quel que soit son contenu. */
+    transform: translateY(calc(-100% - 46px));
     transition: transform 0.25s ease;
   }
   .compactHeaderVisible { transform: translateY(0); }

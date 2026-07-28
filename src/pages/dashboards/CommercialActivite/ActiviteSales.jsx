@@ -1,6 +1,6 @@
 import { Bar, Line } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
@@ -46,6 +46,20 @@ function makeRdvPlugin(rowsRef) {
   };
 }
 
+// Tri du tableau "Comparatif individuel" — même principe que la table "À
+// relancer" de Commercial & Relation Client (clic sur l'en-tête, tri alpha
+// par défaut sur le nom).
+function compareCollabRows(a, b, sort) {
+  let cmp;
+  if (sort.col === 'nom') {
+    cmp = a.nom.localeCompare(b.nom, 'fr');
+  } else {
+    const va = a[sort.col]; const vb = b[sort.col];
+    cmp = (va == null ? -Infinity : va) - (vb == null ? -Infinity : vb);
+  }
+  return sort.dir === 'asc' ? cmp : -cmp;
+}
+
 // KPIs depuis l'archive Ringover (seule source pour cet onglet)
 function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
   const { total, argues, decroche } = result;
@@ -58,10 +72,12 @@ function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
   const cmp = compareResult;
   const cmpTauxDec = cmp && cmp.total > 0 ? Math.round((cmp.decroche / cmp.total) * 100) : null;
 
+  // Ordre "funnel" : on émet un appel, il est décroché, puis argumenté,
+  // enfin une fiche est complétée — plus logique à lire que émis→argumenté→décroché.
   return [
     { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Archive Ringover' },        color: 'blue' },
-    { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
     { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmp ? comparePtsText(tauxDec, cmpTauxDec, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' },     color: 'accent' },
+    { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
     notConnectedKPI('Taux fiches exploitables', 'aucune notion de fiche qualité côté Ringover', 'amber'),
     { label: 'RDV pris',                 value: rdvPris,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'green' },
     { label: 'Taux RDV honorés',         value: tauxHon,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'purple' },
@@ -73,6 +89,14 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   const hasData = salesData?.hasData && salesData?.result;
   const rdvResult = salesData?.rdvResult ?? null;
   const { comparePeriodKey } = usePeriod();
+  const [collabSort, setCollabSort] = useState({ col: 'nom', dir: 'asc' });
+
+  function toggleCollabSort(col) {
+    setCollabSort(s => (s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' }));
+  }
+  function collabSortArrow(col) {
+    return collabSort.col === col ? (collabSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+  }
 
   const kpis = hasData ? buildKPIs(salesData.result, rdvResult, compareResult, comparePeriodKey) : null;
   // RDV par tranche horaire : uniquement le tag Ringover "OK" (row.rdv, déjà
@@ -126,40 +150,54 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
 
       <SectionLabel>Performance globale / collaborateur</SectionLabel>
       <Card title="Comparatif individuel — principaux leviers">
-        {hasData && salesData.result.collabs ? (
-          <table className={styles.perfTable}>
-            <thead><tr>
-              <th>Collaborateur</th>
-              <th>Appels émis</th>
-              <th>Appels argumentés</th>
-              <th>RDV pris</th>
-              <th>RDV honorés</th>
-              <th>Taux décroché</th>
-            </tr></thead>
-            <tbody>
-              {salesData.result.collabs
-                .filter(c => c !== 'Tous')
-                .filter(name => (salesData.result.perCollab?.[name]?.appels ?? 0) > 0)
-                .map(name => {
-                const rdvC  = rdvResult?.perCollab?.[name];
-                const ring  = salesData.result.perCollab?.[name];
-                const taux  = ring?.taux ?? '—';
-                const tauxN = parseInt(taux);
-                const tauxColor = isNaN(tauxN) ? undefined : tauxN >= 35 ? 'var(--pos)' : tauxN >= 25 ? 'var(--warn)' : 'var(--neg)';
-                return (
-                  <tr key={name} className={name === selectedCollab ? styles.highlightRow : ''}>
-                    <td className={styles.tdName}>{name}</td>
-                    <td className={styles.tdNum}>{ring?.appels ?? '—'}</td>
-                    <td className={styles.tdNum}>{ring?.argues ?? '—'}</td>
-                    <td className={styles.tdNum} style={{ color: rdvC ? 'var(--pos)' : undefined }}>{rdvC?.rdvPris ?? '—'}</td>
-                    <td className={styles.tdNum} style={{ color: rdvC ? 'var(--pos)' : undefined }}>{rdvC?.rdvHonores ?? '—'}</td>
-                    <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: tauxColor }}>{taux}</span></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        ) : (
+        {hasData && salesData.result.collabs ? (() => {
+          const rows = salesData.result.collabs
+            .filter(c => c !== 'Tous')
+            .filter(name => (salesData.result.perCollab?.[name]?.appels ?? 0) > 0)
+            .map(name => {
+              const rdvC = rdvResult?.perCollab?.[name];
+              const ring = salesData.result.perCollab?.[name];
+              const tauxN = parseInt(ring?.taux);
+              return {
+                nom: name,
+                appels: ring?.appels ?? null,
+                tauxDecroche: isNaN(tauxN) ? null : tauxN,
+                tauxLabel: ring?.taux ?? '—',
+                argues: ring?.argues ?? null,
+                rdvPris: rdvC?.rdvPris ?? null,
+                rdvHonores: rdvC?.rdvHonores ?? null,
+              };
+            })
+            .sort((a, b) => compareCollabRows(a, b, collabSort));
+
+          return (
+            <table className={styles.perfTable}>
+              <thead><tr>
+                <th onClick={() => toggleCollabSort('nom')} style={{ cursor: 'pointer' }}>Collaborateur{collabSortArrow('nom')}</th>
+                <th onClick={() => toggleCollabSort('appels')} style={{ cursor: 'pointer' }}>Appels émis{collabSortArrow('appels')}</th>
+                <th onClick={() => toggleCollabSort('tauxDecroche')} style={{ cursor: 'pointer' }}>Taux décroché{collabSortArrow('tauxDecroche')}</th>
+                <th onClick={() => toggleCollabSort('argues')} style={{ cursor: 'pointer' }}>Appels argumentés{collabSortArrow('argues')}</th>
+                <th onClick={() => toggleCollabSort('rdvPris')} style={{ cursor: 'pointer' }}>RDV pris{collabSortArrow('rdvPris')}</th>
+                <th onClick={() => toggleCollabSort('rdvHonores')} style={{ cursor: 'pointer' }}>RDV honorés{collabSortArrow('rdvHonores')}</th>
+              </tr></thead>
+              <tbody>
+                {rows.map(row => {
+                  const tauxColor = row.tauxDecroche == null ? undefined : row.tauxDecroche >= 35 ? 'var(--pos)' : row.tauxDecroche >= 25 ? 'var(--warn)' : 'var(--neg)';
+                  return (
+                    <tr key={row.nom} className={row.nom === selectedCollab ? styles.highlightRow : ''}>
+                      <td className={styles.tdName}>{row.nom}</td>
+                      <td className={styles.tdNum}>{row.appels ?? '—'}</td>
+                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: tauxColor }}>{row.tauxLabel}</span></td>
+                      <td className={styles.tdNum}>{row.argues ?? '—'}</td>
+                      <td className={styles.tdNum} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{row.rdvPris ?? '—'}</td>
+                      <td className={styles.tdNum} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{row.rdvHonores ?? '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          );
+        })() : (
           <NotConnected>en attente de l'archive Ringover</NotConnected>
         )}
       </Card>
