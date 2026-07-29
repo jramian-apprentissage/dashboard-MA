@@ -89,6 +89,8 @@
 }
 .evoToggleBtn:hover { color: var(--text); }
 .evoToggleBtnActive { background: var(--myrtille); color: var(--soleil); }
+/* Variante bleu Asus — réservée au dashboard client Asus (co-branding) */
+.evoToggleBtnActiveAsus { background: var(--asus-blue); color: #fff; }
 .cardHeadRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 
 /* Funnel (Taux de transformation nette) */

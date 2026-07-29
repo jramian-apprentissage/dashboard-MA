@@ -22,6 +22,9 @@
   --blanc:      #FFFFFF;
   --brouillard: #FBFBFB;
 
+  /* ─── Bleu de marque Asus — co-branding sur le dashboard client Asus ── */
+  --asus-blue: #006CE1;
+
   /* ─── Surfaces ────────────────────────────────── */
   --bg:    #FBFBFB;   /* Brouillard — fond global (v4) */
   --bg-sidebar: #26001F; /* Myrtille — sidebar gauche */

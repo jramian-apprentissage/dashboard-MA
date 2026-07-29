@@ -42,6 +42,13 @@ export default function DashboardLayout({
   heroBgSrc,
   heroBgPosition = 'center 55%',
   onExtraire,
+  extraireLoading = false,
+  contentRef,
+  // Dashboards clients (ex. ASUS) : phrase d'intro plus explicative que le
+  // "Vous analysez les KPIs" interne, à destination d'un lecteur externe qui
+  // découvre l'outil. Le reste de la phrase (période + comparaison) reste
+  // dynamique, seule l'intro change.
+  clientFacingSubtitle = false,
 }) {
   const tabLabel = subTabs.find(t => t.id === activeSubTab)?.label;
   const excludePeriods = DASHBOARD_EXCLUDED_PERIODS[dashboardId] || [];
@@ -159,8 +166,22 @@ export default function DashboardLayout({
               {dashboardNameEmphasis && <em className={styles.titleEm}> {dashboardNameEmphasis}.</em>}
             </h1>
             <p className={styles.subtitle}>
-              Vous analysez les KPIs&nbsp;
-              <span className={styles.subtitlePeriod}>{subtitle}</span>
+              {clientFacingSubtitle ? (
+                <>
+                  Vous analysez la performance des agents de Mon Ambassadeur
+                  travaillant pour le compte de votre entreprise en mesurant
+                  les indicateurs&nbsp;
+                  <span className={styles.subtitlePeriod}>{subtitle}</span>
+                  {compareActive && (
+                    <> versus <span className={styles.subtitlePeriod}>{comparePeriodKey === 'previous-year' ? "l'année précédente" : 'la période précédente'}</span></>
+                  )}.
+                </>
+              ) : (
+                <>
+                  Vous analysez les KPIs&nbsp;
+                  <span className={styles.subtitlePeriod}>{subtitle}</span>
+                </>
+              )}
             </p>
             {tabLabel && <p className={styles.tabBadge}>{tabLabel}</p>}
 
@@ -208,13 +229,14 @@ export default function DashboardLayout({
                   className={styles.heroBtn}
                   onClick={onExtraire}
                   type="button"
+                  disabled={extraireLoading}
                 >
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                   </svg>
-                  Extraire
+                  {extraireLoading ? 'Génération…' : 'Extraire'}
                 </button>
               )}
 
@@ -282,7 +304,7 @@ export default function DashboardLayout({
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        <div key={activeSubTab} className={styles.contentSlide} style={{ '--slide-dir': slideDir }}>
+        <div key={activeSubTab} ref={contentRef} className={styles.contentSlide} style={{ '--slide-dir': slideDir }}>
           {children}
         </div>
       </main>

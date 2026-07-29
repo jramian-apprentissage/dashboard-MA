@@ -127,6 +127,11 @@
   border-color: rgba(255,249,147,0.55);
   color: var(--soleil);
 }
+.heroBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  pointer-events: none;
+}
 .heroBtnActive {
   background: rgba(255,249,147,0.10);
   border-color: rgba(255,249,147,0.45);

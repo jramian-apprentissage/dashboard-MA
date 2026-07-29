@@ -34,7 +34,7 @@ function fmtDuree(s) {
 function buildTagCards(directionStats, totalLabel, compareStats, comparePeriodKey) {
   const cmpTotal = compareStats ? compareValueText(directionStats.total, compareStats.total, comparePeriodKey) : null;
   const cards = [
-    { label: totalLabel, value: directionStats.total, unit: '', compare: cmpTotal, color: 'accent' },
+    { label: totalLabel, value: directionStats.total, unit: '', compare: cmpTotal, color: 'accentAsus' },
     ...directionStats.parTag.map(t => {
       const ct = compareStats?.parTag.find(x => x.label === t.label);
       return { label: t.label, value: t.count, unit: '', compare: ct ? compareValueText(t.count, ct.count, comparePeriodKey) : null, color: 'default' };
@@ -74,7 +74,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
       {() => (
     <>
     <div className={styles.page}>
-      <SectionLabel badge="RINGOVER — CLIENT ASUS">Activité commerciale ASUS</SectionLabel>
+      <SectionLabel badge="RINGOVER">Activité commerciale ASUS</SectionLabel>
 
       {asusData?.error && (
         <div className={styles.dataAlert} style={{ borderColor: 'rgba(196,135,106,0.4)', background: 'rgba(196,135,106,0.08)' }}>
@@ -83,7 +83,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
       )}
       {hasData && asusData.lastFetched && (
         <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-          <span style={{ color: 'var(--pos)' }}>● Données Ringover — ASUS</span> — {r.totalAppels.toLocaleString('fr-FR')} appels chargés · MAJ arrêtée au {dernierJourArchive(asusData.rows) || '—'}
+          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — MAJ arrêtée au {dernierJourArchive(asusData.rows) || '—'}
           {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
         </div>
       )}
@@ -168,7 +168,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               <button
                 key={o.key}
                 type="button"
-                className={`${styles.evoToggleBtn} ${evoGranularity === o.key ? styles.evoToggleBtnActive : ''}`}
+                className={`${styles.evoToggleBtn} ${evoGranularity === o.key ? `${styles.evoToggleBtnActive} ${styles.evoToggleBtnActiveAsus}` : ''}`}
                 onClick={() => setEvoGranularity(o.key)}
               >
                 {o.label}
@@ -184,9 +184,9 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
                 datasets: [{
                   label: 'Appels',
                   data: evolution.counts,
-                  borderColor: 'rgba(38,0,31,0.8)',
-                  backgroundColor: 'rgba(255,249,147,0.18)',
-                  pointBackgroundColor: 'rgba(38,0,31,0.8)',
+                  borderColor: 'rgba(0,108,225,0.85)',
+                  backgroundColor: 'rgba(0,108,225,0.12)',
+                  pointBackgroundColor: 'rgba(0,108,225,0.85)',
                   tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y',
                 }],
               }}

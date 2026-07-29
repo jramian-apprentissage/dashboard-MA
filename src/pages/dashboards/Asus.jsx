@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import heroActivite from '../../assets/hero-activite.svg';
+import heroAsus from '../../assets/hero-asus.jpg';
+import maLogo from '../../assets/logo/logo-full-myrtille.svg';
+import asusLogo from '../../assets/asus-logo.svg';
 import ActiviteASUS from './CommercialActivite/ActiviteASUS';
 import { getPeriodRange } from '../../components/ui/PeriodPicker';
 import { useAsusData } from '../../hooks/useAsusData';
@@ -8,18 +10,47 @@ import { computeAsusData } from '../../services/sheetsParser';
 import { usePeriod } from '../../contexts/PeriodContext';
 import layoutStyles from '../../components/layout/DashboardLayout.module.css';
 import { LoaderMark } from '../../components/ui/Loader';
+import { exportDashboardPdf } from '../../utils/exportPdf';
+
+const PERIOD_LABELS = {
+  today: "d'aujourd'hui", yesterday: "d'hier", month: 'du mois en cours',
+  'last-month': 'du mois précédent', week: 'de la semaine en cours',
+  'last-week': 'de la semaine précédente', quarter: 'du trimestre en cours',
+  'last-quarter': 'du trimestre précédent',
+};
 
 // Page unique (pas de sous-onglets) — anciennement un onglet à l'intérieur
 // d'Activité commerciale, promu en dashboard indépendant pour un accès plus
 // direct (lien de nav propre, plus besoin de passer par Activité commerciale).
 export default function Asus() {
   const [collab, setCollab] = useState('Tous');
-  const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
+  const { periodKey, customFrom, customTo, compareActive, compareRange, comparePeriodKey } = usePeriod();
   const asusData = useAsusData();
   const [compareResult, setCompareResult] = useState(null);
+  const [exportLoading, setExportLoading] = useState(false);
+  const contentRef = useRef(null);
 
   const collabRef = useRef(collab);
   collabRef.current = collab;
+
+  async function handleExport() {
+    setExportLoading(true);
+    try {
+      const periodLabel = `${PERIOD_LABELS[periodKey] || 'de la période sélectionnée'}${compareActive ? ` · vs ${comparePeriodKey === 'previous-year' ? "l'année précédente" : 'la période précédente'}` : ''}`;
+      await exportDashboardPdf({
+        contentEl: contentRef.current,
+        fileName: `Dashboard-Performance-Agent-Asus-${new Date().toISOString().slice(0, 10)}.pdf`,
+        title: 'Dashboard Performance Agent - Asus',
+        periodLabel,
+        maLogoSrc: maLogo,
+        clientLogoSrc: asusLogo,
+      });
+    } catch (e) {
+      alert(`Échec de l'export PDF : ${e.message}`);
+    } finally {
+      setExportLoading(false);
+    }
+  }
 
   useEffect(() => {
     const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
@@ -82,11 +113,15 @@ export default function Asus() {
   return (
     <DashboardLayout
       dashboardId="asus"
-      dashboardName="ASUS"
+      dashboardName="Dashboard Performance Agent - Asus"
+      clientFacingSubtitle
       extraFilters={extraFilters}
       activeFilters={activeFilters}
-      heroBgSrc={heroActivite}
-      heroBgPosition="center 65%"
+      heroBgSrc={heroAsus}
+      heroBgPosition="center 30%"
+      onExtraire={handleExport}
+      extraireLoading={exportLoading}
+      contentRef={contentRef}
     >
       <ActiviteASUS selectedCollab={collab} asusData={asusData} compareResult={compareResult} />
     </DashboardLayout>

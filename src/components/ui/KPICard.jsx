@@ -30,6 +30,7 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
     variant === 'accent'      ? styles.accent      : '',
     variant === 'accent-soft' ? styles.accentSoft  : '',
     color === 'accent'        ? styles.accent       : '',
+    color === 'accentAsus'    ? styles.accentAsus   : '',
   ].filter(Boolean).join(' ');
 
   const valueLen = String(value).length;
