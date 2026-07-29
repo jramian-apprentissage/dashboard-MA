@@ -5,6 +5,8 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import DonutChart from '../../../components/ui/DonutChart';
+import { usePeriod } from '../../../contexts/PeriodContext';
+import { compareValueText } from '../../../utils/compareText';
 import styles from './Activite.module.css';
 
 Chart.register(LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
@@ -32,6 +34,14 @@ const totalExploitables  = MOCK_COLLABS.reduce((s, c) => s + c.exploitables, 0);
 const totalNonExploit    = MOCK_COLLABS.reduce((s, c) => s + c.nonExploitables, 0);
 const totalFiches        = MOCK_COLLABS.reduce((s, c) => s + c.fichesCompletees, 0);
 const totalRdv           = MOCK_COLLABS.reduce((s, c) => s + c.rdvPris, 0);
+
+// Période de comparaison — fictive elle aussi (pas de source CloudTalk réelle
+// encore branchée), uniquement pour valider le rendu visuel "comparaison +
+// définition" demandé sur tous les dashboards.
+const PREV_APPELS       = 2950;
+const PREV_CONTACTJOINT = 1320;
+const PREV_EXPLOITABLES = 810;
+const PREV_NONEXPLOIT   = 590;
 
 const tauxDecroche30s     = 38; // % — mesuré séparément du contact joint (durée > 30s)
 const tauxRdvHonores      = 71;
@@ -65,17 +75,22 @@ function trend(text) {
 }
 
 export default function ActiviteTLM() {
+  const { comparePeriodKey } = usePeriod();
+
+  // Ordre "tunnel" : émis → décroché → joint → exploitable → taux exploit. →
+  // non exploitable → fiche → rdv → taux honoré → transfo nette. Les KPIs
+  // liés se retrouvent ainsi sur la même ligne (grille 2 colonnes mobile).
   const kpis = [
-    { label: 'Appels émis',                value: totalAppels,                      unit: '', trend: trend('Volume global TLM'),                    color: 'accent' },
-    { label: 'Appels exploitables',        value: totalExploitables,                unit: '', trend: trend(`${tauxFichesExploit}% des appels émis`) },
-    { label: 'Nombre de contacts joints',  value: totalContactJoint,                unit: '', trend: trend(`${Math.round(totalContactJoint / totalAppels * 100)}% des appels émis`) },
-    { label: 'Appels non exploitables',    value: totalNonExploit,                  unit: '', trend: trend('Contact joint sans info business') },
+    { label: 'Appels émis',                value: totalAppels,                      unit: '', compare: compareValueText(totalAppels, PREV_APPELS, comparePeriodKey),             trend: trend(`${MOCK_COLLABS.length} agents TLM actifs`),  color: 'accent' },
     { label: 'Taux décroché > 30s',        value: `${tauxDecroche30s}%`,            unit: '', trend: trend('Capacité à joindre réellement') },
+    { label: 'Contacts joints',            value: totalContactJoint,                unit: '', compare: compareValueText(totalContactJoint, PREV_CONTACTJOINT, comparePeriodKey), trend: trend(`${Math.round(totalContactJoint / totalAppels * 100)}% des appels émis`) },
+    { label: 'Appels exploitables',        value: totalExploitables,                unit: '', compare: compareValueText(totalExploitables, PREV_EXPLOITABLES, comparePeriodKey), trend: trend(`${tauxFichesExploit}% des appels émis`) },
     { label: 'Taux fiches exploitables',   value: `${tauxFichesExploit}%`,          unit: '', trend: trend('Qualité des infos collectées') },
+    { label: 'Appels non exploitables',    value: totalNonExploit,                  unit: '', compare: compareValueText(totalNonExploit, PREV_NONEXPLOIT, comparePeriodKey),     trend: trend('Contact joint sans info business') },
+    { label: 'Fiches complétées',          value: totalFiches,                      unit: '', trend: trend('Besoin ou intérêt identifié') },
     { label: 'RDV pris',                   value: totalRdv,                         unit: '', trend: trend('Transformation TLM → RDV'),              color: 'green' },
     { label: 'Taux RDV honorés',           value: `${tauxRdvHonores}%`,             unit: '', trend: trend('Qualité des RDV générés') },
-    { label: 'Taux de transformation nette', value: `${tauxTransfoNette}%`,         unit: '', trend: trend('RDV pris / appels émis') },
-    { label: 'Fiches complétées',          value: totalFiches,                      unit: '', trend: trend('Besoin ou intérêt identifié') },
+    { label: 'Transformation nette',       value: `${tauxTransfoNette}%`,           unit: '', trend: trend('RDV pris / appels émis') },
   ];
 
   const funnelSteps = [
@@ -87,7 +102,7 @@ export default function ActiviteTLM() {
 
   return (
     <div className={styles.page}>
-      <SectionLabel badge="CLOUDTALK">Activité TLM — indicateurs clés</SectionLabel>
+      <SectionLabel badge="CLOUDTALK">Indicateurs principaux</SectionLabel>
 
       <div className={styles.dataAlert} style={{ borderColor: 'rgba(212,168,75,0.4)', background: 'rgba(212,168,75,0.08)' }}>
         <span style={{ color: 'var(--warn)' }}>⚠ Données fictives</span> — mock local sur les 17 indicateurs TLM d'origine, en attente de la source CloudTalk réelle
@@ -97,7 +112,7 @@ export default function ActiviteTLM() {
         {kpis.map(k => <KPICard key={k.label} {...k} />)}
       </div>
 
-      <SectionLabel>Performance & présence / collaborateur</SectionLabel>
+      <SectionLabel>Performance des agents MA</SectionLabel>
       <Card title="Comparatif individuel — principaux leviers TLM">
         <table className={styles.perfTable}>
           <thead><tr>
@@ -130,8 +145,31 @@ export default function ActiviteTLM() {
         </table>
       </Card>
 
+      <SectionLabel>Funnel du taux de transformation nette</SectionLabel>
+      <Card>
+        <div className={styles.funnelWrap}>
+          {funnelSteps.map((s, i) => {
+            const pctOfMax = Math.round((s.value / funnelSteps[0].value) * 100);
+            const pctPrev  = i === 0 ? 100 : Math.round((s.value / funnelSteps[i - 1].value) * 100);
+            return (
+              <div key={s.label} className={styles.funnelRow}>
+                <div className={styles.funnelLabel}>{s.label}</div>
+                <div className={styles.funnelTrack}>
+                  <div className={styles.funnelFill} style={{ width: `${pctOfMax}%` }} />
+                </div>
+                <div className={styles.funnelValue}>{s.value}{i > 0 && <span className={styles.funnelPct}> · {pctPrev}%</span>}</div>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+
+      {/* Détail de l'activité commerciale — sorti de la section "Performance
+          des agents" où il n'avait pas sa place (ce n'est pas une donnée par
+          collaborateur), regroupé dans sa propre sous-partie. */}
+      <SectionLabel>Détails des appels</SectionLabel>
       <div className={styles.twoCol}>
-        <Card title="Statut par appels — répartition">
+        <Card title="Statut des appels">
           <DonutChart
             variant="donut"
             data={MOCK_STATUTS.map(s => s.count)}
@@ -151,33 +189,13 @@ export default function ActiviteTLM() {
           </div>
         </Card>
 
-        <Card title="Motifs de refus en appel">
+        <Card title="Motif de refus pour les appels non exploitables">
           <div className={styles.subNote} style={{ marginBottom: 12 }}>Principaux freins rencontrés par les équipes TLM</div>
           {MOCK_MOTIFS.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
-          <div className={styles.subNote} style={{ marginTop: 8 }}>Sur les appels non exploitables</div>
         </Card>
       </div>
 
-      <SectionLabel>Taux de transformation nette — funnel</SectionLabel>
-      <Card>
-        <div className={styles.funnelWrap}>
-          {funnelSteps.map((s, i) => {
-            const pctOfMax = Math.round((s.value / funnelSteps[0].value) * 100);
-            const pctPrev  = i === 0 ? 100 : Math.round((s.value / funnelSteps[i - 1].value) * 100);
-            return (
-              <div key={s.label} className={styles.funnelRow}>
-                <div className={styles.funnelLabel}>{s.label}</div>
-                <div className={styles.funnelTrack}>
-                  <div className={styles.funnelFill} style={{ width: `${pctOfMax}%` }} />
-                </div>
-                <div className={styles.funnelValue}>{s.value}{i > 0 && <span className={styles.funnelPct}> · {pctPrev}%</span>}</div>
-              </div>
-            );
-          })}
-        </div>
-      </Card>
-
-      <SectionLabel>Fiches complétées — évolution mensuelle</SectionLabel>
+      <SectionLabel>Évolution mensuelle</SectionLabel>
       <Card title="Fiches complétées">
         <div className={styles.chartWrap} style={{ height: 200 }}>
           <Line

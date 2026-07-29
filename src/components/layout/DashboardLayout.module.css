@@ -461,7 +461,11 @@
 
   .heroBottom {
     width: 100%;
-    justify-content: flex-start;
+    /* Sur mobile, seul le bouton "Extraire" reste visible ici (le reste
+       passe par BottomNav) — aligné à droite pour tomber sous l'onglet
+       actif à droite (ex. Activité TLM) plutôt qu'au bord gauche, où il
+       se lisait comme rattaché au premier onglet (Activité Sales). */
+    justify-content: flex-end;
   }
   .heroActions {
     gap: 6px;

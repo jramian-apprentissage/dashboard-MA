@@ -70,13 +70,13 @@
    le KPI lui-même — forcé sur une seule ligne, tronqué en dernier recours
    (la fin la moins importante, "précédente", saute avant le chiffre). */
 .compare {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 600;
   margin-top: 6px;
   line-height: 1.4;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 .compare .lineText {

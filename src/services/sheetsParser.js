@@ -96,12 +96,15 @@ export function parseSheetCSV(csvText) {
 }
 
 // ─── Catégories de tags ──────────────────────────────────────────────────────
+// Nom complet d'abord, abréviation entre parenthèses ensuite — plus lisible
+// que l'abréviation en tête (retour direct : "légende trop longue, CNA/ING
+// illisible").
 export const TAG_CATEGORIES = [
-  { key: 'OK',  label: 'OK — RDV pris',               color: 'rgba(142,207,170,0.8)' },
-  { key: 'PI',  label: 'PI — Pas intéressé',           color: 'rgba(255,249,147,0.7)' },
-  { key: 'CNA', label: 'CNA — Contact non argumenté', color: 'rgba(123,170,191,0.6)' },
-  { key: 'INJ', label: 'INJ — Injoignable',            color: 'rgba(167,173,170,0.5)' },
-  { key: 'HC',  label: 'HC — Hors cible',             color: 'rgba(196,135,106,0.55)' },
+  { key: 'OK',  label: 'RDV pris (OK)',               color: 'rgba(142,207,170,0.8)' },
+  { key: 'PI',  label: 'Pas intéressé (PI)',           color: 'rgba(255,249,147,0.7)' },
+  { key: 'CNA', label: 'Contact non argumenté (CNA)', color: 'rgba(123,170,191,0.6)' },
+  { key: 'INJ', label: 'Injoignable (INJ)',            color: 'rgba(167,173,170,0.5)' },
+  { key: 'HC',  label: 'Hors cible (HC)',             color: 'rgba(196,135,106,0.55)' },
   { key: '',    label: 'Sans tag',                     color: 'rgba(227,225,216,0.9)' },
 ];
 

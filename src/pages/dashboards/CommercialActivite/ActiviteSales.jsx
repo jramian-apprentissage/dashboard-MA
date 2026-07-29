@@ -37,9 +37,18 @@ function makeRdvPlugin(rowsRef) {
         const rdv = rows[i]?.rdv;
         if (!rdv) return;
         const barHeight = bar.base - bar.y;
-        if (barHeight < 18) return;
-        ctx.fillStyle = 'rgba(142,207,170,0.95)';
-        ctx.fillText(`RDV : ${rdv}`, bar.x, bar.y + 4);
+        // Barre trop courte pour écrire dedans (cas fréquent, tranches à
+        // faible volume) → l'info passait silencieusement à la trappe.
+        // On l'affiche au-dessus de la barre à la place, jamais masquée.
+        if (barHeight >= 18) {
+          ctx.fillStyle = 'rgba(142,207,170,0.95)';
+          ctx.textBaseline = 'top';
+          ctx.fillText(`RDV : ${rdv}`, bar.x, bar.y + 4);
+        } else {
+          ctx.fillStyle = 'rgba(38,0,31,0.75)';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(`RDV : ${rdv}`, bar.x, bar.y - 3);
+        }
       });
       ctx.restore();
     },
@@ -71,11 +80,12 @@ function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
 
   const cmp = compareResult;
   const cmpTauxDec = cmp && cmp.total > 0 ? Math.round((cmp.decroche / cmp.total) * 100) : null;
+  const nbCollabActifs = Object.values(result.perCollab || {}).filter(c => (c.appels || 0) > 0).length;
 
   // Ordre "funnel" : on émet un appel, il est décroché, puis argumenté,
   // enfin une fiche est complétée — plus logique à lire que émis→argumenté→décroché.
   return [
-    { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Archive Ringover' },        color: 'blue' },
+    { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` },        color: 'blue' },
     { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmp ? comparePtsText(tauxDec, cmpTauxDec, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' },     color: 'accent' },
     { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
     notConnectedKPI('Taux fiches exploitables', 'aucune notion de fiche qualité côté Ringover', 'amber'),
@@ -120,7 +130,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
     <Loader loading={firstLoad} label="Récupération de l'archive Ringover…" minHeight={480}>
       {() => (
     <div className={styles.page}>
-      <SectionLabel badge="RINGOVER">Activité Sales — indicateurs clés</SectionLabel>
+      <SectionLabel badge="RINGOVER">Indicateurs principaux</SectionLabel>
 
       {/* Bandeau statut connexion données */}
       {salesData?.error && (
@@ -135,7 +145,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       )}
       {hasData && salesData.lastFetched && (
         <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — {salesData.result.total.toLocaleString('fr-FR')} appels chargés · MAJ arrêtée au {dernierJourArchive(salesData.rows) || '—'}
+          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — Mise à jour arrêtée au {dernierJourArchive(salesData.rows) || '—'}
           {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
         </div>
       )}
@@ -148,7 +158,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
         <Card><NotConnected>{salesData?.error ? 'échec du chargement, voir erreur ci-dessus' : 'en attente de l\'archive Ringover'}</NotConnected></Card>
       )}
 
-      <SectionLabel>Performance globale / collaborateur</SectionLabel>
+      <SectionLabel>Performance commerciale des agents</SectionLabel>
       <Card title="Comparatif individuel — principaux leviers">
         {hasData && salesData.result.collabs ? (() => {
           const rows = salesData.result.collabs
@@ -202,8 +212,8 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
         )}
       </Card>
 
-      <SectionLabel>Appels par tranche horaire</SectionLabel>
-      <Card title={`Joignabilité & RDV par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
+      <SectionLabel>Détails des appels</SectionLabel>
+      <Card title={`Joignabilité par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
         {hasData && trancheRows.length > 0 ? (
           <>
             <div className={styles.chartWrap} style={{ height: 240 }}>
@@ -216,7 +226,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       type: 'bar',
                       label: 'Appels émis',
                       data: trancheRows.map(r => r.appels),
-                      backgroundColor: 'rgba(255,249,147,0.38)',
+                      backgroundColor: 'rgba(123,170,191,0.5)',
                       borderRadius: 4,
                       borderSkipped: false,
                       yAxisID: 'y',
@@ -226,9 +236,9 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       type: 'line',
                       label: 'Joignabilité %',
                       data: trancheRows.map(r => r.appels > 0 ? r.join : null),
-                      borderColor: 'rgba(196,135,106,0.9)',
-                      backgroundColor: 'rgba(196,135,106,0.04)',
-                      pointBackgroundColor: 'rgba(196,135,106,0.9)',
+                      borderColor: 'rgba(169,141,196,0.9)',
+                      backgroundColor: 'rgba(169,141,196,0.04)',
+                      pointBackgroundColor: 'rgba(169,141,196,0.9)',
                       tension: 0.35,
                       fill: false,
                       pointRadius: 4,
@@ -256,15 +266,15 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                   scales: {
                     x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol },
                     y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', title: { display: true, text: 'Nb appels', color: 'rgba(167,173,170,0.4)', font: { size: 9 } } },
-                    y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Joignabilité %', color: 'rgba(196,135,106,0.5)', font: { size: 9 } } },
+                    y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Joignabilité %', color: 'rgba(169,141,196,0.6)', font: { size: 9 } } },
                   },
                 }}
               />
             </div>
             <div className={styles.legend}>
-              <span className={styles.legDot} style={{ background: 'rgba(255,249,147,0.7)' }} />Appels émis (axe gauche)
-              <span style={{ color: 'rgba(142,207,170,0.9)', fontWeight: 600, marginLeft: 14, fontSize: 10 }}>RDV : n</span> affiché dans chaque barre
-              <span className={styles.legDot} style={{ background: 'rgba(196,135,106,0.9)', marginLeft: 14 }} />Joignabilité % (axe droit)
+              <span className={styles.legDot} style={{ background: 'rgba(123,170,191,0.7)' }} />Appels émis
+              <span style={{ color: 'rgba(142,207,170,0.9)', fontWeight: 600, marginLeft: 14, fontSize: 10 }}>RDV : n</span> affiché sur chaque barre
+              <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Joignabilité %
             </div>
           </>
         ) : (
@@ -273,7 +283,11 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       </Card>
 
       <div className={styles.twoCol}>
-        <Card title="Statut par appels — répartition">
+        {/* Répartition par qualification — c'est le widget que l'équipe appelle
+            "Détails des appels" au quotidien, mais le nom exact est repris par
+            la section elle-même juste au-dessus (elle couvre aussi Joignabilité
+            et Motifs) : éviter le doublon de titre section/widget. */}
+        <Card title="Répartition par qualification">
           {hasData && salesData.result.categStats?.length > 0 ? (
             <>
               <DonutChart
@@ -320,7 +334,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
           )}
         </Card>
 
-        <Card title="Motifs de refus en appel">
+        <Card title="Motifs de refus rencontrés">
           <div className={styles.subNote} style={{ marginBottom: 12 }}>Principaux freins rencontrés en prospection</div>
           {(() => {
             const motifs = hasData

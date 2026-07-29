@@ -25,6 +25,10 @@
 /* Table tags individuels (sous le graphe catégories) */
 .tagTable { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 3px; max-height: 160px; overflow-y: auto; }
 .tagTableHead { display: grid; grid-template-columns: 1fr 40px 40px; font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 0 4px 0; border-bottom: 1px solid var(--sable); }
+/* Nb/% de l'en-tête alignés à droite comme leurs colonnes de données
+   (.tagCount/.tagPct) — sinon l'en-tête colle à gauche pendant que les
+   valeurs collent à droite dans la même colonne de 40px. */
+.tagTableHead span:nth-child(2), .tagTableHead span:nth-child(3) { text-align: right; }
 .tagRow { display: grid; grid-template-columns: 1fr 40px 40px; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(227,225,216,0.5); }
 .tagRow:last-child { border-bottom: none; }
 .tagName { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--text2); }
