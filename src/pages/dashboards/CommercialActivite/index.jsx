@@ -22,11 +22,13 @@ export default function CommercialActivite() {
   const isSales = tab === 'sales';
 
   const [collab, setCollab] = useState('Tous');
+  const [tlmCollabs, setTlmCollabs] = useState(['Tous']);
   const [extractOpen, setExtractOpen] = useState(false);
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
 
   const salesData = useSalesData();
   const [compareResult, setCompareResult] = useState(null);
+  const [compareRdvResult, setCompareRdvResult] = useState(null);
 
   const collabRef = useRef(collab);
   collabRef.current = collab;
@@ -48,9 +50,11 @@ export default function CommercialActivite() {
   useEffect(() => {
     if (!compareActive || !compareRange || !salesData.hasCachedRows) {
       setCompareResult(null);
+      setCompareRdvResult(null);
       return;
     }
     setCompareResult(salesData.computeFromCache(compareRange.from, compareRange.to, collabRef.current));
+    setCompareRdvResult(salesData.computeRDVFromCache(compareRange.from, compareRange.to, collabRef.current));
   }, [compareActive, compareRange, salesData.hasCachedRows]); // eslint-disable-line
 
   useEffect(() => { setCollab('Tous'); }, [tab]);
@@ -67,8 +71,9 @@ export default function CommercialActivite() {
     }
   }
 
-  // TLM n'a aucune source réelle (KAVKOM en stand-by) : pas de filtre collab.
-  const collabs = isSales ? (salesData.result?.collabs || ['Tous']) : ['Tous'];
+  // TLM : liste des agents CloudTalk réels, remontée par ActiviteTLM une fois
+  // /cloudtalk/agents-summary chargé (voir onCollabsChange).
+  const collabs = isSales ? (salesData.result?.collabs || ['Tous']) : tlmCollabs;
 
   const extraFilters = (
     <>
@@ -112,8 +117,8 @@ export default function CommercialActivite() {
         heroBgPosition="center 65%"
         onExtraire={tab === 'tlm' ? () => setExtractOpen(true) : undefined}
       >
-        {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} />}
-        {tab === 'tlm' && <ActiviteTLM selectedCollab={collab} />}
+        {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} compareRdvResult={compareRdvResult} />}
+        {tab === 'tlm' && <ActiviteTLM selectedCollab={collab} onCollabsChange={setTlmCollabs} />}
       </DashboardLayout>
 
       {extractOpen && <CloudTalkExtract onClose={() => setExtractOpen(false)} />}

@@ -539,3 +539,58 @@ export function computeRDVMonthlyEvolution(rdvRows, validCollabs, collab) {
     counts: months.map(d => monthlyMap[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] || 0),
   };
 }
+
+// ── Évolution mensuelle des appels émis (archive Ringover), même fenêtre
+// glissante de 6 mois que computeRDVMonthlyEvolution — permet de tracer
+// "Appels émis" sur le même graphe que "RDV pris" (widget "Évolution
+// mensuelle" de l'onglet Sales).
+export function computeCallsMonthlyEvolution(rows, collab) {
+  const filtered = (rows || []).filter(row => {
+    if (!parseDate(row.date)) return false;
+    if (collab && collab !== 'Tous') return row.collab === collab;
+    return !isExcluded(row.collab);
+  });
+
+  const monthlyMap = {};
+  filtered.forEach(r => {
+    const d = parseDate(r.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    monthlyMap[key] = (monthlyMap[key] || 0) + 1;
+  });
+
+  const today = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
+  }
+  return {
+    labels: months.map(d => d.toLocaleString('fr-FR', { month: 'short' })),
+    counts: months.map(d => monthlyMap[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] || 0),
+  };
+}
+
+// ── Recalcul des stats RDV (compte + taux honoré) sur une plage de dates
+// arbitraire, à partir du cache déjà chargé — sert à la comparaison de
+// période ("vs période précédente"), sur le même principe que
+// computeFromCache côté appels Ringover.
+export function computeRDVStatsForRange(rdvRows, validCollabs, collab, dateFrom, dateTo) {
+  const validSet = new Set(validCollabs || []);
+  const from = dateFrom ? toMidnight(dateFrom) : null;
+  const to   = dateTo   ? toMidnight(dateTo)   : null;
+
+  const filtered = (rdvRows || []).filter(row => {
+    if (validSet.size > 0 && !validSet.has(row.collab)) return false;
+    if (collab && collab !== 'Tous' && row.collab !== collab) return false;
+    const d = parseRDVDate(row.date);
+    if (!d) return false;
+    const day = toMidnight(d);
+    if (from && day < from) return false;
+    if (to   && day > to)   return false;
+    return true;
+  });
+
+  const rdvPris = filtered.length;
+  const rdvHonores = filtered.filter(r => r.honore).length;
+  const tauxHonores = rdvPris > 0 ? Math.round((rdvHonores / rdvPris) * 100) : 0;
+  return { rdvPris, rdvHonores, tauxHonores };
+}

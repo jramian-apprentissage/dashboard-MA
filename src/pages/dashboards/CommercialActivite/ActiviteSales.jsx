@@ -71,7 +71,7 @@ function compareCollabRows(a, b, sort) {
 }
 
 // KPIs depuis l'archive Ringover (seule source pour cet onglet)
-function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
+function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePeriodKey) {
   const { total, argues, decroche, fichesExploitables } = result;
   const tauxDec = total > 0 ? Math.round((decroche / total) * 100) : 0;
   const argPct  = total > 0 ? Math.round((argues  / total) * 100) : 0;
@@ -85,6 +85,16 @@ function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
   const cmpTauxFichesExploit = cmp && cmp.total > 0 ? Math.round((cmp.fichesExploitables / cmp.total) * 100) : null;
   const nbCollabActifs = Object.values(result.perCollab || {}).filter(c => (c.appels || 0) > 0).length;
 
+  // Comparatif RDV — masqué (pas juste "0 vs référence") quand la période de
+  // comparaison n'a elle-même aucun RDV, même logique que TLM : un delta
+  // n'a de sens que si la référence a une vraie donnée.
+  const cmpRdv = rdvResult && compareRdvResult && compareRdvResult.rdvPris > 0
+    ? compareValueText(rdvResult.rdvPris, compareRdvResult.rdvPris, comparePeriodKey)
+    : null;
+  const cmpTauxHon = rdvResult && compareRdvResult && compareRdvResult.rdvPris > 0
+    ? comparePtsText(rdvResult.tauxHonores, compareRdvResult.tauxHonores, comparePeriodKey)
+    : null;
+
   // Ordre "funnel" : on émet un appel, il est décroché, puis argumenté,
   // enfin une fiche est complétée — plus logique à lire que émis→argumenté→décroché.
   return [
@@ -92,16 +102,17 @@ function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
     { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmp ? comparePtsText(tauxDec, cmpTauxDec, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' } },
     { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
     { label: 'Taux fiches exploitables', value: `${tauxFichesExploit}%`, unit: '', compare: cmp ? comparePtsText(tauxFichesExploit, cmpTauxFichesExploit, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Argumentés + CNA - Mail' }, color: 'amber' },
-    { label: 'RDV pris',                 value: rdvPris,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'green' },
-    { label: 'Taux RDV honorés',         value: tauxHon,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'purple' },
+    { label: 'RDV pris',                 value: rdvPris,        unit: '', compare: cmpRdv,      trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'green' },
+    { label: 'Taux RDV honorés',         value: tauxHon,        unit: '', compare: cmpTauxHon,  trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'purple' },
   ];
 }
 
-export default function ActiviteSales({ selectedCollab = 'Tous', salesData, compareResult = null }) {
+export default function ActiviteSales({ selectedCollab = 'Tous', salesData, compareResult = null, compareRdvResult = null }) {
   const mounted = useChartMount();
   const hasData = salesData?.hasData && salesData?.result;
   const rdvResult = salesData?.rdvResult ?? null;
   const rdvEvolution = salesData?.rdvEvolution ?? null;
+  const callsEvolution = salesData?.callsEvolution ?? null;
   const { comparePeriodKey } = usePeriod();
   const [collabSort, setCollabSort] = useState({ col: 'nom', dir: 'asc' });
 
@@ -112,7 +123,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
     return collabSort.col === col ? (collabSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
   }
 
-  const kpis = hasData ? buildKPIs(salesData.result, rdvResult, compareResult, comparePeriodKey) : null;
+  const kpis = hasData ? buildKPIs(salesData.result, rdvResult, compareResult, compareRdvResult, comparePeriodKey) : null;
   // RDV par tranche horaire : uniquement le tag Ringover "OK" (row.rdv, déjà
   // calculé par computeSalesData) — pas le fichier RDV externe. Décision
   // explicite : la fiabilité de ce chiffre dépend du bon tagging Ringover
@@ -361,36 +372,54 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
 
       <SectionLabel>Évolution mensuelle</SectionLabel>
       <Card title="Appels émis & RDV pris">
-        {rdvEvolution ? (
+        {rdvEvolution && callsEvolution ? (
           <>
             <div className={styles.chartWrap} style={{ height: 200 }}>
               <Line
                 data={{
-                  labels: rdvEvolution.labels,
+                  labels: callsEvolution.labels,
                   datasets: [
+                    {
+                      label: 'Appels émis',
+                      data: callsEvolution.counts,
+                      borderColor: 'rgba(38,0,31,0.8)', backgroundColor: 'rgba(255,249,147,0.18)', pointBackgroundColor: 'rgba(38,0,31,0.8)',
+                      tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y',
+                    },
                     {
                       label: 'RDV pris',
                       data: rdvEvolution.counts,
                       borderColor: '#7EB89A', backgroundColor: 'rgba(126,184,154,0.04)', pointBackgroundColor: '#7EB89A',
-                      tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y',
+                      tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y1',
                     },
                   ],
                 }}
                 options={{
                   responsive: true, maintainAspectRatio: false,
                   animation: lineAnim,
-                  plugins: { legend: { display: false } },
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y}` } },
+                  },
+                  // Axes masqués (2 échelles indépendantes : "Appels émis" est
+                  // bien plus grand que "RDV pris", même principe que le
+                  // graphe équivalent de l'onglet TLM).
                   scales: {
-                    x: { ticks: tickStyle, grid: gridStyle, border: borderCol },
-                    y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', beginAtZero: true },
+                    x:  { ticks: { display: false }, grid: { display: false }, border: { display: false } },
+                    y:  { display: false, beginAtZero: true, position: 'left' },
+                    y1: { display: false, beginAtZero: true, position: 'right' },
                   },
                 }}
               />
             </div>
             <div className={styles.legend}>
-              <span className={styles.legDot} style={{ background: '#7EB89A' }} />RDV pris (fichier RDV) — 6 derniers mois
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span className={styles.legDot} style={{ background: 'rgba(38,0,31,0.8)' }} />Appels émis
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <span className={styles.legDot} style={{ background: '#7EB89A' }} />RDV pris (fichier RDV)
+              </span>
+              <span className={styles.subNote}> — 6 derniers mois</span>
             </div>
-            <div className={styles.subNote} style={{ marginTop: 6 }}>Évolution mensuelle des appels émis non disponible — nécessite un agrégat par mois côté archive Ringover</div>
           </>
         ) : (
           <NotConnected>fichier RDV non chargé ou sans historique mensuel</NotConnected>

@@ -7,6 +7,7 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import DonutChart from '../../../components/ui/DonutChart';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
+import NotConnected from '../../../components/ui/NotConnected';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { fetchAPI } from '../../../services/api';
@@ -37,7 +38,7 @@ function trend(text) {
 
 // Tri du tableau "Performance des agents" — colonne + sens cliquables,
 // même pattern que le tableau de relances (FocusCommercial).
-function compareAgents(a, b, sort) {
+function compareAgentRows(a, b, sort) {
   let cmp;
   if (sort.col === 'agent_label') {
     cmp = (a.agent_label || '').localeCompare(b.agent_label || '', 'fr');
@@ -120,11 +121,12 @@ function computeEvolution(dailyRows, granularity, field) {
   };
 }
 
-export default function ActiviteTLM() {
+export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange } = {}) {
   const { periodKey, customFrom, customTo, compareActive, compareRange, comparePeriodKey } = usePeriod();
   const [summary, setSummary] = useState(null);
   const [compareSummary, setCompareSummary] = useState(null);
   const [agents, setAgents] = useState([]);
+  const [compareAgents, setCompareAgents] = useState([]);
   const [appelsQuotidiens, setAppelsQuotidiens] = useState([]);
   const [evoGranularity, setEvoGranularity] = useState('jour');
   const [loading, setLoading] = useState(true);
@@ -152,15 +154,25 @@ export default function ActiviteTLM() {
   }, [periodKey, customFrom, customTo]);
 
   useEffect(() => {
-    if (!compareActive || !compareRange) { setCompareSummary(null); return; }
+    if (!compareActive || !compareRange) { setCompareSummary(null); setCompareAgents([]); return; }
     fetchAPI(`/cloudtalk/summary?from=${compareRange.from}&to=${compareRange.to}`)
       .then(setCompareSummary)
       .catch(() => setCompareSummary(null));
+    fetchAPI(`/cloudtalk/agents-summary?from=${compareRange.from}&to=${compareRange.to}`)
+      .then(setCompareAgents)
+      .catch(() => setCompareAgents([]));
   }, [compareActive, compareRange]);
 
   useEffect(() => {
-    fetchAPI('/cloudtalk/appels-quotidiens?jours=200').then(setAppelsQuotidiens).catch(() => {});
-  }, []);
+    const agentParam = selectedCollab && selectedCollab !== 'Tous' ? `&agent=${encodeURIComponent(selectedCollab)}` : '';
+    fetchAPI(`/cloudtalk/appels-quotidiens?jours=200${agentParam}`).then(setAppelsQuotidiens).catch(() => {});
+  }, [selectedCollab]);
+
+  // Remonte la liste des agents réels au parent (index.jsx), qui alimente le
+  // sélecteur "Filtrer par collaborateur" partagé avec l'onglet Sales.
+  useEffect(() => {
+    if (agents.length) onCollabsChange?.(['Tous', ...agents.map(a => a.agent_label)]);
+  }, [agents]); // eslint-disable-line
 
   const appelsEvolution = computeEvolution(appelsQuotidiens, evoGranularity, 'appels');
   const fichesEvolution = computeEvolution(appelsQuotidiens, evoGranularity, 'fiches');
@@ -168,23 +180,33 @@ export default function ActiviteTLM() {
   const hasData = !!summary;
   const firstLoad = loading && !summary && !error;
 
-  const appelsEmis        = summary?.appels_emis ?? 0;
-  const contactsJoints    = summary?.leads_decroches ?? 0;
-  const decroches30s      = summary?.appels_decroches_30s ?? 0;
-  const appelsExploitables = summary?.appels_exploitables ?? 0;
-  const nonExploitables   = summary?.data_non_exploitable ?? 0;
-  const rdvPris           = summary?.rdvs_bookes_tlm ?? 0;
+  // Un agent précis est sélectionné : les indicateurs qui n'ont pas
+  // d'équivalent par agent (motifs, statuts, leads à recycler, évolution
+  // quotidienne) deviennent indisponibles — CloudTalk ne renvoie ces
+  // décompositions qu'au niveau global, pas par ligne/agent.
+  const isFilteredToAgent = !!selectedCollab && selectedCollab !== 'Tous';
+  const agentRow        = isFilteredToAgent ? agents.find(a => a.agent_label === selectedCollab) : null;
+  const compareAgentRow = isFilteredToAgent ? compareAgents.find(a => a.agent_label === selectedCollab) : null;
+
+  const appelsEmis        = isFilteredToAgent ? (agentRow?.appels_emis ?? 0)          : (summary?.appels_emis ?? 0);
+  const contactsJoints    = isFilteredToAgent ? (agentRow?.contacts_joints ?? 0)       : (summary?.leads_decroches ?? 0);
+  const decroches30s      = isFilteredToAgent ? (agentRow?.appels_decroches_30s ?? 0)  : (summary?.appels_decroches_30s ?? 0);
+  const appelsExploitables = isFilteredToAgent ? (agentRow?.appels_exploitables ?? 0)  : (summary?.appels_exploitables ?? 0);
+  const nonExploitables   = isFilteredToAgent ? (agentRow?.appels_non_exploitables ?? 0) : (summary?.data_non_exploitable ?? 0);
+  const rdvPris           = isFilteredToAgent ? (agentRow?.rdvs_pris ?? 0)             : (summary?.rdvs_bookes_tlm ?? 0);
   // "Fiches complétées" = fiches complétées + RDV pris — un RDV pris compte
   // comme une fiche complétée (définition validée par Jimmy).
-  const fichesCompletees  = (summary?.fiches_completees ?? 0) + rdvPris;
-  const leadsARecycler    = summary?.leads_a_recycler ?? 0;
+  const fichesCompletees  = (isFilteredToAgent ? (agentRow?.fiches_completees ?? 0) : (summary?.fiches_completees ?? 0)) + rdvPris;
+  const leadsARecycler    = isFilteredToAgent ? null : (summary?.leads_a_recycler ?? 0);
   const transfoNette      = appelsEmis > 0 ? Math.round((rdvPris / appelsEmis) * 1000) / 10 : 0;
   const tauxDecroche30s   = appelsEmis > 0 ? Math.round((decroches30s / appelsEmis) * 100) : 0;
   const tauxFichesExploit = appelsExploitables > 0 ? Math.round((fichesCompletees / appelsExploitables) * 100) : 0;
 
-  const motifRefusCategorique  = summary?.motif_refus_categorique ?? 0;
-  const motifBarrageSecretaire = summary?.motif_barrage_secretaire ?? 0;
-  const motifHorsCriteres      = summary?.motif_hors_criteres ?? 0;
+  // Motif de refus / Statut des appels : aucune décomposition par agent côté
+  // CloudTalk — masqués (pas juste à 0) quand un agent précis est sélectionné.
+  const motifRefusCategorique  = isFilteredToAgent ? 0 : (summary?.motif_refus_categorique ?? 0);
+  const motifBarrageSecretaire = isFilteredToAgent ? 0 : (summary?.motif_barrage_secretaire ?? 0);
+  const motifHorsCriteres      = isFilteredToAgent ? 0 : (summary?.motif_hors_criteres ?? 0);
   const motifsTotal = motifRefusCategorique + motifBarrageSecretaire + motifHorsCriteres;
   const motifs = [
     { label: 'Refus catégorique',  count: motifRefusCategorique,  pct: motifsTotal > 0 ? Math.round(motifRefusCategorique / motifsTotal * 100) : 0 },
@@ -195,11 +217,11 @@ export default function ActiviteTLM() {
   // Statut des appels — 5 catégories réelles, mutuellement exclusives (voir
   // migrations 020/021). "Sans tags" complète la partition à 100% des
   // appels émis (les 4 autres ne couvrent que les appels tagués).
-  const statutArgumente      = summary?.statut_argumente ?? 0;
-  const statutNonArgumente   = summary?.statut_non_argumente ?? 0;
-  const statutNonExploitable = summary?.statut_non_exploitable ?? 0;
-  const statutInjoignable    = summary?.statut_injoignable ?? 0;
-  const statutSansTags       = summary?.statut_sans_tags ?? 0;
+  const statutArgumente      = isFilteredToAgent ? 0 : (summary?.statut_argumente ?? 0);
+  const statutNonArgumente   = isFilteredToAgent ? 0 : (summary?.statut_non_argumente ?? 0);
+  const statutNonExploitable = isFilteredToAgent ? 0 : (summary?.statut_non_exploitable ?? 0);
+  const statutInjoignable    = isFilteredToAgent ? 0 : (summary?.statut_injoignable ?? 0);
+  const statutSansTags       = isFilteredToAgent ? 0 : (summary?.statut_sans_tags ?? 0);
   const statuts = [
     { label: 'Argumenté',        count: statutArgumente,      color: STATUT_COLORS.argumente },
     { label: 'Non argumenté',    count: statutNonArgumente,   color: STATUT_COLORS.nonArgumente },
@@ -214,39 +236,57 @@ export default function ActiviteTLM() {
   // vraie exclusion.
   const statutsTotal = appelsEmis || 1;
 
-  const cmp = (val, key) => compareSummary ? compareValueText(val, compareSummary[key], comparePeriodKey) : null;
+  // Comparatifs — dérivés de agentRow/compareAgentRow quand un agent précis
+  // est sélectionné (aucune notion de "clients/motifs/statuts" par agent, ces
+  // comparatifs-là restent simplement masqués faute de donnée).
+  const cmp = (val, key, agentKey) => {
+    if (isFilteredToAgent) {
+      if (!agentKey || !compareAgentRow) return null;
+      const ref = compareAgentRow[agentKey];
+      return ref > 0 ? compareValueText(val, ref, comparePeriodKey) : null;
+    }
+    return compareSummary ? compareValueText(val, compareSummary[key], comparePeriodKey) : null;
+  };
   // Fiches complétées de la période de comparaison, même définition combinée
   // (fiches + RDV) que la période courante.
-  const compareFichesCompletees = compareSummary ? (compareSummary.fiches_completees ?? 0) + (compareSummary.rdvs_bookes_tlm ?? 0) : null;
-  const cmpFichesCompletees = compareSummary ? compareValueText(fichesCompletees, compareFichesCompletees, comparePeriodKey) : null;
+  const compareFichesCompletees = isFilteredToAgent
+    ? (compareAgentRow ? (compareAgentRow.fiches_completees ?? 0) + (compareAgentRow.rdvs_pris ?? 0) : null)
+    : (compareSummary ? (compareSummary.fiches_completees ?? 0) + (compareSummary.rdvs_bookes_tlm ?? 0) : null);
+  const cmpFichesCompletees = compareFichesCompletees != null
+    ? compareValueText(fichesCompletees, compareFichesCompletees, comparePeriodKey)
+    : null;
 
   // Comparaison en points pour les taux dérivés (recalculés sur la période
   // de comparaison à partir des mêmes champs bruts). Sans appels émis sur la
   // période de comparaison, il n'y a aucune vraie donnée à comparer (pas un
   // taux de 0%) — on masque plutôt que d'afficher une fausse variation.
-  const compareHasData = compareSummary && compareSummary.appels_emis > 0;
+  const compareBase = isFilteredToAgent ? compareAgentRow : compareSummary;
+  const compareBaseAppelsEmis = isFilteredToAgent ? compareAgentRow?.appels_emis : compareSummary?.appels_emis;
+  const compareHasData = compareBase && compareBaseAppelsEmis > 0;
   const cmpDecroche30s = compareHasData
-    ? comparePtsText(tauxDecroche30s, Math.round((compareSummary.appels_decroches_30s / compareSummary.appels_emis) * 100), comparePeriodKey)
+    ? comparePtsText(tauxDecroche30s, Math.round((compareBase.appels_decroches_30s / compareBaseAppelsEmis) * 100), comparePeriodKey)
     : null;
-  const cmpFichesExploit = compareHasData && compareSummary.appels_exploitables > 0
-    ? comparePtsText(tauxFichesExploit, Math.round((compareFichesCompletees / compareSummary.appels_exploitables) * 100), comparePeriodKey)
+  const compareBaseAppelsExploitables = isFilteredToAgent ? compareAgentRow?.appels_exploitables : compareSummary?.appels_exploitables;
+  const cmpFichesExploit = compareHasData && compareBaseAppelsExploitables > 0
+    ? comparePtsText(tauxFichesExploit, Math.round((compareFichesCompletees / compareBaseAppelsExploitables) * 100), comparePeriodKey)
     : null;
+  const compareBaseRdv = isFilteredToAgent ? compareAgentRow?.rdvs_pris : compareSummary?.rdvs_bookes_tlm;
   const cmpTransfoNette = compareHasData
-    ? comparePtsText(transfoNette, Math.round((compareSummary.rdvs_bookes_tlm / compareSummary.appels_emis) * 1000) / 10, comparePeriodKey)
+    ? comparePtsText(transfoNette, Math.round((compareBaseRdv / compareBaseAppelsEmis) * 1000) / 10, comparePeriodKey)
     : null;
 
   // Ordre "tunnel" : émis → décroché → joint → exploitable → taux exploit. →
   // non exploitable → fiche → rdv → taux honoré → transfo nette. Les KPIs
   // liés se retrouvent ainsi sur la même ligne (grille 2 colonnes mobile).
   const kpis = [
-    { label: 'Appels émis',                value: appelsEmis,                       unit: '', compare: cmp(appelsEmis, 'appels_emis'),           trend: trend(`${summary?.nb_clients ?? 0} clients TLM actifs`) },
+    { label: 'Appels émis',                value: appelsEmis,                       unit: '', compare: cmp(appelsEmis, 'appels_emis', 'appels_emis'),           trend: trend(isFilteredToAgent ? selectedCollab : `${summary?.nb_clients ?? 0} clients TLM actifs`) },
     { label: 'Taux décroché > 30s',        value: `${tauxDecroche30s}%`,            unit: '', compare: cmpDecroche30s,   trend: trend('Durée de conversation > 30s (talking_time)') },
-    { label: 'Contacts joints',            value: contactsJoints,                   unit: '', compare: cmp(contactsJoints, 'leads_decroches'),   trend: trend(appelsEmis ? `${Math.round(contactsJoints / appelsEmis * 100)}% des appels émis` : '—') },
-    { label: 'Appels exploitables',        value: appelsExploitables,               unit: '', compare: cmp(appelsExploitables, 'appels_exploitables'), trend: trend('Enquête complétée/partielle, RDV pris, Rappel') },
+    { label: 'Contacts joints',            value: contactsJoints,                   unit: '', compare: cmp(contactsJoints, 'leads_decroches', 'contacts_joints'),   trend: trend(appelsEmis ? `${Math.round(contactsJoints / appelsEmis * 100)}% des appels émis` : '—') },
+    { label: 'Appels exploitables',        value: appelsExploitables,               unit: '', compare: cmp(appelsExploitables, 'appels_exploitables', 'appels_exploitables'), trend: trend('Enquête complétée/partielle, RDV pris, Rappel') },
     { label: 'Taux fiches exploitables',   value: `${tauxFichesExploit}%`,          unit: '', compare: cmpFichesExploit, trend: trend('Fiches complétées / Appels exploitables') },
-    { label: 'Appels non exploitables',    value: nonExploitables,                  unit: '', compare: cmp(nonExploitables, 'data_non_exploitable'), trend: trend('Contact joint sans info business') },
+    { label: 'Appels non exploitables',    value: nonExploitables,                  unit: '', compare: cmp(nonExploitables, 'data_non_exploitable', 'appels_non_exploitables'), trend: trend('Contact joint sans info business') },
     { label: 'Fiches complétées',          value: fichesCompletees,                 unit: '', compare: cmpFichesCompletees, trend: trend('Enquête complétée + RDV pris') },
-    { label: 'RDV pris',                   value: rdvPris,                          unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm'),           trend: trend('Transformation TLM → RDV'), color: 'green' },
+    { label: 'RDV pris',                   value: rdvPris,                          unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm', 'rdvs_pris'),           trend: trend('Transformation TLM → RDV'), color: 'green' },
     { label: 'Taux RDV honorés',           value: '-',                              unit: '', trend: trend('Pas de suivi de présence côté CloudTalk') },
     { label: 'Transformation nette',       value: `${transfoNette}%`,               unit: '', compare: cmpTransfoNette, trend: trend('RDV pris / appels émis') },
   ];
@@ -308,9 +348,9 @@ export default function ActiviteTLM() {
                   const transfoNette = a.appels_emis > 0 ? Math.round((a.rdvs_pris / a.appels_emis) * 1000) / 10 : 0;
                   return { ...a, fichesAgent, tauxCompletion, tauxDecroche30s, transfoNette };
                 })
-                .sort((a, b) => compareAgents(a, b, agentSort))
+                .sort((a, b) => compareAgentRows(a, b, agentSort))
                 .map(a => (
-                  <tr key={a.agent_label}>
+                  <tr key={a.agent_label} className={a.agent_label === selectedCollab ? styles.highlightRow : ''}>
                     <td className={styles.tdName}>{a.agent_label}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_emis)}</td>
                     <td className={styles.tdNum}>{a.tauxDecroche30s}%</td>
@@ -356,28 +396,38 @@ export default function ActiviteTLM() {
       <SectionLabel>Détails des appels</SectionLabel>
       <div className={styles.twoCol}>
         <Card title="Statut des appels">
-          <DonutChart
-            variant="donut"
-            data={statuts.map(s => s.count)}
-            labels={statuts.map(s => s.label)}
-            colors={statuts.map(s => s.color)}
-            height={200}
-            centerValue={statutsTotal}
-            centerLabel="appels"
-            tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
-            showDataLabels={false}
-          />
-          <div className={styles.legend} style={{ justifyContent: 'center' }}>
-            {statuts.map(s => (
-              <span key={s.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <span className={styles.legDot} style={{ background: s.color }} />{s.label} {Math.round(s.count / statutsTotal * 100)}%
-              </span>
-            ))}
-          </div>
+          {isFilteredToAgent ? (
+            <NotConnected>indisponible pour un collaborateur précis — CloudTalk ne remonte le statut des appels qu'au niveau global</NotConnected>
+          ) : (
+            <>
+              <DonutChart
+                variant="donut"
+                data={statuts.map(s => s.count)}
+                labels={statuts.map(s => s.label)}
+                colors={statuts.map(s => s.color)}
+                height={200}
+                centerValue={statutsTotal}
+                centerLabel="appels"
+                tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
+                showDataLabels={false}
+              />
+              <div className={styles.legend} style={{ justifyContent: 'center' }}>
+                {statuts.map(s => (
+                  <span key={s.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span className={styles.legDot} style={{ background: s.color }} />{s.label} {Math.round(s.count / statutsTotal * 100)}%
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
         </Card>
 
         <Card title="Motif de refus pour les appels non exploitables">
-          {motifs.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
+          {isFilteredToAgent ? (
+            <NotConnected>indisponible pour un collaborateur précis — CloudTalk ne remonte les motifs de refus qu'au niveau global</NotConnected>
+          ) : (
+            motifs.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)
+          )}
         </Card>
       </div>
 
@@ -449,7 +499,7 @@ export default function ActiviteTLM() {
       <SectionLabel>Suivi des leads</SectionLabel>
       <div className={styles.twoCol}>
         <Card>
-          <KPICard label="Leads à recycler" value={leadsARecycler} unit="" trend={trend('Pas de réponse, Répondeur, Injoignable, Rappel (ou sans tag)')} color="amber" />
+          <KPICard label="Leads à recycler" value={isFilteredToAgent ? '-' : leadsARecycler} unit="" trend={trend(isFilteredToAgent ? 'Indisponible pour un collaborateur précis' : 'Pas de réponse, Répondeur, Injoignable, Rappel (ou sans tag)')} color="amber" />
         </Card>
         <Card>
           <KPICard label="Leads restants à contacter" value="-" unit="" trend={trend('Saisi à la main, non calculable via API')} color="amber" />
