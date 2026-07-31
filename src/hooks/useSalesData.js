@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { computeSalesData, parseRDVSheetCSV, computeRDVData } from '../services/sheetsParser';
+import { computeSalesData, parseRDVSheetCSV, computeRDVData, computeRDVMonthlyEvolution } from '../services/sheetsParser';
 import { fetchAPI } from '../services/api';
 
 /* Les appels viennent de l'archive Postgres (/api/ringover/calls), plus du
@@ -17,12 +17,13 @@ const RDV_SHEET_APPSCRIPT_URL = import.meta.env.VITE_RDV_SHEET_APPSCRIPT_URL;
 const RDV_SHEET_GID = import.meta.env.VITE_RDV_SHEET_GID || '0';
 
 export function useSalesData() {
-  const [result,      setResult]      = useState(null);
-  const [rdvResult,   setRdvResult]   = useState(null);
-  const [loading,     setLoading]     = useState(false);
-  const [error,       setError]       = useState(null);
-  const [rdvError,    setRdvError]    = useState(null);
-  const [lastFetched, setLastFetched] = useState(null);
+  const [result,        setResult]        = useState(null);
+  const [rdvResult,     setRdvResult]     = useState(null);
+  const [rdvEvolution,  setRdvEvolution]  = useState(null);
+  const [loading,       setLoading]       = useState(false);
+  const [error,         setError]         = useState(null);
+  const [rdvError,      setRdvError]      = useState(null);
+  const [lastFetched,   setLastFetched]   = useState(null);
 
   const appliedFrom   = useRef(null);
   const appliedTo     = useRef(null);
@@ -82,6 +83,7 @@ export function useSalesData() {
           validCollabs,
         );
         setRdvResult(rdv);
+        setRdvEvolution(computeRDVMonthlyEvolution(rdvRows, validCollabs, collab));
       }
 
       setLastFetched(new Date());
@@ -113,6 +115,7 @@ export function useSalesData() {
         validCollabs,
       );
       setRdvResult(rdv);
+      setRdvEvolution(computeRDVMonthlyEvolution(rdvRowsCache.current, validCollabs, collab));
     }
   }, []);
 
@@ -130,6 +133,7 @@ export function useSalesData() {
   return {
     result,
     rdvResult,
+    rdvEvolution,
     loading,
     error,
     rdvError,

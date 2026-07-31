@@ -89,7 +89,7 @@ function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
   // enfin une fiche est complétée — plus logique à lire que émis→argumenté→décroché.
   return [
     { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` },        color: 'blue' },
-    { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmp ? comparePtsText(tauxDec, cmpTauxDec, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' },     color: 'accent' },
+    { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmp ? comparePtsText(tauxDec, cmpTauxDec, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' } },
     { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
     { label: 'Taux fiches exploitables', value: `${tauxFichesExploit}%`, unit: '', compare: cmp ? comparePtsText(tauxFichesExploit, cmpTauxFichesExploit, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Argumentés + CNA - Mail' }, color: 'amber' },
     { label: 'RDV pris',                 value: rdvPris,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'green' },
@@ -101,6 +101,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   const mounted = useChartMount();
   const hasData = salesData?.hasData && salesData?.result;
   const rdvResult = salesData?.rdvResult ?? null;
+  const rdvEvolution = salesData?.rdvEvolution ?? null;
   const { comparePeriodKey } = usePeriod();
   const [collabSort, setCollabSort] = useState({ col: 'nom', dir: 'asc' });
 
@@ -359,20 +360,17 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       </div>
 
       <SectionLabel>Évolution mensuelle</SectionLabel>
-      <Card title="Appels émis & RDV pris — évolution mensuelle">
-        {rdvResult?.monthly && Object.keys(rdvResult.monthly).length > 0 ? (
+      <Card title="Appels émis & RDV pris">
+        {rdvEvolution ? (
           <>
             <div className={styles.chartWrap} style={{ height: 200 }}>
               <Line
                 data={{
-                  labels: Object.keys(rdvResult.monthly).sort().map(k => {
-                    const [y, m] = k.split('-');
-                    return new Date(parseInt(y), parseInt(m) - 1).toLocaleString('fr-FR', { month: 'short' });
-                  }),
+                  labels: rdvEvolution.labels,
                   datasets: [
                     {
                       label: 'RDV pris',
-                      data: Object.keys(rdvResult.monthly).sort().map(k => rdvResult.monthly[k]),
+                      data: rdvEvolution.counts,
                       borderColor: '#7EB89A', backgroundColor: 'rgba(126,184,154,0.04)', pointBackgroundColor: '#7EB89A',
                       tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y',
                     },
@@ -384,13 +382,13 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                   plugins: { legend: { display: false } },
                   scales: {
                     x: { ticks: tickStyle, grid: gridStyle, border: borderCol },
-                    y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left' },
+                    y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', beginAtZero: true },
                   },
                 }}
               />
             </div>
             <div className={styles.legend}>
-              <span className={styles.legDot} style={{ background: '#7EB89A' }} />RDV pris (fichier RDV)
+              <span className={styles.legDot} style={{ background: '#7EB89A' }} />RDV pris (fichier RDV) — 6 derniers mois
             </div>
             <div className={styles.subNote} style={{ marginTop: 6 }}>Évolution mensuelle des appels émis non disponible — nécessite un agrégat par mois côté archive Ringover</div>
           </>

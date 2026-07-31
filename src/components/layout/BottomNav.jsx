@@ -33,6 +33,14 @@ export default function BottomNav() {
   useEffect(() => {
     function handler(e) {
       if (!sheet) return;
+      // PeriodPicker (utilisé dans la feuille "filtre") rend son menu via un
+      // portail dans document.body — physiquement hors de sheetRef dans le
+      // DOM même si visuellement imbriqué dedans. Sans cette exception, taper
+      // une option du menu déclenche cette fermeture AVANT que son propre
+      // onClick n'ait eu la main : la feuille (et le menu avec) disparaît sur
+      // le mousedown, le clic qui suit n'a plus de cible — la sélection
+      // semble alors n'avoir aucun effet.
+      if (e.target.closest('[data-keep-sheet-open]')) return;
       if (sheetRef.current && !sheetRef.current.contains(e.target) && !e.target.closest('[data-bn-btn]')) {
         setSheet(null);
       }

@@ -239,7 +239,7 @@ export default function ActiviteTLM() {
   // non exploitable → fiche → rdv → taux honoré → transfo nette. Les KPIs
   // liés se retrouvent ainsi sur la même ligne (grille 2 colonnes mobile).
   const kpis = [
-    { label: 'Appels émis',                value: appelsEmis,                       unit: '', compare: cmp(appelsEmis, 'appels_emis'),           trend: trend(`${summary?.nb_clients ?? 0} clients TLM actifs`), color: 'accent' },
+    { label: 'Appels émis',                value: appelsEmis,                       unit: '', compare: cmp(appelsEmis, 'appels_emis'),           trend: trend(`${summary?.nb_clients ?? 0} clients TLM actifs`) },
     { label: 'Taux décroché > 30s',        value: `${tauxDecroche30s}%`,            unit: '', compare: cmpDecroche30s,   trend: trend('Durée de conversation > 30s (talking_time)') },
     { label: 'Contacts joints',            value: contactsJoints,                   unit: '', compare: cmp(contactsJoints, 'leads_decroches'),   trend: trend(appelsEmis ? `${Math.round(contactsJoints / appelsEmis * 100)}% des appels émis` : '—') },
     { label: 'Appels exploitables',        value: appelsExploitables,               unit: '', compare: cmp(appelsExploitables, 'appels_exploitables'), trend: trend('Enquête complétée/partielle, RDV pris, Rappel') },

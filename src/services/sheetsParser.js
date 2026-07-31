@@ -507,3 +507,35 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
 
   return { rdvPris, rdvHonores, tauxHonores, perCollab: collabMap, monthly: monthlyMap, byHour: byHourMap };
 }
+
+// ── Évolution mensuelle des RDV, sur une fenêtre glissante des 6 derniers
+// mois — indépendante de la période de référence sélectionnée sur la page
+// (computeRDVData.monthly ne couvre que les RDV DANS la période choisie,
+// souvent un seul mois : un "graphe d'évolution" à un seul point n'a aucun
+// sens). Mêmes filtres collab/validCollabs que computeRDVData, mais jamais
+// de borne de date.
+export function computeRDVMonthlyEvolution(rdvRows, validCollabs, collab) {
+  const validSet = new Set(validCollabs || []);
+  const filtered = (rdvRows || []).filter(row => {
+    if (validSet.size > 0 && !validSet.has(row.collab)) return false;
+    if (collab && collab !== 'Tous' && row.collab !== collab) return false;
+    return !!parseRDVDate(row.date);
+  });
+
+  const monthlyMap = {};
+  filtered.forEach(r => {
+    const d = parseRDVDate(r.date);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    monthlyMap[key] = (monthlyMap[key] || 0) + 1;
+  });
+
+  const today = new Date();
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
+  }
+  return {
+    labels: months.map(d => d.toLocaleString('fr-FR', { month: 'short' })),
+    counts: months.map(d => monthlyMap[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] || 0),
+  };
+}

@@ -166,7 +166,7 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange, ex
   }
 
   const dropdown = open && coords && createPortal(
-    <div className={styles.dropdown} style={coords} ref={dropRef}>
+    <div className={styles.dropdown} style={coords} ref={dropRef} data-keep-sheet-open>
       {visiblePeriods.map(p => (
         <button
           key={p.key}
