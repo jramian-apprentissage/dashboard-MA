@@ -9,7 +9,7 @@ import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
-import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
+import NotConnected from '../../../components/ui/NotConnected';
 import Loader from '../../../components/ui/Loader';
 import { TAG_CATEGORIES, dernierJourArchive } from '../../../services/sheetsParser';
 import DonutChart from '../../../components/ui/DonutChart';
@@ -72,15 +72,17 @@ function compareCollabRows(a, b, sort) {
 
 // KPIs depuis l'archive Ringover (seule source pour cet onglet)
 function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
-  const { total, argues, decroche } = result;
+  const { total, argues, decroche, fichesExploitables } = result;
   const tauxDec = total > 0 ? Math.round((decroche / total) * 100) : 0;
   const argPct  = total > 0 ? Math.round((argues  / total) * 100) : 0;
+  const tauxFichesExploit = total > 0 ? Math.round((fichesExploitables / total) * 100) : 0;
   const rdvPris = rdvResult?.rdvPris ?? '—';
   const tauxHon = rdvResult ? `${rdvResult.tauxHonores}%` : '—';
   const rdvSrc  = rdvResult ? 'Fichier RDV' : 'Fichier RDV non chargé';
 
   const cmp = compareResult;
   const cmpTauxDec = cmp && cmp.total > 0 ? Math.round((cmp.decroche / cmp.total) * 100) : null;
+  const cmpTauxFichesExploit = cmp && cmp.total > 0 ? Math.round((cmp.fichesExploitables / cmp.total) * 100) : null;
   const nbCollabActifs = Object.values(result.perCollab || {}).filter(c => (c.appels || 0) > 0).length;
 
   // Ordre "funnel" : on émet un appel, il est décroché, puis argumenté,
@@ -89,7 +91,7 @@ function buildKPIs(result, rdvResult, compareResult, comparePeriodKey) {
     { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` },        color: 'blue' },
     { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmp ? comparePtsText(tauxDec, cmpTauxDec, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' },     color: 'accent' },
     { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
-    notConnectedKPI('Taux fiches exploitables', 'aucune notion de fiche qualité côté Ringover', 'amber'),
+    { label: 'Taux fiches exploitables', value: `${tauxFichesExploit}%`, unit: '', compare: cmp ? comparePtsText(tauxFichesExploit, cmpTauxFichesExploit, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Argumentés + CNA - Mail' }, color: 'amber' },
     { label: 'RDV pris',                 value: rdvPris,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'green' },
     { label: 'Taux RDV honorés',         value: tauxHon,        unit: '', trend: { dir: 'neutral', text: rdvSrc },                                                                                             color: 'purple' },
   ];
@@ -169,14 +171,17 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               const rdvC = rdvResult?.perCollab?.[name];
               const ring = salesData.result.perCollab?.[name];
               const tauxN = parseInt(ring?.taux);
+              const rdvPris = rdvC?.rdvPris ?? null;
+              const rdvHonores = rdvC?.rdvHonores ?? null;
               return {
                 nom: name,
                 appels: ring?.appels ?? null,
                 tauxDecroche: isNaN(tauxN) ? null : tauxN,
                 tauxLabel: ring?.taux ?? '—',
                 argues: ring?.argues ?? null,
-                rdvPris: rdvC?.rdvPris ?? null,
-                rdvHonores: rdvC?.rdvHonores ?? null,
+                tauxFichesExploit: ring?.tauxFichesExploit ?? null,
+                rdvPris,
+                tauxRdvHonores: rdvPris > 0 ? Math.round((rdvHonores / rdvPris) * 100) : null,
               };
             })
             .sort((a, b) => compareCollabRows(a, b, collabSort));
@@ -186,10 +191,11 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               <thead><tr>
                 <th onClick={() => toggleCollabSort('nom')} style={{ cursor: 'pointer' }}>Collaborateur{collabSortArrow('nom')}</th>
                 <th onClick={() => toggleCollabSort('appels')} style={{ cursor: 'pointer' }}>Appels émis{collabSortArrow('appels')}</th>
-                <th onClick={() => toggleCollabSort('tauxDecroche')} style={{ cursor: 'pointer' }}>Taux décroché{collabSortArrow('tauxDecroche')}</th>
+                <th onClick={() => toggleCollabSort('tauxDecroche')} style={{ cursor: 'pointer' }}>Taux décrochés &gt;30s{collabSortArrow('tauxDecroche')}</th>
                 <th onClick={() => toggleCollabSort('argues')} style={{ cursor: 'pointer' }}>Appels argumentés{collabSortArrow('argues')}</th>
+                <th onClick={() => toggleCollabSort('tauxFichesExploit')} style={{ cursor: 'pointer' }}>Taux fiches exploitables{collabSortArrow('tauxFichesExploit')}</th>
                 <th onClick={() => toggleCollabSort('rdvPris')} style={{ cursor: 'pointer' }}>RDV pris{collabSortArrow('rdvPris')}</th>
-                <th onClick={() => toggleCollabSort('rdvHonores')} style={{ cursor: 'pointer' }}>RDV honorés{collabSortArrow('rdvHonores')}</th>
+                <th onClick={() => toggleCollabSort('tauxRdvHonores')} style={{ cursor: 'pointer' }}>Taux RDV honorés{collabSortArrow('tauxRdvHonores')}</th>
               </tr></thead>
               <tbody>
                 {rows.map(row => {
@@ -200,8 +206,9 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       <td className={styles.tdNum}>{fmtNumber(row.appels) ?? '—'}</td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: tauxColor }}>{row.tauxLabel}</span></td>
                       <td className={styles.tdNum}>{fmtNumber(row.argues) ?? '—'}</td>
+                      <td className={styles.tdNum}>{row.tauxFichesExploit != null ? `${row.tauxFichesExploit}%` : '—'}</td>
                       <td className={styles.tdNum} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</td>
+                      <td className={styles.tdNum} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? `${row.tauxRdvHonores}%` : '—'}</td>
                     </tr>
                   );
                 })}

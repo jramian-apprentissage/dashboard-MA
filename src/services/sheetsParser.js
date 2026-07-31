@@ -60,6 +60,15 @@ function hasTagCat(tags, cat) {
   return tags.split(/[,;|]/).some(t => t.trim().toUpperCase().startsWith(cat.toUpperCase()));
 }
 
+// Match un tag précis (pas juste sa catégorie à 2-3 lettres), tolérant aux
+// espaces variables autour du tiret ("CNA - Mail", "CNA -Mail", "CNA- Mail").
+function hasTagPrefix(tags, prefix) {
+  if (!tags) return false;
+  const norm = s => s.trim().toUpperCase().replace(/\s*-\s*/g, ' - ');
+  const target = norm(prefix);
+  return tags.split(/[,;|]/).some(t => norm(t).startsWith(target));
+}
+
 // Collaborateurs à exclure du filtre "Tous" (pas des commerciaux Sales)
 const EXCLUDED_COLLABS = ['Entrant', 'Management'];
 
@@ -135,6 +144,11 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   // Contact argumenté = OK (RDV pris) + PI (Pas intéressé) — le prospect a écouté le pitch
   const argues = filtered.filter(r => hasTagCat(r.tags, 'OK') || hasTagCat(r.tags, 'PI')).length;
   const rdv    = filtered.filter(r => hasTagCat(r.tags, 'OK')).length;
+  // Fiche exploitable = argumenté (OK/PI) + CNA - Mail (contact non argumenté
+  // au téléphone mais dont l'échange par mail a permis de récupérer une info).
+  const fichesExploitables = filtered.filter(r =>
+    hasTagCat(r.tags, 'OK') || hasTagCat(r.tags, 'PI') || hasTagPrefix(r.tags, 'CNA - Mail')
+  ).length;
 
   // Tranches horaires
   const trancheMap = {};
@@ -191,20 +205,24 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   // ── Statistiques par collaborateur ──────────────────────────────────────────
   const collabStats = {};
   filtered.forEach(r => {
-    if (!collabStats[r.collab]) collabStats[r.collab] = { appels: 0, decroche: 0, argues: 0 };
+    if (!collabStats[r.collab]) collabStats[r.collab] = { appels: 0, decroche: 0, argues: 0, fichesExploitables: 0 };
     collabStats[r.collab].appels++;
     if (r.duration > 30) collabStats[r.collab].decroche++;
-    if (hasTagCat(r.tags, 'OK') || hasTagCat(r.tags, 'PI')) collabStats[r.collab].argues++;
+    const estArgue = hasTagCat(r.tags, 'OK') || hasTagCat(r.tags, 'PI');
+    if (estArgue) collabStats[r.collab].argues++;
+    if (estArgue || hasTagPrefix(r.tags, 'CNA - Mail')) collabStats[r.collab].fichesExploitables++;
   });
   const perCollab = Object.fromEntries(
     Object.entries(collabStats).map(([name, v]) => [name, {
       appels: v.appels,
       argues: v.argues,
+      fichesExploitables: v.fichesExploitables,
+      tauxFichesExploit: v.appels > 0 ? Math.round((v.fichesExploitables / v.appels) * 100) : 0,
       taux:   v.appels > 0 ? `${Math.round((v.decroche / v.appels) * 100)}%` : '—',
     }])
   );
 
-  return { total, decroche, argues, rdv, tranches, collabs, categStats, tagStats, perCollab };
+  return { total, decroche, argues, fichesExploitables, rdv, tranches, collabs, categStats, tagStats, perCollab };
 }
 
 // ─── ASUS (client) ───────────────────────────────────────────────────────────
@@ -398,11 +416,16 @@ export function parseRDVSheetCSV(csvText) {
   // Détection automatique de la structure via l'en-tête ligne 1
   const header = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
   // Nouvelle structure : col B est exactement "heure" (après Apps Script)
-  // Ancienne structure : col B est "date / horaire meeting" (nom long)
+  // Ancienne structure : col A = "Date de Création" (booking), col B = "Date
+  // / Horaire Meeting" (date réelle du RDV, à utiliser pour le filtrage et
+  // les statistiques) ; col I = BDR (collaborateur), col J = Présent/Absent/
+  // A replanifier — vérifié directement sur l'export réel (BDR et Présent
+  // étaient décalés d'une colonne, "Effectif"/"BDR" au lieu de "BDR"/"Présent",
+  // ce qui vidait silencieusement tout le calcul RDV, cf. vérification du 31/07).
   const hasTimeCol = header[1] === 'heure' || header[1] === 'time';
   const COL = hasTimeCol
     ? { DATE: 0, TIME: 1, COLLAB: 8, HONORE: 9 }  // après Apps Script
-    : { DATE: 0, TIME: -1, COLLAB: 7, HONORE: 8 }; // ancienne structure
+    : { DATE: 1, TIME: -1, COLLAB: 8, HONORE: 9 }; // ancienne structure
 
   return lines.slice(1)
     .map(line => {

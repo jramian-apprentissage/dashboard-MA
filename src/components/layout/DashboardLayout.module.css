@@ -507,6 +507,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
+    touch-action: manipulation;
   }
   .subTabPillActive {
     background: var(--soleil);

@@ -6,7 +6,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import DonutChart from '../../../components/ui/DonutChart';
-import Loader from '../../../components/ui/Loader';
+import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { fetchAPI } from '../../../services/api';
@@ -221,15 +221,18 @@ export default function ActiviteTLM() {
   const cmpFichesCompletees = compareSummary ? compareValueText(fichesCompletees, compareFichesCompletees, comparePeriodKey) : null;
 
   // Comparaison en points pour les taux dérivés (recalculés sur la période
-  // de comparaison à partir des mêmes champs bruts).
-  const cmpDecroche30s = compareSummary
-    ? comparePtsText(tauxDecroche30s, compareSummary.appels_emis > 0 ? Math.round((compareSummary.appels_decroches_30s / compareSummary.appels_emis) * 100) : 0, comparePeriodKey)
+  // de comparaison à partir des mêmes champs bruts). Sans appels émis sur la
+  // période de comparaison, il n'y a aucune vraie donnée à comparer (pas un
+  // taux de 0%) — on masque plutôt que d'afficher une fausse variation.
+  const compareHasData = compareSummary && compareSummary.appels_emis > 0;
+  const cmpDecroche30s = compareHasData
+    ? comparePtsText(tauxDecroche30s, Math.round((compareSummary.appels_decroches_30s / compareSummary.appels_emis) * 100), comparePeriodKey)
     : null;
-  const cmpFichesExploit = compareSummary
-    ? comparePtsText(tauxFichesExploit, compareSummary.appels_exploitables > 0 ? Math.round((compareFichesCompletees / compareSummary.appels_exploitables) * 100) : 0, comparePeriodKey)
+  const cmpFichesExploit = compareHasData && compareSummary.appels_exploitables > 0
+    ? comparePtsText(tauxFichesExploit, Math.round((compareFichesCompletees / compareSummary.appels_exploitables) * 100), comparePeriodKey)
     : null;
-  const cmpTransfoNette = compareSummary
-    ? comparePtsText(transfoNette, compareSummary.appels_emis > 0 ? Math.round((compareSummary.rdvs_bookes_tlm / compareSummary.appels_emis) * 1000) / 10 : 0, comparePeriodKey)
+  const cmpTransfoNette = compareHasData
+    ? comparePtsText(transfoNette, Math.round((compareSummary.rdvs_bookes_tlm / compareSummary.appels_emis) * 1000) / 10, comparePeriodKey)
     : null;
 
   // Ordre "tunnel" : émis → décroché → joint → exploitable → taux exploit. →
@@ -269,8 +272,9 @@ export default function ActiviteTLM() {
         </div>
       )}
       {hasData && (
-        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
+        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ color: 'var(--pos)' }}>● Données CloudTalk</span> — MAJ au {formatJourMois(summary.dernier_jour)}
+          {loading && <LoaderMark size={16} />}
         </div>
       )}
 
@@ -285,29 +289,39 @@ export default function ActiviteTLM() {
             <thead><tr>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('agent_label')}>Collaborateur{agentSortArrow('agent_label')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_emis')}>Appels émis{agentSortArrow('appels_emis')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('tauxDecroche30s')}>Taux décroché &gt; 30s{agentSortArrow('tauxDecroche30s')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('contacts_joints')}>Contact joint{agentSortArrow('contacts_joints')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_exploitables')}>Exploitables{agentSortArrow('appels_exploitables')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('tauxCompletion')}>Taux fiches exploitables{agentSortArrow('tauxCompletion')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_non_exploitables')}>Non exploitables{agentSortArrow('appels_non_exploitables')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('fichesAgent')}>Fiches complétées{agentSortArrow('fichesAgent')}</th>
-              <th className={styles.thSortable} onClick={() => toggleAgentSort('tauxCompletion')}>Taux complétion{agentSortArrow('tauxCompletion')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('rdvs_pris')}>RDV pris{agentSortArrow('rdvs_pris')}</th>
+              <th>Taux RDV honorés</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('transfoNette')}>Transformation nette{agentSortArrow('transfoNette')}</th>
             </tr></thead>
             <tbody>
               {agents
                 .map(a => {
                   const fichesAgent = a.fiches_completees + a.rdvs_pris;
                   const tauxCompletion = a.appels_exploitables > 0 ? Math.round((fichesAgent / a.appels_exploitables) * 100) : 0;
-                  return { ...a, fichesAgent, tauxCompletion };
+                  const tauxDecroche30s = a.appels_emis > 0 ? Math.round((a.appels_decroches_30s / a.appels_emis) * 100) : 0;
+                  const transfoNette = a.appels_emis > 0 ? Math.round((a.rdvs_pris / a.appels_emis) * 1000) / 10 : 0;
+                  return { ...a, fichesAgent, tauxCompletion, tauxDecroche30s, transfoNette };
                 })
                 .sort((a, b) => compareAgents(a, b, agentSort))
                 .map(a => (
                   <tr key={a.agent_label}>
                     <td className={styles.tdName}>{a.agent_label}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_emis)}</td>
+                    <td className={styles.tdNum}>{a.tauxDecroche30s}%</td>
                     <td className={styles.tdNum}>{fmtNumber(a.contacts_joints)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_exploitables)}</td>
-                    <td className={styles.tdNum}>{fmtNumber(a.fichesAgent)}</td>
                     <td className={styles.tdNum}><span className={styles.tauxPill}>{a.tauxCompletion}%</span></td>
+                    <td className={styles.tdNum}>{fmtNumber(a.appels_non_exploitables)}</td>
+                    <td className={styles.tdNum}>{fmtNumber(a.fichesAgent)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.rdvs_pris)}</td>
+                    <td className={styles.tdNum}>-</td>
+                    <td className={styles.tdNum}>{a.transfoNette}%</td>
                   </tr>
                 ))}
             </tbody>
