@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { fmtNumber } from '../../utils/formatNumber';
 import styles from './MotifBar.module.css';
 
 export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)' }) {
@@ -27,7 +28,7 @@ export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)' }
         />
       </div>
       <div className={styles.val}>
-        {pct}%{count !== undefined && <span> → {count}</span>}
+        {pct}%{count !== undefined && <span> → {fmtNumber(count)}</span>}
       </div>
     </div>
   );

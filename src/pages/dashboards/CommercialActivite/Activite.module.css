@@ -11,6 +11,9 @@
 .kpiGrid6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
 .kpiGrid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
 .kpiGridAuto { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
+/* 5 colonnes fixes (2 lignes pour 10 cartes) — Activité TLM uniquement,
+   pour alléger la vue desktop par rapport à kpiGridAuto (jusqu'à 8 colonnes) */
+.kpiGrid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
 .twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 .chartWrap { position: relative; }
 
@@ -39,6 +42,8 @@
 /* Table performance */
 .perfTable { width: 100%; border-collapse: collapse; }
 .perfTable th { font-size: 9.5px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.thSortable { cursor: pointer; user-select: none; }
+.thSortable:hover { color: var(--text); }
 .perfTable td { font-size: 12px; color: var(--text2); padding: 10px 12px; border-bottom: 1px solid rgba(227,225,216,0.5); font-variant-numeric: tabular-nums; }
 .perfTable tr:last-child td { border-bottom: none; }
 .perfTable tr:hover td { background: rgba(240,238,233,0.6); }
@@ -132,14 +137,24 @@
 /* ─── Responsive ─── */
 @media (max-width: 1100px) {
   .kpiGrid6 { grid-template-columns: repeat(3, 1fr); }
+  .kpiGrid5 { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 900px) {
   .twoCol { grid-template-columns: 1fr; }
   .kpiGrid4 { grid-template-columns: 1fr 1fr; }
-  /* Table comparatif (6-7 colonnes) → défilement horizontal */
+  .kpiGrid5 { grid-template-columns: repeat(2, 1fr); }
+  /* Table comparatif (6-7 colonnes) → défilement horizontal, 1re colonne
+     figée pour garder le nom du collaborateur visible pendant le scroll. */
   .perfTable { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+  .perfTable th:first-child, .perfTable td:first-child {
+    position: sticky; left: 0; z-index: 1;
+    background: var(--blanc);
+    box-shadow: 1px 0 0 var(--border);
+  }
+  .perfTable tr:hover td:first-child { background: rgb(240,238,233); }
 }
 @media (max-width: 480px) {
   .kpiGrid6 { grid-template-columns: 1fr 1fr; }
   .kpiGrid4 { grid-template-columns: 1fr; }
+  .kpiGrid5 { grid-template-columns: repeat(2, 1fr); }
 }

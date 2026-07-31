@@ -8,6 +8,7 @@ import NotConnected from '../../../components/ui/NotConnected';
 import Loader from '../../../components/ui/Loader';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText } from '../../../utils/compareText';
+import { fmtNumber } from '../../../utils/formatNumber';
 import { computeAsusEvolution, dernierJourArchive } from '../../../services/sheetsParser';
 import styles from './Activite.module.css';
 
@@ -139,16 +140,16 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
                   <td className={styles.tdName}>{name}</td>
                   <td className={styles.tdNum}>
                     <button type="button" className={styles.clickableStat} onClick={() => setQualifOpen({ collab: name, direction: 'sortant' })}>
-                      {c.sortant.total}<ClickIcon />
+                      {fmtNumber(c.sortant.total)}<ClickIcon />
                     </button>
                   </td>
                   <td className={styles.tdNum}>
                     <button type="button" className={styles.clickableStat} onClick={() => setQualifOpen({ collab: name, direction: 'entrant' })}>
-                      {c.entrant.total}<ClickIcon />
+                      {fmtNumber(c.entrant.total)}<ClickIcon />
                     </button>
                   </td>
                   <td className={styles.tdNum}>{fmtDuree(c.dureeMoyenneS)}</td>
-                  <td className={styles.tdNum}>{c.bonsAppels}</td>
+                  <td className={styles.tdNum}>{fmtNumber(c.bonsAppels)}</td>
                 </tr>
               ))}
             </tbody>

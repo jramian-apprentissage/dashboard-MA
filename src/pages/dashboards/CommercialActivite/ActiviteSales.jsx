@@ -4,6 +4,7 @@ import { useRef, useMemo, useState } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
+import { fmtNumber } from '../../../utils/formatNumber';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -196,11 +197,11 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                   return (
                     <tr key={row.nom} className={row.nom === selectedCollab ? styles.highlightRow : ''}>
                       <td className={styles.tdName}>{row.nom}</td>
-                      <td className={styles.tdNum}>{row.appels ?? '—'}</td>
+                      <td className={styles.tdNum}>{fmtNumber(row.appels) ?? '—'}</td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: tauxColor }}>{row.tauxLabel}</span></td>
-                      <td className={styles.tdNum}>{row.argues ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{row.rdvPris ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{row.rdvHonores ?? '—'}</td>
+                      <td className={styles.tdNum}>{fmtNumber(row.argues) ?? '—'}</td>
+                      <td className={styles.tdNum} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</td>
+                      <td className={styles.tdNum} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</td>
                     </tr>
                   );
                 })}

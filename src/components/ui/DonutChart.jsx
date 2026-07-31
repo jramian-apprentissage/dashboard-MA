@@ -1,6 +1,7 @@
 import { Doughnut } from 'react-chartjs-2';
 import { Chart, ArcElement, Tooltip } from 'chart.js';
 import { useInView } from '../../hooks/useInView';
+import { fmtNumber } from '../../utils/formatNumber';
 import styles from './DonutChart.module.css';
 
 Chart.register(ArcElement, Tooltip);
@@ -132,6 +133,7 @@ export default function DonutChart({
   centerValue,
   centerLabel,
   tooltip,
+  showDataLabels = true,
 }) {
   const [ref, inView] = useInView(0.3);
 
@@ -161,7 +163,7 @@ export default function DonutChart({
       {inView && (
         <>
           <Doughnut
-            plugins={[rosePlugin, labelsPlugin]}
+            plugins={showDataLabels ? [rosePlugin, labelsPlugin] : [rosePlugin]}
             data={{
               labels: L,
               datasets: [{
@@ -207,7 +209,7 @@ export default function DonutChart({
           />
           {centerValue !== undefined && variant === 'donut' && (
             <div className={styles.center}>
-              <span className={styles.centerValue}>{centerValue}</span>
+              <span className={styles.centerValue}>{fmtNumber(centerValue)}</span>
               {centerLabel && <span className={styles.centerLabel}>{centerLabel}</span>}
             </div>
           )}

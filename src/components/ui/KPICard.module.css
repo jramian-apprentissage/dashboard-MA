@@ -57,7 +57,25 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text2);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
 }
+
+/* Marqueur réel/mock — chantier CloudTalk (voir KPICard.jsx) */
+.sourceDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  cursor: help;
+}
+.sourceDot.sourceReal { background: var(--pos); }
+.sourceDot.sourceMock { background: var(--warn); }
+.card.accent .sourceDot.sourceReal,
+.card.accentAsus .sourceDot.sourceReal { background: #8ECFAA; }
+.card.accent .sourceDot.sourceMock,
+.card.accentAsus .sourceDot.sourceMock { background: #E8C97A; }
 
 /* Valeur principale — myrtille sombre, impact fort */
 .value {

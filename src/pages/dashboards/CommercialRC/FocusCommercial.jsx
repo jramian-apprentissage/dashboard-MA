@@ -6,6 +6,7 @@ import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useLeadsAnalytics } from '../../../hooks/useLeadsAnalytics';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
+import { fmtNumber } from '../../../utils/formatNumber';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -177,7 +178,7 @@ export default function FocusCommercial() {
                         <div className={styles.barTrack}>
                           <div className={styles.barFill} style={{ width: `${Math.max(s.pct, 4)}%` }} />
                         </div>
-                        <div className={styles.barVal}>{s.pct}%<span>→ {s.count}</span></div>
+                        <div className={styles.barVal}>{s.pct}%<span>→ {fmtNumber(s.count)}</span></div>
                       </div>
                     ));
                   })()}
@@ -360,7 +361,7 @@ export default function FocusCommercial() {
         ) : leads.data?.opportunitesSansAction ? (
           <>
             <div className={styles.alertCount}>
-              <span className={styles.alertNum}>{leads.data.opportunitesSansAction.length}</span>
+              <span className={styles.alertNum}>{fmtNumber(leads.data.opportunitesSansAction.length)}</span>
               <span className={styles.alertSub}>Affaires sans date de relance planifiée ou passée</span>
             </div>
             <table className={styles.tbl}>

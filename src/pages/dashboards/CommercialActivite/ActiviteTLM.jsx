@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import { Chart, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler } from 'chart.js';
 import KPICard from '../../../components/ui/KPICard';
@@ -5,8 +6,12 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import DonutChart from '../../../components/ui/DonutChart';
+import Loader from '../../../components/ui/Loader';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { compareValueText } from '../../../utils/compareText';
+import { getPeriodRange } from '../../../components/ui/PeriodPicker';
+import { fetchAPI } from '../../../services/api';
+import { compareValueText, comparePtsText } from '../../../utils/compareText';
+import { fmtNumber } from '../../../utils/formatNumber';
 import styles from './Activite.module.css';
 
 Chart.register(LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
@@ -16,148 +21,315 @@ const gridStyle = { color: 'rgba(227,225,216,0.5)' };
 const borderCol = { color: 'rgba(227,225,216,0.08)' };
 const lineAnim = { duration: 900, easing: 'easeOutQuart' };
 
-/* Données fictives, en local uniquement — le temps de valider avec Jimmy les
-   17 indicateurs TLM d'origine avant de brancher la vraie source CloudTalk
-   (remplace KAVKOM, en stand-by). Relations internes cohérentes (contact
-   joint <= émis, exploitables <= contact joint, etc.) pour que les KPIs
-   dérivés (taux, funnel) restent lisibles même fictifs. */
-const MOCK_COLLABS = [
-  { nom: 'Agent TLM 1', tempsPresence: '162h', appels: 950, contactJoint: 430, exploitables: 280, nonExploitables: 150, fichesCompletees: 130, rdvPris: 32 },
-  { nom: 'Agent TLM 2', tempsPresence: '148h', appels: 820, contactJoint: 365, exploitables: 230, nonExploitables: 135, fichesCompletees: 105, rdvPris: 24 },
-  { nom: 'Agent TLM 3', tempsPresence: '155h', appels: 760, contactJoint: 340, exploitables: 210, nonExploitables: 130, fichesCompletees: 95,  rdvPris: 22 },
-  { nom: 'Agent TLM 4', tempsPresence: '147h', appels: 670, contactJoint: 315, exploitables: 170, nonExploitables: 145, fichesCompletees: 80,  rdvPris: 18 },
-];
-
-const totalAppels        = MOCK_COLLABS.reduce((s, c) => s + c.appels, 0);
-const totalContactJoint  = MOCK_COLLABS.reduce((s, c) => s + c.contactJoint, 0);
-const totalExploitables  = MOCK_COLLABS.reduce((s, c) => s + c.exploitables, 0);
-const totalNonExploit    = MOCK_COLLABS.reduce((s, c) => s + c.nonExploitables, 0);
-const totalFiches        = MOCK_COLLABS.reduce((s, c) => s + c.fichesCompletees, 0);
-const totalRdv           = MOCK_COLLABS.reduce((s, c) => s + c.rdvPris, 0);
-
-// Période de comparaison — fictive elle aussi (pas de source CloudTalk réelle
-// encore branchée), uniquement pour valider le rendu visuel "comparaison +
-// définition" demandé sur tous les dashboards.
-const PREV_APPELS       = 2950;
-const PREV_CONTACTJOINT = 1320;
-const PREV_EXPLOITABLES = 810;
-const PREV_NONEXPLOIT   = 590;
-
-const tauxDecroche30s     = 38; // % — mesuré séparément du contact joint (durée > 30s)
-const tauxRdvHonores      = 71;
-const tauxFichesExploit   = Math.round((totalExploitables / totalAppels) * 100);
-const tauxTransfoNette    = Math.round((totalRdv / totalAppels) * 1000) / 10;
-const injoignables        = totalAppels - totalContactJoint;
-
-const MOCK_STATUTS = [
-  { label: 'RDV pris',               count: totalRdv,                                                          color: 'rgba(142,207,170,0.8)' },
-  { label: 'Fiche complétée',        count: totalFiches - totalRdv,                                             color: 'rgba(123,170,191,0.6)' },
-  { label: 'Exploitable sans suite', count: totalExploitables - totalFiches,                                    color: 'rgba(255,249,147,0.7)' },
-  { label: 'Non exploitable',        count: totalNonExploit,                                                    color: 'rgba(196,135,106,0.55)' },
-  { label: 'Injoignable / NRP',      count: injoignables,                                                       color: 'rgba(167,173,170,0.5)' },
-];
-
-const MOCK_MOTIFS = [
-  { label: 'Pas de besoin identifié',       pct: 34, count: 190 },
-  { label: 'Budget insuffisant',            pct: 22, count: 123 },
-  { label: 'Déjà équipé / sous contrat',    pct: 18, count: 101 },
-  { label: 'Mauvais interlocuteur',         pct: 15, count: 84  },
-  { label: 'Autre prestataire retenu',      pct: 11, count: 62  },
-];
-
-const MOCK_EVOLUTION_FICHES = { 'Fév': 52, 'Mars': 61, 'Avr': 70, 'Mai': 75, 'Juin': 68, 'Juil': 74 };
-
-const MOCK_LEADS_A_RECYCLER = 240;
-const MOCK_LEADS_RESTANTS   = 780;
+// Couleurs des 5 catégories réelles du "Statut des appels" (partition
+// mutuellement exclusive des tags CloudTalk, voir migration 020/021).
+const STATUT_COLORS = {
+  argumente:      'rgba(142,207,170,0.8)',
+  nonArgumente:   'rgba(196,135,106,0.55)',
+  nonExploitable: 'rgba(196,135,106,0.85)',
+  injoignable:    'rgba(167,173,170,0.5)',
+  sansTags:       'rgba(123,170,191,0.5)',
+};
 
 function trend(text) {
   return { dir: 'neutral', text };
 }
 
+// Tri du tableau "Performance des agents" — colonne + sens cliquables,
+// même pattern que le tableau de relances (FocusCommercial).
+function compareAgents(a, b, sort) {
+  let cmp;
+  if (sort.col === 'agent_label') {
+    cmp = (a.agent_label || '').localeCompare(b.agent_label || '', 'fr');
+  } else {
+    cmp = (a[sort.col] ?? 0) - (b[sort.col] ?? 0);
+  }
+  return sort.dir === 'asc' ? cmp : -cmp;
+}
+
+function formatJourMois(isoDate) {
+  if (!isoDate) return '—';
+  const [, m, d] = isoDate.split('-');
+  return `${d}/${m}`;
+}
+
+const EVO_OPTIONS = [
+  { key: 'jour',    label: 'Journalier' },
+  { key: 'semaine', label: 'Semaine' },
+  { key: 'mois',    label: 'Mensuel' },
+];
+
+function mondayOf(d) {
+  const day = d.getDay(); // 0=dim..6=sam
+  const diff = day === 0 ? -6 : 1 - day;
+  const m = new Date(d);
+  m.setDate(d.getDate() + diff);
+  m.setHours(0, 0, 0, 0);
+  return m;
+}
+
+/* Reconstruit les fenêtres jour/semaine/mois à partir d'une série
+   journalière déjà agrégée côté serveur (contrairement à computeAsusEvolution,
+   qui compte des lignes d'appels brutes — CloudTalk n'expose que des totaux
+   déjà quotidiens, donc on somme ces totaux par fenêtre plutôt que de
+   compter des lignes). `field` sélectionne la colonne à agréger ('appels' ou
+   'fiches') — même fenêtrage réutilisé par les deux graphes à bascule. */
+function computeEvolution(dailyRows, granularity, field) {
+  const byDate = new Map(dailyRows.map(r => [r.date, r[field]]));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  function sumRange(start, end) {
+    let sum = 0;
+    for (const [dateStr, n] of byDate) {
+      const d = new Date(`${dateStr}T00:00:00`);
+      if (d >= start && d <= end) sum += n;
+    }
+    return sum;
+  }
+
+  if (granularity === 'semaine') {
+    const monday = mondayOf(today);
+    const weeks = [];
+    for (let i = 3; i >= 0; i--) {
+      const start = new Date(monday); start.setDate(start.getDate() - i * 7);
+      const end = new Date(start); end.setDate(start.getDate() + 6);
+      weeks.push({ start, end });
+    }
+    return {
+      labels: weeks.map(w => `${String(w.start.getDate()).padStart(2, '0')}/${String(w.start.getMonth() + 1).padStart(2, '0')}`),
+      counts: weeks.map(w => sumRange(w.start, w.end)),
+    };
+  }
+
+  if (granularity === 'mois') {
+    const months = [];
+    for (let i = 5; i >= 0; i--) months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
+    return {
+      labels: months.map(m => m.toLocaleString('fr-FR', { month: 'short' })),
+      counts: months.map(m => sumRange(m, new Date(m.getFullYear(), m.getMonth() + 1, 0, 23, 59, 59))),
+    };
+  }
+
+  // 'jour' (défaut) — 7 derniers jours
+  const days = [];
+  for (let i = 6; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate() - i); days.push(d); }
+  return {
+    labels: days.map(d => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`),
+    counts: days.map(d => byDate.get(d.toISOString().slice(0, 10)) || 0),
+  };
+}
+
 export default function ActiviteTLM() {
-  const { comparePeriodKey } = usePeriod();
+  const { periodKey, customFrom, customTo, compareActive, compareRange, comparePeriodKey } = usePeriod();
+  const [summary, setSummary] = useState(null);
+  const [compareSummary, setCompareSummary] = useState(null);
+  const [agents, setAgents] = useState([]);
+  const [appelsQuotidiens, setAppelsQuotidiens] = useState([]);
+  const [evoGranularity, setEvoGranularity] = useState('jour');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [agentSort, setAgentSort] = useState({ col: 'appels_emis', dir: 'desc' });
+
+  function toggleAgentSort(col) {
+    setAgentSort(s => (s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: col === 'agent_label' ? 'asc' : 'desc' }));
+  }
+  function agentSortArrow(col) {
+    return agentSort.col === col ? (agentSort.dir === 'asc' ? ' ▲' : ' ▼') : '';
+  }
+
+  useEffect(() => {
+    const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
+    setLoading(true);
+    setError(null);
+    fetchAPI(`/cloudtalk/summary?from=${from}&to=${to}`)
+      .then(setSummary)
+      .catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+    fetchAPI(`/cloudtalk/agents-summary?from=${from}&to=${to}`)
+      .then(setAgents)
+      .catch(() => setAgents([]));
+  }, [periodKey, customFrom, customTo]);
+
+  useEffect(() => {
+    if (!compareActive || !compareRange) { setCompareSummary(null); return; }
+    fetchAPI(`/cloudtalk/summary?from=${compareRange.from}&to=${compareRange.to}`)
+      .then(setCompareSummary)
+      .catch(() => setCompareSummary(null));
+  }, [compareActive, compareRange]);
+
+  useEffect(() => {
+    fetchAPI('/cloudtalk/appels-quotidiens?jours=200').then(setAppelsQuotidiens).catch(() => {});
+  }, []);
+
+  const appelsEvolution = computeEvolution(appelsQuotidiens, evoGranularity, 'appels');
+  const fichesEvolution = computeEvolution(appelsQuotidiens, evoGranularity, 'fiches');
+
+  const hasData = !!summary;
+  const firstLoad = loading && !summary && !error;
+
+  const appelsEmis        = summary?.appels_emis ?? 0;
+  const contactsJoints    = summary?.leads_decroches ?? 0;
+  const decroches30s      = summary?.appels_decroches_30s ?? 0;
+  const appelsExploitables = summary?.appels_exploitables ?? 0;
+  const nonExploitables   = summary?.data_non_exploitable ?? 0;
+  const rdvPris           = summary?.rdvs_bookes_tlm ?? 0;
+  // "Fiches complétées" = fiches complétées + RDV pris — un RDV pris compte
+  // comme une fiche complétée (définition validée par Jimmy).
+  const fichesCompletees  = (summary?.fiches_completees ?? 0) + rdvPris;
+  const leadsARecycler    = summary?.leads_a_recycler ?? 0;
+  const transfoNette      = appelsEmis > 0 ? Math.round((rdvPris / appelsEmis) * 1000) / 10 : 0;
+  const tauxDecroche30s   = appelsEmis > 0 ? Math.round((decroches30s / appelsEmis) * 100) : 0;
+  const tauxFichesExploit = appelsExploitables > 0 ? Math.round((fichesCompletees / appelsExploitables) * 100) : 0;
+
+  const motifRefusCategorique  = summary?.motif_refus_categorique ?? 0;
+  const motifBarrageSecretaire = summary?.motif_barrage_secretaire ?? 0;
+  const motifHorsCriteres      = summary?.motif_hors_criteres ?? 0;
+  const motifsTotal = motifRefusCategorique + motifBarrageSecretaire + motifHorsCriteres;
+  const motifs = [
+    { label: 'Refus catégorique',  count: motifRefusCategorique,  pct: motifsTotal > 0 ? Math.round(motifRefusCategorique / motifsTotal * 100) : 0 },
+    { label: 'Hors critères',      count: motifHorsCriteres,      pct: motifsTotal > 0 ? Math.round(motifHorsCriteres / motifsTotal * 100) : 0 },
+    { label: 'Barrage secrétaire', count: motifBarrageSecretaire, pct: motifsTotal > 0 ? Math.round(motifBarrageSecretaire / motifsTotal * 100) : 0 },
+  ];
+
+  // Statut des appels — 5 catégories réelles, mutuellement exclusives (voir
+  // migrations 020/021). "Sans tags" complète la partition à 100% des
+  // appels émis (les 4 autres ne couvrent que les appels tagués).
+  const statutArgumente      = summary?.statut_argumente ?? 0;
+  const statutNonArgumente   = summary?.statut_non_argumente ?? 0;
+  const statutNonExploitable = summary?.statut_non_exploitable ?? 0;
+  const statutInjoignable    = summary?.statut_injoignable ?? 0;
+  const statutSansTags       = summary?.statut_sans_tags ?? 0;
+  const statuts = [
+    { label: 'Argumenté',        count: statutArgumente,      color: STATUT_COLORS.argumente },
+    { label: 'Non argumenté',    count: statutNonArgumente,   color: STATUT_COLORS.nonArgumente },
+    { label: 'Non exploitable',  count: statutNonExploitable, color: STATUT_COLORS.nonExploitable },
+    { label: 'Injoignable',      count: statutInjoignable,    color: STATUT_COLORS.injoignable },
+    { label: 'Sans tags',        count: statutSansTags,       color: STATUT_COLORS.sansTags },
+  ];
+  // Ancré sur appelsEmis (pas la somme des 5 catégories) : c'est le même
+  // total que la carte "Appels émis" des indicateurs principaux, et les 5
+  // catégories sont censées en couvrir 100% (partition complète avec "Sans
+  // tags") — un écart résiduel viendrait d'un backfill partiel, pas d'une
+  // vraie exclusion.
+  const statutsTotal = appelsEmis || 1;
+
+  const cmp = (val, key) => compareSummary ? compareValueText(val, compareSummary[key], comparePeriodKey) : null;
+  // Fiches complétées de la période de comparaison, même définition combinée
+  // (fiches + RDV) que la période courante.
+  const compareFichesCompletees = compareSummary ? (compareSummary.fiches_completees ?? 0) + (compareSummary.rdvs_bookes_tlm ?? 0) : null;
+  const cmpFichesCompletees = compareSummary ? compareValueText(fichesCompletees, compareFichesCompletees, comparePeriodKey) : null;
+
+  // Comparaison en points pour les taux dérivés (recalculés sur la période
+  // de comparaison à partir des mêmes champs bruts).
+  const cmpDecroche30s = compareSummary
+    ? comparePtsText(tauxDecroche30s, compareSummary.appels_emis > 0 ? Math.round((compareSummary.appels_decroches_30s / compareSummary.appels_emis) * 100) : 0, comparePeriodKey)
+    : null;
+  const cmpFichesExploit = compareSummary
+    ? comparePtsText(tauxFichesExploit, compareSummary.appels_exploitables > 0 ? Math.round((compareFichesCompletees / compareSummary.appels_exploitables) * 100) : 0, comparePeriodKey)
+    : null;
+  const cmpTransfoNette = compareSummary
+    ? comparePtsText(transfoNette, compareSummary.appels_emis > 0 ? Math.round((compareSummary.rdvs_bookes_tlm / compareSummary.appels_emis) * 1000) / 10 : 0, comparePeriodKey)
+    : null;
 
   // Ordre "tunnel" : émis → décroché → joint → exploitable → taux exploit. →
   // non exploitable → fiche → rdv → taux honoré → transfo nette. Les KPIs
   // liés se retrouvent ainsi sur la même ligne (grille 2 colonnes mobile).
   const kpis = [
-    { label: 'Appels émis',                value: totalAppels,                      unit: '', compare: compareValueText(totalAppels, PREV_APPELS, comparePeriodKey),             trend: trend(`${MOCK_COLLABS.length} agents TLM actifs`),  color: 'accent' },
-    { label: 'Taux décroché > 30s',        value: `${tauxDecroche30s}%`,            unit: '', trend: trend('Capacité à joindre réellement') },
-    { label: 'Contacts joints',            value: totalContactJoint,                unit: '', compare: compareValueText(totalContactJoint, PREV_CONTACTJOINT, comparePeriodKey), trend: trend(`${Math.round(totalContactJoint / totalAppels * 100)}% des appels émis`) },
-    { label: 'Appels exploitables',        value: totalExploitables,                unit: '', compare: compareValueText(totalExploitables, PREV_EXPLOITABLES, comparePeriodKey), trend: trend(`${tauxFichesExploit}% des appels émis`) },
-    { label: 'Taux fiches exploitables',   value: `${tauxFichesExploit}%`,          unit: '', trend: trend('Qualité des infos collectées') },
-    { label: 'Appels non exploitables',    value: totalNonExploit,                  unit: '', compare: compareValueText(totalNonExploit, PREV_NONEXPLOIT, comparePeriodKey),     trend: trend('Contact joint sans info business') },
-    { label: 'Fiches complétées',          value: totalFiches,                      unit: '', trend: trend('Besoin ou intérêt identifié') },
-    { label: 'RDV pris',                   value: totalRdv,                         unit: '', trend: trend('Transformation TLM → RDV'),              color: 'green' },
-    { label: 'Taux RDV honorés',           value: `${tauxRdvHonores}%`,             unit: '', trend: trend('Qualité des RDV générés') },
-    { label: 'Transformation nette',       value: `${tauxTransfoNette}%`,           unit: '', trend: trend('RDV pris / appels émis') },
+    { label: 'Appels émis',                value: appelsEmis,                       unit: '', compare: cmp(appelsEmis, 'appels_emis'),           trend: trend(`${summary?.nb_clients ?? 0} clients TLM actifs`), color: 'accent' },
+    { label: 'Taux décroché > 30s',        value: `${tauxDecroche30s}%`,            unit: '', compare: cmpDecroche30s,   trend: trend('Durée de conversation > 30s (talking_time)') },
+    { label: 'Contacts joints',            value: contactsJoints,                   unit: '', compare: cmp(contactsJoints, 'leads_decroches'),   trend: trend(appelsEmis ? `${Math.round(contactsJoints / appelsEmis * 100)}% des appels émis` : '—') },
+    { label: 'Appels exploitables',        value: appelsExploitables,               unit: '', compare: cmp(appelsExploitables, 'appels_exploitables'), trend: trend('Enquête complétée/partielle, RDV pris, Rappel') },
+    { label: 'Taux fiches exploitables',   value: `${tauxFichesExploit}%`,          unit: '', compare: cmpFichesExploit, trend: trend('Fiches complétées / Appels exploitables') },
+    { label: 'Appels non exploitables',    value: nonExploitables,                  unit: '', compare: cmp(nonExploitables, 'data_non_exploitable'), trend: trend('Contact joint sans info business') },
+    { label: 'Fiches complétées',          value: fichesCompletees,                 unit: '', compare: cmpFichesCompletees, trend: trend('Enquête complétée + RDV pris') },
+    { label: 'RDV pris',                   value: rdvPris,                          unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm'),           trend: trend('Transformation TLM → RDV'), color: 'green' },
+    { label: 'Taux RDV honorés',           value: '-',                              unit: '', trend: trend('Pas de suivi de présence côté CloudTalk') },
+    { label: 'Transformation nette',       value: `${transfoNette}%`,               unit: '', compare: cmpTransfoNette, trend: trend('RDV pris / appels émis') },
   ];
 
+  // Funnel entièrement réel — 5 paliers, tous calculés côté CloudTalk.
   const funnelSteps = [
-    { label: 'Appels émis',      value: totalAppels },
-    { label: 'Contact joint',    value: totalContactJoint },
-    { label: 'Exploitable',      value: totalExploitables },
-    { label: 'RDV pris',         value: totalRdv },
+    { label: 'Appels émis',      value: appelsEmis },
+    { label: 'Contact joint',    value: contactsJoints },
+    { label: 'Exploitable',      value: appelsExploitables },
+    { label: 'Fiche complétée',  value: fichesCompletees },
+    { label: 'RDV pris',         value: rdvPris },
   ];
 
   return (
+    <Loader loading={firstLoad} label="Récupération des indicateurs CloudTalk…" minHeight={380}>
+      {() => (
     <div className={styles.page}>
       <SectionLabel badge="CLOUDTALK">Indicateurs principaux</SectionLabel>
 
-      <div className={styles.dataAlert} style={{ borderColor: 'rgba(212,168,75,0.4)', background: 'rgba(212,168,75,0.08)' }}>
-        <span style={{ color: 'var(--warn)' }}>⚠ Données fictives</span> — mock local sur les 17 indicateurs TLM d'origine, en attente de la source CloudTalk réelle
-      </div>
+      {error && (
+        <div className={styles.dataAlert} style={{ borderColor: 'rgba(196,135,106,0.4)', background: 'rgba(196,135,106,0.08)' }}>
+          <span style={{ color: 'var(--neg)' }}>⚠ Erreur :</span> {error}
+        </div>
+      )}
+      {hasData && (
+        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
+          <span style={{ color: 'var(--pos)' }}>● Données CloudTalk</span> — MAJ au {formatJourMois(summary.dernier_jour)}
+        </div>
+      )}
 
-      <div className={styles.kpiGridAuto}>
+      <div className={styles.kpiGrid5}>
         {kpis.map(k => <KPICard key={k.label} {...k} />)}
       </div>
 
       <SectionLabel>Performance des agents MA</SectionLabel>
       <Card title="Comparatif individuel — principaux leviers TLM">
-        <table className={styles.perfTable}>
-          <thead><tr>
-            <th>Collaborateur</th>
-            <th>Temps de présence</th>
-            <th>Appels émis</th>
-            <th>Contact joint</th>
-            <th>Exploitables</th>
-            <th>Fiches complétées</th>
-            <th>Taux complétion</th>
-            <th>RDV pris</th>
-          </tr></thead>
-          <tbody>
-            {MOCK_COLLABS.map(c => {
-              const tauxCompletion = Math.round((c.fichesCompletees / c.exploitables) * 100);
-              return (
-                <tr key={c.nom}>
-                  <td className={styles.tdName}>{c.nom}</td>
-                  <td className={styles.tdNum}>{c.tempsPresence}</td>
-                  <td className={styles.tdNum}>{c.appels}</td>
-                  <td className={styles.tdNum}>{c.contactJoint}</td>
-                  <td className={styles.tdNum}>{c.exploitables}</td>
-                  <td className={styles.tdNum}>{c.fichesCompletees}</td>
-                  <td className={styles.tdNum}><span className={styles.tauxPill}>{tauxCompletion}%</span></td>
-                  <td className={styles.tdNum}>{c.rdvPris}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {agents.length > 0 ? (
+          <table className={styles.perfTable}>
+            <thead><tr>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('agent_label')}>Collaborateur{agentSortArrow('agent_label')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_emis')}>Appels émis{agentSortArrow('appels_emis')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('contacts_joints')}>Contact joint{agentSortArrow('contacts_joints')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_exploitables')}>Exploitables{agentSortArrow('appels_exploitables')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('fichesAgent')}>Fiches complétées{agentSortArrow('fichesAgent')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('tauxCompletion')}>Taux complétion{agentSortArrow('tauxCompletion')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('rdvs_pris')}>RDV pris{agentSortArrow('rdvs_pris')}</th>
+            </tr></thead>
+            <tbody>
+              {agents
+                .map(a => {
+                  const fichesAgent = a.fiches_completees + a.rdvs_pris;
+                  const tauxCompletion = a.appels_exploitables > 0 ? Math.round((fichesAgent / a.appels_exploitables) * 100) : 0;
+                  return { ...a, fichesAgent, tauxCompletion };
+                })
+                .sort((a, b) => compareAgents(a, b, agentSort))
+                .map(a => (
+                  <tr key={a.agent_label}>
+                    <td className={styles.tdName}>{a.agent_label}</td>
+                    <td className={styles.tdNum}>{fmtNumber(a.appels_emis)}</td>
+                    <td className={styles.tdNum}>{fmtNumber(a.contacts_joints)}</td>
+                    <td className={styles.tdNum}>{fmtNumber(a.appels_exploitables)}</td>
+                    <td className={styles.tdNum}>{fmtNumber(a.fichesAgent)}</td>
+                    <td className={styles.tdNum}><span className={styles.tauxPill}>{a.tauxCompletion}%</span></td>
+                    <td className={styles.tdNum}>{fmtNumber(a.rdvs_pris)}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className={styles.subNote}>Aucune donnée agent sur cette période</div>
+        )}
       </Card>
 
       <SectionLabel>Funnel du taux de transformation nette</SectionLabel>
       <Card>
         <div className={styles.funnelWrap}>
           {funnelSteps.map((s, i) => {
-            const pctOfMax = Math.round((s.value / funnelSteps[0].value) * 100);
-            const pctPrev  = i === 0 ? 100 : Math.round((s.value / funnelSteps[i - 1].value) * 100);
+            const pctOfMax = funnelSteps[0].value > 0 ? Math.round((s.value / funnelSteps[0].value) * 100) : 0;
+            const pctPrev  = i === 0 ? 100 : (funnelSteps[i - 1].value > 0 ? Math.round((s.value / funnelSteps[i - 1].value) * 100) : 0);
             return (
               <div key={s.label} className={styles.funnelRow}>
                 <div className={styles.funnelLabel}>{s.label}</div>
                 <div className={styles.funnelTrack}>
                   <div className={styles.funnelFill} style={{ width: `${pctOfMax}%` }} />
                 </div>
-                <div className={styles.funnelValue}>{s.value}{i > 0 && <span className={styles.funnelPct}> · {pctPrev}%</span>}</div>
+                <div className={styles.funnelValue}>{fmtNumber(s.value)}{i > 0 && <span className={styles.funnelPct}> · {pctPrev}%</span>}</div>
               </div>
             );
           })}
@@ -172,49 +344,88 @@ export default function ActiviteTLM() {
         <Card title="Statut des appels">
           <DonutChart
             variant="donut"
-            data={MOCK_STATUTS.map(s => s.count)}
-            labels={MOCK_STATUTS.map(s => s.label)}
-            colors={MOCK_STATUTS.map(s => s.color)}
+            data={statuts.map(s => s.count)}
+            labels={statuts.map(s => s.label)}
+            colors={statuts.map(s => s.color)}
             height={200}
-            centerValue={totalAppels}
+            centerValue={statutsTotal}
             centerLabel="appels"
             tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
+            showDataLabels={false}
           />
           <div className={styles.legend} style={{ justifyContent: 'center' }}>
-            {MOCK_STATUTS.map(s => (
+            {statuts.map(s => (
               <span key={s.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <span className={styles.legDot} style={{ background: s.color }} />{s.label} {Math.round(s.count / totalAppels * 100)}%
+                <span className={styles.legDot} style={{ background: s.color }} />{s.label} {Math.round(s.count / statutsTotal * 100)}%
               </span>
             ))}
           </div>
         </Card>
 
         <Card title="Motif de refus pour les appels non exploitables">
-          <div className={styles.subNote} style={{ marginBottom: 12 }}>Principaux freins rencontrés par les équipes TLM</div>
-          {MOCK_MOTIFS.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
+          {motifs.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
         </Card>
       </div>
 
-      <SectionLabel>Évolution mensuelle</SectionLabel>
-      <Card title="Fiches complétées">
-        <div className={styles.chartWrap} style={{ height: 200 }}>
+      <SectionLabel>Évolution des appels et fiches complétées</SectionLabel>
+      <Card>
+        <div className={styles.cardHeadRow}>
+          <div className={styles.legend}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span className={styles.legDot} style={{ background: 'rgba(38,0,31,0.8)' }} />Appels
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span className={styles.legDot} style={{ background: '#7EB89A' }} />Fiches complétées
+            </span>
+          </div>
+          <div className={styles.evoToggle}>
+            {EVO_OPTIONS.map(o => (
+              <button
+                key={o.key}
+                type="button"
+                className={`${styles.evoToggleBtn} ${evoGranularity === o.key ? styles.evoToggleBtnActive : ''}`}
+                onClick={() => setEvoGranularity(o.key)}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.chartWrap} style={{ height: 220 }}>
           <Line
             data={{
-              labels: Object.keys(MOCK_EVOLUTION_FICHES),
-              datasets: [{
-                label: 'Fiches complétées',
-                data: Object.values(MOCK_EVOLUTION_FICHES),
-                borderColor: '#7EB89A', backgroundColor: 'rgba(126,184,154,0.04)', pointBackgroundColor: '#7EB89A',
-                tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y',
-              }],
+              labels: appelsEvolution.labels,
+              datasets: [
+                {
+                  label: 'Appels',
+                  data: appelsEvolution.counts,
+                  borderColor: 'rgba(38,0,31,0.8)',
+                  backgroundColor: 'rgba(255,249,147,0.18)',
+                  pointBackgroundColor: 'rgba(38,0,31,0.8)',
+                  tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y',
+                },
+                {
+                  label: 'Fiches complétées',
+                  data: fichesEvolution.counts,
+                  borderColor: '#7EB89A', backgroundColor: 'rgba(126,184,154,0.04)', pointBackgroundColor: '#7EB89A',
+                  tension: 0.35, fill: true, pointRadius: 4, borderWidth: 2, yAxisID: 'y1',
+                },
+              ],
             }}
             options={{
               responsive: true, maintainAspectRatio: false,
               animation: lineAnim,
-              plugins: { legend: { display: false } },
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y}` } },
+              },
+              // Axes masqués (2 échelles distinctes pour ne pas écraser la
+              // série "Fiches complétées", bien plus petite que "Appels" —
+              // mais aucune ne doit s'afficher, la légende suffit).
               scales: {
-                x: { ticks: tickStyle, grid: gridStyle, border: borderCol },
-                y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left' },
+                x: { ticks: { display: false }, grid: { display: false }, border: { display: false } },
+                y:  { display: false, beginAtZero: true, position: 'left' },
+                y1: { display: false, beginAtZero: true, position: 'right' },
               },
             }}
           />
@@ -223,13 +434,15 @@ export default function ActiviteTLM() {
 
       <SectionLabel>Suivi des leads</SectionLabel>
       <div className={styles.twoCol}>
-        <Card title="Lead à recycler">
-          <KPICard label="Leads à recycler" value={MOCK_LEADS_A_RECYCLER} unit="" trend={trend('À relancer après J+30')} color="amber" />
+        <Card>
+          <KPICard label="Leads à recycler" value={leadsARecycler} unit="" trend={trend('Pas de réponse, Répondeur, Injoignable, Rappel (ou sans tag)')} color="amber" />
         </Card>
-        <Card title="Lead restant à contacter">
-          <KPICard label="Leads restants à contacter" value={MOCK_LEADS_RESTANTS} unit="" trend={trend('Stock non encore traité')} color="amber" />
+        <Card>
+          <KPICard label="Leads restants à contacter" value="-" unit="" trend={trend('Saisi à la main, non calculable via API')} color="amber" />
         </Card>
       </div>
     </div>
+      )}
+    </Loader>
   );
 }

@@ -1,4 +1,5 @@
 import styles from './KPICard.module.css';
+import { fmtNumber } from '../../utils/formatNumber';
 
 // Icônes "tendance graphique" (trending-up/down) plutôt qu'un chevron, qui se
 // lit comme un contrôle cliquable (expand/collapse) et non comme un
@@ -24,7 +25,7 @@ function TrendIcon({ dir }) {
   return null;
 }
 
-export default function KPICard({ label, value, unit, trend, compare, color = 'default', variant }) {
+export default function KPICard({ label, value, unit, trend, compare, color = 'default', variant, source }) {
   const cls = [
     styles.card,
     variant === 'accent'      ? styles.accent      : '',
@@ -37,9 +38,21 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
 
   return (
     <div className={cls}>
-      <div className={styles.label}>{label}</div>
+      <div className={styles.label}>
+        {label}
+        {/* Marqueur temporaire (chantier CloudTalk réel vs mock) : certains
+            indicateurs TLM n'ont pas d'équivalent dans les données CloudTalk
+            (détail par agent, taux d'appels honorés...) et restent fictifs
+            tant qu'aucune autre source ne les couvre. */}
+        {source && (
+          <span
+            className={`${styles.sourceDot} ${source === 'real' ? styles.sourceReal : styles.sourceMock}`}
+            title={source === 'real' ? 'Donnée réelle (CloudTalk)' : 'Donnée fictive (mock) — pas de source CloudTalk pour cet indicateur'}
+          />
+        )}
+      </div>
       <div className={`${styles.value}${valueLen > 8 ? ' ' + styles.sm : ''}`}>
-        {value}<span className={styles.unit}>{unit}</span>
+        {fmtNumber(value)}<span className={styles.unit}>{unit}</span>
       </div>
       {/* Ligne 1 (si dispo) : comparaison vs période précédente/année précédente.
           Ligne 2 : la petite définition du KPI, toujours affichée — la

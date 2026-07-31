@@ -172,7 +172,14 @@
 }
 @media (max-width: 900px) {
   .twoCol { grid-template-columns: 1fr; }
+  /* 1re colonne figée pour garder le client visible pendant le scroll. */
   .tbl { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .tbl th:first-child, .tbl td:first-child {
+    position: sticky; left: 0; z-index: 1;
+    background: var(--blanc);
+    box-shadow: 1px 0 0 var(--border);
+  }
+  .tbl tr:hover td:first-child { background: rgb(240,238,233); }
   .pipelineHeader { flex-wrap: wrap; gap: 14px; }
   /* flex-basis (240px) s'applique à la hauteur une fois l'axe basculé en
      colonne — sans ce reset, ça réservait ~95px de vide sous le donut avant
