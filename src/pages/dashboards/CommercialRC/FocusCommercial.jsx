@@ -6,7 +6,7 @@ import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useLeadsAnalytics } from '../../../hooks/useLeadsAnalytics';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
-import { fmtNumber } from '../../../utils/formatNumber';
+import { fmtNumber, fmtEurosExact } from '../../../utils/formatNumber';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -14,8 +14,10 @@ import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import Pill from '../../../components/ui/Pill';
 import MotifBar from '../../../components/ui/MotifBar';
 import DonutChart from '../../../components/ui/DonutChart';
-import NotConnected from '../../../components/ui/NotConnected';
+import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
+import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { todayDDMM } from '../../../utils/formatDate';
+import { SHOW_LEADS_KPIS } from '../../../config/featureFlags';
 import styles from './FocusCommercial.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
@@ -84,6 +86,7 @@ function compareRelances(a, b, sort) {
 }
 
 const RELANCES_VISIBLE = 8;
+const LEADS_HIDDEN_REASON = 'masqué temporairement — reconstruction Comptes en cours';
 
 export default function FocusCommercial() {
   const mounted = useChartMount();
@@ -96,6 +99,10 @@ export default function FocusCommercial() {
   const c = compareResult;
   const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
   const cmpPts = (current, ref) => c ? comparePtsText(current, ref, comparePeriodKey) : null;
+  // Connecté, données chargées, mais aucun compte facturé sur la période
+  // choisie — même traitement que Synthèse/Focus Client : un seul message
+  // clair plutôt qu'une mosaïque de "0 €" sur les sections issues de Comptes.
+  const isEmptyPeriod = result && result.nbClientsActifs === 0;
 
   function toggleRelanceSort(col) {
     setRelanceSort(s => (s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: 'asc' }));
@@ -128,44 +135,63 @@ export default function FocusCommercial() {
       )}
       {result && (
         <>
+          {SHOW_LEADS_KPIS && isEmptyPeriod ? (
+            <Card><NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." /></Card>
+          ) : (
           <div className={styles.kpiRow4}>
-            <KPICard
-              label="Pipeline total"
-              value={fmt(result.montantPipeline)}
-              compare={cmp(result.montantPipeline, c?.montantPipeline)}
-              trend={{ dir: 'neutral', text: 'Opportunités en cours' }}
-              color="blue"
-            />
-            <KPICard
-              label="Pipeline pondéré"
-              value={fmt(result.montantPipelinePondere)}
-              compare={cmp(result.montantPipelinePondere, c?.montantPipelinePondere)}
-              trend={{ dir: 'neutral', text: 'Seuil ≥ 30% de probabilité' }}
-              color="green"
-            />
-            <KPICard
-              label="Win rate"
-              value={`${winRate}%`}
-              compare={cmpPts(winRate, c?.winRate)}
-              trend={{ dir: 'neutral', text: 'Gagnés ÷ (Gagnés + Perdus)' }}
-              color={winRate >= 50 ? 'green' : 'amber'}
-            />
-            <KPICard
-              label="Deals gagnés"
-              value={result.nbDealsGagnes}
-              unit=" deals"
-              compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
-              trend={{ dir: 'neutral', text: `CA associé : ${fmt(result.sommeVentesGagnes)}` }}
-              color="green"
-            />
+            {!SHOW_LEADS_KPIS ? (
+              <>
+                <KPICard {...notConnectedKPI('Pipeline total', LEADS_HIDDEN_REASON, 'blue')} />
+                <KPICard {...notConnectedKPI('Pipeline pondéré', LEADS_HIDDEN_REASON, 'green')} />
+                <KPICard {...notConnectedKPI('Win rate', LEADS_HIDDEN_REASON, 'amber')} />
+                <KPICard {...notConnectedKPI('Deals gagnés', LEADS_HIDDEN_REASON, 'green')} />
+              </>
+            ) : (
+              <>
+                <KPICard
+                  label="Pipeline total"
+                  value={fmt(result.montantPipeline)}
+                  exactValue={fmtEurosExact(result.montantPipeline)}
+                  compare={cmp(result.montantPipeline, c?.montantPipeline)}
+                  trend={{ dir: 'neutral', text: 'Opportunités en cours' }}
+                  color="blue"
+                />
+                <KPICard
+                  label="Pipeline pondéré"
+                  value={fmt(result.montantPipelinePondere)}
+                  exactValue={fmtEurosExact(result.montantPipelinePondere)}
+                  compare={cmp(result.montantPipelinePondere, c?.montantPipelinePondere)}
+                  trend={{ dir: 'neutral', text: 'Seuil ≥ 30% de probabilité' }}
+                  color="green"
+                />
+                <KPICard
+                  label="Win rate"
+                  value={`${winRate}%`}
+                  compare={cmpPts(winRate, c?.winRate)}
+                  trend={{ dir: 'neutral', text: 'Gagnés ÷ (Gagnés + Perdus)' }}
+                  color={winRate >= 50 ? 'green' : 'amber'}
+                />
+                <KPICard
+                  label="Deals gagnés"
+                  value={result.nbDealsGagnes}
+                  unit=" deals"
+                  compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
+                  trend={{ dir: 'neutral', text: `CA associé : ${fmt(result.sommeVentesGagnes)}` }}
+                  color="green"
+                />
+              </>
+            )}
           </div>
+          )}
 
           {/* ══ Ligne 2 — Diagnostic du flux : où sont les opps, que valent-elles ══ */}
           <SectionLabel>Diagnostic du pipeline</SectionLabel>
           <div className={styles.twoCol}>
             {/* Funnel par étape — colonne "Etat" du board Leads/Prospects */}
             <Card title="Funnel par étape commerciale">
-              {leads.error ? (
+              {!SHOW_LEADS_KPIS ? (
+                <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
+              ) : leads.error ? (
                 <NotConnected>{leads.error}</NotConnected>
               ) : leads.data?.funnel ? (
                 <>
@@ -201,37 +227,45 @@ export default function FocusCommercial() {
 
             {/* Pipeline pondéré par probabilité */}
             <Card title="Pipeline pondéré par probabilité">
-              <div className={styles.pipelineHeader}>
-                <div>
-                  <div className={styles.metaSub}>Pipeline total</div>
-                  <div className={styles.metaVal}>{fmt(result.montantPipeline)}</div>
-                </div>
-                <div>
-                  <div className={styles.metaSub}>Pipeline pondéré</div>
-                  <div className={styles.metaVal} style={{ color: 'var(--myrtille)' }}>{fmt(result.montantPipelinePondere)}</div>
-                </div>
-              </div>
-              <div className={styles.sep} />
-              {result.pipelineBreakdown.map((p, i) => (
-                <div key={p.label} className={styles.pBar}>
-                  <div className={styles.pLabel}>{p.label}</div>
-                  <div className={styles.pTrack}>
-                    <div
-                      className={styles.pFill}
-                      style={{
-                        width: mounted ? `${p.pct}%` : '0%',
-                        background: p.color,
-                        transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 80}ms`,
-                      }}
-                    >
-                      <span>{fmt(p.amount)}</span>
-                      <span style={{ opacity: 0.7 }}>{p.pct}%</span>
+              {!SHOW_LEADS_KPIS ? (
+                <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
+              ) : isEmptyPeriod ? (
+                <NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." />
+              ) : (
+                <>
+                  <div className={styles.pipelineHeader}>
+                    <div>
+                      <div className={styles.metaSub}>Pipeline total</div>
+                      <div className={styles.metaVal}>{fmt(result.montantPipeline)}</div>
+                    </div>
+                    <div>
+                      <div className={styles.metaSub}>Pipeline pondéré</div>
+                      <div className={styles.metaVal} style={{ color: 'var(--myrtille)' }}>{fmt(result.montantPipelinePondere)}</div>
                     </div>
                   </div>
-                </div>
-              ))}
-              {result.pipelineBreakdown.length === 0 && (
-                <div style={{ color: 'var(--text3)', fontSize: 12 }}>Aucune opportunité en pipeline</div>
+                  <div className={styles.sep} />
+                  {result.pipelineBreakdown.map((p, i) => (
+                    <div key={p.label} className={styles.pBar}>
+                      <div className={styles.pLabel}>{p.label}</div>
+                      <div className={styles.pTrack}>
+                        <div
+                          className={styles.pFill}
+                          style={{
+                            width: mounted ? `${p.pct}%` : '0%',
+                            background: p.color,
+                            transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 80}ms`,
+                          }}
+                        >
+                          <span>{fmt(p.amount)}</span>
+                          <span style={{ opacity: 0.7 }}>{p.pct}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {result.pipelineBreakdown.length === 0 && (
+                    <div style={{ color: 'var(--text3)', fontSize: 12 }}>Aucune opportunité en pipeline</div>
+                  )}
+                </>
               )}
             </Card>
           </div>
@@ -245,56 +279,66 @@ export default function FocusCommercial() {
         {/* Win rate — jauge + détail des issues */}
         {result && (
           <Card title="Détail des deals">
-            <div className={styles.donutWrap} style={{ height: 'auto' }}>
-              <svg viewBox="0 0 110 110" width={120} height={120}>
-                <defs>
-                  <linearGradient id="winGradFC" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%"   stopColor="#26001F" stopOpacity="0.55" />
-                    <stop offset="100%" stopColor="#26001F" stopOpacity="1" />
-                  </linearGradient>
-                </defs>
-                <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(167,173,170,0.25)" strokeWidth="11" />
-                {/* Repère cible 50% */}
-                <line x1="55" y1="4" x2="55" y2="16" stroke="rgba(38,0,31,0.3)" strokeWidth="2" transform="rotate(180 55 55)" />
-                <circle
-                  cx="55" cy="55" r="44" fill="none"
-                  stroke="url(#winGradFC)" strokeWidth="11"
-                  strokeDasharray={mounted ? `${dashTarget} ${circumference}` : `0 ${circumference}`}
-                  strokeLinecap="round"
-                  transform="rotate(-90 55 55)"
-                  style={{ transition: 'stroke-dasharray 1.1s cubic-bezier(0.16,1,0.3,1)' }}
-                />
-              </svg>
-              <div className={styles.donutCenter}>
-                <div className={styles.donutVal}>{winRate}%</div>
-                <div className={styles.donutLbl}>Win rate</div>
-              </div>
-            </div>
-            <div className={styles.donutStats}>
-              <div className={styles.dstat}>
-                <div className={styles.dv} style={{ color: 'var(--pos)' }}>{result.dealStats.gagnes}</div>
-                <div className={styles.dl}>Deals gagnés</div>
-              </div>
-              <div className={styles.dstat}>
-                <div className={styles.dv} style={{ color: 'var(--neg)' }}>{result.dealStats.perdus}</div>
-                <div className={styles.dl}>Deals perdus</div>
-              </div>
-              <div className={styles.dstat}>
-                <div className={styles.dv} style={{ color: 'var(--warn)' }}>{result.dealStats.standby}</div>
-                <div className={styles.dl}>Deals stand-by</div>
-              </div>
-              <div className={styles.dstat}>
-                <div className={styles.dv} style={{ color: 'var(--text2)' }}>{result.dealStats.enCours}</div>
-                <div className={styles.dl}>Deals en cours</div>
-              </div>
-            </div>
-            <div className={styles.subnote}>
-              {result.dealStats.gagnes} affaire{result.dealStats.gagnes > 1 ? 's' : ''} signée{result.dealStats.gagnes > 1 ? 's' : ''} sur {result.dealStats.gagnes + result.dealStats.perdus} affaire{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''} totale{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''}
-            </div>
+            {!SHOW_LEADS_KPIS ? (
+              <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
+            ) : isEmptyPeriod ? (
+              <NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." />
+            ) : (
+              <>
+                <div className={styles.donutWrap} style={{ height: 'auto' }}>
+                  <svg viewBox="0 0 110 110" width={120} height={120}>
+                    <defs>
+                      <linearGradient id="winGradFC" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%"   stopColor="#26001F" stopOpacity="0.55" />
+                        <stop offset="100%" stopColor="#26001F" stopOpacity="1" />
+                      </linearGradient>
+                    </defs>
+                    <circle cx="55" cy="55" r="44" fill="none" stroke="rgba(167,173,170,0.25)" strokeWidth="11" />
+                    {/* Repère cible 50% */}
+                    <line x1="55" y1="4" x2="55" y2="16" stroke="rgba(38,0,31,0.3)" strokeWidth="2" transform="rotate(180 55 55)" />
+                    <circle
+                      cx="55" cy="55" r="44" fill="none"
+                      stroke="url(#winGradFC)" strokeWidth="11"
+                      strokeDasharray={mounted ? `${dashTarget} ${circumference}` : `0 ${circumference}`}
+                      strokeLinecap="round"
+                      transform="rotate(-90 55 55)"
+                      style={{ transition: 'stroke-dasharray 1.1s cubic-bezier(0.16,1,0.3,1)' }}
+                    />
+                  </svg>
+                  <div className={styles.donutCenter}>
+                    <div className={styles.donutVal}>{winRate}%</div>
+                    <div className={styles.donutLbl}>Win rate</div>
+                  </div>
+                </div>
+                <div className={styles.donutStats}>
+                  <div className={styles.dstat}>
+                    <div className={styles.dv} style={{ color: 'var(--pos)' }}>{result.dealStats.gagnes}</div>
+                    <div className={styles.dl}>Deals gagnés</div>
+                  </div>
+                  <div className={styles.dstat}>
+                    <div className={styles.dv} style={{ color: 'var(--neg)' }}>{result.dealStats.perdus}</div>
+                    <div className={styles.dl}>Deals perdus</div>
+                  </div>
+                  <div className={styles.dstat}>
+                    <div className={styles.dv} style={{ color: 'var(--warn)' }}>{result.dealStats.standby}</div>
+                    <div className={styles.dl}>Deals stand-by</div>
+                  </div>
+                  <div className={styles.dstat}>
+                    <div className={styles.dv} style={{ color: 'var(--text2)' }}>{result.dealStats.enCours}</div>
+                    <div className={styles.dl}>Deals en cours</div>
+                  </div>
+                </div>
+                <div className={styles.subnote}>
+                  {result.dealStats.gagnes} affaire{result.dealStats.gagnes > 1 ? 's' : ''} signée{result.dealStats.gagnes > 1 ? 's' : ''} sur {result.dealStats.gagnes + result.dealStats.perdus} affaire{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''} totale{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''}
+                </div>
+              </>
+            )}
           </Card>
         )}
         <Card title="Deals gagnés / perdus / stand-by — par mois">
-          {leads.error ? (
+          {!SHOW_LEADS_KPIS ? (
+            <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
+          ) : leads.error ? (
             <NotConnected>{leads.error}</NotConnected>
           ) : leads.data?.evolutionMensuelle ? (
             <>
@@ -325,7 +369,9 @@ export default function FocusCommercial() {
       </div>
       <div className={styles.twoCol} style={{ marginTop: 12 }}>
         <Card title="Motifs des deals perdus">
-          {leads.error ? (
+          {!SHOW_LEADS_KPIS ? (
+            <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
+          ) : leads.error ? (
             <NotConnected>{leads.error}</NotConnected>
           ) : leads.data?.motifsPerdu ? (
             leads.data.motifsPerdu.motifs.length > 0 ? (
@@ -343,7 +389,9 @@ export default function FocusCommercial() {
           )}
         </Card>
         <Card title="Motifs des deals stand-by">
-          {leads.error ? (
+          {!SHOW_LEADS_KPIS ? (
+            <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
+          ) : leads.error ? (
             <NotConnected>{leads.error}</NotConnected>
           ) : leads.data?.motifsStandby ? (
             leads.data.motifsStandby.motifs.length > 0 ? (
@@ -366,7 +414,9 @@ export default function FocusCommercial() {
       <div ref={relanceSectionRef} />
       <SectionLabel badge="Monday">À relancer</SectionLabel>
       <Card title="Opportunités sans prochaine action">
-        {leads.error ? (
+        {!SHOW_LEADS_KPIS ? (
+          <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
+        ) : leads.error ? (
           <NotConnected>{leads.error}</NotConnected>
         ) : leads.data?.opportunitesSansAction ? (
           <>
@@ -426,7 +476,9 @@ export default function FocusCommercial() {
         </Card>
         {/* Sources de lead — colonne "Canaux d'acquisition" du board Leads */}
         <Card title="Performance par source de lead">
-          {leads.error ? (
+          {!SHOW_LEADS_KPIS ? (
+            <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
+          ) : leads.error ? (
             <NotConnected>{leads.error}</NotConnected>
           ) : leads.data?.sources?.length > 0 ? (
             (() => {

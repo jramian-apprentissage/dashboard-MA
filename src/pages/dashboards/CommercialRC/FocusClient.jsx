@@ -11,7 +11,10 @@ import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import Pill from '../../../components/ui/Pill';
 import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
+import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { todayDDMM } from '../../../utils/formatDate';
+import { fmtEurosExact } from '../../../utils/formatNumber';
+import { SHOW_LEADS_KPIS } from '../../../config/featureFlags';
 import styles from './FocusClient.module.css';
 
 const sentimentInfo = s => {
@@ -44,6 +47,10 @@ export default function FocusClient() {
   const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
   const c = compareResult;
   const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
+  // Connecté, données chargées, mais aucun compte facturé sur la période
+  // choisie — même traitement que Synthèse/Sales/ASUS/TLM : un seul message
+  // clair plutôt qu'une mosaïque de "0 €" et de graphiques vides.
+  const isEmptyPeriod = result && result.nbClientsActifs === 0;
 
   return (
     <div className={styles.page}>
@@ -63,16 +70,25 @@ export default function FocusClient() {
       {error && (
         <div style={{ padding: '20px 0', color: 'var(--neg)', fontSize: 13 }}>Erreur de chargement : {error}</div>
       )}
-      {result && (
+
+      {isEmptyPeriod && (
+        <Card><NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." /></Card>
+      )}
+
+      {result && !isEmptyPeriod && (
         <div className={styles.newClientsGrid}>
-          <KPICard
-            label="Nouveaux clients"
-            value={result.nbDealsGagnes}
-            unit=" clients"
-            compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
-            trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.sommeVentesGagnes)}` }}
-            color="green"
-          />
+          {SHOW_LEADS_KPIS ? (
+            <KPICard
+              label="Nouveaux clients"
+              value={result.nbDealsGagnes}
+              unit=" clients"
+              compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
+              trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.sommeVentesGagnes)}` }}
+              color="green"
+            />
+          ) : (
+            <KPICard {...notConnectedKPI('Nouveaux clients', 'masqué temporairement — reconstruction Comptes en cours', 'green')} />
+          )}
           <KPICard {...notConnectedKPI('Clients perdus', 'aucun suivi des départs de clients côté Monday', 'red')} />
           <KPICard
             label="Portefeuille de clients actifs"
@@ -85,6 +101,7 @@ export default function FocusClient() {
           <KPICard
             label="Marge brute nouveaux"
             value={fmtEuros(result.margeBruteNouveaux)}
+            exactValue={fmtEurosExact(result.margeBruteNouveaux)}
             compare={cmp(result.margeBruteNouveaux, c?.margeBruteNouveaux)}
             trend={{
               dir: 'neutral',

@@ -43,10 +43,13 @@ function ConsolidatedKPIs({ result }) {
   // rencontré : les deux classes CSS se superposent et le texte devient illisible).
   return (
     <div className={styles.kpiGrid}>
-      <KPICard label="Appels émis" value={totalAppels} trend={{ dir: 'neutral', text: `${prefixes.length} client(s) calculé(s)` }} />
-      <KPICard label="Leads décrochés" value={totalDecroches} />
-      <KPICard label="RDVs bookés" value={totalRdv} trend={{ dir: totalRdv > 0 ? 'up' : 'neutral', text: 'TLM + Telepro' }} />
-      <KPICard label="Fiches complétées" value={totalFiches} />
+      {/* Extraction ponctuelle, pas de notion de période comparée ici —
+          compare={false} explicite pour ne pas afficher "Calcul en cours…"
+          si "Comparer" est resté actif sur le dashboard en arrière-plan. */}
+      <KPICard label="Appels émis" value={totalAppels} compare={false} trend={{ dir: 'neutral', text: `${prefixes.length} client(s) calculé(s)` }} />
+      <KPICard label="Leads décrochés" value={totalDecroches} compare={false} />
+      <KPICard label="RDVs bookés" value={totalRdv} compare={false} trend={{ dir: totalRdv > 0 ? 'up' : 'neutral', text: 'TLM + Telepro' }} />
+      <KPICard label="Fiches complétées" value={totalFiches} compare={false} />
     </div>
   );
 }

@@ -11,8 +11,11 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
-import NotConnected from '../../../components/ui/NotConnected';
+import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
+import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { todayDDMM } from '../../../utils/formatDate';
+import { fmtEurosExact } from '../../../utils/formatNumber';
+import { SHOW_LEADS_KPIS } from '../../../config/featureFlags';
 import styles from './Synthese.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
@@ -81,6 +84,10 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
   const d = result;
   const c = compareResult;
   const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
+  // Connecté, données chargées, mais aucun compte facturé sur la période
+  // choisie (ex. période hors historique) — même traitement que Sales/
+  // ASUS/TLM : un seul message clair plutôt qu'une mosaïque de "0 €".
+  const isEmptyPeriod = d.nbClientsActifs === 0;
 
   const chartData = {
     labels: d.topClients.map(c => c.name),
@@ -108,12 +115,20 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
         {loading && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
       </div>
 
+      {isEmptyPeriod ? (
+        <>
+          <SectionLabel badge="Monday">Vue consolidée</SectionLabel>
+          <Card><NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." /></Card>
+        </>
+      ) : (
+      <>
       {/* ── Ligne 1 — Le résultat : les 4 chiffres du lundi matin ─────────── */}
       <SectionLabel badge="Monday">Vue consolidée</SectionLabel>
       <div className={styles.kpiGrid}>
         <KPICard
           label="CA"
           value={fmt(d.caGlobal)}
+          exactValue={fmtEurosExact(d.caGlobal)}
           compare={cmp(d.caGlobal, c?.caGlobal)}
           trend={{ dir: 'neutral', text: `Clients actifs : ${d.nbClientsActifs}` }}
           color="blue"
@@ -121,25 +136,36 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
         <KPICard
           label="Marge brute"
           value={fmt(d.margeBruteGlobale)}
+          exactValue={fmtEurosExact(d.margeBruteGlobale)}
           compare={cmp(d.margeBruteGlobale, c?.margeBruteGlobale)}
           trend={{ dir: 'neutral', text: `Taux de marge brute : ${d.tauxMarge}%` }}
           color="green"
         />
-        <KPICard
-          label="Deals gagnés"
-          value={d.nbDealsGagnes}
-          unit=" deals"
-          compare={cmp(d.nbDealsGagnes, c?.nbDealsGagnes)}
-          trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.sommeVentesGagnes)}` }}
-          color="green"
-        />
-        <KPICard
-          label="Pipeline pondéré"
-          value={fmt(d.montantPipelinePondere)}
-          compare={cmp(d.montantPipelinePondere, c?.montantPipelinePondere)}
-          trend={{ dir: 'neutral', text: 'Le CA de demain — opportunités en cours' }}
-          color="purple"
-        />
+        {SHOW_LEADS_KPIS ? (
+          <>
+            <KPICard
+              label="Deals gagnés"
+              value={d.nbDealsGagnes}
+              unit=" deals"
+              compare={cmp(d.nbDealsGagnes, c?.nbDealsGagnes)}
+              trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.sommeVentesGagnes)}` }}
+              color="green"
+            />
+            <KPICard
+              label="Pipeline pondéré"
+              value={fmt(d.montantPipelinePondere)}
+              exactValue={fmtEurosExact(d.montantPipelinePondere)}
+              compare={cmp(d.montantPipelinePondere, c?.montantPipelinePondere)}
+              trend={{ dir: 'neutral', text: 'Le CA de demain — opportunités en cours' }}
+              color="purple"
+            />
+          </>
+        ) : (
+          <>
+            <KPICard {...notConnectedKPI('Deals gagnés', 'masqué temporairement — reconstruction Comptes en cours', 'green')} />
+            <KPICard {...notConnectedKPI('Pipeline pondéré', 'masqué temporairement — reconstruction Comptes en cours', 'purple')} />
+          </>
+        )}
       </div>
 
       {/* ── Ligne 2 — La trajectoire : évolution CA + marge ────────────────── */}
@@ -282,6 +308,8 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
           </div>
         </Card>
       </div>
+      </>
+      )}
 
     </div>
   );

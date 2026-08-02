@@ -129,3 +129,75 @@
 .card.accent .compare.up      { color: #8ECFAA; }
 .card.accent .compare.down    { color: #E0A9A9; }
 .card.accent .compare.neutral { color: rgba(255,255,255,0.55); }
+
+/* ─── Montant exact au survol (ordinateur) ───────────────────────────────
+   Pour les KPI normalement abrégés (ex. "137 K€") : une petite infobulle
+   affiche le montant à 2 décimales au survol. Uniquement sur les appareils
+   à vrai survol (souris) — sur tactile, `(hover: hover)` est faux, donc
+   cette infobulle ne s'affiche jamais là-bas (clic + retournement à la
+   place, voir .flipWrap plus bas). */
+.valueHoverable { position: relative; }
+.exactTooltip {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  margin-bottom: 6px;
+  background: var(--myrtille);
+  color: var(--soleil);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(2px);
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  z-index: 20;
+}
+@media (hover: hover) and (pointer: fine) {
+  .valueHoverable { cursor: help; }
+  .valueHoverable:hover .exactTooltip { opacity: 1; transform: translateY(0); }
+}
+@media not all and (hover: hover) {
+  .exactTooltip { display: none; }
+}
+
+/* ─── Retournement au clic (mobile/tactile) ──────────────────────────────
+   Pas de survol fiable au doigt : un tap retourne la carte 5 secondes pour
+   révéler le montant exact (face arrière), puis elle repasse seule à
+   l'affichage normal (voir FLIP_DURATION_MS, KPICard.jsx). */
+.flipWrap { perspective: 1000px; }
+.flipInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+.flipInner.flipped { transform: rotateY(180deg); }
+.flipFront {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flipBack {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: rotateY(180deg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+}
+.exactValueBack {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--myrtille);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import styles from './KPICard.module.css';
 import { fmtNumber } from '../../utils/formatNumber';
 import { usePeriod } from '../../contexts/PeriodContext';
@@ -42,9 +43,30 @@ function resolveCompare(compare, compareActive) {
   return { dir: 'neutral', text: 'Calcul en cours…' };
 }
 
-export default function KPICard({ label, value, unit, trend, compare, color = 'default', variant, source }) {
+// Durée d'affichage du montant exact après un tap sur mobile (pas de survol
+// possible au doigt) — la carte se "retourne" automatiquement après ce délai.
+const FLIP_DURATION_MS = 5000;
+
+export default function KPICard({ label, value, unit, trend, compare, color = 'default', variant, source, exactValue }) {
   const { compareActive } = usePeriod();
   const resolvedCompare = resolveCompare(compare, compareActive);
+  const [flipped, setFlipped] = useState(false);
+  const flipTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(flipTimer.current), []);
+
+  // Le survol (voir CSS, gate `@media (hover: hover)`) couvre déjà l'ordinateur
+  // — sur un appareil qui n'a pas de vrai survol (mobile/tactile), le clic
+  // retourne la carte 5 secondes pour révéler le montant exact, puis repasse
+  // seul à l'affichage normal.
+  function handleClick() {
+    if (!exactValue) return;
+    if (typeof window !== 'undefined' && window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return;
+    setFlipped(true);
+    clearTimeout(flipTimer.current);
+    flipTimer.current = setTimeout(() => setFlipped(false), FLIP_DURATION_MS);
+  }
+
   const cls = [
     styles.card,
     variant === 'accent'      ? styles.accent      : '',
@@ -55,7 +77,7 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
 
   const valueLen = String(value).length;
 
-  return (
+  const front = (
     <div className={cls}>
       <div className={styles.label}>
         {label}
@@ -70,8 +92,12 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
           />
         )}
       </div>
-      <div className={`${styles.value}${valueLen > 8 ? ' ' + styles.sm : ''}`}>
+      <div className={`${styles.value}${valueLen > 8 ? ' ' + styles.sm : ''} ${exactValue ? styles.valueHoverable : ''}`}>
         {fmtNumber(value)}<span className={styles.unit}>{unit}</span>
+        {/* Infobulle montant exact — CSS-only, ordinateur uniquement (voir
+            @media (hover: hover) dans KPICard.module.css) : le tactile n'a
+            pas de survol fiable, il passe par le clic + retournement. */}
+        {exactValue && <span className={styles.exactTooltip}>{exactValue}</span>}
       </div>
       {/* Ligne 1 (si dispo) : comparaison vs période précédente/année précédente.
           Ligne 2 : la petite définition du KPI, toujours affichée — la
@@ -88,6 +114,20 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
           <span className={styles.lineText}>{trend.text}</span>
         </div>
       )}
+    </div>
+  );
+
+  if (!exactValue) return front;
+
+  return (
+    <div className={styles.flipWrap} onClick={handleClick}>
+      <div className={`${styles.flipInner} ${flipped ? styles.flipped : ''}`}>
+        <div className={styles.flipFront}>{front}</div>
+        <div className={`${cls} ${styles.flipBack}`}>
+          <div className={styles.label}>{label}</div>
+          <div className={styles.exactValueBack}>{exactValue}</div>
+        </div>
+      </div>
     </div>
   );
 }
