@@ -5,7 +5,7 @@ import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import NotConnected from '../../../components/ui/NotConnected';
-import Loader from '../../../components/ui/Loader';
+import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText } from '../../../utils/compareText';
@@ -89,9 +89,10 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
         </div>
       )}
       {hasData && asusData.lastFetched && (
-        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)', textAlign: 'center' }}>
+        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
           <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — Mise à jour arrêtée au {dernierJourArchive(asusData.rows) || '—'}
           {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
+          {asusData.loading && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
         </div>
       )}
 

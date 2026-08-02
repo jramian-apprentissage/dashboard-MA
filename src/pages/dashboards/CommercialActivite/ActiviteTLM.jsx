@@ -325,9 +325,9 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
         </div>
       )}
       {hasData && (
-        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
           <span style={{ color: 'var(--pos)' }}>● Données CloudTalk</span> — Mise à jour arrêtée au {formatJourMois(summary.dernier_jour)}
-          {loading && <LoaderMark size={16} />}
+          {loading && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
         </div>
       )}
 

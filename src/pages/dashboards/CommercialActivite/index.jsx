@@ -100,7 +100,11 @@ export default function CommercialActivite() {
         </select>
       </div>
 
-      {isSales && salesData.loading && (
+      {/* Uniquement le tout premier chargement — une fois les données là,
+          un rechargement suite à un changement de filtre affiche son
+          spinner dans le bandeau de fraîcheur du corps de page plutôt
+          qu'ici (voir ActiviteSales.jsx / ActiviteTLM.jsx). */}
+      {isSales && salesData.loading && !salesData.hasData && (
         <div className={layoutStyles.loadingPill}>
           <LoaderMark size={13} />
           Chargement…

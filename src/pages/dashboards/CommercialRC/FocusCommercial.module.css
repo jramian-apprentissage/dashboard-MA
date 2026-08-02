@@ -1,5 +1,23 @@
 .page { display: flex; flex-direction: column; gap: 0; }
 
+/* Fraîcheur des données — même style que le bandeau Ringover/CloudTalk des
+   dashboards d'Activité commerciale (Activite.module.css). */
+.dataAlert {
+  font-size: 11px;
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 12px;
+  margin-bottom: 14px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  text-align: left;
+}
+.dataAlertSpin { display: inline-flex; color: var(--myrtille); }
+
 /* ── Nouvelle organisation directeur ── */
 .kpiRow4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
 .threeCol { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 20px; }

@@ -7,7 +7,17 @@
   padding: 7px 12px;
   margin-bottom: 14px;
   line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  text-align: left;
 }
+/* Spinner de rechargement (changement de filtre, pas le chargement initial
+   — celui-là reste le grand Loader central) — juste à droite du texte de
+   fraîcheur, en myrtille pour rester visible même si l'utilisateur ne
+   regarde plus l'en-tête après avoir cliqué un filtre. */
+.dataAlertSpin { display: inline-flex; color: var(--myrtille); }
 .kpiGrid6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
 .kpiGrid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
 .kpiGridAuto { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }

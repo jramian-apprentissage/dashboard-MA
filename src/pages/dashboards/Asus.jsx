@@ -99,7 +99,11 @@ export default function Asus() {
         </select>
       </div>
 
-      {asusData.loading && (
+      {/* Uniquement le tout premier chargement (pas de données en cache
+          encore) — une fois les données là, un rechargement suite à un
+          changement de filtre affiche son spinner dans le bandeau de
+          fraîcheur du corps de page plutôt qu'ici (voir ActiviteASUS.jsx). */}
+      {asusData.loading && !asusData.hasData && (
         <div className={layoutStyles.loadingPill}>
           <LoaderMark size={13} />
           Chargement…

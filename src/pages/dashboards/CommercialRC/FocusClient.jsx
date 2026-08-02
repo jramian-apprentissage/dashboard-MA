@@ -7,10 +7,11 @@ import { compareValueText } from '../../../utils/compareText';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
-import Loader from '../../../components/ui/Loader';
+import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import Pill from '../../../components/ui/Pill';
 import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
+import { todayDDMM } from '../../../utils/formatDate';
 import styles from './FocusClient.module.css';
 
 const sentimentInfo = s => {
@@ -47,9 +48,18 @@ export default function FocusClient() {
   return (
     <div className={styles.page}>
 
+      {/* Source des données — Monday CRM, toujours à jour du jour (pas
+          d'archive figée comme Ringover/CloudTalk). Spinner uniquement lors
+          d'un rechargement (changement de filtre), pas au tout premier
+          affichage — voir le Loader juste en dessous, gate sur !result. */}
+      <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
+        <span style={{ color: 'var(--pos)' }}>● Source Monday CRM</span> — Mise à jour au {todayDDMM()}
+        {loading && result && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
+      </div>
+
       {/* ══ Ligne 1 — Le solde net du portefeuille : entrées vs sorties ══ */}
       <SectionLabel badge="Monday">Vision client</SectionLabel>
-      <Loader loading={loading} label="Chargement des données CRM…" size={44} minHeight={110} />
+      <Loader loading={loading && !result} label="Chargement des données CRM…" size={44} minHeight={110} />
       {error && (
         <div style={{ padding: '20px 0', color: 'var(--neg)', fontSize: 13 }}>Erreur de chargement : {error}</div>
       )}

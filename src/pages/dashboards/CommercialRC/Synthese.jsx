@@ -9,9 +9,10 @@ import { compareValueText } from '../../../utils/compareText';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
-import Loader from '../../../components/ui/Loader';
+import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected from '../../../components/ui/NotConnected';
+import { todayDDMM } from '../../../utils/formatDate';
 import styles from './Synthese.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
@@ -58,19 +59,23 @@ export default function Synthese() {
   const { comparePeriodKey } = usePeriod();
 
   return (
-    <Loader loading={loading} label="Chargement des données CRM…" minHeight={220}>
+    // Le grand Loader central ne couvre que le tout premier chargement
+    // (result encore null) — une fois les données là, un rechargement
+    // (changement de période) garde le contenu affiché et montre son
+    // spinner dans le bandeau de fraîcheur en tête de page à la place.
+    <Loader loading={loading && !result} label="Chargement des données CRM…" minHeight={220}>
       {() => error ? (
         <div style={{ padding: '40px 0', textAlign: 'center', color: 'var(--neg)', fontSize: 13 }}>
           Erreur de chargement : {error}
         </div>
       ) : result ? (
-        <SyntheseContent result={result} compareResult={compareResult} comparePeriodKey={comparePeriodKey} monthly={monthly} satisfaction={satisfaction} />
+        <SyntheseContent result={result} compareResult={compareResult} comparePeriodKey={comparePeriodKey} monthly={monthly} satisfaction={satisfaction} loading={loading} />
       ) : null}
     </Loader>
   );
 }
 
-function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, satisfaction }) {
+function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, satisfaction, loading }) {
   const mounted = useChartMount();
   const navigate = useNavigate();
   const d = result;
@@ -93,6 +98,15 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
 
   return (
     <div className={styles.page}>
+
+      {/* Source des données — Monday CRM (webhooks live), donc pas de
+          notion d'archive figée comme Ringover/CloudTalk : toujours à jour
+          du jour. Spinner uniquement lors d'un rechargement (changement de
+          filtre), pas au tout premier affichage. */}
+      <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
+        <span style={{ color: 'var(--pos)' }}>● Source Monday CRM</span> — Mise à jour au {todayDDMM()}
+        {loading && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
+      </div>
 
       {/* ── Ligne 1 — Le résultat : les 4 chiffres du lundi matin ─────────── */}
       <SectionLabel badge="Monday">Vue consolidée</SectionLabel>
