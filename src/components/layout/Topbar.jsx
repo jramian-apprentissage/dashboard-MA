@@ -75,6 +75,13 @@ export default function Topbar({ scrolled = false }) {
             const isActive = isRouteActive(d.id);
             const isOpen = openSubmenu === d.id;
             const defaultTab = DASHBOARD_DEFAULT_TAB[d.id];
+            // Même thème que le hero du dashboard concerné (voir
+            // DashboardLayout.module.css / heroCiment /heroCommercialRC) —
+            // cohérence demandée par Jimmy entre tous les popups de l'appli.
+            const submenuThemeCls = d.id === 'commercial-activite' ? styles.submenuMyrtille
+              : d.id === 'commercial-rc' ? styles.submenuArgent
+              : d.id === 'asus' ? styles.submenuAsus
+              : '';
 
             return (
               <div key={d.id} className={styles.navItem} ref={isOpen ? submenuRef : null}>
@@ -97,7 +104,7 @@ export default function Topbar({ scrolled = false }) {
                 </NavLink>
 
                 {hasTabs && isOpen && (
-                  <div className={styles.submenu}>
+                  <div className={`${styles.submenu} ${submenuThemeCls}`}>
                     <div className={styles.submenuLabel}>Choisir une vue</div>
                     {tabs.map(t => {
                       const params = new URLSearchParams(location.search);

@@ -66,6 +66,17 @@ export default function BottomNav() {
   const currentPageItem = pageItems.find(it => it.id === 'home' ? location.pathname === '/' : location.pathname === DASHBOARD_ROUTES[it.id]);
   const currentDashboardId = Object.entries(DASHBOARD_ROUTES).find(([, route]) => location.pathname === route)?.[0];
   const excludePeriods = DASHBOARD_EXCLUDED_PERIODS[currentDashboardId] || [];
+  // Même repère couleur que le hero desktop (voir DashboardLayout.jsx) —
+  // la barre du bas reste neutre (chrome partagé entre toutes les pages),
+  // seul le contenu des feuilles (Filtre/Comparer) reprend la teinte.
+  const theme = currentDashboardId === 'asus' ? 'asus'
+    : currentDashboardId === 'commercial-rc' ? 'argent'
+    : currentDashboardId === 'commercial-activite' ? 'myrtille'
+    : 'default';
+  const sheetThemeCls = theme === 'asus' ? styles.sheetAsus
+    : theme === 'argent' ? styles.sheetArgent
+    : theme === 'myrtille' ? styles.sheetMyrtille
+    : '';
 
   function toggle(name) {
     setSheet(s => (s === name ? null : name));
@@ -115,7 +126,10 @@ export default function BottomNav() {
 
       {sheet && (
         <div className={styles.scrim}>
-          <div className={styles.sheet} ref={sheetRef}>
+          {/* Thème repris uniquement pour Filtre/Comparer (contenu propre à
+              la page courante) — pas pour Dashboard/Comptes qui listent des
+              destinations multiples, où une seule couleur n'aurait pas de sens. */}
+          <div className={`${styles.sheet} ${(sheet === 'filtre' || sheet === 'comparer') ? sheetThemeCls : ''}`} ref={sheetRef}>
             <div className={styles.sheetHandle} />
 
             {sheet === 'page' && (
@@ -152,7 +166,7 @@ export default function BottomNav() {
                 )}
                 <div className={styles.sheetTitle}>Période de référence</div>
                 <div className={styles.sheetCentered}>
-                  <PeriodPicker value={periodKey} customFrom={customFrom} customTo={customTo} onChange={onChange} excludeKeys={excludePeriods} />
+                  <PeriodPicker value={periodKey} customFrom={customFrom} customTo={customTo} onChange={onChange} excludeKeys={excludePeriods} onClose={() => setSheet(null)} theme={theme} />
                 </div>
               </>
             )}

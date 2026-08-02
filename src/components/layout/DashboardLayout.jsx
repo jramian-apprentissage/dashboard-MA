@@ -149,13 +149,21 @@ export default function DashboardLayout({
     ? `${periodLabel} · ${filterParts.join(' · ')}`
     : periodLabel;
 
+  // Couleur par dashboard — sert de repère visuel pour se rappeler où l'on
+  // se trouve, sur le hero desktop comme sur le bandeau compact mobile
+  // (voir compactHeader plus bas, qui n'est pas un descendant du hero donc
+  // ne peut pas hériter de .heroAsus/.heroCiment/.heroCommercialRC via CSS).
+  const periodPickerTheme = dashboardId === 'asus' ? 'asus' : dashboardId === 'commercial-rc' ? 'argent' : dashboardId === 'commercial-activite' ? 'myrtille' : 'default';
+  const heroThemeCls = dashboardId === 'asus' ? styles.heroAsus : dashboardId === 'commercial-activite' ? styles.heroCiment : dashboardId === 'commercial-rc' ? styles.heroCommercialRC : '';
+  const compactThemeCls = dashboardId === 'asus' ? styles.compactHeaderAsus : dashboardId === 'commercial-activite' ? styles.compactHeaderCiment : dashboardId === 'commercial-rc' ? styles.compactHeaderCommercialRC : '';
+
   return (
     <div className={styles.shell}>
 
       {/* ── Hero header ── */}
-      {/* Teinte bleue (charte ASUS) au lieu du myrtille par défaut — seul ce
-          dashboard a une identité de marque client à respecter dans le hero. */}
-      <div className={`${styles.hero} ${dashboardId === 'asus' ? styles.heroAsus : ''}`}>
+      {/* Teinte par dashboard (charte ASUS, ou simple repère de couleur pour
+          les autres) au lieu du myrtille uni par défaut. */}
+      <div className={`${styles.hero} ${heroThemeCls}`}>
         <div className={styles.heroBg} style={{ backgroundImage: `url(${heroBgSrc || defaultHeroBg})`, backgroundPosition: heroBgPosition }} />
         <div className={styles.heroOverlay} />
 
@@ -223,7 +231,7 @@ export default function DashboardLayout({
                   customTo={customTo}
                   onChange={onChange}
                   excludeKeys={excludePeriods}
-                  theme={dashboardId === 'asus' ? 'asus' : 'default'}
+                  theme={periodPickerTheme}
                 />
               </div>
 
@@ -285,7 +293,7 @@ export default function DashboardLayout({
       </div>
 
       {/* ── Bandeau contextuel compact (mobile, apparaît au scroll) ── */}
-      <div className={`${styles.compactHeader} ${compactVisible ? styles.compactHeaderVisible : ''}`}>
+      <div className={`${styles.compactHeader} ${compactThemeCls} ${compactVisible ? styles.compactHeaderVisible : ''}`}>
         <div className={styles.compactHeaderTitle}>
           {dashboardName}{dashboardNameEmphasis ? ` ${dashboardNameEmphasis}` : ''}
           {tabLabel && <span className={styles.compactHeaderTab}> · {tabLabel}</span>}

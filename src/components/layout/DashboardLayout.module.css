@@ -50,10 +50,10 @@
 .heroAsus .title,
 .heroAsus .subtitle,
 .heroAsus .subtitlePeriod,
+.heroAsus .titleEm,
 .heroAsus .tabBadge {
-  color: var(--myrtille);
+  color: var(--asus-blue);
 }
-.heroAsus .titleEm { color: var(--asus-blue); }
 .heroAsus .subtitle { opacity: 0.7; }
 .heroAsus .tabBadge { opacity: 0.6; }
 
@@ -82,19 +82,105 @@
 .heroAsus .compareModeBtn:not(:last-child) { border-right-color: rgba(0,108,225,0.25); }
 .heroAsus .compareModeBtn:hover { color: var(--asus-blue); }
 .heroAsus .compareModeBtnActive { background: rgba(0,108,225,0.14); color: var(--asus-blue); }
-.heroAsus .collabPill {
-  color: var(--asus-blue);
-  background: rgba(0,108,225,0.06);
-  border-color: rgba(0,108,225,0.25);
+/* Dashboard "Activités commerciales" — même principe que .heroAsus
+   ci-dessus (dégradé couvrant la moitié gauche où vivent le titre et les
+   filtres, photo visible sur la droite), mais en Ciment (A7ADAA) plutôt
+   qu'en gris quasi-blanc : pas de marque client à respecter ici, juste une
+   couverture plus douce que le myrtille uni par défaut. Le jaune soleil,
+   pensé pour un fond sombre, n'y est pas plus lisible que sur le hero
+   ASUS : mêmes reprises en encre myrtille pour le texte et les contrôles. */
+.heroCiment { background: var(--ciment); }
+.heroCiment .heroBg { opacity: 1; }
+.heroCiment .heroOverlay {
+  background: linear-gradient(
+    100deg,
+    var(--ciment) 0%,
+    var(--ciment) 42%,
+    rgba(167,173,170,0.85) 50%,
+    rgba(167,173,170,0) 62%
+  );
 }
-.heroAsus .collabPill:hover {
-  background: rgba(0,108,225,0.12);
-  border-color: rgba(0,108,225,0.45);
-  color: var(--asus-blue);
+.heroCiment .title,
+.heroCiment .subtitle,
+.heroCiment .subtitlePeriod,
+.heroCiment .tabBadge {
+  color: var(--myrtille);
 }
-.heroAsus .collabPill svg { color: rgba(0,108,225,0.6); }
-.heroAsus .collabSelect { color: var(--asus-blue); }
-.heroAsus .collabSelect option { background: #fff; color: var(--myrtille); }
+.heroCiment .titleEm { color: var(--myrtille); }
+.heroCiment .subtitle { opacity: 0.7; }
+.heroCiment .tabBadge { opacity: 0.6; }
+
+/* Filtres (période, collaborateur) et comparaison en myrtille — essai à la
+   demande, mêmes teintes que celles utilisées ailleurs pour l'encre de
+   marque sur fond clair (voir .heroAsus plus haut, avec asus-blue). */
+.heroCiment .heroBtn {
+  color: var(--myrtille);
+  border-color: rgba(38,0,31,0.3);
+}
+.heroCiment .heroBtn:hover {
+  background: rgba(38,0,31,0.08);
+  border-color: rgba(38,0,31,0.55);
+  color: var(--myrtille);
+}
+.heroCiment .heroBtnActive {
+  background: rgba(38,0,31,0.10);
+  border-color: var(--myrtille);
+  color: var(--myrtille);
+}
+.heroCiment .heroBtnX { color: rgba(38,0,31,0.45); }
+.heroCiment .heroBtnX:hover { color: var(--myrtille); background: rgba(38,0,31,0.08); }
+.heroCiment .dot { background: var(--myrtille); box-shadow: 0 0 5px rgba(38,0,31,0.5); }
+.heroCiment .compareModeGroup { border-color: rgba(38,0,31,0.3); }
+.heroCiment .compareModeBtn { color: rgba(38,0,31,0.55); }
+.heroCiment .compareModeBtn:not(:last-child) { border-right-color: rgba(38,0,31,0.22); }
+.heroCiment .compareModeBtn:hover { color: var(--myrtille); }
+.heroCiment .compareModeBtnActive { background: rgba(38,0,31,0.12); color: var(--myrtille); }
+/* Commercial & Relation Client — même principe de couverture moitié-moitié
+   (photo nette sur la droite, dégradé plein sur la gauche), mais en gardant
+   le myrtille par défaut du dashboard (pas de teinte de substitution) : on
+   remonte juste l'opacité de la photo au lieu du 0.18 diffus par défaut.
+   Textes et boutons filtres/comparaison en argent (--ciment, A7ADAA), à la
+   demande — plus de cohérence entre les deux plutôt que soleil+argent. */
+.heroCommercialRC { background: var(--myrtille); }
+.heroCommercialRC .heroBg { opacity: 1; }
+.heroCommercialRC .heroOverlay {
+  background: linear-gradient(
+    100deg,
+    var(--myrtille) 0%,
+    var(--myrtille) 42%,
+    rgba(38,0,31,0.85) 50%,
+    rgba(38,0,31,0) 62%
+  );
+}
+.heroCommercialRC .title,
+.heroCommercialRC .subtitle,
+.heroCommercialRC .subtitlePeriod,
+.heroCommercialRC .tabBadge {
+  color: var(--ciment);
+}
+.heroCommercialRC .titleEm { color: var(--ciment); }
+.heroCommercialRC .heroBtn {
+  color: var(--ciment);
+  border-color: rgba(167,173,170,0.35);
+}
+.heroCommercialRC .heroBtn:hover {
+  background: rgba(167,173,170,0.12);
+  border-color: rgba(167,173,170,0.6);
+  color: var(--ciment);
+}
+.heroCommercialRC .heroBtnActive {
+  background: rgba(167,173,170,0.14);
+  border-color: var(--ciment);
+  color: var(--ciment);
+}
+.heroCommercialRC .heroBtnX { color: rgba(167,173,170,0.55); }
+.heroCommercialRC .heroBtnX:hover { color: var(--ciment); background: rgba(167,173,170,0.12); }
+.heroCommercialRC .dot { background: var(--ciment); box-shadow: 0 0 5px rgba(167,173,170,0.6); }
+.heroCommercialRC .compareModeGroup { border-color: rgba(167,173,170,0.35); }
+.heroCommercialRC .compareModeBtn { color: rgba(167,173,170,0.65); }
+.heroCommercialRC .compareModeBtn:not(:last-child) { border-right-color: rgba(167,173,170,0.25); }
+.heroCommercialRC .compareModeBtn:hover { color: var(--ciment); }
+.heroCommercialRC .compareModeBtnActive { background: rgba(167,173,170,0.18); color: var(--ciment); }
 
 .heroInner {
   position: relative;
@@ -399,54 +485,6 @@
   flex-shrink: 0;
 }
 
-/* Pills agents/collabs — style soleil sur fond sombre */
-.collabPill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(255,249,147,0.7);
-  background: rgba(255,249,147,0.06);
-  border: 1px solid rgba(255,249,147,0.18);
-  border-radius: 99px;
-  padding: 4px 10px 4px 12px;
-  transition: background 0.15s, border-color 0.15s;
-}
-.collabPill:hover {
-  background: rgba(255,249,147,0.12);
-  border-color: rgba(255,249,147,0.35);
-  color: var(--soleil);
-}
-.collabPill svg { color: rgba(255,249,147,0.5); flex-shrink: 0; }
-
-.collabSelect {
-  background: transparent;
-  border: none;
-  color: rgba(255,249,147,0.7);
-  font-size: 11px;
-  font-weight: 500;
-  font-family: var(--font);
-  cursor: pointer;
-  outline: none;
-  padding: 0;
-  max-width: 130px;
-}
-.collabSelect option { background: var(--myrtille); color: var(--soleil); }
-
-/* Indicateur de chargement */
-.loadingPill {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11px;
-  color: rgba(255,249,147,0.4);
-  font-family: var(--font);
-  white-space: nowrap;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.spinIcon { animation: spin 0.9s linear infinite; flex-shrink: 0; }
-
 .dot {
   width: 5px;
   height: 5px;
@@ -624,4 +662,24 @@
     text-overflow: ellipsis;
   }
   .compactHeaderCompare { color: rgba(255,249,147,0.5); }
+
+  /* Couleur par dashboard — même repère que le hero (heroAsus/heroCiment/
+     heroCommercialRC), repris ici puisque ce bandeau n'est pas un
+     descendant du hero et ne peut pas hériter de sa couleur en CSS. */
+  .compactHeaderAsus { background: #F2F2F0; border-bottom-color: rgba(0,108,225,0.15); }
+  .compactHeaderAsus .compactHeaderTitle { color: var(--asus-blue); }
+  .compactHeaderAsus .compactHeaderTab { color: rgba(0,44,92,0.6); }
+  .compactHeaderAsus .compactHeaderPeriod { color: rgba(0,44,92,0.55); }
+  .compactHeaderAsus .compactHeaderCompare { color: rgba(0,108,225,0.5); }
+
+  .compactHeaderCiment { background: var(--ciment); border-bottom-color: rgba(38,0,31,0.15); }
+  .compactHeaderCiment .compactHeaderTitle { color: var(--myrtille); }
+  .compactHeaderCiment .compactHeaderTab { color: rgba(38,0,31,0.6); }
+  .compactHeaderCiment .compactHeaderPeriod { color: rgba(38,0,31,0.55); }
+  .compactHeaderCiment .compactHeaderCompare { color: rgba(38,0,31,0.5); }
+
+  .compactHeaderCommercialRC .compactHeaderTitle { color: var(--ciment); }
+  .compactHeaderCommercialRC .compactHeaderTab { color: rgba(167,173,170,0.7); }
+  .compactHeaderCommercialRC .compactHeaderPeriod { color: rgba(167,173,170,0.65); }
+  .compactHeaderCommercialRC .compactHeaderCompare { color: rgba(167,173,170,0.5); }
 }

@@ -106,3 +106,33 @@
 }
 .compareModeBtn:first-child { border-right: 1px solid rgba(255,249,147,0.15); }
 .compareModeBtnActive { background: var(--soleil); color: var(--myrtille); }
+
+/* Couleur par dashboard — reprise uniquement sur les feuilles Filtre/
+   Comparer (voir BottomNav.jsx), même repère que le hero desktop. */
+.sheetAsus,
+.sheetMyrtille {
+  background: rgba(255,255,255,0.98);
+}
+.sheetAsus .sheetTitle { color: rgba(0,108,225,0.45); }
+.sheetAsus .compareToggle { background: rgba(0,108,225,0.06); border-color: rgba(0,108,225,0.25); color: var(--asus-blue); }
+.sheetAsus .compareToggleActive { background: var(--asus-blue); color: #fff; border-color: var(--asus-blue); }
+.sheetAsus .compareModeGroup { border-color: rgba(0,108,225,0.25); }
+.sheetAsus .compareModeBtn { color: rgba(0,44,92,0.65); }
+.sheetAsus .compareModeBtn:first-child { border-right-color: rgba(0,108,225,0.18); }
+.sheetAsus .compareModeBtnActive { background: var(--asus-blue); color: #fff; }
+
+.sheetMyrtille .sheetTitle { color: rgba(38,0,31,0.4); }
+.sheetMyrtille .compareToggle { background: rgba(38,0,31,0.06); border-color: rgba(38,0,31,0.22); color: var(--myrtille); }
+.sheetMyrtille .compareToggleActive { background: var(--myrtille); color: #fff; border-color: var(--myrtille); }
+.sheetMyrtille .compareModeGroup { border-color: rgba(38,0,31,0.22); }
+.sheetMyrtille .compareModeBtn { color: rgba(38,0,31,0.65); }
+.sheetMyrtille .compareModeBtn:first-child { border-right-color: rgba(38,0,31,0.15); }
+.sheetMyrtille .compareModeBtnActive { background: var(--myrtille); color: #fff; }
+
+.sheetArgent .sheetTitle { color: rgba(167,173,170,0.5); }
+.sheetArgent .compareToggle { background: rgba(167,173,170,0.08); border-color: rgba(167,173,170,0.3); color: var(--ciment); }
+.sheetArgent .compareToggleActive { background: var(--ciment); color: var(--myrtille); border-color: var(--ciment); }
+.sheetArgent .compareModeGroup { border-color: rgba(167,173,170,0.3); }
+.sheetArgent .compareModeBtn { color: rgba(167,173,170,0.7); }
+.sheetArgent .compareModeBtn:first-child { border-right-color: rgba(167,173,170,0.2); }
+.sheetArgent .compareModeBtnActive { background: var(--ciment); color: var(--myrtille); }

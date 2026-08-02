@@ -9,8 +9,7 @@ import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { DASHBOARD_TABS } from '../../../data/dashboardTabs';
 import { useSalesData } from '../../../hooks/useSalesData';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import layoutStyles from '../../../components/layout/DashboardLayout.module.css';
-import { LoaderMark } from '../../../components/ui/Loader';
+import CollabPicker from '../../../components/ui/CollabPicker';
 
 const subTabs = DASHBOARD_TABS['commercial-activite'];
 
@@ -68,8 +67,7 @@ export default function CommercialActivite() {
 
   useEffect(() => { setCollab('Tous'); }, [tab]);
 
-  function handleCollabChange(e) {
-    const v = e.target.value;
+  function handleCollabChange(v) {
     setCollab(v);
     if (isSales) {
       if (salesData.hasData) salesData.recomputeCollab(v);
@@ -85,32 +83,7 @@ export default function CommercialActivite() {
   const collabs = isSales ? (salesData.result?.collabs || ['Tous']) : tlmCollabs;
 
   const extraFilters = (
-    <>
-      <div className={layoutStyles.collabPill}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-        <select
-          className={layoutStyles.collabSelect}
-          value={collab}
-          onChange={handleCollabChange}
-          aria-label="Filtrer par collaborateur"
-        >
-          {collabs.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-
-      {/* Uniquement le tout premier chargement — une fois les données là,
-          un rechargement suite à un changement de filtre affiche son
-          spinner dans le bandeau de fraîcheur du corps de page plutôt
-          qu'ici (voir ActiviteSales.jsx / ActiviteTLM.jsx). */}
-      {isSales && salesData.loading && !salesData.hasData && (
-        <div className={layoutStyles.loadingPill}>
-          <LoaderMark size={13} />
-          Chargement…
-        </div>
-      )}
-    </>
+    <CollabPicker value={collab} options={collabs} onChange={handleCollabChange} theme="myrtille" />
   );
 
   const activeFilters = collab !== 'Tous' ? [collab] : [];

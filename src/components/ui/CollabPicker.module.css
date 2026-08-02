@@ -1,0 +1,129 @@
+.wrap { position: relative; }
+
+/* Pill trigger — même style que PeriodPicker (soleil sur fond myrtille par défaut) */
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255,249,147,0.7);
+  background: rgba(255,249,147,0.06);
+  border: 1px solid rgba(255,249,147,0.18);
+  border-radius: 99px;
+  padding: 4px 10px 4px 12px;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+.pill:hover {
+  background: rgba(255,249,147,0.12);
+  border-color: rgba(255,249,147,0.35);
+  color: var(--soleil);
+}
+.pill svg { color: rgba(255,249,147,0.5); flex-shrink: 0; }
+
+.pill.themeAsus {
+  color: var(--asus-blue);
+  background: rgba(0,108,225,0.06);
+  border-color: rgba(0,108,225,0.25);
+}
+.pill.themeAsus:hover {
+  background: rgba(0,108,225,0.12);
+  border-color: rgba(0,108,225,0.45);
+  color: var(--asus-blue);
+}
+.pill.themeAsus svg { color: rgba(0,108,225,0.6); }
+
+.pill.themeArgent {
+  color: var(--ciment);
+  background: rgba(167,173,170,0.10);
+  border-color: rgba(167,173,170,0.35);
+}
+.pill.themeArgent:hover {
+  background: rgba(167,173,170,0.18);
+  border-color: rgba(167,173,170,0.55);
+  color: var(--ciment);
+}
+.pill.themeArgent svg { color: rgba(167,173,170,0.75); }
+
+.pill.themeMyrtille {
+  color: var(--myrtille);
+  background: rgba(38,0,31,0.06);
+  border-color: rgba(38,0,31,0.22);
+}
+.pill.themeMyrtille:hover {
+  background: rgba(38,0,31,0.12);
+  border-color: rgba(38,0,31,0.4);
+  color: var(--myrtille);
+}
+.pill.themeMyrtille svg { color: rgba(38,0,31,0.55); }
+
+.chevron { transition: transform 0.18s; flex-shrink: 0; }
+.chevronOpen { transform: rotate(180deg); }
+
+/* Dropdown — portail, mêmes coordonnées viewport que PeriodPicker */
+.dropdown {
+  position: fixed;
+  max-height: min(300px, calc(100vh - 20px));
+  overflow-y: auto;
+  min-width: 150px;
+  background: rgba(28,8,22,0.97);
+  border: 1px solid rgba(255,249,147,0.1);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
+  padding: 5px;
+  z-index: 500;
+  animation: fadeIn 0.12s ease;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 12px;
+  color: rgba(255,249,147,0.55);
+  font-family: var(--font);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s, color 0.1s;
+  touch-action: manipulation;
+}
+.option:hover { background: rgba(255,249,147,0.06); color: rgba(255,249,147,0.9); }
+.optionActive { color: var(--soleil); font-weight: 600; }
+
+.check { color: var(--soleil); width: 9px; flex-shrink: 0; }
+.checkPlaceholder { width: 9px; flex-shrink: 0; display: inline-block; }
+
+/* Thèmes du dropdown — même logique que PeriodPicker.module.css */
+.dropdown.themeAsus,
+.dropdown.themeMyrtille {
+  background: rgba(255,255,255,0.97);
+}
+.dropdown.themeAsus { border-color: rgba(0,108,225,0.18); }
+.dropdown.themeAsus .option { color: rgba(0,44,92,0.65); }
+.dropdown.themeAsus .option:hover { background: rgba(0,108,225,0.08); color: var(--asus-blue); }
+.dropdown.themeAsus .optionActive { color: var(--asus-blue); }
+.dropdown.themeAsus .check { color: var(--asus-blue); }
+
+.dropdown.themeMyrtille { border-color: rgba(38,0,31,0.15); }
+.dropdown.themeMyrtille .option { color: rgba(38,0,31,0.65); }
+.dropdown.themeMyrtille .option:hover { background: rgba(38,0,31,0.06); color: var(--myrtille); }
+.dropdown.themeMyrtille .optionActive { color: var(--myrtille); }
+.dropdown.themeMyrtille .check { color: var(--myrtille); }
+
+.dropdown.themeArgent { border-color: rgba(167,173,170,0.18); }
+.dropdown.themeArgent .option { color: rgba(167,173,170,0.65); }
+.dropdown.themeArgent .option:hover { background: rgba(167,173,170,0.08); color: var(--ciment); }
+.dropdown.themeArgent .optionActive { color: var(--ciment); }
+.dropdown.themeArgent .check { color: var(--ciment); }

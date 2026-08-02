@@ -41,6 +41,35 @@
 }
 .pill.themeAsus svg { color: rgba(0,108,225,0.6); }
 
+/* Thème "Commercial & Relation Client" — boutons argent (--ciment, A7ADAA)
+   sur le hero myrtille couvert à moitié (voir .heroCommercialRC,
+   DashboardLayout.module.css). */
+.pill.themeArgent {
+  color: var(--ciment);
+  background: rgba(167,173,170,0.10);
+  border-color: rgba(167,173,170,0.35);
+}
+.pill.themeArgent:hover {
+  background: rgba(167,173,170,0.18);
+  border-color: rgba(167,173,170,0.55);
+  color: var(--ciment);
+}
+.pill.themeArgent svg { color: rgba(167,173,170,0.75); }
+
+/* Thème "Activités commerciales" — boutons myrtille sur le hero couvert de
+   ciment (voir .heroCiment, DashboardLayout.module.css). */
+.pill.themeMyrtille {
+  color: var(--myrtille);
+  background: rgba(38,0,31,0.06);
+  border-color: rgba(38,0,31,0.22);
+}
+.pill.themeMyrtille:hover {
+  background: rgba(38,0,31,0.12);
+  border-color: rgba(38,0,31,0.4);
+  color: var(--myrtille);
+}
+.pill.themeMyrtille svg { color: rgba(38,0,31,0.55); }
+
 .chevron { transition: transform 0.18s; flex-shrink: 0; }
 .chevronOpen { transform: rotate(180deg); }
 
@@ -117,6 +146,128 @@
 .customInput:focus { border-color: rgba(255,249,147,0.35); }
 .customInput::-webkit-calendar-picker-indicator { opacity: 0.5; cursor: pointer; filter: invert(1); }
 
+/* Mini-calendrier "Personnaliser" — pop-up séparé (centré, backdrop),
+   plutôt qu'inline dans le dropdown (qui s'allongeait et poussait tout vers
+   le bas). Sélection de la plage à 2 clics (début puis fin) ; les champs
+   Du/Au du dropdown restent utilisables tels quels (saisie directe) et se
+   synchronisent avec les clics ici — voir PeriodPicker.jsx. */
+.calOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(38,0,31,0.45);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.calPanel {
+  background: rgba(28,8,22,0.98);
+  border: 1px solid rgba(255,249,147,0.12);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 290px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
+  padding: 12px 14px 14px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: fadeIn 0.15s ease;
+}
+.calPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.calPanelTitle { font-size: 12.5px; font-weight: 700; color: var(--soleil); }
+.calClose {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(255,249,147,0.08);
+  border-radius: 7px;
+  color: rgba(255,249,147,0.7);
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font);
+  transition: background 0.12s, color 0.12s;
+  touch-action: manipulation;
+}
+.calClose:hover { background: rgba(255,249,147,0.16); color: var(--soleil); }
+
+.calHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2px 2px 8px;
+}
+.calLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--soleil);
+  text-transform: capitalize;
+}
+.calNav {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: rgba(255,249,147,0.08);
+  border-radius: 6px;
+  color: rgba(255,249,147,0.7);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  font-family: var(--font);
+  transition: background 0.12s, color 0.12s;
+  touch-action: manipulation;
+}
+.calNav:hover { background: rgba(255,249,147,0.16); color: var(--soleil); }
+.calWeekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  font-size: 9px;
+  color: rgba(255,249,147,0.35);
+  text-align: center;
+  padding: 0 2px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.calGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 0 2px; }
+.calDayEmpty { display: block; }
+.calDay {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  font-size: 11px;
+  color: rgba(255,249,147,0.65);
+  font-family: var(--font);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+  touch-action: manipulation;
+}
+.calDay:hover { background: rgba(255,249,147,0.10); color: var(--soleil); }
+.calDayInRange { background: rgba(255,249,147,0.08); border-radius: 0; }
+.calDayStart, .calDayEnd, .calDaySingle {
+  background: var(--soleil);
+  color: var(--myrtille);
+  font-weight: 700;
+}
+.calDayStart { border-radius: 6px 0 0 6px; }
+.calDayEnd { border-radius: 0 6px 6px 0; }
+
 .applyBtn {
   align-self: flex-end;
   padding: 5px 14px;
@@ -134,3 +285,116 @@
   touch-action: manipulation;
 }
 .applyBtn:hover { opacity: 0.85; }
+
+/* ─── Dropdown thématisé — le panneau qui s'ouvre doit reprendre la même
+   teinte que le bouton qui l'a ouvert, sur chaque dashboard (voir themeCls,
+   appliqué à la fois sur .pill et .dropdown dans PeriodPicker.jsx). ─── */
+
+/* ASUS et Activités commerciales : le bouton est en encre foncée (bleu /
+   myrtille) sur un hero clair — panneau clair assorti, plutôt que le
+   panneau sombre par défaut qui casserait la continuité à l'ouverture. */
+.dropdown.themeAsus,
+.dropdown.themeMyrtille {
+  background: rgba(255,255,255,0.97);
+}
+.dropdown.themeAsus { border-color: rgba(0,108,225,0.18); }
+.dropdown.themeAsus .option { color: rgba(0,44,92,0.65); }
+.dropdown.themeAsus .option:hover { background: rgba(0,108,225,0.08); color: var(--asus-blue); }
+.dropdown.themeAsus .optionActive { color: var(--asus-blue); }
+.dropdown.themeAsus .optionSep { background: rgba(0,108,225,0.12); }
+.dropdown.themeAsus .check { color: var(--asus-blue); }
+.dropdown.themeAsus .customRange { border-top-color: rgba(0,108,225,0.12); }
+.dropdown.themeAsus .customLbl { color: rgba(0,44,92,0.5); }
+.dropdown.themeAsus .customInput {
+  background: rgba(0,108,225,0.05);
+  border-color: rgba(0,108,225,0.18);
+  color: rgba(0,44,92,0.85);
+  color-scheme: light;
+}
+.dropdown.themeAsus .customInput::-webkit-calendar-picker-indicator { filter: none; opacity: 0.6; }
+.dropdown.themeAsus .applyBtn { background: var(--asus-blue); color: #fff; }
+
+.dropdown.themeMyrtille { border-color: rgba(38,0,31,0.15); }
+.dropdown.themeMyrtille .option { color: rgba(38,0,31,0.65); }
+.dropdown.themeMyrtille .option:hover { background: rgba(38,0,31,0.06); color: var(--myrtille); }
+.dropdown.themeMyrtille .optionActive { color: var(--myrtille); }
+.dropdown.themeMyrtille .optionSep { background: rgba(38,0,31,0.12); }
+.dropdown.themeMyrtille .check { color: var(--myrtille); }
+.dropdown.themeMyrtille .customRange { border-top-color: rgba(38,0,31,0.12); }
+.dropdown.themeMyrtille .customLbl { color: rgba(38,0,31,0.5); }
+.dropdown.themeMyrtille .customInput {
+  background: rgba(38,0,31,0.05);
+  border-color: rgba(38,0,31,0.18);
+  color: rgba(38,0,31,0.85);
+  color-scheme: light;
+}
+.dropdown.themeMyrtille .customInput::-webkit-calendar-picker-indicator { filter: none; opacity: 0.6; }
+.dropdown.themeMyrtille .applyBtn { background: var(--myrtille); color: #fff; }
+
+/* Commercial & Relation Client : le bouton est en argent clair sur un hero
+   sombre — le panneau sombre par défaut reste cohérent, seuls les accents
+   passent de soleil à argent. */
+.dropdown.themeArgent { border-color: rgba(167,173,170,0.18); }
+.dropdown.themeArgent .option { color: rgba(167,173,170,0.65); }
+.dropdown.themeArgent .option:hover { background: rgba(167,173,170,0.08); color: var(--ciment); }
+.dropdown.themeArgent .optionActive { color: var(--ciment); }
+.dropdown.themeArgent .optionSep { background: rgba(167,173,170,0.15); }
+.dropdown.themeArgent .check { color: var(--ciment); }
+.dropdown.themeArgent .customRange { border-top-color: rgba(167,173,170,0.12); }
+.dropdown.themeArgent .customLbl { color: rgba(167,173,170,0.5); }
+.dropdown.themeArgent .customInput {
+  background: rgba(167,173,170,0.06);
+  border-color: rgba(167,173,170,0.2);
+  color: rgba(167,173,170,0.9);
+}
+.dropdown.themeArgent .applyBtn { background: var(--ciment); color: var(--myrtille); }
+
+/* ─── Pop-up calendrier thématisé — même logique que le dropdown ci-dessus,
+   appliquée à .calPanel (élément séparé, portail indépendant). ─── */
+.calPanel.themeAsus,
+.calPanel.themeMyrtille {
+  background: rgba(255,255,255,0.98);
+  border-color: rgba(38,0,31,0.1);
+}
+.calPanel.themeAsus .calPanelTitle { color: var(--asus-blue); }
+.calPanel.themeAsus .calClose { background: rgba(0,108,225,0.08); color: rgba(0,108,225,0.7); }
+.calPanel.themeAsus .calClose:hover { background: rgba(0,108,225,0.16); color: var(--asus-blue); }
+.calPanel.themeAsus .calLabel { color: var(--asus-blue); }
+.calPanel.themeAsus .calNav { background: rgba(0,108,225,0.08); color: rgba(0,108,225,0.7); }
+.calPanel.themeAsus .calNav:hover { background: rgba(0,108,225,0.16); color: var(--asus-blue); }
+.calPanel.themeAsus .calWeekdays { color: rgba(0,44,92,0.35); }
+.calPanel.themeAsus .calDay { color: rgba(0,44,92,0.6); }
+.calPanel.themeAsus .calDay:hover { background: rgba(0,108,225,0.08); color: var(--asus-blue); }
+.calPanel.themeAsus .calDayInRange { background: rgba(0,108,225,0.08); }
+.calPanel.themeAsus .calDayStart,
+.calPanel.themeAsus .calDayEnd,
+.calPanel.themeAsus .calDaySingle { background: var(--asus-blue); color: #fff; }
+
+.calPanel.themeMyrtille .calPanelTitle { color: var(--myrtille); }
+.calPanel.themeMyrtille .calClose { background: rgba(38,0,31,0.08); color: rgba(38,0,31,0.6); }
+.calPanel.themeMyrtille .calClose:hover { background: rgba(38,0,31,0.16); color: var(--myrtille); }
+.calPanel.themeMyrtille .calLabel { color: var(--myrtille); }
+.calPanel.themeMyrtille .calNav { background: rgba(38,0,31,0.08); color: rgba(38,0,31,0.6); }
+.calPanel.themeMyrtille .calNav:hover { background: rgba(38,0,31,0.16); color: var(--myrtille); }
+.calPanel.themeMyrtille .calWeekdays { color: rgba(38,0,31,0.35); }
+.calPanel.themeMyrtille .calDay { color: rgba(38,0,31,0.6); }
+.calPanel.themeMyrtille .calDay:hover { background: rgba(38,0,31,0.08); color: var(--myrtille); }
+.calPanel.themeMyrtille .calDayInRange { background: rgba(38,0,31,0.08); }
+.calPanel.themeMyrtille .calDayStart,
+.calPanel.themeMyrtille .calDayEnd,
+.calPanel.themeMyrtille .calDaySingle { background: var(--myrtille); color: #fff; }
+
+.calPanel.themeArgent { border-color: rgba(167,173,170,0.18); }
+.calPanel.themeArgent .calPanelTitle { color: var(--ciment); }
+.calPanel.themeArgent .calClose { background: rgba(167,173,170,0.08); color: rgba(167,173,170,0.6); }
+.calPanel.themeArgent .calClose:hover { background: rgba(167,173,170,0.16); color: var(--ciment); }
+.calPanel.themeArgent .calLabel { color: var(--ciment); }
+.calPanel.themeArgent .calNav { background: rgba(167,173,170,0.08); color: rgba(167,173,170,0.6); }
+.calPanel.themeArgent .calNav:hover { background: rgba(167,173,170,0.16); color: var(--ciment); }
+.calPanel.themeArgent .calWeekdays { color: rgba(167,173,170,0.35); }
+.calPanel.themeArgent .calDay { color: rgba(167,173,170,0.6); }
+.calPanel.themeArgent .calDay:hover { background: rgba(167,173,170,0.12); color: var(--ciment); }
+.calPanel.themeArgent .calDayInRange { background: rgba(167,173,170,0.10); }
+.calPanel.themeArgent .calDayStart,
+.calPanel.themeArgent .calDayEnd,
+.calPanel.themeArgent .calDaySingle { background: var(--ciment); color: var(--myrtille); }

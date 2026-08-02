@@ -8,8 +8,7 @@ import { getPeriodRange } from '../../components/ui/PeriodPicker';
 import { useAsusData } from '../../hooks/useAsusData';
 import { computeAsusData } from '../../services/sheetsParser';
 import { usePeriod } from '../../contexts/PeriodContext';
-import layoutStyles from '../../components/layout/DashboardLayout.module.css';
-import { LoaderMark } from '../../components/ui/Loader';
+import CollabPicker from '../../components/ui/CollabPicker';
 import { exportDashboardPdf } from '../../utils/exportPdf';
 
 const PERIOD_LABELS = {
@@ -71,8 +70,7 @@ export default function Asus() {
     ));
   }, [compareActive, compareRange, asusData.hasCachedRows]); // eslint-disable-line
 
-  function handleCollabChange(e) {
-    const v = e.target.value;
+  function handleCollabChange(v) {
     setCollab(v);
     if (asusData.hasData) asusData.recomputeCollab(v);
     else {
@@ -84,32 +82,7 @@ export default function Asus() {
   const collabs = asusData.result?.collabs || ['Tous'];
 
   const extraFilters = (
-    <>
-      <div className={layoutStyles.collabPill}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-        </svg>
-        <select
-          className={layoutStyles.collabSelect}
-          value={collab}
-          onChange={handleCollabChange}
-          aria-label="Filtrer par collaborateur"
-        >
-          {collabs.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-
-      {/* Uniquement le tout premier chargement (pas de données en cache
-          encore) — une fois les données là, un rechargement suite à un
-          changement de filtre affiche son spinner dans le bandeau de
-          fraîcheur du corps de page plutôt qu'ici (voir ActiviteASUS.jsx). */}
-      {asusData.loading && !asusData.hasData && (
-        <div className={layoutStyles.loadingPill}>
-          <LoaderMark size={13} />
-          Chargement…
-        </div>
-      )}
-    </>
+    <CollabPicker value={collab} options={collabs} onChange={handleCollabChange} theme="asus" />
   );
 
   const activeFilters = collab !== 'Tous' ? [collab] : [];

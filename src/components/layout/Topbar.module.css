@@ -113,6 +113,35 @@
   flex-shrink: 0;
 }
 
+/* ─── Thèmes "Choisir une vue" — même couleur que le hero du dashboard
+   concerné (voir DashboardLayout.module.css .heroAsus/.heroCiment/
+   .heroCommercialRC), pour que ce popup s'inscrive dans la même cohérence
+   que les autres (période, comparaison, filtre collaborateur). ─── */
+.submenuAsus,
+.submenuMyrtille {
+  background: rgba(255,255,255,0.97);
+}
+.submenuAsus { border-color: rgba(0,108,225,0.18); }
+.submenuAsus .submenuLabel { color: rgba(0,108,225,0.45); }
+.submenuAsus .submenuItem { color: rgba(0,44,92,0.65); }
+.submenuAsus .submenuItem:hover { background: rgba(0,108,225,0.08); color: var(--asus-blue); }
+.submenuAsus .submenuItemActive { color: var(--asus-blue); }
+.submenuAsus .submenuDot { background: rgba(0,108,225,0.3); }
+
+.submenuMyrtille { border-color: rgba(38,0,31,0.15); }
+.submenuMyrtille .submenuLabel { color: rgba(38,0,31,0.4); }
+.submenuMyrtille .submenuItem { color: rgba(38,0,31,0.65); }
+.submenuMyrtille .submenuItem:hover { background: rgba(38,0,31,0.06); color: var(--myrtille); }
+.submenuMyrtille .submenuItemActive { color: var(--myrtille); }
+.submenuMyrtille .submenuDot { background: rgba(38,0,31,0.25); }
+
+.submenuArgent { border-color: rgba(167,173,170,0.18); }
+.submenuArgent .submenuLabel { color: rgba(167,173,170,0.5); }
+.submenuArgent .submenuItem { color: rgba(167,173,170,0.65); }
+.submenuArgent .submenuItem:hover { background: rgba(167,173,170,0.08); color: var(--ciment); }
+.submenuArgent .submenuItemActive { color: var(--ciment); }
+.submenuArgent .submenuDot { background: rgba(167,173,170,0.35); }
+
 /* ─── Avatar button + dropdown ───────────────────────────────────────────────── */
 .right { position: relative; }
 
