@@ -5,6 +5,7 @@ import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import NotConnected from '../../../components/ui/NotConnected';
+import NoPeriodData from '../../../components/ui/NoPeriodData';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -70,6 +71,9 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
   // logo animé plutôt qu'une mosaïque de "Non connecté", pour ne pas donner
   // l'impression que c'est cassé le temps que l'archive arrive.
   const firstLoad = !hasData && asusData?.loading && !asusData?.error;
+  // Connecté, données chargées, mais aucun appel sur la période choisie —
+  // distinct d'un vrai problème de connexion (voir ActiviteSales.jsx).
+  const isEmptyPeriod = hasData && r.totalAppels === 0;
 
   const perCollabEntries = hasData ? Object.entries(r.perCollab || {}) : [];
   const evolution = hasData ? computeAsusEvolution(asusData.rows || [], evoGranularity, selectedCollab) : null;
@@ -96,6 +100,13 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
         </div>
       )}
 
+      {isEmptyPeriod ? (
+        <>
+        <SectionLabel badge="RINGOVER">Activité commerciale ASUS</SectionLabel>
+        <Card><NoPeriodData suggestion="Essayez le mois précédent, ou élargissez la période sélectionnée." /></Card>
+        </>
+      ) : (
+      <>
       <SectionLabel badge="RINGOVER">Activité commerciale ASUS</SectionLabel>
       <Card>
         {hasData ? (
@@ -298,6 +309,8 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
           <NotConnected>en attente de l'archive Ringover</NotConnected>
         )}
       </Card>
+      </>
+      )}
     </div>
 
     {qualifOpen && qualifStats && (

@@ -8,6 +8,7 @@ import MotifBar from '../../../components/ui/MotifBar';
 import DonutChart from '../../../components/ui/DonutChart';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import NotConnected from '../../../components/ui/NotConnected';
+import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { fetchAPI } from '../../../services/api';
@@ -185,6 +186,10 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
 
   const hasData = !!summary;
   const firstLoad = loading && !summary && !error;
+  // Connecté, données chargées, mais aucun appel sur la période choisie
+  // (indépendant du filtre agent — un agent précis à 0 appel n'est pas la
+  // même situation) — voir ActiviteSales.jsx.
+  const isEmptyPeriod = hasData && (summary?.appels_emis ?? 0) === 0;
 
   // Un agent précis est sélectionné : les indicateurs qui n'ont pas
   // d'équivalent par agent (motifs, statuts, leads à recycler, évolution
@@ -331,6 +336,10 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
         </div>
       )}
 
+      {isEmptyPeriod ? (
+        <Card><NoPeriodData suggestion="Essayez le mois précédent, ou élargissez la période sélectionnée." /></Card>
+      ) : (
+      <>
       <div className={styles.kpiGrid5}>
         {kpis.map(k => <KPICard key={k.label} {...k} />)}
       </div>
@@ -525,6 +534,8 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
           <KPICard label="Leads restants à contacter" value="-" unit="" compare={false} trend={trend('Saisi à la main, non calculable via API')} color="amber" />
         </Card>
       </div>
+      </>
+      )}
     </div>
       )}
     </Loader>

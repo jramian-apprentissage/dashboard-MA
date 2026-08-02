@@ -10,6 +10,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import MotifBar from '../../../components/ui/MotifBar';
 import NotConnected from '../../../components/ui/NotConnected';
+import NoPeriodData from '../../../components/ui/NoPeriodData';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import { TAG_CATEGORIES, dernierJourArchive } from '../../../services/sheetsParser';
 import DonutChart from '../../../components/ui/DonutChart';
@@ -141,6 +142,11 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   }
 
   const kpis = hasData ? buildKPIs(salesData.result, rdvResult, compareResult, compareRdvResult, comparePeriodKey) : null;
+  // Connecté, données chargées, mais aucun appel sur la période choisie
+  // (ex. mois en cours tout juste commencé) — distinct d'un vrai problème
+  // de connexion : un seul message clair plutôt qu'une mosaïque de cartes
+  // "Non connecté" en dessous.
+  const isEmptyPeriod = hasData && salesData.result.total === 0;
   // RDV par tranche horaire : uniquement le tag Ringover "OK" (row.rdv, déjà
   // calculé par computeSalesData) — pas le fichier RDV externe. Décision
   // explicite : la fiabilité de ce chiffre dépend du bon tagging Ringover
@@ -192,6 +198,10 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
         </div>
       )}
 
+      {isEmptyPeriod ? (
+        <Card><NoPeriodData suggestion="Essayez le mois précédent, ou élargissez la période sélectionnée." /></Card>
+      ) : (
+      <>
       {kpis ? (
         <div className={styles.kpiGrid6}>
           {kpis.map(k => <KPICard key={k.label} {...k} />)}
@@ -452,6 +462,8 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
           <NotConnected>fichier RDV non chargé ou sans historique mensuel</NotConnected>
         )}
       </Card>
+      </>
+      )}
     </div>
       )}
     </Loader>
