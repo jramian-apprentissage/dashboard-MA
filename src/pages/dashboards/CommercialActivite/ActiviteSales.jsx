@@ -117,9 +117,9 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
   // enfin une fiche est complétée — plus logique à lire que émis→argumenté→décroché.
   return [
     { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` },        color: 'blue' },
-    { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmp ? comparePtsText(tauxDec, cmpTauxDec, comparePeriodKey) : null,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' } },
+    { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmpTauxDec,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' } },
     { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
-    { label: 'Taux fiches exploitables', value: `${tauxFichesExploit}%`, unit: '', compare: cmp ? comparePtsText(tauxFichesExploit, cmpTauxFichesExploit, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Argumentés + CNA - Mail' }, color: 'amber' },
+    { label: 'Taux fiches exploitables', value: `${tauxFichesExploit}%`, unit: '', compare: cmpTauxFichesExploit, trend: { dir: 'neutral', text: 'Argumentés + CNA - Mail' }, color: 'amber' },
     { label: 'RDV pris',                 value: rdvPris,        unit: '', compare: cmpRdv,      trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'green' },
     { label: 'Taux RDV honorés',         value: tauxHon,        unit: '', compare: cmpTauxHon,  trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'purple' },
   ];
