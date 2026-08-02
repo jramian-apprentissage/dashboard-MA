@@ -231,32 +231,32 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
 // préfixe "CAT - sous-type" à parser comme pour l'équipe Mon Ambassadeur,
 // Jimmy a confirmé qu'ils sont déjà nommés comme les indicateurs voulus.
 
-// `tag` = texte réel envoyé par Ringover (peut différer du libellé affiché,
-// ex. "Envoie catalogue" et non "Envoi catalogue") ; `prefix: true` pour un
-// tag composite du type "NRP : non attribué / hors service / faux numéro",
-// dont seul le préfixe avant les deux-points est stable — vérifié directement
-// sur les valeurs réelles de la table, plusieurs libellés ne correspondaient
-// plus telles quels et ces appels étaient silencieusement exclus de tous les
-// compteurs par tag (jamais comptés nulle part, ni dans le tag ni "sans tag").
+// `tags` = variantes réelles envoyées par Ringover pour cette catégorie —
+// plusieurs orthographes possibles pour un même tag (ex. "Pas intéresser"
+// puis "Pas intéressé" après correction du libellé dans Ringover début
+// août 2026 : l'archive garde l'ancienne orthographe sur les appels déjà
+// tagués, il faut donc matcher les deux indéfiniment). `prefix: true` pour
+// un tag composite du type "NRP : non attribué / hors service / faux
+// numéro", dont seul le préfixe avant les deux-points est stable.
 export const ASUS_TAGS_SORTANT = [
-  { label: 'Rappel',                tag: 'Rappel' },
-  { label: 'Répondeur',             tag: 'Répondeur' },
-  { label: 'NRP',                   tag: 'NRP', prefix: true },
-  { label: 'Vente gagnée',          tag: 'Vente gagnée' },
-  { label: 'Pas intéresser',        tag: 'Pas intéresser' },
-  { label: 'Vente perdue',          tag: 'Vente perdue' },
-  { label: 'Envoie catalogue',      tag: 'Envoie catalogue' },
-  { label: 'Rendez-vous',           tag: 'Rendez-vous' },
-  { label: 'Opportunité détectée',  tag: 'Opportunité détectée' },
+  { label: 'Rappel',                tags: ['Rappel'] },
+  { label: 'Répondeur',             tags: ['Répondeur'] },
+  { label: 'NRP',                   tags: ['NRP'], prefix: true },
+  { label: 'Vente gagnée',          tags: ['Vente gagnée'] },
+  { label: 'Pas intéressé',         tags: ['Pas intéressé', 'Pas intéresser'] },
+  { label: 'Vente perdue',          tags: ['Vente perdue'] },
+  { label: 'Envoi catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
+  { label: 'Rendez-vous',           tags: ['Rendez-vous'] },
+  { label: 'Opportunité détectée',  tags: ['Opportunité détectée'] },
 ];
 export const ASUS_TAGS_ENTRANT = [
-  { label: 'Vente gagnée',          tag: 'Vente gagnée' },
-  { label: 'Pas intéresser',        tag: 'Pas intéresser' },
-  { label: 'Vente perdue',          tag: 'Vente perdue' },
-  { label: 'Envoie catalogue',      tag: 'Envoie catalogue' },
-  { label: 'Rendez-vous',           tag: 'Rendez-vous' },
-  { label: 'Rappel',                tag: 'Rappel' },
-  { label: 'Opportunité détectée',  tag: 'Opportunité détectée' },
+  { label: 'Vente gagnée',          tags: ['Vente gagnée'] },
+  { label: 'Pas intéressé',         tags: ['Pas intéressé', 'Pas intéresser'] },
+  { label: 'Vente perdue',          tags: ['Vente perdue'] },
+  { label: 'Envoi catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
+  { label: 'Rendez-vous',           tags: ['Rendez-vous'] },
+  { label: 'Rappel',                tags: ['Rappel'] },
+  { label: 'Opportunité détectée',  tags: ['Opportunité détectée'] },
 ];
 
 const BON_APPEL_SECONDES = 300; // 5 min — seuil convenu avec Jimmy
@@ -269,8 +269,10 @@ function statsDirection(rows, direction, tagDefs) {
   const set = rows.filter(r => r.direction === direction);
   const matchesTag = (r, def) => {
     const t = normTag(r.tag);
-    const m = normTag(def.tag);
-    return def.prefix ? t.startsWith(m) : t === m;
+    return def.tags.some(tag => {
+      const m = normTag(tag);
+      return def.prefix ? t.startsWith(m) : t === m;
+    });
   };
   const parTag = tagDefs.map(def => ({
     label: def.label,
