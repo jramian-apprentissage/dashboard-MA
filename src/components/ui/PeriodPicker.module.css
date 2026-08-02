@@ -26,6 +26,21 @@
 }
 .pill svg { color: rgba(255,249,147,0.5); flex-shrink: 0; }
 
+/* Thème ASUS — pill en bleu de marque (le fond clair du hero rend le jaune
+   soleil illisible). Le dropdown reste sombre : c'est un panneau flottant
+   opaque, lisible quel que soit le fond derrière. */
+.pill.themeAsus {
+  color: var(--asus-blue);
+  background: rgba(0,108,225,0.06);
+  border-color: rgba(0,108,225,0.25);
+}
+.pill.themeAsus:hover {
+  background: rgba(0,108,225,0.12);
+  border-color: rgba(0,108,225,0.45);
+  color: var(--asus-blue);
+}
+.pill.themeAsus svg { color: rgba(0,108,225,0.6); }
+
 .chevron { transition: transform 0.18s; flex-shrink: 0; }
 .chevronOpen { transform: rotate(180deg); }
 

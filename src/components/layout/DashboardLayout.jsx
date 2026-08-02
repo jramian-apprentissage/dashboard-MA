@@ -153,7 +153,9 @@ export default function DashboardLayout({
     <div className={styles.shell}>
 
       {/* ── Hero header ── */}
-      <div className={styles.hero}>
+      {/* Teinte bleue (charte ASUS) au lieu du myrtille par défaut — seul ce
+          dashboard a une identité de marque client à respecter dans le hero. */}
+      <div className={`${styles.hero} ${dashboardId === 'asus' ? styles.heroAsus : ''}`}>
         <div className={styles.heroBg} style={{ backgroundImage: `url(${heroBgSrc || defaultHeroBg})`, backgroundPosition: heroBgPosition }} />
         <div className={styles.heroOverlay} />
 
@@ -221,24 +223,9 @@ export default function DashboardLayout({
                   customTo={customTo}
                   onChange={onChange}
                   excludeKeys={excludePeriods}
+                  theme={dashboardId === 'asus' ? 'asus' : 'default'}
                 />
               </div>
-
-              {onExtraire && (
-                <button
-                  className={styles.heroBtn}
-                  onClick={onExtraire}
-                  type="button"
-                  disabled={extraireLoading}
-                >
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                  {extraireLoading ? 'Génération…' : 'Extraire'}
-                </button>
-              )}
 
               <div className={`${styles.compareWrap} ${styles.mobileHidden}`}>
                 <button
@@ -275,6 +262,22 @@ export default function DashboardLayout({
                   </div>
                 )}
               </div>
+
+              {onExtraire && (
+                <button
+                  className={styles.heroBtn}
+                  onClick={onExtraire}
+                  type="button"
+                  disabled={extraireLoading}
+                >
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  {extraireLoading ? 'Génération…' : 'Extraire'}
+                </button>
+              )}
             </div>
           </div>
 

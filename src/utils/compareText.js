@@ -6,9 +6,20 @@ export function compareLabel(comparePeriodKey) {
   return comparePeriodKey === 'previous-year' ? 'année précédente' : 'période précédente';
 }
 
+// Texte "0 sur la période/année précédente" — jamais de comparaison masquée
+// silencieusement : un pourcentage n'a pas de sens avec une référence à 0,
+// mais l'utilisateur doit voir POURQUOI il n'y a pas de %, pas une carte
+// vide sans explication (retour direct : certaines cartes affichent un
+// comparatif et d'autres non, sans qu'on comprenne pourquoi).
+export function compareZeroRefText(comparePeriodKey) {
+  const article = comparePeriodKey === 'previous-year' ? "l'" : 'la ';
+  return { dir: 'neutral', text: `0 sur ${article}${compareLabel(comparePeriodKey)}` };
+}
+
 // Delta relatif (%) entre une valeur courante et une valeur de référence.
 export function compareValueText(current, ref, comparePeriodKey) {
-  if (ref == null || ref === 0) return null;
+  if (ref == null) return null; // donnée de comparaison pas encore chargée — KPICard affiche "Calcul en cours…"
+  if (ref === 0) return compareZeroRefText(comparePeriodKey);
   const pct = Math.round(((current - ref) / ref) * 100);
   const sign = pct > 0 ? '+' : '';
   return {
@@ -19,7 +30,7 @@ export function compareValueText(current, ref, comparePeriodKey) {
 
 // Delta en points (taux/pourcentages déjà exprimés en %, ex. win rate).
 export function comparePtsText(current, ref, comparePeriodKey) {
-  if (ref == null) return null;
+  if (ref == null || !Number.isFinite(ref) || !Number.isFinite(current)) return null;
   const diff = current - ref;
   const sign = diff > 0 ? '+' : '';
   const unit = Math.abs(diff) === 1 ? 'pt' : 'pts';

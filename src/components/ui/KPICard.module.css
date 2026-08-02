@@ -32,8 +32,10 @@
    en évidence) mais avec le bleu de marque Asus, réservée au dashboard
    client Asus (co-branding demandé par le client). */
 .card.accentAsus {
-  background: var(--asus-blue);
-  border-color: var(--asus-blue);
+  background: rgba(0,108,225,0.85);
+  border-color: rgba(0,108,225,0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .card.accentAsus .label { color: rgba(255,255,255,0.6); }
 .card.accentAsus .value { color: #fff; }

@@ -3,7 +3,7 @@ import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale
 import { useRef, useMemo, useState } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { compareValueText, comparePtsText } from '../../../utils/compareText';
+import { compareValueText, comparePtsText, compareZeroRefText } from '../../../utils/compareText';
 import { fmtNumber } from '../../../utils/formatNumber';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
@@ -81,19 +81,36 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
   const rdvSrc  = rdvResult ? 'Fichier RDV' : 'Fichier RDV non chargé';
 
   const cmp = compareResult;
-  const cmpTauxDec = cmp && cmp.total > 0 ? Math.round((cmp.decroche / cmp.total) * 100) : null;
-  const cmpTauxFichesExploit = cmp && cmp.total > 0 ? Math.round((cmp.fichesExploitables / cmp.total) * 100) : null;
+  // Le total de la période comparée peut être à 0 (aucun appel) — un vrai
+  // résultat, pas une donnée manquante : comparePtsText doit recevoir un
+  // taux "0" explicite dans ce cas, jamais null (qui signifierait "pas
+  // encore chargé" pour KPICard et masquerait la ligne à tort).
+  const cmpTauxDec = cmp
+    ? (cmp.total > 0
+        ? comparePtsText(tauxDec, Math.round((cmp.decroche / cmp.total) * 100), comparePeriodKey)
+        : compareZeroRefText(comparePeriodKey))
+    : null;
+  const cmpTauxFichesExploit = cmp
+    ? (cmp.total > 0
+        ? comparePtsText(tauxFichesExploit, Math.round((cmp.fichesExploitables / cmp.total) * 100), comparePeriodKey)
+        : compareZeroRefText(comparePeriodKey))
+    : null;
   const nbCollabActifs = Object.values(result.perCollab || {}).filter(c => (c.appels || 0) > 0).length;
 
-  // Comparatif RDV — masqué (pas juste "0 vs référence") quand la période de
-  // comparaison n'a elle-même aucun RDV, même logique que TLM : un delta
-  // n'a de sens que si la référence a une vraie donnée.
-  const cmpRdv = rdvResult && compareRdvResult && compareRdvResult.rdvPris > 0
-    ? compareValueText(rdvResult.rdvPris, compareRdvResult.rdvPris, comparePeriodKey)
-    : null;
-  const cmpTauxHon = rdvResult && compareRdvResult && compareRdvResult.rdvPris > 0
-    ? comparePtsText(rdvResult.tauxHonores, compareRdvResult.tauxHonores, comparePeriodKey)
-    : null;
+  // Comparatif RDV — même logique : 0 RDV sur la période comparée est un
+  // résultat explicite, pas une absence de donnée. Reste null tant que
+  // rdvResult (valeur courante) ou compareRdvResult (référence) n'est pas
+  // encore arrivé, pour que KPICard affiche "Calcul en cours…" à ce moment-là.
+  const cmpRdv = !rdvResult ? null : (compareRdvResult
+    ? (compareRdvResult.rdvPris > 0
+        ? compareValueText(rdvResult.rdvPris, compareRdvResult.rdvPris, comparePeriodKey)
+        : compareZeroRefText(comparePeriodKey))
+    : null);
+  const cmpTauxHon = !rdvResult ? null : (compareRdvResult
+    ? (compareRdvResult.rdvPris > 0
+        ? comparePtsText(rdvResult.tauxHonores, compareRdvResult.tauxHonores, comparePeriodKey)
+        : compareZeroRefText(comparePeriodKey))
+    : null);
 
   // Ordre "funnel" : on émet un appel, il est décroché, puis argumenté,
   // enfin une fiche est complétée — plus logique à lire que émis→argumenté→décroché.
@@ -145,6 +162,15 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
     <Loader loading={firstLoad} label="Récupération de l'archive Ringover…" minHeight={480}>
       {() => (
     <div className={styles.page}>
+      {/* Fraîcheur de l'archive — tout en haut, centré, avant même le titre
+          de section (retour direct : doit être la première chose visible). */}
+      {hasData && salesData.lastFetched && (
+        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)', textAlign: 'center' }}>
+          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — Mise à jour arrêtée au {dernierJourArchive(salesData.rows) || '—'}
+          {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
+        </div>
+      )}
+
       <SectionLabel badge="RINGOVER">Indicateurs principaux</SectionLabel>
 
       {/* Bandeau statut connexion données */}
@@ -156,12 +182,6 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       {salesData?.rdvError && (
         <div className={styles.dataAlert} style={{ borderColor: 'rgba(212,168,75,0.4)', background: 'rgba(212,168,75,0.08)' }}>
           <span style={{ color: 'var(--warn)' }}>⚠ Fichier RDV :</span> {salesData.rdvError}
-        </div>
-      )}
-      {hasData && salesData.lastFetched && (
-        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — Mise à jour arrêtée au {dernierJourArchive(salesData.rows) || '—'}
-          {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
         </div>
       )}
 

@@ -31,6 +31,71 @@
   pointer-events: none;
 }
 
+/* Dashboard client ASUS — dégradé gris clair côté texte, photo visible sans
+   assombrissement côté image (retour direct : le bleu uni "c'est moche",
+   préférence pour un style proche d'un hero produit ASUS classique : fond
+   gris clair sur la moitié gauche, photo nette sur la droite, texte sombre
+   plutôt que le blanc/soleil pensé pour un fond myrtille). */
+.heroAsus { background: #F2F2F0; }
+.heroAsus .heroBg { opacity: 1; }
+.heroAsus .heroOverlay {
+  background: linear-gradient(
+    100deg,
+    #F2F2F0 0%,
+    #F2F2F0 42%,
+    rgba(242,242,240,0.85) 50%,
+    rgba(242,242,240,0) 62%
+  );
+}
+.heroAsus .title,
+.heroAsus .subtitle,
+.heroAsus .subtitlePeriod,
+.heroAsus .tabBadge {
+  color: var(--myrtille);
+}
+.heroAsus .titleEm { color: var(--asus-blue); }
+.heroAsus .subtitle { opacity: 0.7; }
+.heroAsus .tabBadge { opacity: 0.6; }
+
+/* Boutons du hero (Comparer/Extraire/période) en bleu ASUS plutôt qu'en
+   soleil (jaune, pensé pour un fond myrtille sombre — illisible sur le
+   fond clair de ce dashboard). */
+.heroAsus .heroBtn {
+  color: var(--asus-blue);
+  border-color: rgba(0,108,225,0.35);
+}
+.heroAsus .heroBtn:hover {
+  background: rgba(0,108,225,0.08);
+  border-color: rgba(0,108,225,0.6);
+  color: var(--asus-blue);
+}
+.heroAsus .heroBtnActive {
+  background: rgba(0,108,225,0.10);
+  border-color: var(--asus-blue);
+  color: var(--asus-blue);
+}
+.heroAsus .heroBtnX { color: rgba(0,108,225,0.5); }
+.heroAsus .heroBtnX:hover { color: var(--asus-blue); background: rgba(0,108,225,0.08); }
+.heroAsus .dot { background: var(--asus-blue); box-shadow: 0 0 5px rgba(0,108,225,0.5); }
+.heroAsus .compareModeGroup { border-color: rgba(0,108,225,0.35); }
+.heroAsus .compareModeBtn { color: rgba(0,44,92,0.6); }
+.heroAsus .compareModeBtn:not(:last-child) { border-right-color: rgba(0,108,225,0.25); }
+.heroAsus .compareModeBtn:hover { color: var(--asus-blue); }
+.heroAsus .compareModeBtnActive { background: rgba(0,108,225,0.14); color: var(--asus-blue); }
+.heroAsus .collabPill {
+  color: var(--asus-blue);
+  background: rgba(0,108,225,0.06);
+  border-color: rgba(0,108,225,0.25);
+}
+.heroAsus .collabPill:hover {
+  background: rgba(0,108,225,0.12);
+  border-color: rgba(0,108,225,0.45);
+  color: var(--asus-blue);
+}
+.heroAsus .collabPill svg { color: rgba(0,108,225,0.6); }
+.heroAsus .collabSelect { color: var(--asus-blue); }
+.heroAsus .collabSelect option { background: #fff; color: var(--myrtille); }
+
 .heroInner {
   position: relative;
   z-index: 1;

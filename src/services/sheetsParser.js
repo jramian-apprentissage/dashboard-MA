@@ -238,25 +238,29 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
 // tagués, il faut donc matcher les deux indéfiniment). `prefix: true` pour
 // un tag composite du type "NRP : non attribué / hors service / faux
 // numéro", dont seul le préfixe avant les deux-points est stable.
+// Ordre d'affichage demandé par Jimmy : les tags "qualifiants" (résultat de
+// l'appel) d'abord, les tags "techniques" (répondeur/NRP/sans tag) ensuite —
+// "Sans tag" reste toujours en toute dernière position (ajouté par
+// statsDirection/buildTagCards, pas dans cette liste).
 export const ASUS_TAGS_SORTANT = [
+  { label: 'Opportunité détectée',  tags: ['Opportunité détectée'] },
+  { label: 'Envoi catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
+  { label: 'Rendez-vous',           tags: ['Rendez-vous'] },
+  { label: 'Vente gagnée',          tags: ['Vente gagnée'] },
+  { label: 'Vente perdue',          tags: ['Vente perdue'] },
   { label: 'Rappel',                tags: ['Rappel'] },
   { label: 'Répondeur',             tags: ['Répondeur'] },
   { label: 'NRP',                   tags: ['NRP'], prefix: true },
-  { label: 'Vente gagnée',          tags: ['Vente gagnée'] },
   { label: 'Pas intéressé',         tags: ['Pas intéressé', 'Pas intéresser'] },
-  { label: 'Vente perdue',          tags: ['Vente perdue'] },
-  { label: 'Envoi catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
-  { label: 'Rendez-vous',           tags: ['Rendez-vous'] },
-  { label: 'Opportunité détectée',  tags: ['Opportunité détectée'] },
 ];
 export const ASUS_TAGS_ENTRANT = [
-  { label: 'Vente gagnée',          tags: ['Vente gagnée'] },
-  { label: 'Pas intéressé',         tags: ['Pas intéressé', 'Pas intéresser'] },
-  { label: 'Vente perdue',          tags: ['Vente perdue'] },
+  { label: 'Opportunité détectée',  tags: ['Opportunité détectée'] },
   { label: 'Envoi catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
   { label: 'Rendez-vous',           tags: ['Rendez-vous'] },
+  { label: 'Vente gagnée',          tags: ['Vente gagnée'] },
+  { label: 'Vente perdue',          tags: ['Vente perdue'] },
   { label: 'Rappel',                tags: ['Rappel'] },
-  { label: 'Opportunité détectée',  tags: ['Opportunité détectée'] },
+  { label: 'Pas intéressé',         tags: ['Pas intéressé', 'Pas intéresser'] },
 ];
 
 const BON_APPEL_SECONDES = 300; // 5 min — seuil convenu avec Jimmy
@@ -304,6 +308,33 @@ export function computeAsusData(rows, dateFrom, dateTo, collab = 'Tous') {
   const bonsAppels     = filtered.filter(r => (r.duration || 0) >= BON_APPEL_SECONDES).length;
   const tauxBons       = totalAppels ? Math.round((bonsAppels / totalAppels) * 100) : 0;
 
+  // TMC par sens — même donnée que sortant.total/entrant.total, calculée à
+  // part pour ne pas faire dépendre computeAsusData() du contenu de parTag.
+  const dureeMoyenne = (direction) => {
+    const set = filtered.filter(r => r.direction === direction);
+    return set.length ? Math.round(set.reduce((s, r) => s + (r.duration || 0), 0) / set.length) : 0;
+  };
+  const dureeMoyenneSortantS = dureeMoyenne('out');
+  const dureeMoyenneEntrantS = dureeMoyenne('in');
+
+  // Répartition "abouti / non abouti" (sortant) et "décroché / manqué"
+  // (entrant) — sur le statut Ringover (`statut`), pas sur la durée : la
+  // durée n'est pas un signal fiable ici (des appels non aboutis ont une
+  // durée non nulle dans cette archive). Définitions et valeurs vérifiées
+  // directement auprès de Jimmy contre le rapport Ringover réel de juillet :
+  //   Aboutis (sortant)    = ANSWERED
+  //   Non aboutis (sortant) = CANCELLED + FAILED
+  //   Décrochés (entrant)   = ANSWERED
+  //   Manqués (entrant)     = MISSED + VOICEMAIL (le standard ASUS compte le
+  //                           répondeur comme manqué, pas comme décroché)
+  // Alimente le donut "Nombre total d'appels" (vision globale sortant+entrant).
+  const sortantRows = filtered.filter(r => r.direction === 'out');
+  const entrantRows = filtered.filter(r => r.direction === 'in');
+  const aboutis    = sortantRows.filter(r => r.statut === 'ANSWERED').length;
+  const nonAboutis = sortantRows.filter(r => r.statut === 'CANCELLED' || r.statut === 'FAILED').length;
+  const decroches  = entrantRows.filter(r => r.statut === 'ANSWERED').length;
+  const manques    = entrantRows.filter(r => r.statut === 'MISSED' || r.statut === 'VOICEMAIL').length;
+
   const collabs = ['Tous', ...Array.from(new Set(rows.map(r => r.collab).filter(Boolean))).sort()];
 
   // Statistiques par collaborateur — tableau du bas + détail au clic sur
@@ -322,7 +353,7 @@ export function computeAsusData(rows, dateFrom, dateTo, collab = 'Tous') {
     };
   });
 
-  return { sortant, entrant, totalAppels, dureeMoyenneS, bonsAppels, tauxBons, collabs, perCollab };
+  return { sortant, entrant, totalAppels, dureeMoyenneS, dureeMoyenneSortantS, dureeMoyenneEntrantS, bonsAppels, tauxBons, aboutis, nonAboutis, decroches, manques, collabs, perCollab };
 }
 
 function dateKeyOf(d) {

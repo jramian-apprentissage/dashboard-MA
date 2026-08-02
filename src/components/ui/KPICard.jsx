@@ -1,5 +1,6 @@
 import styles from './KPICard.module.css';
 import { fmtNumber } from '../../utils/formatNumber';
+import { usePeriod } from '../../contexts/PeriodContext';
 
 // Icônes "tendance graphique" (trending-up/down) plutôt qu'un chevron, qui se
 // lit comme un contrôle cliquable (expand/collapse) et non comme un
@@ -25,7 +26,25 @@ function TrendIcon({ dir }) {
   return null;
 }
 
+// Ligne de comparaison jamais masquée silencieusement : tant que "Comparer"
+// est actif, la carte affiche toujours quelque chose (le delta, "0 sur la
+// période précédente" pour une référence à zéro, ou "Calcul en cours…" tant
+// que la donnée n'est pas encore arrivée) — sans ça, l'utilisateur ne peut
+// pas deviner pourquoi certaines cartes ont un comparatif et d'autres non.
+// Seule la désactivation explicite de "Comparer" masque la ligne. `compare`
+// reste néanmoins surchargeable à `false` (jamais `null`/`undefined`) par
+// une carte qui n'a structurellement aucune notion de comparaison (ex. un
+// libellé texte plutôt qu'un chiffre) — cas volontairement rare.
+function resolveCompare(compare, compareActive) {
+  if (!compareActive) return null;
+  if (compare === false) return null;
+  if (compare) return compare;
+  return { dir: 'neutral', text: 'Calcul en cours…' };
+}
+
 export default function KPICard({ label, value, unit, trend, compare, color = 'default', variant, source }) {
+  const { compareActive } = usePeriod();
+  const resolvedCompare = resolveCompare(compare, compareActive);
   const cls = [
     styles.card,
     variant === 'accent'      ? styles.accent      : '',
@@ -57,10 +76,10 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
       {/* Ligne 1 (si dispo) : comparaison vs période précédente/année précédente.
           Ligne 2 : la petite définition du KPI, toujours affichée — la
           comparaison vient s'ajouter au-dessus, elle ne la remplace jamais. */}
-      {compare && (
-        <div className={`${styles.compare} ${styles[compare.dir] || ''}`}>
-          <TrendIcon dir={compare.dir} />
-          <span className={styles.lineText}>{compare.text}</span>
+      {resolvedCompare && (
+        <div className={`${styles.compare} ${styles[resolvedCompare.dir] || ''}`}>
+          <TrendIcon dir={resolvedCompare.dir} />
+          <span className={styles.lineText}>{resolvedCompare.text}</span>
         </div>
       )}
       {trend && (

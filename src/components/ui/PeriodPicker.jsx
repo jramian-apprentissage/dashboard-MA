@@ -104,7 +104,8 @@ export function getPeriodRange(key, customFrom, customTo) {
   }
 }
 
-export default function PeriodPicker({ value, customFrom, customTo, onChange, excludeKeys = [] }) {
+export default function PeriodPicker({ value, customFrom, customTo, onChange, excludeKeys = [], theme = 'default' }) {
+  const themeCls = theme === 'asus' ? styles.themeAsus : '';
   const visiblePeriods = excludeKeys.length ? PERIODS.filter(p => !excludeKeys.includes(p.key)) : PERIODS;
   const [open, setOpen] = useState(false);
   // Coordonnées viewport (position:fixed) calculées à l'ouverture
@@ -166,7 +167,7 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange, ex
   }
 
   const dropdown = open && coords && createPortal(
-    <div className={styles.dropdown} style={coords} ref={dropRef} data-keep-sheet-open>
+    <div className={`${styles.dropdown} ${themeCls}`} style={coords} ref={dropRef} data-keep-sheet-open>
       {visiblePeriods.map(p => (
         <button
           key={p.key}
@@ -230,7 +231,7 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange, ex
 
   return (
     <div className={styles.wrap} ref={wrapRef}>
-      <button className={styles.pill} onClick={() => setOpen(o => !o)} type="button">
+      <button className={`${styles.pill} ${themeCls}`} onClick={() => setOpen(o => !o)} type="button">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="4" width="18" height="18" rx="2"/>
           <line x1="16" y1="2" x2="16" y2="6"/>

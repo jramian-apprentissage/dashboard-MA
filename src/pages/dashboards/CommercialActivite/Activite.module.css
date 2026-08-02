@@ -111,6 +111,94 @@
 .legend { display: flex; align-items: center; font-size: 10.5px; color: var(--text2); gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
 
+/* Donut "Nombre total d'appels" (ASUS) — donut à gauche, répartition
+   sortant/entrant en 2 colonnes à droite (repris du style camembert déjà
+   utilisé ailleurs plutôt qu'un design ASUS importé tel quel). */
+.asusTotalWrap {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: nowrap;
+}
+/* Le DonutChart interne fait width:100% de son parent — sans une largeur
+   fixe ici, il mange tout l'espace et laisse 0px aux stats à droite. */
+.asusTotalDonut { width: 150px; flex-shrink: 0; }
+.asusTotalStats {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* Largeur plafonnée — sinon .asusTotalRowVal (margin-left:auto) s'étire sur
+   tout l'espace disponible et sépare le libellé de sa valeur par un grand
+   vide sur les écrans larges. */
+.asusTotalGroup { display: flex; flex-direction: column; gap: 6px; min-width: 0; max-width: 260px; }
+.asusTotalGroupTitle {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text2);
+  margin-bottom: 2px;
+}
+.asusTotalRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text);
+}
+.asusTotalRowVal { margin-left: auto; font-weight: 700; }
+/* Desktop : donut centré en haut, puis 2 colonnes côte à côte en dessous
+   (entrant à gauche, sortant à droite) — le mobile garde le layout par
+   défaut ci-dessus (donut à gauche, stats empilées à droite), inchangé. */
+@media (min-width: 641px) {
+  .asusTotalWrap { flex-direction: column; align-items: center; gap: 20px; }
+  .asusTotalDonut { width: 170px; }
+  .asusTotalStats { flex-direction: row; gap: 56px; }
+  .asusTotalGroup:first-child { order: 2; }
+  .asusTotalGroup:last-child { order: 1; }
+}
+
+.asusTotalRowPct {
+  font-size: 9.5px;
+  color: var(--text2);
+  background: var(--brouillard);
+  border-radius: 5px;
+  padding: 1px 6px;
+  min-width: 34px;
+  text-align: center;
+}
+
+/* Icône "i" — définitions Ringover (Aboutis/Non aboutis/Décrochés/Manqués).
+   Survol OU clic sur ordinateur ; masqué sur portable où le survol n'existe
+   pas et où la bulle prendrait toute la largeur utile. */
+.infoWrap { position: relative; display: inline-flex; }
+.infoBtn {
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg3);
+  color: var(--text2); font-size: 10px; font-weight: 700; font-style: italic;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0; line-height: 1; font-family: Georgia, serif;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.infoBtn:hover { background: var(--myrtille); color: var(--soleil); border-color: var(--myrtille); }
+.infoTooltip {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  width: 300px; background: #FBFBFB; color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(38,0,31,0.18);
+  padding: 12px 14px; font-size: 11px; line-height: 1.55; text-align: left;
+  z-index: 50;
+}
+.infoTooltip p { margin: 0 0 8px 0; }
+.infoTooltip p:last-child { margin-bottom: 0; }
+.infoTooltip strong { color: var(--myrtille); }
+@media (max-width: 640px) {
+  .infoWrap { display: none; }
+}
+
 /* Bouton Comparer */
 .compareWrap { display: flex; align-items: center; gap: 6px; }
 .compareBtn {

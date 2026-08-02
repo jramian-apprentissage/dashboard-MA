@@ -6,6 +6,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import NotConnected from '../../../components/ui/NotConnected';
 import Loader from '../../../components/ui/Loader';
+import DonutChart from '../../../components/ui/DonutChart';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText } from '../../../utils/compareText';
 import { fmtNumber } from '../../../utils/formatNumber';
@@ -63,6 +64,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
   const { comparePeriodKey } = usePeriod();
   const [qualifOpen, setQualifOpen] = useState(null); // { collab, direction }
   const [evoGranularity, setEvoGranularity] = useState('jour');
+  const [infoOpen, setInfoOpen] = useState(false);
 
   // Même principe que Activité Sales : le tout premier chargement affiche le
   // logo animé plutôt qu'une mosaïque de "Non connecté", pour ne pas donner
@@ -80,24 +82,98 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
       {() => (
     <>
     <div className={styles.page}>
-      <SectionLabel badge="RINGOVER">Activité commerciale ASUS</SectionLabel>
-
+      {/* Fraîcheur de l'archive — tout en haut, avant la première section. */}
       {asusData?.error && (
         <div className={styles.dataAlert} style={{ borderColor: 'rgba(196,135,106,0.4)', background: 'rgba(196,135,106,0.08)' }}>
           <span style={{ color: 'var(--neg)' }}>⚠ Erreur :</span> {asusData.error}
         </div>
       )}
       {hasData && asusData.lastFetched && (
-        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — MAJ arrêtée au {dernierJourArchive(asusData.rows) || '—'}
+        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)', textAlign: 'center' }}>
+          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — Mise à jour arrêtée au {dernierJourArchive(asusData.rows) || '—'}
           {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
         </div>
       )}
 
+      <SectionLabel badge="RINGOVER">Activité commerciale ASUS</SectionLabel>
+      <Card>
+        {hasData ? (
+          <>
+          <div className={styles.cardHeadRow}>
+            <span className={styles.subNote} style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12 }}>Nombre total d'appels</span>
+            <div
+              className={styles.infoWrap}
+              onMouseEnter={() => setInfoOpen(true)}
+              onMouseLeave={() => setInfoOpen(false)}
+            >
+              <button type="button" className={styles.infoBtn} onClick={() => setInfoOpen(o => !o)} aria-label="Définitions Ringover">i</button>
+              {infoOpen && (
+                <div className={styles.infoTooltip}>
+                  <p><strong>Aboutis</strong> : Pris par un agent ou tombés sur la messagerie vocale.</p>
+                  <p><strong>Non aboutis</strong> : Impossible de joindre le contact (raccroché avant de faire sonner chez le contact ou échec de la connexion).</p>
+                  <p><strong>Décrochés</strong> : Pris par un agent ou par un standard. Lorsque l'option « Considérer comme appel manqué » est désactivée dans votre standard, les appels sont comptabilisés comme décrochés. Les appels décrochés en interne ne sont pas comptabilisés.</p>
+                  <p><strong>Manqués</strong> : Non pris par un agent ou par un standard avec l'option « Considérer comme manqué » activée.</p>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className={styles.asusTotalWrap}>
+            <div className={styles.asusTotalDonut}>
+              <DonutChart
+                variant="donut"
+                data={[r.aboutis, r.nonAboutis, r.decroches, r.manques]}
+                labels={['Aboutis (sortant)', 'Non aboutis (sortant)', 'Décrochés (entrant)', 'Manqués (entrant)']}
+                colors={['var(--asus-blue)', 'rgba(167,173,170,0.5)', 'rgba(126,184,154,0.75)', 'rgba(196,135,106,0.75)']}
+                height={150}
+                centerValue={r.totalAppels}
+                centerLabel="appels"
+                tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
+                showDataLabels={false}
+              />
+            </div>
+            <div className={styles.asusTotalStats}>
+              <div className={styles.asusTotalGroup}>
+                <div className={styles.asusTotalGroupTitle}>Appels sortants</div>
+                <div className={styles.asusTotalRow}>
+                  <span className={styles.legDot} style={{ background: 'var(--asus-blue)' }} />
+                  Aboutis
+                  <span className={styles.asusTotalRowVal}>{fmtNumber(r.aboutis)}</span>
+                  <span className={styles.asusTotalRowPct}>{r.sortant.total > 0 ? Math.round(r.aboutis / r.sortant.total * 100) : 0}%</span>
+                </div>
+                <div className={styles.asusTotalRow}>
+                  <span className={styles.legDot} style={{ background: 'rgba(167,173,170,0.5)' }} />
+                  Non aboutis
+                  <span className={styles.asusTotalRowVal}>{fmtNumber(r.nonAboutis)}</span>
+                  <span className={styles.asusTotalRowPct}>{r.sortant.total > 0 ? Math.round(r.nonAboutis / r.sortant.total * 100) : 0}%</span>
+                </div>
+              </div>
+              <div className={styles.asusTotalGroup}>
+                <div className={styles.asusTotalGroupTitle}>Appels entrants</div>
+                <div className={styles.asusTotalRow}>
+                  <span className={styles.legDot} style={{ background: 'rgba(126,184,154,0.75)' }} />
+                  Décrochés
+                  <span className={styles.asusTotalRowVal}>{fmtNumber(r.decroches)}</span>
+                  <span className={styles.asusTotalRowPct}>{r.entrant.total > 0 ? Math.round(r.decroches / r.entrant.total * 100) : 0}%</span>
+                </div>
+                <div className={styles.asusTotalRow}>
+                  <span className={styles.legDot} style={{ background: 'rgba(196,135,106,0.75)' }} />
+                  Manqués
+                  <span className={styles.asusTotalRowVal}>{fmtNumber(r.manques)}</span>
+                  <span className={styles.asusTotalRowPct}>{r.entrant.total > 0 ? Math.round(r.manques / r.entrant.total * 100) : 0}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          </>
+        ) : (
+          <NotConnected>en attente de l'archive Ringover</NotConnected>
+        )}
+      </Card>
+
       <SectionLabel>Appels sortants</SectionLabel>
       <Card>
         {hasData ? (
-          <div className={styles.kpiGridAuto}>
+          <div className={styles.kpiGrid5}>
             {buildTagCards(r.sortant, 'Appels sortants', compareResult?.sortant, comparePeriodKey).map(k => <KPICard key={k.label} {...k} />)}
           </div>
         ) : (
@@ -108,7 +184,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
       <SectionLabel>Appels entrants</SectionLabel>
       <Card>
         {hasData ? (
-          <div className={styles.kpiGridAuto}>
+          <div className={styles.kpiGrid5}>
             {buildTagCards(r.entrant, 'Appels entrants', compareResult?.entrant, comparePeriodKey).map(k => <KPICard key={k.label} {...k} />)}
           </div>
         ) : (
@@ -120,7 +196,14 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
       <Card>
         {hasData ? (
           <div className={styles.kpiGridAuto}>
-            <KPICard label="Durée moyenne (TMC)" value={fmtDuree(r.dureeMoyenneS)} unit="min" compare={compareResult ? compareValueText(r.dureeMoyenneS, compareResult.dureeMoyenneS, comparePeriodKey) : null} color="default" />
+            <KPICard
+              label="Durée moyenne (TMC)"
+              value={fmtDuree(r.dureeMoyenneS)}
+              unit="min"
+              compare={compareResult ? compareValueText(r.dureeMoyenneS, compareResult.dureeMoyenneS, comparePeriodKey) : null}
+              trend={{ dir: 'neutral', text: `${fmtDuree(r.dureeMoyenneSortantS)} sortant · ${fmtDuree(r.dureeMoyenneEntrantS)} entrant` }}
+              color="default"
+            />
             <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null} trend={{ dir: 'neutral', text: `${r.tauxBons}% du total` }} color="default" />
           </div>
         ) : (
@@ -229,8 +312,11 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
             <button type="button" className={styles.qualifClose} onClick={() => setQualifOpen(null)}>✕</button>
           </div>
           <div className={styles.kpiGridAuto}>
+            {/* Pas de comparatif dans ce détail par agent (pas de donnée de
+                période comparée plombée jusqu'ici) — compare={false} explicite,
+                sinon KPICard afficherait "Calcul en cours…" indéfiniment. */}
             {buildTagCards(qualifStats, qualifOpen.direction === 'sortant' ? 'Appels sortants' : 'Appels entrants').map(k => (
-              <KPICard key={k.label} {...k} />
+              <KPICard key={k.label} {...k} compare={false} />
             ))}
           </div>
         </div>

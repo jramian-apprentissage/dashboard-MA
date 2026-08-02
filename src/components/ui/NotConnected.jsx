@@ -3,13 +3,16 @@
    affichage, voir Loader/messages d'erreur des hooks). À utiliser tant
    qu'aucune source de données n'existe pour la métrique concernée. */
 
-// Props KPICard pour une métrique sans source de données.
+// Props KPICard pour une métrique sans source de données. compare: false
+// (jamais juste omis) — sinon KPICard afficherait "Calcul en cours…", trompeur
+// pour une carte qui n'aura structurellement jamais de comparaison possible.
 export function notConnectedKPI(label, raison, color = 'default') {
   return {
     label,
     value: '—',
     unit: '',
     trend: { dir: 'neutral', text: `Non connecté — ${raison}` },
+    compare: false,
     color,
   };
 }
