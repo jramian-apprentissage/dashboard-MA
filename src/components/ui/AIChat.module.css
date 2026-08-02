@@ -6,27 +6,29 @@
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: #160512;
-  border: 1px solid rgba(255,249,147,0.22);
-  color: #FFF993;
+  background: var(--soleil);
+  border: 1px solid var(--soleil);
+  color: var(--myrtille);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 500;
-  box-shadow: 0 4px 20px rgba(22,5,18,0.30), 0 0 0 0 rgba(255,249,147,0.15);
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  box-shadow: 0 4px 20px rgba(38,0,31,0.22), 0 0 0 0 rgba(38,0,31,0.10);
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s, color 0.2s;
   font-family: var(--font);
 }
 .fab:hover {
-  background: #26001F;
-  border-color: rgba(255,249,147,0.40);
-  box-shadow: 0 6px 28px rgba(22,5,18,0.36), 0 0 0 4px rgba(255,249,147,0.06);
+  background: var(--myrtille);
+  color: var(--soleil);
+  border-color: var(--myrtille);
+  box-shadow: 0 6px 28px rgba(38,0,31,0.32), 0 0 0 4px rgba(38,0,31,0.08);
   transform: scale(1.06);
 }
 .fabOpen {
-  background: rgba(22,5,18,0.95);
-  border-color: rgba(255,249,147,0.35);
+  background: var(--myrtille);
+  color: var(--soleil);
+  border-color: var(--myrtille);
 }
 
 /* ─── Panel ─────────────────────────────────────── */
