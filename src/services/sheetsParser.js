@@ -426,17 +426,13 @@ export function computeAsusEvolution(rows, granularity, collab = 'Tous') {
   };
 }
 
-// ─── RDV Sheet ───────────────────────────────────────────────────────────────
-// Ancienne structure (avant Apps Script) :
-//   A(0)=date+heure, H(7)=BDR, I(8)=Présent
-// Nouvelle structure (après Apps Script) :
-//   A(0)=date, B(1)=heure, I(8)=BDR, J(9)=Présent
-// Le parseur détecte automatiquement la structure via l'en-tête.
-
-// Parseur dédié au fichier RDV
-// Col A contient la date uniquement après restructuration (DD.MM.YYYY)
+// ─── RDV ─────────────────────────────────────────────────────────────────────
+// Les lignes ({date, time, collab, honore}) viennent de /api/rdv/rows —
+// table Postgres remplacée chaque soir par le backend depuis le Google
+// Sheet (voir server/src/rdvParser.js pour le parsing CSV, désormais
+// côté serveur). parseRDVDate reste utilisé ici pour filtrer par plage de
+// dates dans computeRDVData/computeRDVMonthlyEvolution/computeRDVStatsForRange.
 // Formats tolérés pour l'historique : "DD.MM.YYYY", "DD/MM/YYYY", "YYYY-MM-DD"
-// Garde aussi le support "DD.MM.YYYY HH:MM" pour rétrocompatibilité si split non fait
 function parseRDVDate(str) {
   if (!str) return null;
   const s = str.trim().split(' ')[0]; // partie date (avant l'éventuelle heure)
@@ -465,50 +461,6 @@ function parseRDVDate(str) {
   }
   const d = new Date(s);
   return isNaN(d) ? null : d;
-}
-
-export function parseRDVSheetCSV(csvText) {
-  const lines = csvText.split(/\r?\n/).filter(l => l.trim());
-  if (lines.length < 2) return [];
-
-  // Détection automatique de la structure via l'en-tête ligne 1
-  const header = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
-  // Nouvelle structure : col B est exactement "heure" (après Apps Script)
-  // Ancienne structure : col A = "Date de Création" (booking), col B = "Date
-  // / Horaire Meeting" (date réelle du RDV, à utiliser pour le filtrage et
-  // les statistiques) ; col I = BDR (collaborateur), col J = Présent/Absent/
-  // A replanifier — vérifié directement sur l'export réel (BDR et Présent
-  // étaient décalés d'une colonne, "Effectif"/"BDR" au lieu de "BDR"/"Présent",
-  // ce qui vidait silencieusement tout le calcul RDV, cf. vérification du 31/07).
-  const hasTimeCol = header[1] === 'heure' || header[1] === 'time';
-  const COL = hasTimeCol
-    ? { DATE: 0, TIME: 1, COLLAB: 8, HONORE: 9 }  // après Apps Script
-    : { DATE: 1, TIME: -1, COLLAB: 8, HONORE: 9 }; // ancienne structure
-
-  return lines.slice(1)
-    .map(line => {
-      const cols = parseCSVLine(line);
-      const rawDate = (cols[COL.DATE] || '').trim();
-      const datePart = rawDate.split(' ')[0];
-
-      // Ignorer les lignes sans date valide (texte libre, cellules vides…)
-      if (!parseRDVDate(datePart)) return null;
-
-      const rawTime = COL.TIME >= 0
-        ? (cols[COL.TIME] || '').trim()
-        : (rawDate.includes(' ') ? rawDate.split(' ')[1] : '');
-
-      // Temps absent ou 00:00 → on garde la ligne avec time = "00:00"
-      const time = (!rawTime || /^00:?00/.test(rawTime)) ? '00:00' : rawTime;
-
-      return {
-        date:   datePart,
-        time,
-        collab: (cols[COL.COLLAB] || '').trim(),
-        honore: (cols[COL.HONORE] || '').trim().toLowerCase() === 'présent',
-      };
-    })
-    .filter(r => r !== null && r.collab);
 }
 
 export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) {

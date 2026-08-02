@@ -1,23 +1,16 @@
 import { useState, useCallback, useRef } from 'react';
 import {
-  computeSalesData, parseRDVSheetCSV, computeRDVData, computeRDVMonthlyEvolution,
+  computeSalesData, computeRDVData, computeRDVMonthlyEvolution,
   computeCallsMonthlyEvolution, computeRDVStatsForRange,
 } from '../services/sheetsParser';
 import { fetchAPI } from '../services/api';
 
-/* Les appels viennent de l'archive Postgres (/api/ringover/calls), plus du
-   Google Sheet RDV. Deux raisons : le Sheet exposait publiquement numéros
-   et enregistrements, et surtout l'archive conserve les agents partis — leur
-   compte Ringover étant supprimé, l'API Ringover ne les restitue plus.
-   Les RDV restent sur leur feuille, en source secondaire non bloquante.
-
-   Le Sheet RDV ne peut pas être partagé publiquement (comme avant, via
-   /export?format=csv) : on passe par une Web App Apps Script bindée au
-   fichier (voir scripts/appscript/rdv-sheet-export.gs), qui lit la feuille
-   avec les droits du propriétaire et la ressert en CSV sans exposer le
-   fichier lui-même. */
-const RDV_SHEET_APPSCRIPT_URL = import.meta.env.VITE_RDV_SHEET_APPSCRIPT_URL;
-const RDV_SHEET_GID = import.meta.env.VITE_RDV_SHEET_GID || '0';
+/* Les appels et les RDV viennent tous les deux de l'archive Postgres
+   (/api/ringover/calls, /api/rdv/rows) — plus de fetch direct du Google
+   Sheet RDV côté client. La table rdv_sheet est remplacée en intégralité
+   chaque soir par le backend (rdvIngestion.js) : les lignes du Sheet
+   peuvent être corrigées en cours de journée (ex. RDV honoré ou pas), un
+   remplacement complet est donc nécessaire plutôt qu'un upsert. */
 
 function fmtDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -61,10 +54,6 @@ export function useSalesData() {
     setLoading(true);
     setError(null);
     try {
-      const rdvUrl = RDV_SHEET_APPSCRIPT_URL
-        ? `${RDV_SHEET_APPSCRIPT_URL}?gid=${RDV_SHEET_GID}`
-        : null;
-
       // Fenêtre bornée (6 derniers mois glissants minimum + période de
       // référence) plutôt que l'archive complète — /ringover/calls supporte
       // from/to côté backend, ce qui évite de retélécharger des mois
@@ -72,13 +61,13 @@ export function useSalesData() {
       const fetchWindow = widenedFetchWindow(from, to);
       const callsUrl = `/ringover/calls?from=${fetchWindow.from}&to=${fetchWindow.to}`;
 
-      /* La feuille RDV est secondaire : si elle est inaccessible (partage
-         retiré → 401 sans en-tête CORS, donc fetch rejeté), on affiche quand
-         même toute l'activité Ringover. Sans ce catch, Promise.all rejette
-         et l'onglet entier échoue alors que les appels sont disponibles. */
-      const [rows, rdvRes] = await Promise.all([
+      /* La table RDV est secondaire : si elle est inaccessible, on affiche
+         quand même toute l'activité Ringover. Sans ce catch, Promise.all
+         rejette et l'onglet entier échoue alors que les appels sont
+         disponibles. */
+      const [rows, rdvRows] = await Promise.all([
         fetchAPI(callsUrl),
-        rdvUrl ? fetch(rdvUrl).catch(() => null) : Promise.resolve(null),
+        fetchAPI('/rdv/rows').catch(() => null),
       ]);
 
       if (!rows.length) throw new Error('Aucun appel dans l\'archive Ringover');
@@ -96,15 +85,11 @@ export function useSalesData() {
       setResult(computed);
       setCallsEvolution(computeCallsMonthlyEvolution(rows, collab));
 
-      // RDV sheet — échec non bloquant, signalé à part
-      if (rdvUrl && !rdvRes) {
-        setRdvError('Feuille RDV inaccessible — vérifier que le déploiement Apps Script est actif (VITE_RDV_SHEET_APPSCRIPT_URL)');
-      } else if (rdvRes && !rdvRes.ok) {
-        setRdvError(`Feuille RDV : HTTP ${rdvRes.status}`);
-      } else if (rdvRes && rdvRes.ok) {
+      // Table RDV — échec non bloquant, signalé à part
+      if (!rdvRows) {
+        setRdvError('Archive RDV indisponible');
+      } else {
         setRdvError(null);
-        const rdvCsv  = await rdvRes.text();
-        const rdvRows = parseRDVSheetCSV(rdvCsv);
         rdvRowsCache.current = rdvRows;
 
         // validCollabs = tous les collabs présents dans Ringover (hors Entrant/Management)
