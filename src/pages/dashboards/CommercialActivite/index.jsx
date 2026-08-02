@@ -46,16 +46,25 @@ export default function CommercialActivite() {
     salesData.fetchData(from, to, collabRef.current);
   }, [periodKey, customFrom, customTo, isSales]); // eslint-disable-line
 
-  // Recalcul comparaison depuis le cache
+  // Comparaison de période — fetch dédié et borné à la plage comparée (voir
+  // fetchCompareData), retéclenché aussi sur changement de collaborateur
+  // (auparavant lu depuis une ref sans être dans les deps, donc jamais
+  // recalculé si on changeait de collaborateur pendant que "Comparer" était
+  // actif).
   useEffect(() => {
-    if (!compareActive || !compareRange || !salesData.hasCachedRows) {
+    if (!isSales || !compareActive || !compareRange) {
       setCompareResult(null);
       setCompareRdvResult(null);
       return;
     }
-    setCompareResult(salesData.computeFromCache(compareRange.from, compareRange.to, collabRef.current));
-    setCompareRdvResult(salesData.computeRDVFromCache(compareRange.from, compareRange.to, collabRef.current));
-  }, [compareActive, compareRange, salesData.hasCachedRows]); // eslint-disable-line
+    let cancelled = false;
+    salesData.fetchCompareData(compareRange.from, compareRange.to, collab).then(({ result, rdv }) => {
+      if (cancelled) return;
+      setCompareResult(result);
+      setCompareRdvResult(rdv);
+    });
+    return () => { cancelled = true; };
+  }, [isSales, compareActive, compareRange, collab]); // eslint-disable-line
 
   useEffect(() => { setCollab('Tous'); }, [tab]);
 

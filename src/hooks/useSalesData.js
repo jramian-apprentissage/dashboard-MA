@@ -19,6 +19,29 @@ import { fetchAPI } from '../services/api';
 const RDV_SHEET_APPSCRIPT_URL = import.meta.env.VITE_RDV_SHEET_APPSCRIPT_URL;
 const RDV_SHEET_GID = import.meta.env.VITE_RDV_SHEET_GID || '0';
 
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Fenêtre de récupération élargie : au moins les 6 derniers mois glissants
+// (nécessaires au graphe "Évolution mensuelle", toujours ancré sur
+// aujourd'hui, indépendamment de la période de référence choisie) ET la
+// période de référence elle-même si elle remonte plus loin (ex. période
+// personnalisée). Sert à borner /ringover/calls sans casser ni les KPI de
+// la période sélectionnée, ni le graphe d'évolution — au lieu de retélécharger
+// tout l'historique de l'archive à chaque chargement.
+function widenedFetchWindow(from, to) {
+  const sixMoAgo = new Date();
+  sixMoAgo.setDate(1);
+  sixMoAgo.setMonth(sixMoAgo.getMonth() - 5);
+  const sixMoAgoStr = fmtDate(sixMoAgo);
+  const todayStr = fmtDate(new Date());
+  return {
+    from: from && from < sixMoAgoStr ? from : sixMoAgoStr,
+    to:   to && to > todayStr ? to : todayStr,
+  };
+}
+
 export function useSalesData() {
   const [result,          setResult]          = useState(null);
   const [rdvResult,       setRdvResult]       = useState(null);
@@ -42,12 +65,19 @@ export function useSalesData() {
         ? `${RDV_SHEET_APPSCRIPT_URL}?gid=${RDV_SHEET_GID}`
         : null;
 
+      // Fenêtre bornée (6 derniers mois glissants minimum + période de
+      // référence) plutôt que l'archive complète — /ringover/calls supporte
+      // from/to côté backend, ce qui évite de retélécharger des mois
+      // d'historique à chaque ouverture du dashboard.
+      const fetchWindow = widenedFetchWindow(from, to);
+      const callsUrl = `/ringover/calls?from=${fetchWindow.from}&to=${fetchWindow.to}`;
+
       /* La feuille RDV est secondaire : si elle est inaccessible (partage
          retiré → 401 sans en-tête CORS, donc fetch rejeté), on affiche quand
          même toute l'activité Ringover. Sans ce catch, Promise.all rejette
          et l'onglet entier échoue alors que les appels sont disponibles. */
       const [rows, rdvRes] = await Promise.all([
-        fetchAPI('/ringover/calls'),
+        fetchAPI(callsUrl),
         rdvUrl ? fetch(rdvUrl).catch(() => null) : Promise.resolve(null),
       ]);
 
@@ -125,24 +155,27 @@ export function useSalesData() {
     }
   }, []);
 
-  // Calcul synchrone depuis le cache pour une période de comparaison
-  const computeFromCache = useCallback((from, to, collab = 'Tous') => {
-    if (!rowsCache.current) return null;
-    return computeSalesData(
-      rowsCache.current,
-      from ? new Date(from) : null,
-      to   ? new Date(to)   : null,
-      collab,
-    );
-  }, []);
-
-  // Idem pour les RDV — sert au comparatif "vs période précédente" des cartes
-  // RDV pris / Taux RDV honorés, sur le même principe que computeFromCache.
-  const computeRDVFromCache = useCallback((from, to, collab = 'Tous') => {
-    if (!rdvRowsCache.current || !rowsCache.current) return null;
-    const computed = computeSalesData(rowsCache.current, null, null, collab);
-    const validCollabs = computed.collabs.filter(c => c !== 'Tous');
-    return computeRDVStatsForRange(rdvRowsCache.current, validCollabs, collab, from ? new Date(from) : null, to ? new Date(to) : null);
+  // Comparaison de période ("vs période précédente" / "vs année précédente")
+  // — fetch dédié et borné à la plage demandée, plutôt qu'une relecture du
+  // cache principal : ce dernier ne couvre que les 6 derniers mois glissants
+  // (voir widenedFetchWindow), insuffisant pour "vs année précédente" qui
+  // peut pointer bien plus loin en arrière. validCollabs est dérivé des
+  // lignes fraîchement récupérées pour CETTE période (pas du cache courant),
+  // pour ne pas exclure à tort un collaborateur absent de la période
+  // affichée mais présent sur la période comparée.
+  const fetchCompareData = useCallback(async (from, to, collab = 'Tous') => {
+    try {
+      const rows = await fetchAPI(`/ringover/calls?from=${from}&to=${to}`);
+      const computed = computeSalesData(rows, null, null, collab);
+      let rdv = null;
+      if (rdvRowsCache.current) {
+        const validCollabs = computed.collabs.filter(c => c !== 'Tous');
+        rdv = computeRDVStatsForRange(rdvRowsCache.current, validCollabs, collab, new Date(from), new Date(to));
+      }
+      return { result: computed, rdv };
+    } catch {
+      return { result: null, rdv: null };
+    }
   }, []);
 
   return {
@@ -156,8 +189,7 @@ export function useSalesData() {
     lastFetched,
     fetchData,
     recomputeCollab,
-    computeFromCache,
-    computeRDVFromCache,
+    fetchCompareData,
     isConnected: true, // archive Postgres, toujours joignable via l'API
     hasData: !!result,
     hasRDV: !!rdvResult,
