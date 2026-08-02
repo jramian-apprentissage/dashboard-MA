@@ -28,23 +28,14 @@
 .card.accent .trend { color: rgba(255,255,255,0.4); }
 .card.accent:hover  { box-shadow: 0 4px 20px rgba(38,0,31,0.3); }
 
-/* Variante accent Asus — même traitement que .accent (fond sombre, valeur
-   en évidence) mais avec le bleu de marque Asus, réservée au dashboard
-   client Asus (co-branding demandé par le client). */
+/* Variante accent Asus — même carte (fond, texte) que les autres
+   indicateurs, seule la bordure se distingue : bleu de marque Asus, plus
+   épaisse que la bordure sable par défaut, pour repérer "Appels sortants" /
+   "Appels entrants" sans les isoler visuellement du reste des cartes. */
 .card.accentAsus {
-  background: rgba(0,108,225,0.85);
-  border-color: rgba(0,108,225,0.85);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  border: 2px solid var(--asus-blue);
 }
-.card.accentAsus .label { color: rgba(255,255,255,0.6); }
-.card.accentAsus .value { color: #fff; }
-.card.accentAsus .unit  { color: rgba(255,255,255,0.6); }
-.card.accentAsus .trend { color: rgba(255,255,255,0.4); }
-.card.accentAsus:hover  { box-shadow: 0 4px 20px rgba(0,108,225,0.3); }
-.card.accentAsus .compare.up      { color: #8ECFAA; }
-.card.accentAsus .compare.down    { color: #F5B8B8; }
-.card.accentAsus .compare.neutral { color: rgba(255,255,255,0.55); }
+.card.accentAsus:hover { box-shadow: 0 4px 20px rgba(0,108,225,0.18); }
 
 /* Variante accent-soft — fond soleil léger */
 .card.accentSoft {
@@ -74,10 +65,8 @@
 }
 .sourceDot.sourceReal { background: var(--pos); }
 .sourceDot.sourceMock { background: var(--warn); }
-.card.accent .sourceDot.sourceReal,
-.card.accentAsus .sourceDot.sourceReal { background: #8ECFAA; }
-.card.accent .sourceDot.sourceMock,
-.card.accentAsus .sourceDot.sourceMock { background: #E8C97A; }
+.card.accent .sourceDot.sourceReal { background: #8ECFAA; }
+.card.accent .sourceDot.sourceMock { background: #E8C97A; }
 
 /* Valeur principale — myrtille sombre, impact fort */
 .value {
