@@ -34,12 +34,17 @@ function fmtDuree(s) {
 // reçoit la variante accent, c'est l'indicateur "plus important".
 function buildTagCards(directionStats, totalLabel, compareStats, comparePeriodKey) {
   const cmpTotal = compareStats ? compareValueText(directionStats.total, compareStats.total, comparePeriodKey) : null;
+  const cmpSansTag = compareStats ? compareValueText(directionStats.sansTag, compareStats.sansTag, comparePeriodKey) : null;
   const cards = [
     { label: totalLabel, value: directionStats.total, unit: '', compare: cmpTotal, color: 'accentAsus' },
     ...directionStats.parTag.map(t => {
       const ct = compareStats?.parTag.find(x => x.label === t.label);
       return { label: t.label, value: t.count, unit: '', compare: ct ? compareValueText(t.count, ct.count, comparePeriodKey) : null, color: 'default' };
     }),
+    // Appels dont le tag ne correspond à aucune des catégories ci-dessus (ou
+    // sans tag du tout) — complète le total pour qu'on puisse voir d'un coup
+    // d'œil si des appels échappent au suivi qualitatif.
+    { label: 'Sans tag', value: directionStats.sansTag, unit: '', compare: cmpSansTag, color: 'default' },
   ];
   return cards;
 }

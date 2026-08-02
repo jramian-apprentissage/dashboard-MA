@@ -231,13 +231,32 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
 // préfixe "CAT - sous-type" à parser comme pour l'équipe Mon Ambassadeur,
 // Jimmy a confirmé qu'ils sont déjà nommés comme les indicateurs voulus.
 
+// `tag` = texte réel envoyé par Ringover (peut différer du libellé affiché,
+// ex. "Envoie catalogue" et non "Envoi catalogue") ; `prefix: true` pour un
+// tag composite du type "NRP : non attribué / hors service / faux numéro",
+// dont seul le préfixe avant les deux-points est stable — vérifié directement
+// sur les valeurs réelles de la table, plusieurs libellés ne correspondaient
+// plus telles quels et ces appels étaient silencieusement exclus de tous les
+// compteurs par tag (jamais comptés nulle part, ni dans le tag ni "sans tag").
 export const ASUS_TAGS_SORTANT = [
-  'Rappel', 'Répondeur', 'NRP', 'Vente gagnée', 'Pas intéressé',
-  'Vente perdue', 'Envoi catalogue', 'Rendez-vous',
+  { label: 'Rappel',                tag: 'Rappel' },
+  { label: 'Répondeur',             tag: 'Répondeur' },
+  { label: 'NRP',                   tag: 'NRP', prefix: true },
+  { label: 'Vente gagnée',          tag: 'Vente gagnée' },
+  { label: 'Pas intéressé',         tag: 'Pas intéresser' },
+  { label: 'Vente perdue',          tag: 'Vente perdue' },
+  { label: 'Envoi catalogue',       tag: 'Envoie catalogue' },
+  { label: 'Rendez-vous',           tag: 'Rendez-vous' },
+  { label: 'Opportunité détectée',  tag: 'Opportunité détectée' },
 ];
 export const ASUS_TAGS_ENTRANT = [
-  'Vente gagnée', 'Pas intéressé', 'Vente perdue', 'Envoi catalogue',
-  'Rendez-vous', 'Rappel',
+  { label: 'Vente gagnée',          tag: 'Vente gagnée' },
+  { label: 'Pas intéressé',         tag: 'Pas intéresser' },
+  { label: 'Vente perdue',          tag: 'Vente perdue' },
+  { label: 'Envoi catalogue',       tag: 'Envoie catalogue' },
+  { label: 'Rendez-vous',           tag: 'Rendez-vous' },
+  { label: 'Rappel',                tag: 'Rappel' },
+  { label: 'Opportunité détectée',  tag: 'Opportunité détectée' },
 ];
 
 const BON_APPEL_SECONDES = 300; // 5 min — seuil convenu avec Jimmy
@@ -246,13 +265,19 @@ function normTag(s) {
   return (s || '').trim().toLowerCase();
 }
 
-function statsDirection(rows, direction, labels) {
+function statsDirection(rows, direction, tagDefs) {
   const set = rows.filter(r => r.direction === direction);
-  const parTag = labels.map(label => ({
-    label,
-    count: set.filter(r => normTag(r.tag) === normTag(label)).length,
+  const matchesTag = (r, def) => {
+    const t = normTag(r.tag);
+    const m = normTag(def.tag);
+    return def.prefix ? t.startsWith(m) : t === m;
+  };
+  const parTag = tagDefs.map(def => ({
+    label: def.label,
+    count: set.filter(r => matchesTag(r, def)).length,
   }));
-  return { total: set.length, parTag };
+  const sansTag = set.filter(r => !r.tag || !tagDefs.some(def => matchesTag(r, def))).length;
+  return { total: set.length, parTag, sansTag };
 }
 
 export function computeAsusData(rows, dateFrom, dateTo, collab = 'Tous') {
