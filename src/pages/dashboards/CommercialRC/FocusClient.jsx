@@ -172,7 +172,39 @@ export default function FocusClient() {
         </Card>
 
         <Card title="Marge brute par client">
-          <NotConnected>l'API ne renvoie pas encore la marge par client (seulement le CA global et par top client)</NotConnected>
+          {!SHOW_COMPTES_KPIS ? (
+            <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+          ) : result?.topClientsMarge?.length > 0 ? (
+            <table className={styles.tbl}>
+              <thead><tr><th></th><th></th><th>Marge</th><th>Part de la marge</th></tr></thead>
+              <tbody>
+                {result.topClientsMarge.map((c, i) => (
+                  <tr key={c.name}>
+                    <td className={styles.rank} style={{ color: i === 0 ? 'var(--myrtille)' : 'var(--text2)' }}>{i + 1}</td>
+                    <td className={styles.tdName}>{c.name}</td>
+                    <td className={styles.tdRight} style={{ color: c.marge >= 0 ? 'var(--text)' : 'var(--neg)', fontWeight: 600 }}>{fmtEuros(c.marge)}</td>
+                    <td>
+                      <div className={styles.miniBarWrap}>
+                        <div className={styles.miniBar}>
+                          <div
+                            className={styles.miniFill}
+                            style={{
+                              width: mounted ? `${Math.max(c.pct, 0)}%` : '0%',
+                              transition: `width 0.85s cubic-bezier(0.16,1,0.3,1) ${i * 60}ms`,
+                            }}
+                          />
+                        </div>
+                        <span>{c.pct}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <NotConnected>aucun client actif sur la période</NotConnected>
+          )}
+          <div className={styles.subnote}>Top 5 clients par marge brute (vente − achat)</div>
         </Card>
       </div>
 
