@@ -34,7 +34,11 @@ function previousPeriodRange(fromStr, toStr) {
 }
 
 export function PeriodProvider({ children }) {
-  const [periodKey, setPeriodKey] = useState('month');
+  // "Mois en cours" est presque toujours vide en pratique (facturation pas
+  // encore remontée) — un dashboard s'ouvrant dessus affiche "0 €" partout
+  // sans que l'utilisateur comprenne pourquoi. Le mois précédent a quasi
+  // toujours des données, donc c'est le point d'entrée par défaut.
+  const [periodKey, setPeriodKey] = useState('last-month');
   const [customFrom, setCustomFrom] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
