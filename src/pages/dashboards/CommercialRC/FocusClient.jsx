@@ -11,11 +11,14 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import Pill from '../../../components/ui/Pill';
 import DonutChart from '../../../components/ui/DonutChart';
-import NotConnected from '../../../components/ui/NotConnected';
+import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { todayDDMM } from '../../../utils/formatDate';
 import { fmtEurosExact } from '../../../utils/formatNumber';
+import { SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 import styles from './FocusClient.module.css';
+
+const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
 
 const sentimentInfo = s => {
   if (s?.includes('Sain'))   return { color: 'var(--pos)',  variant: 'green', label: 'Sain' };
@@ -51,7 +54,7 @@ export default function FocusClient() {
   // Connecté, données chargées, mais aucun compte facturé sur la période
   // choisie — même traitement que Synthèse/Sales/ASUS/TLM : un seul message
   // clair plutôt qu'une mosaïque de "0 €" et de graphiques vides.
-  const isEmptyPeriod = result && result.nbClientsActifs === 0;
+  const isEmptyPeriod = SHOW_COMPTES_KPIS && result && result.nbClientsActifs === 0;
 
   return (
     <div className={styles.page}>
@@ -78,43 +81,54 @@ export default function FocusClient() {
 
       {result && !isEmptyPeriod && (
         <div className={styles.newClientsGrid}>
-          <KPICard
-            label="Nouveaux clients"
-            value={result.nbNouveauxClients}
-            unit=" clients"
-            compare={cmp(result.nbNouveauxClients, c?.nbNouveauxClients)}
-            trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.caNouveauxClients)}` }}
-            color="green"
-          />
-          <KPICard
-            label="Clients perdus"
-            value={result.nbClientsPerdus}
-            unit=" clients"
-            compare={cmp(result.nbClientsPerdus, c?.nbClientsPerdus, true)}
-            trend={{ dir: 'neutral', text: `CA perdu : ${fmtEuros(result.caPerdu)}` }}
-            color="red"
-          />
-          <KPICard
-            label="Portefeuille de clients actifs"
-            value={result.nbClientsActifs}
-            unit=" actifs"
-            compare={cmp(result.nbClientsActifs, c?.nbClientsActifs)}
-            trend={{ dir: 'neutral', text: `Facturés sur la période · ${result.nbClientsTotal} comptes au total` }}
-            color="blue"
-          />
-          <KPICard
-            label="Marge brute nouveaux"
-            value={fmtEuros(result.margeBruteNouveaux)}
-            exactValue={fmtEurosExact(result.margeBruteNouveaux)}
-            compare={cmp(result.margeBruteNouveaux, c?.margeBruteNouveaux)}
-            trend={{
-              dir: 'neutral',
-              text: result.sommeVentesGagnes > 0
-                ? `Taux : ${Math.round(result.margeBruteNouveaux / result.sommeVentesGagnes * 100)}%`
-                : '—',
-            }}
-            color={result.margeBruteNouveaux >= 0 ? 'green' : 'red'}
-          />
+          {!SHOW_COMPTES_KPIS ? (
+            <>
+              <KPICard {...notConnectedKPI('Nouveaux clients', COMPTES_HIDDEN_REASON, 'green')} />
+              <KPICard {...notConnectedKPI('Clients perdus', COMPTES_HIDDEN_REASON, 'red')} />
+              <KPICard {...notConnectedKPI('Portefeuille de clients actifs', COMPTES_HIDDEN_REASON, 'blue')} />
+              <KPICard {...notConnectedKPI('Marge brute nouveaux', COMPTES_HIDDEN_REASON, 'green')} />
+            </>
+          ) : (
+            <>
+              <KPICard
+                label="Nouveaux clients"
+                value={result.nbNouveauxClients}
+                unit=" clients"
+                compare={cmp(result.nbNouveauxClients, c?.nbNouveauxClients)}
+                trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.caNouveauxClients)}` }}
+                color="green"
+              />
+              <KPICard
+                label="Clients perdus"
+                value={result.nbClientsPerdus}
+                unit=" clients"
+                compare={cmp(result.nbClientsPerdus, c?.nbClientsPerdus, true)}
+                trend={{ dir: 'neutral', text: `CA perdu : ${fmtEuros(result.caPerdu)}` }}
+                color="red"
+              />
+              <KPICard
+                label="Portefeuille de clients actifs"
+                value={result.nbClientsActifs}
+                unit=" actifs"
+                compare={cmp(result.nbClientsActifs, c?.nbClientsActifs)}
+                trend={{ dir: 'neutral', text: `Facturés sur la période · ${result.nbClientsTotal} comptes au total` }}
+                color="blue"
+              />
+              <KPICard
+                label="Marge brute nouveaux"
+                value={fmtEuros(result.margeBruteNouveaux)}
+                exactValue={fmtEurosExact(result.margeBruteNouveaux)}
+                compare={cmp(result.margeBruteNouveaux, c?.margeBruteNouveaux)}
+                trend={{
+                  dir: 'neutral',
+                  text: result.sommeVentesGagnes > 0
+                    ? `Taux : ${Math.round(result.margeBruteNouveaux / result.sommeVentesGagnes * 100)}%`
+                    : '—',
+                }}
+                color={result.margeBruteNouveaux >= 0 ? 'green' : 'red'}
+              />
+            </>
+          )}
         </div>
       )}
 
@@ -122,7 +136,9 @@ export default function FocusClient() {
       <SectionLabel>Performance client</SectionLabel>
       <div className={styles.col6040}>
         <Card title="CA par client">
-          {result?.topClients?.length > 0 ? (
+          {!SHOW_COMPTES_KPIS ? (
+            <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+          ) : result?.topClients?.length > 0 ? (
             <table className={styles.tbl}>
               <thead><tr><th></th><th></th><th>CA</th><th>Part du CA</th></tr></thead>
               <tbody>
@@ -164,7 +180,9 @@ export default function FocusClient() {
       <SectionLabel badge="IA">Santé du portefeuille client</SectionLabel>
       <div className={styles.twoCol}>
         <Card title="Niveau de santé client">
-          {satisfaction.error ? (
+          {!SHOW_COMPTES_KPIS ? (
+            <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+          ) : satisfaction.error ? (
             <NotConnected>{satisfaction.error}</NotConnected>
           ) : satisfaction.data ? (
             <>
@@ -222,7 +240,9 @@ export default function FocusClient() {
         </Card>
 
         <Card title="Détail des clients perdus">
-          {perdus.error ? (
+          {!SHOW_COMPTES_KPIS ? (
+            <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+          ) : perdus.error ? (
             <NotConnected>{perdus.error}</NotConnected>
           ) : perdus.detail ? (
             perdus.detail.length > 0 ? (
@@ -250,7 +270,9 @@ export default function FocusClient() {
       {/* Détail par client — regroupé juste sous "Niveau de santé client", en
           l'absence de KPI clients/revenus perdus à intercaler pour l'instant. */}
       <Card title="Détails du niveau de Santé par Client">
-        {satisfaction.error ? (
+        {!SHOW_COMPTES_KPIS ? (
+          <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+        ) : satisfaction.error ? (
           <NotConnected>{satisfaction.error}</NotConnected>
         ) : satisfaction.data ? (
           (() => {
@@ -307,7 +329,9 @@ export default function FocusClient() {
 
       <div style={{ marginTop: 20 }}>
         <Card title="Évolution mensuelle des revenus perdus">
-          {perdus.error ? (
+          {!SHOW_COMPTES_KPIS ? (
+            <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+          ) : perdus.error ? (
             <NotConnected>{perdus.error}</NotConnected>
           ) : perdus.monthly ? (
             perdus.monthly.some(m => m.caPerdu > 0) ? (() => {

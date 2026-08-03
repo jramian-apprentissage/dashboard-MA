@@ -15,7 +15,9 @@ import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnect
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { todayDDMM } from '../../../utils/formatDate';
 import { fmtEurosExact } from '../../../utils/formatNumber';
-import { SHOW_LEADS_KPIS } from '../../../config/featureFlags';
+import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
+
+const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
 import styles from './Synthese.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
@@ -87,7 +89,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
   // Connecté, données chargées, mais aucun compte facturé sur la période
   // choisie (ex. période hors historique) — même traitement que Sales/
   // ASUS/TLM : un seul message clair plutôt qu'une mosaïque de "0 €".
-  const isEmptyPeriod = d.nbClientsActifs === 0;
+  const isEmptyPeriod = SHOW_COMPTES_KPIS && d.nbClientsActifs === 0;
 
   const chartData = {
     labels: d.topClients.map(c => c.name),
@@ -125,22 +127,31 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
       {/* ── Ligne 1 — Le résultat : les 4 chiffres du lundi matin ─────────── */}
       <SectionLabel badge="Monday">Vue consolidée</SectionLabel>
       <div className={styles.kpiGrid}>
-        <KPICard
-          label="CA"
-          value={fmt(d.caGlobal)}
-          exactValue={fmtEurosExact(d.caGlobal)}
-          compare={cmp(d.caGlobal, c?.caGlobal)}
-          trend={{ dir: 'neutral', text: `Clients actifs : ${d.nbClientsActifs}` }}
-          color="blue"
-        />
-        <KPICard
-          label="Marge brute"
-          value={fmt(d.margeBruteGlobale)}
-          exactValue={fmtEurosExact(d.margeBruteGlobale)}
-          compare={cmp(d.margeBruteGlobale, c?.margeBruteGlobale)}
-          trend={{ dir: 'neutral', text: `Taux de marge brute : ${d.tauxMarge}%` }}
-          color="green"
-        />
+        {SHOW_COMPTES_KPIS ? (
+          <>
+            <KPICard
+              label="CA"
+              value={fmt(d.caGlobal)}
+              exactValue={fmtEurosExact(d.caGlobal)}
+              compare={cmp(d.caGlobal, c?.caGlobal)}
+              trend={{ dir: 'neutral', text: `Clients actifs : ${d.nbClientsActifs}` }}
+              color="blue"
+            />
+            <KPICard
+              label="Marge brute"
+              value={fmt(d.margeBruteGlobale)}
+              exactValue={fmtEurosExact(d.margeBruteGlobale)}
+              compare={cmp(d.margeBruteGlobale, c?.margeBruteGlobale)}
+              trend={{ dir: 'neutral', text: `Taux de marge brute : ${d.tauxMarge}%` }}
+              color="green"
+            />
+          </>
+        ) : (
+          <>
+            <KPICard {...notConnectedKPI('CA', COMPTES_HIDDEN_REASON, 'blue')} />
+            <KPICard {...notConnectedKPI('Marge brute', COMPTES_HIDDEN_REASON, 'green')} />
+          </>
+        )}
         {SHOW_LEADS_KPIS ? (
           <>
             <KPICard
@@ -171,7 +182,9 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
       {/* ── Ligne 2 — La trajectoire : évolution CA + marge ────────────────── */}
       <SectionLabel>La trajectoire — 6 derniers mois</SectionLabel>
       <Card title="Évolution mensuelle du CA et de la marge">
-        {monthly && monthly.length > 0 ? (
+        {!SHOW_COMPTES_KPIS ? (
+          <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+        ) : monthly && monthly.length > 0 ? (
           <>
             <div className={styles.chartWrapLarge}>
               <Bar
@@ -253,7 +266,9 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
       <SectionLabel>Santé du portefeuille client</SectionLabel>
       <div className={styles.chartsRow}>
         <Card title="Top 5 clients par CA">
-          {d.topClients.length > 0 ? (
+          {!SHOW_COMPTES_KPIS ? (
+            <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+          ) : d.topClients.length > 0 ? (
             <div className={styles.chartWrap}>
               <Bar data={chartData} options={chartOpts} />
             </div>
@@ -263,6 +278,10 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
         </Card>
 
         <Card title="Concentration du CA & santé client">
+          {!SHOW_COMPTES_KPIS ? (
+            <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+          ) : (
+          <>
           {/* Résumé santé client en tête, chiffres avant le camembert — plus
               parlant qu'un pourcentage (source : colonne "Note de
               satisfaction" IA, board Comptes Monday) */}
@@ -306,6 +325,8 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               Pôle Relation Client
             </button>
           </div>
+          </>
+          )}
         </Card>
       </div>
       </>
