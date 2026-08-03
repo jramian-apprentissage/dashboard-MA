@@ -17,13 +17,18 @@ export function compareZeroRefText(comparePeriodKey) {
 }
 
 // Delta relatif (%) entre une valeur courante et une valeur de référence.
-export function compareValueText(current, ref, comparePeriodKey) {
+// `invert` : pour les KPI "perte" (ex. clients perdus) où une hausse est
+// une mauvaise nouvelle — le texte (+X%) reste basé sur le sens réel de la
+// variation, seule la couleur (vert/rouge, via `dir`) est inversée.
+export function compareValueText(current, ref, comparePeriodKey, invert = false) {
   if (ref == null) return null; // donnée de comparaison pas encore chargée — KPICard affiche "Calcul en cours…"
   if (ref === 0) return compareZeroRefText(comparePeriodKey);
   const pct = Math.round(((current - ref) / ref) * 100);
   const sign = pct > 0 ? '+' : '';
+  let dir = pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral';
+  if (invert && dir !== 'neutral') dir = dir === 'up' ? 'down' : 'up';
   return {
-    dir: pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral',
+    dir,
     text: `${pct === 0 ? '=' : sign + pct + '%'} vs ${compareLabel(comparePeriodKey)}`,
   };
 }

@@ -47,7 +47,7 @@ export default function FocusClient() {
   const [healthVisible, setHealthVisible] = useState(HEALTH_LIST_STEP);
   const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
   const c = compareResult;
-  const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
+  const cmp = (current, ref, invert) => c ? compareValueText(current, ref, comparePeriodKey, invert) : null;
   // Connecté, données chargées, mais aucun compte facturé sur la période
   // choisie — même traitement que Synthèse/Sales/ASUS/TLM : un seul message
   // clair plutôt qu'une mosaïque de "0 €" et de graphiques vides.
@@ -90,7 +90,7 @@ export default function FocusClient() {
             label="Clients perdus"
             value={result.nbClientsPerdus}
             unit=" clients"
-            compare={cmp(result.nbClientsPerdus, c?.nbClientsPerdus)}
+            compare={cmp(result.nbClientsPerdus, c?.nbClientsPerdus, true)}
             trend={{ dir: 'neutral', text: `CA perdu : ${fmtEuros(result.caPerdu)}` }}
             color="red"
           />
