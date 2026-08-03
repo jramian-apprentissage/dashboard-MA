@@ -140,7 +140,7 @@ export const useAuth = () => useContext(AuthContext);
 export const DASHBOARDS = [
   { id: 'commercial-rc',       label: 'Commercial & Relation Client' },
   { id: 'commercial-activite', label: 'Activités commerciales' },
-  { id: 'asus',                label: 'ASUS' },
+  { id: 'asus',                label: 'Client - Asus' },
 ];
 
 // Accueil suit exactement le même mécanisme d'autorisation que DASHBOARDS

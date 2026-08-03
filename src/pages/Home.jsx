@@ -12,11 +12,11 @@ const ROUTES = {
 // Titres longs pour les cartes de l'accueil — distincts des libellés de nav
 // (courts, utilisés dans le header/la barre basse) pour rester lisibles là-bas.
 // Peuvent tenir sur deux lignes (cf. FocusCommercial.module.css → insightDash).
-// Convention pour tout futur dashboard client : "Dashboard client - [Nom]".
+// Convention pour tout futur dashboard client : "Dashboard Client - [Nom]".
 const CARD_LABELS = {
   'commercial-rc':       'Dashboard Commercial et Relation Client',
   'commercial-activite': 'Dashboard Activités commerciales',
-  asus:                  'Dashboard client - Asus',
+  asus:                  'Dashboard Client - Asus',
 };
 
 const DASH_ICONS = {
