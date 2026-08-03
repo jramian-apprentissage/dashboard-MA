@@ -23,6 +23,13 @@ import styles from './FocusCommercial.module.css';
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
 
 const fmt = v => v >= 1000 ? `${(v / 1000).toFixed(0)} K€` : `${v}€`;
+// Revenu moyen par profil : fmt() arrondit à l'entier le plus proche en K€,
+// ce qui écrase la différence entre p.ex. 1,6 K€ et 2,4 K€ (tous deux
+// affichés "2 K€") — un chiffre après la virgule pour ne pas fausser la
+// lecture sur des petits effectifs (ex. 5 profils).
+const fmtMoyenne = v => v >= 1000
+  ? `${(v / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} K€`
+  : `${v}€`;
 const tickStyle = { color: 'rgba(22,5,18,0.35)', font: { size: 10, family: 'DM Sans' } };
 const gridStyle = { color: 'rgba(22,5,18,0.06)' };
 const borderStyle = { color: 'rgba(22,5,18,0.08)' };
@@ -550,7 +557,7 @@ export default function FocusCommercial() {
                   </div>
                   <div>
                     <div className={styles.missionRev}>{fmt(m.revenue)} <span className={styles.missionPct}>· {m.pct}%</span></div>
-                    <div className={styles.missionAvg}>Revenu moyen par profil {fmt(m.moyenne)} · {m.count} profils</div>
+                    <div className={styles.missionAvg}>Revenu moyen par profil {fmtMoyenne(m.moyenne)} · {m.count} profils</div>
                   </div>
                 </div>
               ))}
