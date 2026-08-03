@@ -11,11 +11,10 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import Pill from '../../../components/ui/Pill';
 import DonutChart from '../../../components/ui/DonutChart';
-import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
+import NotConnected from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { todayDDMM } from '../../../utils/formatDate';
 import { fmtEurosExact } from '../../../utils/formatNumber';
-import { SHOW_LEADS_KPIS } from '../../../config/featureFlags';
 import styles from './FocusClient.module.css';
 
 const sentimentInfo = s => {
@@ -79,18 +78,14 @@ export default function FocusClient() {
 
       {result && !isEmptyPeriod && (
         <div className={styles.newClientsGrid}>
-          {SHOW_LEADS_KPIS ? (
-            <KPICard
-              label="Nouveaux clients"
-              value={result.nbDealsGagnes}
-              unit=" clients"
-              compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
-              trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.sommeVentesGagnes)}` }}
-              color="green"
-            />
-          ) : (
-            <KPICard {...notConnectedKPI('Nouveaux clients', 'masqué temporairement — reconstruction Comptes en cours', 'green')} />
-          )}
+          <KPICard
+            label="Nouveaux clients"
+            value={result.nbNouveauxClients}
+            unit=" clients"
+            compare={cmp(result.nbNouveauxClients, c?.nbNouveauxClients)}
+            trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.caNouveauxClients)}` }}
+            color="green"
+          />
           <KPICard
             label="Clients perdus"
             value={result.nbClientsPerdus}
