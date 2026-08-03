@@ -4,6 +4,7 @@ import { Chart, BarElement, LineElement, PointElement, ArcElement, CategoryScale
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useLeadsAnalytics } from '../../../hooks/useLeadsAnalytics';
+import { useComptesSecteurs } from '../../../hooks/useComptesSecteurs';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import { fmtNumber, fmtEurosExact } from '../../../utils/formatNumber';
@@ -17,8 +18,10 @@ import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { todayDDMM } from '../../../utils/formatDate';
-import { SHOW_LEADS_KPIS } from '../../../config/featureFlags';
+import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 import styles from './FocusCommercial.module.css';
+
+const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
 
@@ -99,6 +102,7 @@ export default function FocusCommercial() {
   const mounted = useChartMount();
   const { result, compareResult, loading, error } = useSnapshotData();
   const leads = useLeadsAnalytics();
+  const secteurs = useComptesSecteurs();
   const { comparePeriodKey } = usePeriod();
   const [relanceSort, setRelanceSort] = useState({ col: 'etat', dir: 'asc' });
   const [showAllRelances, setShowAllRelances] = useState(false);
@@ -212,9 +216,8 @@ export default function FocusCommercial() {
                     // pleine même à 71%, ce qui trompe sur sa vraie part.
                     // Seuil mini de largeur pour que les petites valeurs
                     // (ex. 1%) restent visibles à l'œil.
-                    // Étapes triées alphabétiquement — repère mnémotechnique
-                    // constant plutôt qu'un ordre arbitraire.
-                    const sorted = [...leads.data.funnel.etapes].sort((a, b) => a.etat.localeCompare(b.etat, 'fr'));
+                    // Étapes triées par ordre décroissant (part du total).
+                    const sorted = [...leads.data.funnel.etapes].sort((a, b) => b.pct - a.pct);
                     return sorted.map(s => (
                       <div key={s.etat} className={styles.barRow}>
                         <div className={styles.barLbl}>{s.etat}</div>
@@ -479,7 +482,36 @@ export default function FocusCommercial() {
       <SectionLabel>Performance par segment</SectionLabel>
       <div className={styles.twoCol}>
         <Card title="CA par secteur d'activité">
-          <NotConnected>aucune colonne secteur/activité sur le board Comptes Monday</NotConnected>
+          {!SHOW_COMPTES_KPIS ? (
+            <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+          ) : secteurs.error ? (
+            <NotConnected>{secteurs.error}</NotConnected>
+          ) : secteurs.data?.length > 0 ? (
+            <>
+              <DonutChart
+                variant="rose"
+                data={secteurs.data.map(s => s.ca)}
+                labels={secteurs.data.map(s => s.label)}
+                colors={sourceColors}
+                height={210}
+                tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${pct}%)`}
+              />
+              <div className={styles.donutLegend}>
+                {secteurs.data.map((s, i) => (
+                  <span key={s.label} className={styles.legItem}>
+                    <span className={styles.legDot} style={{ background: sourceColors[i % sourceColors.length] }} />{s.label}
+                  </span>
+                ))}
+              </div>
+              <div className={styles.subnote} style={{ marginTop: 8 }}>
+                Instantané des comptes actifs (pas filtré par période) · {secteurs.data.reduce((s, x) => s + x.nb, 0)} compte(s) avec secteur renseigné sur Monday
+              </div>
+            </>
+          ) : secteurs.data ? (
+            <NotConnected>aucun compte n'a de secteur d'activité renseigné sur Monday</NotConnected>
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
         </Card>
         {/* Sources de lead — colonne "Canaux d'acquisition" du board Leads */}
         <Card title="Performance par source de lead">
@@ -534,7 +566,9 @@ export default function FocusCommercial() {
       {/* ══ Ligne 6 — Missions MA : part du tout en donut + chiffres exacts à côté ══ */}
       <SectionLabel badge="Monday">Type de mission MA</SectionLabel>
       <Card title="Répartition du revenue par type de mission">
-        {leads.error ? (
+        {!SHOW_COMPTES_KPIS ? (
+          <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
+        ) : leads.error ? (
           <NotConnected>{leads.error}</NotConnected>
         ) : leads.data?.missions?.length > 0 ? (
           <div className={styles.missionSplit}>
