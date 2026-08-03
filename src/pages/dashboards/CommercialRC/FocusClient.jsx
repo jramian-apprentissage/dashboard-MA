@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
+import { useClientsPerdus } from '../../../hooks/useClientsPerdus';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText } from '../../../utils/compareText';
 import KPICard from '../../../components/ui/KPICard';
@@ -42,6 +43,7 @@ export default function FocusClient() {
   const mounted = useChartMount();
   const { result, compareResult, loading, error } = useSnapshotData();
   const satisfaction = useSatisfactionClient();
+  const perdus = useClientsPerdus();
   const { comparePeriodKey } = usePeriod();
   const [healthVisible, setHealthVisible] = useState(HEALTH_LIST_STEP);
   const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
@@ -89,7 +91,14 @@ export default function FocusClient() {
           ) : (
             <KPICard {...notConnectedKPI('Nouveaux clients', 'masqué temporairement — reconstruction Comptes en cours', 'green')} />
           )}
-          <KPICard {...notConnectedKPI('Clients perdus', 'aucun suivi des départs de clients côté Monday', 'red')} />
+          <KPICard
+            label="Clients perdus"
+            value={result.nbClientsPerdus}
+            unit=" clients"
+            compare={cmp(result.nbClientsPerdus, c?.nbClientsPerdus)}
+            trend={{ dir: 'neutral', text: `CA perdu : ${fmtEuros(result.caPerdu)}` }}
+            color="red"
+          />
           <KPICard
             label="Portefeuille de clients actifs"
             value={result.nbClientsActifs}
@@ -218,7 +227,28 @@ export default function FocusClient() {
         </Card>
 
         <Card title="Détail des clients perdus">
-          <NotConnected>aucun suivi des départs de clients côté Monday — nécessite un statut/date de fin de contrat compte</NotConnected>
+          {perdus.error ? (
+            <NotConnected>{perdus.error}</NotConnected>
+          ) : perdus.detail ? (
+            perdus.detail.length > 0 ? (
+              <table className={styles.tbl}>
+                <thead><tr><th></th><th>Fin de contrat</th><th>CA</th></tr></thead>
+                <tbody>
+                  {perdus.detail.map(c => (
+                    <tr key={c.compteId}>
+                      <td className={styles.tdName}>{c.nom}</td>
+                      <td>{c.dateFin ? new Date(`${c.dateFin}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
+                      <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtEuros(c.ca)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <NotConnected>aucun client perdu sur la période</NotConnected>
+            )
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
         </Card>
       </div>
 
@@ -282,7 +312,35 @@ export default function FocusClient() {
 
       <div style={{ marginTop: 20 }}>
         <Card title="Évolution mensuelle des revenus perdus">
-          <NotConnected>dépend du suivi des départs de clients ci-dessus</NotConnected>
+          {perdus.error ? (
+            <NotConnected>{perdus.error}</NotConnected>
+          ) : perdus.monthly ? (
+            perdus.monthly.some(m => m.caPerdu > 0) ? (() => {
+              const maxCaPerdu = Math.max(...perdus.monthly.map(m => m.caPerdu), 1);
+              return perdus.monthly.map(m => (
+                <div key={m.month} className={styles.hsRow} style={{ gridTemplateColumns: '60px 1fr 90px' }}>
+                  <div className={styles.hsName} style={{ textTransform: 'capitalize' }}>{m.label}</div>
+                  <div className={styles.hsBarCol}>
+                    <div className={styles.hsBar}>
+                      <div
+                        className={styles.hsBarFill}
+                        style={{
+                          width: mounted ? `${Math.max((m.caPerdu / maxCaPerdu) * 100, m.caPerdu > 0 ? 4 : 0)}%` : '0%',
+                          background: 'var(--neg)',
+                          transition: 'width 0.85s cubic-bezier(0.16,1,0.3,1)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtEuros(m.caPerdu)}</div>
+                </div>
+              ));
+            })() : (
+              <NotConnected>aucun revenu perdu sur les 6 derniers mois</NotConnected>
+            )
+          ) : (
+            <NotConnected>chargement…</NotConnected>
+          )}
         </Card>
       </div>
 
