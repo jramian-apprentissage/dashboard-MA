@@ -128,18 +128,21 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
   const from = dateFrom || '';
   const to   = dateTo   || '';
 
-  // ── LEADS — deals gagnés (filtrés par date de démarrage souhaité) ─────────
-  const dealsGagnesPeriode = leadsSnap.filter(l =>
-    l.etat === 'Contrat signé' &&
-    l.date_demarrage_souhaite &&
-    l.date_demarrage_souhaite >= from &&
-    l.date_demarrage_souhaite <= to
-  );
+  // Date de référence unique pour tout ce qui est Leads/Prospects : la Date
+  // RDV (c'est l'entrée du lead dans le pipeline — "un lead arrive" — donc
+  // tous les calculs de période se font par rapport à elle, et non par
+  // rapport à la date de démarrage souhaitée, d'ouverture, etc.).
+  const inRdvPeriod = l => l.date_rdv && l.date_rdv >= from && l.date_rdv <= to;
+
+  // ── LEADS — deals gagnés (Date RDV dans la période) ───────────────────────
+  const dealsGagnesPeriode = leadsSnap.filter(l => l.etat === 'Contrat signé' && inRdvPeriod(l));
   const nbDealsGagnes = dealsGagnesPeriode.length;
 
-  // ── LEADS — pipeline (state) ───────────────────────────────────────────────
-  const pipelineItems  = leadsSnap.filter(l => PIPELINE_ETATS.has(l.etat));
-  const montantPipeline = pipelineItems.reduce((s, l) => s + l.vente_p, 0);
+  // ── LEADS — pipeline (state + Date RDV dans la période) ───────────────────
+  // Achat P (et non Vente P) : "Pipeline total" représente le volume d'achat
+  // engagé sur les leads dont le RDV est tombé dans la période.
+  const pipelineItems  = leadsSnap.filter(l => PIPELINE_ETATS.has(l.etat) && inRdvPeriod(l));
+  const montantPipeline = pipelineItems.reduce((s, l) => s + l.achat_p, 0);
 
   // Pipeline pondéré (KPI headline) : seuil 30%, répartition Modérée 30-75% /
   // Forte ≥ 75% — inchangé, décision produit d'origine (Staline ne voulait que
@@ -184,10 +187,10 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
     },
   ];
 
-  // ── LEADS — win rate (all-time, par groupe) ────────────────────────────────
-  const nbGagnesAll  = leadsSnap.filter(l => GAGNES_GROUPES.has(l.groupe)).length;
-  const nbPerdusAll  = leadsSnap.filter(l => PERDUS_GROUPES.has(l.groupe)).length;
-  const nbStandbyAll = leadsSnap.filter(l => l.groupe === 'Stand By').length;
+  // ── LEADS — win rate (par groupe, Date RDV dans la période) ────────────────
+  const nbGagnesAll  = leadsSnap.filter(l => GAGNES_GROUPES.has(l.groupe) && inRdvPeriod(l)).length;
+  const nbPerdusAll  = leadsSnap.filter(l => PERDUS_GROUPES.has(l.groupe) && inRdvPeriod(l)).length;
+  const nbStandbyAll = leadsSnap.filter(l => l.groupe === 'Stand By' && inRdvPeriod(l)).length;
   const nbEnCoursAll = pipelineItems.length;
 
   const winRate = (nbGagnesAll + nbPerdusAll) > 0
