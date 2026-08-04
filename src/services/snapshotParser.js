@@ -91,13 +91,30 @@ export function resolveSnapshot(rows, periodEndStr) {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// "Etat" uniquement pour tout ce qui est Leads (perdu/stand-by/pipeline) —
+// jamais "Groupe", pas garanti synchronisé avec Etat (décision de Jimmy,
+// 2026-08-04). Seul "gagné" fait exception : voir nbClientsGagnes plus bas,
+// qui vient du board Comptes (date de démarrage), pas de cet état.
+// Doit rester synchronisé avec server/src/leadsEtats.js (ETAT_PERDU/
+// ETAT_STANDBY) — deux copies faute de code partagé entre back et front.
+const ETAT_PERDU = new Set([
+  'Arrêt suivi',
+  'Résilié / Arrêt de collaboration',
+  'Stop contact',
+  'Fin de contrat',
+]);
+const ETAT_STANDBY = new Set([
+  'Stand By',
+  'Suspension de contrat',
+]);
+// "Date de démarrage planifié/Contrat signé" exclu : c'est un état gagné
+// (ETAT_GAGNE côté serveur), pas une opportunité encore en pipeline.
 const PIPELINE_ETATS = new Set([
   'Attente retour client',
   'Relance à faire',
   'Point de cadrage',
   'Présentation profil',
   'Recherche profil',
-  'Date de démarrage planifié/Contrat signé',
   'R1 Planifié',
   'Relance en cours',
   'Suivi MEP J+7',
@@ -106,25 +123,17 @@ const PIPELINE_ETATS = new Set([
   'R2 à planifier/planifié',
 ]);
 
-const GAGNES_GROUPES = new Set([
-  'Gagnée',
-  'ARC après présentation / date de démarrage confirmé',
-]);
-
-const PERDUS_GROUPES = new Set([
-  'Arrêt Suivi',
-  'Stop Contact',
-  'Résilié / Arrêt de collaboration',
-  'ATRC après prez',
-]);
-
 // ─── KPI computation ─────────────────────────────────────────────────────────
 // comptesSnap / leadsSnap : rows already resolved to the right snapshot date
 // dateFrom / dateTo       : ISO strings "YYYY-MM-DD" from getPeriodRange
 
 // Partie LEADS uniquement — la partie COMPTES est désormais calculée par le
 // backend Railway (/api/kpis) sur l'historique SCD2 injecté.
-export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
+// nbClientsGagnes : nombre de "gagnés" à utiliser pour le win rate/dealStats
+// — vient du board Comptes (nbNouveauxClients, date de démarrage dans la
+// période), pas des Leads. C'est la seule exception à "tout le reste se fie
+// à Etat, jamais Groupe" (décision de Jimmy, 2026-08-04).
+export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo, nbClientsGagnes = 0) {
   const from = dateFrom || '';
   const to   = dateTo   || '';
 
@@ -133,11 +142,6 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
   // tous les calculs de période se font par rapport à elle, et non par
   // rapport à la date de démarrage souhaitée, d'ouverture, etc.).
   const inRdvPeriod = l => l.date_rdv && l.date_rdv >= from && l.date_rdv <= to;
-
-  // "Deals gagnés" ne se calcule plus depuis les Leads (colonne Etat) : un
-  // client gagné = un deal gagné, et cette notion part directement du board
-  // Comptes (date de démarrage dans la période — voir nbNouveauxClients/
-  // caNouveauxClients côté /api/kpis), pas du board Leads/Prospects.
 
   // ── LEADS — pipeline (state + Date RDV dans la période) ───────────────────
   // Achat P (et non Vente P) : "Pipeline total" représente le volume d'achat
@@ -188,10 +192,12 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
     },
   ];
 
-  // ── LEADS — win rate (par groupe, Date RDV dans la période) ────────────────
-  const nbGagnesAll  = leadsSnap.filter(l => GAGNES_GROUPES.has(l.groupe) && inRdvPeriod(l)).length;
-  const nbPerdusAll  = leadsSnap.filter(l => PERDUS_GROUPES.has(l.groupe) && inRdvPeriod(l)).length;
-  const nbStandbyAll = leadsSnap.filter(l => l.groupe === 'Stand By' && inRdvPeriod(l)).length;
+  // ── LEADS — win rate (par Etat, Date RDV dans la période) ──────────────────
+  // "Gagnés" = nbClientsGagnes (Comptes, passé en paramètre) — pas un
+  // filtre sur les Leads ici, cf. commentaire en tête de fonction.
+  const nbGagnesAll  = nbClientsGagnes;
+  const nbPerdusAll  = leadsSnap.filter(l => ETAT_PERDU.has(l.etat) && inRdvPeriod(l)).length;
+  const nbStandbyAll = leadsSnap.filter(l => ETAT_STANDBY.has(l.etat) && inRdvPeriod(l)).length;
   const nbEnCoursAll = pipelineItems.length;
 
   const winRate = (nbGagnesAll + nbPerdusAll) > 0

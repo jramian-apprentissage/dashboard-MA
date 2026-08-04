@@ -85,13 +85,13 @@ export function useSnapshotData() {
   const result = useMemo(() => {
     if (!compteKpis || !leadsRows) return null;
     const leadsSnap = resolveSnapshot(leadsRows, to);
-    return { ...compteKpis, ...computeLeadsKPIs(leadsSnap, from, to) };
+    return { ...compteKpis, ...computeLeadsKPIs(leadsSnap, from, to, compteKpis.nbNouveauxClients) };
   }, [compteKpis, leadsRows, from, to]);
 
   const compareResult = useMemo(() => {
     if (!compareActive || !compareRange || !compareCompteKpis || !leadsRows) return null;
     const leadsSnap = resolveSnapshot(leadsRows, compareRange.to);
-    return { ...compareCompteKpis, ...computeLeadsKPIs(leadsSnap, compareRange.from, compareRange.to) };
+    return { ...compareCompteKpis, ...computeLeadsKPIs(leadsSnap, compareRange.from, compareRange.to, compareCompteKpis.nbNouveauxClients) };
   }, [compareActive, compareRange, compareCompteKpis, leadsRows]);
 
   return { result, compareResult, monthly, loading: loading || (!result && !error), error };
