@@ -159,7 +159,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               value={d.nbDealsGagnes}
               unit=" deals"
               compare={cmp(d.nbDealsGagnes, c?.nbDealsGagnes)}
-              trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.sommeVentesGagnes)}` }}
+              trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.caDealsGagnes)}` }}
               color="green"
             />
             <KPICard
@@ -285,15 +285,22 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
           {/* Résumé santé client en tête, chiffres avant le camembert — plus
               parlant qu'un pourcentage (source : colonne "Note de
               satisfaction" IA, board Comptes Monday) */}
-          <div className={styles.metaSub} style={{ marginBottom: 8 }}>Santé du portefeuille (Health Score)</div>
+          <div className={styles.metaSub} style={{ marginBottom: 2 }}>Santé du portefeuille (Health Score)</div>
           {satisfaction.error ? (
             <div style={{ padding: '8px 0', color: 'var(--neg)', fontSize: 12 }}>Erreur de chargement : {satisfaction.error}</div>
           ) : satisfaction.data ? (
-            <div className={styles.healthRow}>
-              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</span><span className={styles.hLbl}>Clients sains</span></div>
-              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Clients sous vigilance</span></div>
-              <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</span><span className={styles.hLbl}>Clients à risque</span></div>
-            </div>
+            <>
+              {/* Instantané des comptes live actuels, indépendant de la période
+                  sélectionnée (la note de satisfaction n'a pas d'historique par
+                  mois côté Monday) — ne pas comparer ce total à "Clients
+                  actifs" ci-dessus, qui lui est filtré sur la période. */}
+              <div className={styles.subnote} style={{ marginBottom: 8 }}>Instantané des comptes actuels — pas filtré par période</div>
+              <div className={styles.healthRow}>
+                <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</span><span className={styles.hLbl}>Clients sains</span></div>
+                <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Clients sous vigilance</span></div>
+                <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</span><span className={styles.hLbl}>Clients à risque</span></div>
+              </div>
+            </>
           ) : (
             <NotConnected>chargement…</NotConnected>
           )}

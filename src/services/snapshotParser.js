@@ -137,6 +137,10 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
   // ── LEADS — deals gagnés (Date RDV dans la période) ───────────────────────
   const dealsGagnesPeriode = leadsSnap.filter(l => l.etat === 'Contrat signé' && inRdvPeriod(l));
   const nbDealsGagnes = dealsGagnesPeriode.length;
+  // CA des deals gagnés eux-mêmes (Leads) — distinct de sommeVentesGagnes
+  // (Comptes, nouveaux clients par date de démarrage) : les deux comptaient
+  // des populations différentes tout en s'affichant côte à côte.
+  const caDealsGagnes = dealsGagnesPeriode.reduce((s, l) => s + l.vente_p, 0);
 
   // ── LEADS — pipeline (state + Date RDV dans la période) ───────────────────
   // Achat P (et non Vente P) : "Pipeline total" représente le volume d'achat
@@ -200,6 +204,7 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
   return {
     // Leads — deals gagnés période
     nbDealsGagnes,
+    caDealsGagnes,
     // Pipeline
     montantPipeline,
     montantPipelinePondere,

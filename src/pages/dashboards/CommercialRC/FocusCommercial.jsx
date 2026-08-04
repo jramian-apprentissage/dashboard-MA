@@ -187,7 +187,7 @@ export default function FocusCommercial() {
                   value={result.nbDealsGagnes}
                   unit=" deals"
                   compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
-                  trend={{ dir: 'neutral', text: `CA associé : ${fmt(result.sommeVentesGagnes)}` }}
+                  trend={{ dir: 'neutral', text: `CA associé : ${fmt(result.caDealsGagnes)}` }}
                   color="green"
                 />
               </>
