@@ -300,6 +300,9 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
                 <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Clients sous vigilance</span></div>
                 <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</span><span className={styles.hLbl}>Clients à risque</span></div>
               </div>
+              {satisfaction.data.buckets.sansNote > 0 && (
+                <div className={styles.subnote} style={{ marginTop: 4 }}>+ {satisfaction.data.buckets.sansNote} client(s) actif(s) sans note pour l'instant</div>
+              )}
             </>
           ) : (
             <NotConnected>chargement…</NotConnected>
