@@ -12,9 +12,13 @@ les mêmes règles strictes** que celui de la note, puis traduit le résultat en
 libellé. C'est ce qui garantit que les deux colonnes ne peuvent plus se
 contredire.
 
-Les seuils découlent directement de l'étalonnage du prompt note
-(85 = sain · 50 = warning · 25 = risque) : les bornes sont placées à
-mi-chemin entre ces repères, soit 70 et 40.
+Les seuils (65 et 35) découlent de l'étalonnage du prompt note
+(85 = sain · 50 = warning · 25 = risque), volontairement abaissés de 5 points
+par rapport au milieu exact : mieux vaut être indulgent qu'accusateur aux
+frontières. Répartition obtenue sur les 88 comptes notés à ce jour :
+**17 sains · 68 sous vigilance · 3 à risque**. Les 5 comptes notés 35 — dont
+MOBIX, à l'origine du constat — ressortent en « Warning », plus jamais en
+« Sain ».
 
 ---
 
@@ -63,9 +67,9 @@ RÈGLES STRICTES (identiques à celles de la note) :
   cas la case vide.
 
 Traduis ensuite ce score en libellé, sans aucune exception :
-- score >= 70          → 🤩 Sain
-- score entre 40 et 69 → 😐 Warning
-- score < 40           → 😔 Risque de départ
+- score >= 65          → 🤩 Sain
+- score entre 35 et 64 → 😐 Warning
+- score < 35           → 😔 Risque de départ
 
 Ces bornes découlent de l'étalonnage utilisé pour la note (85 = client sain et
 engagé · 50 = vigilance · 25 = risque de départ imminent). Le libellé doit
