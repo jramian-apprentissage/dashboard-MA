@@ -3,6 +3,7 @@ import { usePeriod } from '../../contexts/PeriodContext';
 import { getPeriodRange } from './PeriodPicker';
 import { filtrerMentions } from '../../data/kpiRegistry';
 import { ai } from '../../services/api';
+import Markdown from './Markdown';
 import styles from './AIChat.module.css';
 
 const WELCOME = 'Bonjour ! Posez-moi une question sur vos données. Tapez « / » pour cibler un indicateur précis.';
@@ -91,18 +92,51 @@ export default function AIChat() {
     setMenuOpen(false);
     setTyping(true);
 
-    const { ok, data } = await ai.chat({
-      messages: historique.map(m => ({ role: m.role, content: m.text })),
-      from, to,
-      mentions: mentions.map(m => m.chemin),
+    // Bulle assistante créée vide puis remplie au fil du flux — c'est elle
+    // qui donne l'impression d'écriture en direct. `index` la repère pour
+    // les mises à jour suivantes.
+    let index = -1;
+    let recu = '';
+    const ecrire = fragment => {
+      recu += fragment;
+      setMessages(prev => {
+        const copie = [...prev];
+        if (index === -1) return copie; // sécurité : bulle pas encore créée
+        copie[index] = { ...copie[index], text: recu };
+        return copie;
+      });
+    };
+
+    setMessages(prev => {
+      index = prev.length;
+      return [...prev, { role: 'assistant', text: '', streaming: true }];
     });
 
+    const { ok, error } = await ai.chat(
+      {
+        messages: historique.map(m => ({ role: m.role, content: m.text })),
+        from, to,
+        mentions: mentions.map(m => m.chemin),
+      },
+      fragment => {
+        // Premier fragment reçu : on retire l'indicateur "…" de frappe.
+        if (!recu) setTyping(false);
+        ecrire(fragment);
+      },
+    );
+
     setTyping(false);
-    setMessages(prev => [...prev, {
-      role: 'assistant',
-      text: ok ? data.reply : (data.error || "L'assistante est indisponible."),
-      erreur: !ok,
-    }]);
+    setMessages(prev => {
+      const copie = [...prev];
+      if (index === -1 || !copie[index]) return copie;
+      copie[index] = ok
+        ? { role: 'assistant', text: recu, streaming: false }
+        // Erreur en cours de route : on garde le texte déjà reçu et on
+        // ajoute la raison, plutôt que de tout effacer.
+        : { role: 'assistant', erreur: true, streaming: false,
+            text: recu ? `${recu}\n\n_${error}_` : (error || "L'assistante est indisponible.") };
+      return copie;
+    });
     // Les mentions valent pour la question posée, pas pour toute la session.
     setMentions([]);
   }
@@ -154,7 +188,11 @@ export default function AIChat() {
         <div className={styles.messages}>
           {messages.map((m, i) => (
             <div key={i} className={`${styles.msg} ${styles[m.role]} ${m.erreur ? styles.msgErreur : ''}`}>
-              {m.text}
+              {/* Les messages utilisateur restent en texte brut : les
+                  interpréter en Markdown transformerait un simple astérisque
+                  tapé par l'utilisateur en mise en forme. */}
+              {m.role === 'assistant' ? <Markdown>{m.text}</Markdown> : m.text}
+              {m.streaming && <span className={styles.caret} />}
             </div>
           ))}
           {typing && (

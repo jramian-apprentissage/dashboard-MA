@@ -36,8 +36,11 @@
   position: fixed;
   bottom: 82px;
   right: 24px;
-  width: 340px;
-  height: 480px;
+  /* Élargi (340 → 420) depuis que les réponses contiennent des tableaux et
+     des listes : à 340 px chaque ligne se cassait en trois. Reste sous les
+     440 px de l'écran mobile le plus étroit, cf. la media query plus bas. */
+  width: 420px;
+  height: 520px;
   background: #160512;
   border: 1px solid rgba(227,225,216,0.10);
   border-radius: 14px;
@@ -131,7 +134,23 @@
   color: rgba(227,225,216,0.80);
   align-self: flex-start;
   border-bottom-left-radius: 3px;
+  /* Plus large que les messages utilisateur : c'est elle qui porte les
+     tableaux et les listes, 85% les comprimait inutilement. */
+  max-width: 94%;
 }
+
+/* Curseur clignotant pendant la génération — même repère visuel que Claude,
+   il montre que le texte continue d'arriver. */
+.caret {
+  display: inline-block;
+  width: 6px;
+  height: 13px;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: rgba(255,249,147,0.75);
+  animation: caretBlink 1s steps(2, start) infinite;
+}
+@keyframes caretBlink { to { visibility: hidden; } }
 
 .user {
   background: rgba(255,249,147,0.08);
