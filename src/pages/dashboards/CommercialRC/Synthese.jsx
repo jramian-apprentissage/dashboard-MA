@@ -145,37 +145,37 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               trend={{ dir: 'neutral', text: `Taux de marge brute : ${d.tauxMarge}%` }}
               color="green"
             />
+            {/* Un client gagné (démarré sur la période, board Comptes) = un
+                deal gagné — même logique que "Nouveaux clients" côté Focus
+                Client, plus fiable que le statut "Contrat signé" du board
+                Leads/Prospects. */}
+            <KPICard
+              label="Deals gagnés"
+              value={d.nbNouveauxClients}
+              unit=" deals"
+              compare={cmp(d.nbNouveauxClients, c?.nbNouveauxClients)}
+              trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.caNouveauxClients)}` }}
+              color="green"
+            />
           </>
         ) : (
           <>
             <KPICard {...notConnectedKPI('CA', COMPTES_HIDDEN_REASON, 'blue')} />
             <KPICard {...notConnectedKPI('Marge brute', COMPTES_HIDDEN_REASON, 'green')} />
+            <KPICard {...notConnectedKPI('Deals gagnés', COMPTES_HIDDEN_REASON, 'green')} />
           </>
         )}
         {SHOW_LEADS_KPIS ? (
-          <>
-            <KPICard
-              label="Deals gagnés"
-              value={d.nbDealsGagnes}
-              unit=" deals"
-              compare={cmp(d.nbDealsGagnes, c?.nbDealsGagnes)}
-              trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.caDealsGagnes)}` }}
-              color="green"
-            />
-            <KPICard
-              label="Pipeline pondéré"
-              value={fmt(d.montantPipelinePondere)}
-              exactValue={fmtEurosExact(d.montantPipelinePondere)}
-              compare={cmp(d.montantPipelinePondere, c?.montantPipelinePondere)}
-              trend={{ dir: 'neutral', text: 'Le CA de demain — opportunités en cours' }}
-              color="purple"
-            />
-          </>
+          <KPICard
+            label="Pipeline pondéré"
+            value={fmt(d.montantPipelinePondere)}
+            exactValue={fmtEurosExact(d.montantPipelinePondere)}
+            compare={cmp(d.montantPipelinePondere, c?.montantPipelinePondere)}
+            trend={{ dir: 'neutral', text: 'Le CA de demain — opportunités en cours' }}
+            color="purple"
+          />
         ) : (
-          <>
-            <KPICard {...notConnectedKPI('Deals gagnés', 'masqué temporairement — reconstruction Comptes en cours', 'green')} />
-            <KPICard {...notConnectedKPI('Pipeline pondéré', 'masqué temporairement — reconstruction Comptes en cours', 'purple')} />
-          </>
+          <KPICard {...notConnectedKPI('Pipeline pondéré', 'masqué temporairement — reconstruction Comptes en cours', 'purple')} />
         )}
       </div>
 
@@ -290,11 +290,11 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
             <div style={{ padding: '8px 0', color: 'var(--neg)', fontSize: 12 }}>Erreur de chargement : {satisfaction.error}</div>
           ) : satisfaction.data ? (
             <>
-              {/* Instantané des comptes live actuels, indépendant de la période
-                  sélectionnée (la note de satisfaction n'a pas d'historique par
-                  mois côté Monday) — ne pas comparer ce total à "Clients
-                  actifs" ci-dessus, qui lui est filtré sur la période. */}
-              <div className={styles.subnote} style={{ marginBottom: 8 }}>Instantané des comptes actuels — pas filtré par période</div>
+              {/* Scopé aux clients actifs sur la période (mêmes clients que
+                  "Clients actifs" ci-dessus) — rapprochés par nom avec leur
+                  éventuel score live, un client actif sans score retombe
+                  dans "sans note" plutôt que d'être silencieusement exclu. */}
+              <div className={styles.subnote} style={{ marginBottom: 8 }}>Sur les clients actifs de la période</div>
               <div className={styles.healthRow}>
                 <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</span><span className={styles.hLbl}>Clients sains</span></div>
                 <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Clients sous vigilance</span></div>

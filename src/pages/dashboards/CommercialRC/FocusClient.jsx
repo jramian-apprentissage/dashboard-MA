@@ -221,11 +221,10 @@ export default function FocusClient() {
               {/* Chiffres en tête, camembert en dessous — même représentation
                   que la synthèse (les nombres se lisent avant le %). Cliquer
                   une catégorie déploie son Top 5 clients concernés. */}
-              {/* Instantané des comptes live actuels, indépendant de la
-                  période sélectionnée — ne pas comparer ce total à
-                  "Portefeuille de clients actifs" ci-dessus (celui-là est
-                  filtré sur la période). */}
-              <div className={styles.subnote} style={{ marginBottom: 8 }}>Instantané des comptes actuels — pas filtré par période</div>
+              {/* Scopé aux clients actifs sur la période (mêmes clients que
+                  "Portefeuille de clients actifs" ci-dessus) — rapprochés
+                  par nom avec leur éventuel score live. */}
+              <div className={styles.subnote} style={{ marginBottom: 8 }}>Sur les clients actifs de la période</div>
               <div className={styles.healthStats}>
                 <button type="button" className={styles.hStat} onClick={() => setSelectedBucket(b => b === 'sain' ? null : 'sain')}>
                   <div className={styles.hVal} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</div><div className={styles.hLbl}>Clients sains</div>
@@ -354,7 +353,7 @@ export default function FocusClient() {
                   </button>
                 )}
                 <div className={styles.subnote} style={{ marginTop: 8 }}>
-                  Classé du score le plus bas au plus élevé · note générée par l'IA Monday — le raisonnement détaillé (survol dans Monday) n'est pas exposé par l'API, seule la note chiffrée l'est · liste des comptes live actuels, pas filtrée par période
+                  Classé du score le plus bas au plus élevé · note générée par l'IA Monday — le raisonnement détaillé (survol dans Monday) n'est pas exposé par l'API, seule la note chiffrée l'est · clients actifs sur la période
                 </div>
               </>
             );
