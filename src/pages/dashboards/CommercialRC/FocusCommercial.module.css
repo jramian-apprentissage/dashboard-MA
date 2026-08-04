@@ -29,6 +29,10 @@
 .barFill { height: 100%; background: var(--myrtille); border-radius: 5px; }
 .barVal { font-size: 11px; font-weight: 600; color: var(--text); width: 66px; flex-shrink: 0; display: flex; justify-content: flex-end; gap: 6px; font-variant-numeric: tabular-nums; }
 .barVal span { color: var(--text3); font-weight: 500; }
+/* Âge moyen de l'étape (jours depuis la Date RDV) — volontairement discret,
+   c'est une info de contexte à côté de la part du total qui, elle, porte
+   la lecture principale de la ligne. */
+.barAge { font-size: 10.5px; color: var(--text3); width: 38px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Stats de cycle intégrées au funnel */
 .cycleStats { display: flex; gap: 28px; }

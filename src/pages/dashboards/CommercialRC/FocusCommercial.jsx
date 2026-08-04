@@ -178,7 +178,7 @@ export default function FocusCommercial() {
                   label="Win rate"
                   value={`${winRate}%`}
                   compare={cmpPts(winRate, c?.winRate)}
-                  trend={{ dir: 'neutral', text: 'Gagnés ÷ (Gagnés + Perdus)' }}
+                  trend={{ dir: 'neutral', text: 'Gagnés ÷ tous les deals de la période' }}
                   color={winRate >= 50 ? 'green' : 'amber'}
                 />
               </>
@@ -213,9 +213,27 @@ export default function FocusCommercial() {
                 <NotConnected>{leads.error}</NotConnected>
               ) : leads.data?.funnel ? (
                 <>
-                  <div className={styles.pipeTotal}>
-                    <div className={styles.metaSub}>Opportunités en cours</div>
-                    <div className={styles.metaVal}>{leads.data.funnel.totalOpportunites}</div>
+                  {/* Âge moyen et durée de cycle se calculent depuis la Date
+                      RDV, comme tous les indicateurs Leads/Prospects : âge =
+                      jours écoulés depuis le RDV, cycle = RDV → date de
+                      démarrage souhaitée sur les deals signés. */}
+                  <div className={styles.pipelineHeader}>
+                    <div>
+                      <div className={styles.metaSub}>Opportunités en cours</div>
+                      <div className={styles.metaVal}>{leads.data.funnel.totalOpportunites}</div>
+                    </div>
+                    <div>
+                      <div className={styles.metaSub}>Âge moyen</div>
+                      <div className={styles.metaVal}>
+                        {leads.data.funnel.ageMoyenJours != null ? `${leads.data.funnel.ageMoyenJours} j` : '—'}
+                      </div>
+                    </div>
+                    <div>
+                      <div className={styles.metaSub}>Durée de cycle</div>
+                      <div className={styles.metaVal} style={{ color: 'var(--myrtille)' }}>
+                        {leads.data.funnel.dureeCycleJours != null ? `${leads.data.funnel.dureeCycleJours} j` : '—'}
+                      </div>
+                    </div>
                   </div>
                   {(() => {
                     // Échelle fixe à 100% (pas au max de la série) — sinon
@@ -232,10 +250,16 @@ export default function FocusCommercial() {
                           <div className={styles.barFill} style={{ width: `${Math.max(s.pct, 4)}%` }} />
                         </div>
                         <div className={styles.barVal}>{s.pct}%<span>→ {fmtNumber(s.count)}</span></div>
+                        <div className={styles.barAge} title="Âge moyen depuis la Date RDV">
+                          {s.ageMoyenJours != null ? `${s.ageMoyenJours} j` : '—'}
+                        </div>
                       </div>
                     ));
                   })()}
-                  <div className={styles.subnote} style={{ marginTop: 8 }}>Part du total des opps ouvertes par étape · âge moyen et durée de cycle non disponibles</div>
+                  <div className={styles.subnote} style={{ marginTop: 8 }}>
+                    Part du total des opps ouvertes par étape · âge moyen depuis la Date RDV
+                    {leads.data.funnel.nbDealsCycle > 0 && ` · cycle mesuré sur ${leads.data.funnel.nbDealsCycle} deal(s) signé(s)`}
+                  </div>
                 </>
               ) : (
                 <NotConnected>chargement…</NotConnected>
@@ -346,7 +370,7 @@ export default function FocusCommercial() {
                   </div>
                 </div>
                 <div className={styles.subnote}>
-                  {result.dealStats.gagnes} affaire{result.dealStats.gagnes > 1 ? 's' : ''} signée{result.dealStats.gagnes > 1 ? 's' : ''} sur {result.dealStats.gagnes + result.dealStats.perdus} affaire{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''} totale{(result.dealStats.gagnes + result.dealStats.perdus) > 1 ? 's' : ''}
+                  {result.dealStats.gagnes} affaire{result.dealStats.gagnes > 1 ? 's' : ''} signée{result.dealStats.gagnes > 1 ? 's' : ''} sur {result.dealStats.total} deal{result.dealStats.total > 1 ? 's' : ''} dont la Date RDV tombe sur la période
                 </div>
               </>
             )}

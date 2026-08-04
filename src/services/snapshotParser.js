@@ -200,8 +200,13 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo, nbClientsGagnes = 
   const nbStandbyAll = leadsSnap.filter(l => ETAT_STANDBY.has(l.etat) && inRdvPeriod(l)).length;
   const nbEnCoursAll = pipelineItems.length;
 
-  const winRate = (nbGagnesAll + nbPerdusAll) > 0
-    ? Math.round((nbGagnesAll / (nbGagnesAll + nbPerdusAll)) * 100)
+  // Win rate = gagnés ÷ TOUS les deals dont la Date RDV tombe dans la période
+  // — pas gagnés ÷ (gagnés + perdus), qui ignorait les stand-by et les
+  // affaires encore en cours et gonflait donc mécaniquement le taux
+  // (décision de Jimmy, 2026-08-04).
+  const nbTousDeals = leadsSnap.filter(inRdvPeriod).length;
+  const winRate = nbTousDeals > 0
+    ? Math.round((nbGagnesAll / nbTousDeals) * 100)
     : 0;
 
   return {
@@ -216,6 +221,7 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo, nbClientsGagnes = 
       perdus:  nbPerdusAll,
       standby: nbStandbyAll,
       enCours: nbEnCoursAll,
+      total:   nbTousDeals,
     },
   };
 }
