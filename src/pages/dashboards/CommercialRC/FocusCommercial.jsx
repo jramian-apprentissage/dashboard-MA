@@ -135,7 +135,7 @@ export default function FocusCommercial() {
           Spinner uniquement lors d'un rechargement (changement de filtre),
           pas au tout premier affichage. */}
       <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-        <span style={{ color: 'var(--pos)' }}>● Source Monday CRM</span> — Extraction du {derniereExtractionDDMM()} à 21h
+        <span style={{ color: 'var(--pos)' }}>● Données Monday CRM</span> — Mise à jour arrêtée au {derniereExtractionDDMM()}
         {loading && result && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
       </div>
 
