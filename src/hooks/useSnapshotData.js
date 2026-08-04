@@ -1,46 +1,49 @@
 import { useState, useEffect, useMemo } from 'react';
 import { usePeriod } from '../contexts/PeriodContext';
 import { getPeriodRange } from '../components/ui/PeriodPicker';
-import {
-  parseSnapLeads, resolveSnapshot, computeLeadsKPIs, SNAP_LEADS_URL,
-} from '../services/snapshotParser';
 import { fetchAPI } from '../services/api';
 
 /* Comptes : API backend Railway (historique SCD2 injecté depuis le compte
    d'exploitation 2023→2026 + webhooks Monday live).
-   Leads : toujours le snapshot Google Sheets (pipeline / win rate). */
+   Leads/acquisition : /api/leads/deals, également côté backend — le snapshot
+   Google Sheets n'est plus utilisé, il donnait des chiffres différents de
+   ceux du funnel pour les mêmes indicateurs (décision de Jimmy, 2026-08-04 :
+   "les deals doivent être dans la partie acquisition, basé sur les chiffres
+   acquisition"). */
 
 export function useSnapshotData() {
-  const [leadsRows,   setLeadsRows]   = useState(null);
+  const [leadsKpis,   setLeadsKpis]   = useState(null);
   const [compteKpis,  setCompteKpis]  = useState(null);
   const [monthly,     setMonthly]     = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
   const [compareCompteKpis, setCompareCompteKpis] = useState(null);
+  const [compareLeadsKpis,  setCompareLeadsKpis]  = useState(null);
 
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
 
-  // Leads sheet + série mensuelle : une seule fois au montage
+  // Série mensuelle : une seule fois au montage (fenêtre fixe 6 mois)
   useEffect(() => {
     let cancelled = false;
-
-    Promise.all([
-      fetch(SNAP_LEADS_URL).then(r => {
-        if (!r.ok) throw new Error(`Leads sheet: HTTP ${r.status}`);
-        return r.text();
-      }),
-      fetchAPI('/monthly?months=6'),
-    ])
-      .then(([leadsCsv, monthlyData]) => {
-        if (cancelled) return;
-        setLeadsRows(parseSnapLeads(leadsCsv));
-        setMonthly(monthlyData);
-      })
+    fetchAPI('/monthly?months=6')
+      .then(monthlyData => { if (!cancelled) setMonthly(monthlyData); })
       .catch(e => { if (!cancelled) setError(e.message); });
-
     return () => { cancelled = true; };
   }, []);
+
+  // KPIs acquisition (deals, win rate, pipeline) — recalculés par le backend
+  // à chaque changement de période, même source que le funnel.
+  useEffect(() => {
+    let cancelled = false;
+    const qs = new URLSearchParams();
+    if (from) qs.set('from', from);
+    if (to)   qs.set('to', to);
+    fetchAPI(`/leads/deals?${qs}`)
+      .then(data => { if (!cancelled) setLeadsKpis(data); })
+      .catch(e => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, [from, to]);
 
   // KPIs comptes : recalculés par le backend à chaque changement de période
   useEffect(() => {
@@ -63,13 +66,13 @@ export function useSnapshotData() {
     return () => { cancelled = true; };
   }, [from, to]);
 
-  // KPIs comptes de la période de comparaison — même route backend, juste
-  // rejouée avec compareRange. Les KPIs leads, eux, se recalculent en mémoire
-  // (leadsRows déjà chargé), pas besoin d'un second fetch.
+  // Période de comparaison — mêmes deux routes backend, rejouées avec
+  // compareRange (les KPIs leads ne se calculent plus en mémoire).
   useEffect(() => {
     let cancelled = false;
     if (!compareActive || !compareRange) {
       setCompareCompteKpis(null);
+      setCompareLeadsKpis(null);
       return;
     }
     const qs = new URLSearchParams();
@@ -78,21 +81,22 @@ export function useSnapshotData() {
     fetchAPI(`/kpis?${qs}`)
       .then(data => { if (!cancelled) setCompareCompteKpis(data); })
       .catch(() => { if (!cancelled) setCompareCompteKpis(null); });
+    fetchAPI(`/leads/deals?${qs}`)
+      .then(data => { if (!cancelled) setCompareLeadsKpis(data); })
+      .catch(() => { if (!cancelled) setCompareLeadsKpis(null); });
     return () => { cancelled = true; };
   }, [compareActive, compareRange?.from, compareRange?.to]); // eslint-disable-line
 
-  // Fusion : KPIs comptes (backend) + KPIs leads (snapshot sheet, en mémoire)
+  // Fusion : KPIs comptes + KPIs acquisition, tous deux calculés par le backend
   const result = useMemo(() => {
-    if (!compteKpis || !leadsRows) return null;
-    const leadsSnap = resolveSnapshot(leadsRows, to);
-    return { ...compteKpis, ...computeLeadsKPIs(leadsSnap, from, to, compteKpis.nbNouveauxClients) };
-  }, [compteKpis, leadsRows, from, to]);
+    if (!compteKpis || !leadsKpis) return null;
+    return { ...compteKpis, ...leadsKpis };
+  }, [compteKpis, leadsKpis]);
 
   const compareResult = useMemo(() => {
-    if (!compareActive || !compareRange || !compareCompteKpis || !leadsRows) return null;
-    const leadsSnap = resolveSnapshot(leadsRows, compareRange.to);
-    return { ...compareCompteKpis, ...computeLeadsKPIs(leadsSnap, compareRange.from, compareRange.to, compareCompteKpis.nbNouveauxClients) };
-  }, [compareActive, compareRange, compareCompteKpis, leadsRows]);
+    if (!compareActive || !compareRange || !compareCompteKpis) return null;
+    return { ...compareCompteKpis, ...(compareLeadsKpis || {}) };
+  }, [compareActive, compareRange, compareCompteKpis, compareLeadsKpis]);
 
   return { result, compareResult, monthly, loading: loading || (!result && !error), error };
 }

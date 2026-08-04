@@ -18,6 +18,7 @@ import { fmtEurosExact } from '../../../utils/formatNumber';
 import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 
 const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
+const LEADS_HIDDEN_REASON = 'masqué temporairement — reconstruction Comptes en cours';
 import styles from './Synthese.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
@@ -145,37 +146,39 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               trend={{ dir: 'neutral', text: `Taux de marge brute : ${d.tauxMarge}%` }}
               color="green"
             />
-            {/* Un client gagné (démarré sur la période, board Comptes) = un
-                deal gagné — même logique que "Nouveaux clients" côté Focus
-                Client, plus fiable que le statut "Contrat signé" du board
-                Leads/Prospects. */}
-            <KPICard
-              label="Deals gagnés"
-              value={d.nbNouveauxClients}
-              unit=" deals"
-              compare={cmp(d.nbNouveauxClients, c?.nbNouveauxClients)}
-              trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.caNouveauxClients)}` }}
-              color="green"
-            />
           </>
         ) : (
           <>
             <KPICard {...notConnectedKPI('CA', COMPTES_HIDDEN_REASON, 'blue')} />
             <KPICard {...notConnectedKPI('Marge brute', COMPTES_HIDDEN_REASON, 'green')} />
-            <KPICard {...notConnectedKPI('Deals gagnés', COMPTES_HIDDEN_REASON, 'green')} />
           </>
         )}
+        {/* Deals gagnés et pipeline viennent tous deux du board
+            Leads/Prospects (acquisition) — même flag, même source. */}
         {SHOW_LEADS_KPIS ? (
-          <KPICard
-            label="Pipeline pondéré"
-            value={fmt(d.montantPipelinePondere)}
-            exactValue={fmtEurosExact(d.montantPipelinePondere)}
-            compare={cmp(d.montantPipelinePondere, c?.montantPipelinePondere)}
-            trend={{ dir: 'neutral', text: 'Le CA de demain — opportunités en cours' }}
-            color="purple"
-          />
+          <>
+            <KPICard
+              label="Deals gagnés"
+              value={d.nbDealsGagnes}
+              unit=" deals"
+              compare={cmp(d.nbDealsGagnes, c?.nbDealsGagnes)}
+              trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.caDealsGagnes)}` }}
+              color="green"
+            />
+            <KPICard
+              label="Pipeline pondéré"
+              value={fmt(d.montantPipelinePondere)}
+              exactValue={fmtEurosExact(d.montantPipelinePondere)}
+              compare={cmp(d.montantPipelinePondere, c?.montantPipelinePondere)}
+              trend={{ dir: 'neutral', text: 'Le CA de demain — opportunités en cours' }}
+              color="purple"
+            />
+          </>
         ) : (
-          <KPICard {...notConnectedKPI('Pipeline pondéré', 'masqué temporairement — reconstruction Comptes en cours', 'purple')} />
+          <>
+            <KPICard {...notConnectedKPI('Deals gagnés', LEADS_HIDDEN_REASON, 'green')} />
+            <KPICard {...notConnectedKPI('Pipeline pondéré', LEADS_HIDDEN_REASON, 'purple')} />
+          </>
         )}
       </div>
 

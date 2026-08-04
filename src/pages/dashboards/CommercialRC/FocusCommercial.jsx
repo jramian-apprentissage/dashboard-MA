@@ -155,6 +155,7 @@ export default function FocusCommercial() {
                 <KPICard {...notConnectedKPI('Pipeline total', LEADS_HIDDEN_REASON, 'blue')} />
                 <KPICard {...notConnectedKPI('Pipeline pondéré', LEADS_HIDDEN_REASON, 'green')} />
                 <KPICard {...notConnectedKPI('Win rate', LEADS_HIDDEN_REASON, 'amber')} />
+                <KPICard {...notConnectedKPI('Deals gagnés', LEADS_HIDDEN_REASON, 'green')} />
               </>
             ) : (
               <>
@@ -178,26 +179,21 @@ export default function FocusCommercial() {
                   label="Win rate"
                   value={`${winRate}%`}
                   compare={cmpPts(winRate, c?.winRate)}
-                  trend={{ dir: 'neutral', text: 'Gagnés ÷ tous les deals de la période' }}
+                  trend={{ dir: 'neutral', text: 'Gagnés ÷ (gagnés + perdus + en cours)' }}
                   color={winRate >= 50 ? 'green' : 'amber'}
                 />
+                {/* Deals gagnés = affaires signées côté acquisition (board
+                    Leads/Prospects), même source que le win rate juste à
+                    côté — sinon les deux ne sont pas comparables. */}
+                <KPICard
+                  label="Deals gagnés"
+                  value={result.nbDealsGagnes}
+                  unit=" deals"
+                  compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
+                  trend={{ dir: 'neutral', text: `CA associé : ${fmt(result.caDealsGagnes)}` }}
+                  color="green"
+                />
               </>
-            )}
-            {/* Un client gagné (démarré sur la période, board Comptes) = un
-                deal gagné — même logique que "Nouveaux clients" côté Focus
-                Client, plus fiable que le statut "Contrat signé" du board
-                Leads/Prospects. */}
-            {!SHOW_COMPTES_KPIS ? (
-              <KPICard {...notConnectedKPI('Deals gagnés', COMPTES_HIDDEN_REASON, 'green')} />
-            ) : (
-              <KPICard
-                label="Deals gagnés"
-                value={result.nbNouveauxClients}
-                unit=" deals"
-                compare={cmp(result.nbNouveauxClients, c?.nbNouveauxClients)}
-                trend={{ dir: 'neutral', text: `CA associé : ${fmt(result.caNouveauxClients)}` }}
-                color="green"
-              />
             )}
           </div>
           )}
