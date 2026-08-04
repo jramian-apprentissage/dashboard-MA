@@ -134,13 +134,10 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
   // rapport à la date de démarrage souhaitée, d'ouverture, etc.).
   const inRdvPeriod = l => l.date_rdv && l.date_rdv >= from && l.date_rdv <= to;
 
-  // ── LEADS — deals gagnés (Date RDV dans la période) ───────────────────────
-  const dealsGagnesPeriode = leadsSnap.filter(l => l.etat === 'Contrat signé' && inRdvPeriod(l));
-  const nbDealsGagnes = dealsGagnesPeriode.length;
-  // CA des deals gagnés eux-mêmes (Leads) — distinct de sommeVentesGagnes
-  // (Comptes, nouveaux clients par date de démarrage) : les deux comptaient
-  // des populations différentes tout en s'affichant côte à côte.
-  const caDealsGagnes = dealsGagnesPeriode.reduce((s, l) => s + l.vente_p, 0);
+  // "Deals gagnés" ne se calcule plus depuis les Leads (colonne Etat) : un
+  // client gagné = un deal gagné, et cette notion part directement du board
+  // Comptes (date de démarrage dans la période — voir nbNouveauxClients/
+  // caNouveauxClients côté /api/kpis), pas du board Leads/Prospects.
 
   // ── LEADS — pipeline (state + Date RDV dans la période) ───────────────────
   // Achat P (et non Vente P) : "Pipeline total" représente le volume d'achat
@@ -202,9 +199,6 @@ export function computeLeadsKPIs(leadsSnap, dateFrom, dateTo) {
     : 0;
 
   return {
-    // Leads — deals gagnés période
-    nbDealsGagnes,
-    caDealsGagnes,
     // Pipeline
     montantPipeline,
     montantPipelinePondere,
