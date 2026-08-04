@@ -170,7 +170,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               value={fmt(d.montantPipelinePondere)}
               exactValue={fmtEurosExact(d.montantPipelinePondere)}
               compare={cmp(d.montantPipelinePondere, c?.montantPipelinePondere)}
-              trend={{ dir: 'neutral', text: 'Le CA de demain — opportunités en cours' }}
+              trend={{ dir: 'neutral', text: 'Deals supérieurs à 30% de probabilité' }}
               color="purple"
             />
           </>
