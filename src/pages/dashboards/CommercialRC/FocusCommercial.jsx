@@ -7,7 +7,7 @@ import { useLeadsAnalytics } from '../../../hooks/useLeadsAnalytics';
 import { useComptesSecteurs } from '../../../hooks/useComptesSecteurs';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
-import { fmtNumber, fmtEurosExact } from '../../../utils/formatNumber';
+import { fmtNumber, fmtEurosExact, fmtEurosDetail } from '../../../utils/formatNumber';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -17,6 +17,7 @@ import MotifBar from '../../../components/ui/MotifBar';
 import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
+import MontantExact from '../../../components/ui/MontantExact';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 import styles from './FocusCommercial.module.css';
@@ -617,8 +618,8 @@ export default function FocusCommercial() {
                     {missionLabels[m.label] || m.label}
                   </div>
                   <div>
-                    <div className={styles.missionRev}>{fmt(m.revenue)} <span className={styles.missionPct}>· {m.pct}%</span></div>
-                    <div className={styles.missionAvg}>Revenu moyen par profil {fmtMoyenne(m.moyenne)} · {m.count} profils</div>
+                    <div className={styles.missionRev}><MontantExact exact={fmtEurosExact(m.revenue)}>{fmtEurosDetail(m.revenue)}</MontantExact> <span className={styles.missionPct}>· {m.pct}%</span></div>
+                    <div className={styles.missionAvg}>Revenu moyen par profil <MontantExact exact={fmtEurosExact(m.moyenne)}>{fmtMoyenne(m.moyenne)}</MontantExact> · {m.count} profils</div>
                   </div>
                 </div>
               ))}

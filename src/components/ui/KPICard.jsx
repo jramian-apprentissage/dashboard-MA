@@ -57,13 +57,17 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
 
   // Le survol (voir CSS, gate `@media (hover: hover)`) couvre déjà l'ordinateur
   // — sur un appareil qui n'a pas de vrai survol (mobile/tactile), le clic
-  // retourne la carte 5 secondes pour révéler le montant exact, puis repasse
-  // seul à l'affichage normal.
+  // retourne la carte pour révéler le montant exact.
+  //
+  // Le retour se fait de deux façons : automatiquement après 5 s, ou tout de
+  // suite si l'utilisateur retouche la carte. Sans ce second clic, il fallait
+  // attendre le délai en regardant l'écran, sans aucun moyen de revenir.
   function handleClick() {
     if (!exactValue) return;
     if (typeof window !== 'undefined' && window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return;
-    setFlipped(true);
     clearTimeout(flipTimer.current);
+    if (flipped) { setFlipped(false); return; }
+    setFlipped(true);
     flipTimer.current = setTimeout(() => setFlipped(false), FLIP_DURATION_MS);
   }
 

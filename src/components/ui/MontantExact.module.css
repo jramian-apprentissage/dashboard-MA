@@ -1,0 +1,51 @@
+/* Montant abrégé consultable en valeur exacte — voir MontantExact.jsx.
+   Reprend volontairement l'apparence de l'infobulle des cartes KPI
+   (KPICard.module.css) : c'est la même information, elle doit se présenter
+   de la même façon où qu'elle apparaisse. */
+
+.wrap {
+  position: relative;
+  /* inline-block : sans ça l'infobulle, positionnée en absolu, se cale sur
+     la cellule du tableau et non sur le montant lui-même. */
+  display: inline-block;
+}
+
+.tooltip {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 6px;
+  background: var(--myrtille);
+  color: var(--soleil);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.15s, transform 0.15s;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .wrap { cursor: help; }
+  .wrap:hover .tooltip { opacity: 1; transform: translateY(0); }
+}
+
+/* Tactile : pas de survol fiable, l'infobulle ne sert à rien — la valeur
+   exacte prend la place de la valeur abrégée au tap (voir le composant). */
+@media not all and (hover: hover) {
+  .tooltip { display: none; }
+  .wrap { cursor: pointer; }
+}
+
+/* Valeur exacte affichée en place : plus petite, sinon elle déborde de la
+   colonne (« 5 K€ » fait 3 caractères, « 5 180,46 € » en fait 10). */
+.exactInline {
+  font-size: 0.86em;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}

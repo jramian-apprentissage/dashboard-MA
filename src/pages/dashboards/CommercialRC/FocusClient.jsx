@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
@@ -13,8 +13,9 @@ import Pill from '../../../components/ui/Pill';
 import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
+import MontantExact from '../../../components/ui/MontantExact';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
-import { fmtEurosExact } from '../../../utils/formatNumber';
+import { fmtEurosExact, fmtEurosDetail } from '../../../utils/formatNumber';
 import { SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 import styles from './FocusClient.module.css';
 
@@ -47,7 +48,8 @@ export default function FocusClient() {
   const satisfaction = useSatisfactionClient();
   const perdus = useClientsPerdus();
   const { comparePeriodKey } = usePeriod();
-  const [healthVisible, setHealthVisible] = useState(HEALTH_LIST_STEP);
+  const [showAllSante, setShowAllSante] = useState(false);
+  const santeSectionRef = useRef(null);
   const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
   const c = compareResult;
   const cmp = (current, ref, invert) => c ? compareValueText(current, ref, comparePeriodKey, invert) : null;
@@ -147,7 +149,7 @@ export default function FocusClient() {
                   <tr key={c.name}>
                     <td className={styles.rank} style={{ color: i === 0 ? 'var(--myrtille)' : 'var(--text2)' }}>{i + 1}</td>
                     <td className={styles.tdName}>{c.name}</td>
-                    <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtEuros(c.ca)}</td>
+                    <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}><MontantExact exact={fmtEurosExact(c.ca)}>{fmtEurosDetail(c.ca)}</MontantExact></td>
                     <td>
                       <div className={styles.miniBarWrap}>
                         <div className={styles.miniBar}>
@@ -183,7 +185,7 @@ export default function FocusClient() {
                   <tr key={c.name}>
                     <td className={styles.rank} style={{ color: i === 0 ? 'var(--myrtille)' : 'var(--text2)' }}>{i + 1}</td>
                     <td className={styles.tdName}>{c.name}</td>
-                    <td className={styles.tdRight} style={{ color: c.marge >= 0 ? 'var(--text)' : 'var(--neg)', fontWeight: 600 }}>{fmtEuros(c.marge)}</td>
+                    <td className={styles.tdRight} style={{ color: c.marge >= 0 ? 'var(--text)' : 'var(--neg)', fontWeight: 600 }}><MontantExact exact={fmtEurosExact(c.marge)}>{fmtEurosDetail(c.marge)}</MontantExact></td>
                     <td>
                       <div className={styles.miniBarWrap}>
                         <div className={styles.miniBar}>
@@ -290,7 +292,7 @@ export default function FocusClient() {
                     <tr key={c.compteId}>
                       <td className={styles.tdName}>{c.nom}</td>
                       <td>{c.dateFin ? new Date(`${c.dateFin}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
-                      <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtEuros(c.ca)}</td>
+                      <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}><MontantExact exact={fmtEurosExact(c.ca)}>{fmtEurosDetail(c.ca)}</MontantExact></td>
                     </tr>
                   ))}
                 </tbody>
@@ -306,6 +308,7 @@ export default function FocusClient() {
 
       {/* Détail par client — regroupé juste sous "Niveau de santé client", en
           l'absence de KPI clients/revenus perdus à intercaler pour l'instant. */}
+      <div ref={santeSectionRef} />
       <Card title="Détails du niveau de Santé par Client">
         {!SHOW_COMPTES_KPIS ? (
           <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
@@ -318,8 +321,7 @@ export default function FocusClient() {
             const sorted = satisfaction.data.clients
               .filter(c => c.note != null)
               .sort((a, b) => a.note - b.note);
-            const visible = sorted.slice(0, healthVisible);
-            const reste = sorted.length - visible.length;
+            const visible = sorted.slice(0, showAllSante ? undefined : HEALTH_LIST_STEP);
             return (
               <>
                 {visible.map((c, i) => {
@@ -348,9 +350,21 @@ export default function FocusClient() {
                     </div>
                   );
                 })}
-                {reste > 0 && (
-                  <button type="button" className={styles.hsMore} onClick={() => setHealthVisible(v => v + HEALTH_LIST_STEP)}>
-                    Voir plus ({reste} restant{reste > 1 ? 's' : ''})
+                {sorted.length > HEALTH_LIST_STEP && (
+                  <button
+                    type="button"
+                    className={styles.hsMore}
+                    onClick={() => {
+                      // "Voir moins" : la liste se réduit, mais si on avait
+                      // scrollé en bas de la liste déployée, on restait coincé
+                      // loin du début — on remonte au début de la section.
+                      if (showAllSante) santeSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      setShowAllSante(v => !v);
+                    }}
+                  >
+                    {showAllSante
+                      ? 'Voir moins'
+                      : `Voir les ${sorted.length - HEALTH_LIST_STEP} autres`}
                   </button>
                 )}
                 <div className={styles.subnote} style={{ marginTop: 8 }}>
@@ -388,7 +402,7 @@ export default function FocusClient() {
                       />
                     </div>
                   </div>
-                  <div className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>{fmtEuros(m.caPerdu)}</div>
+                  <div className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}><MontantExact exact={fmtEurosExact(m.caPerdu)}>{fmtEurosDetail(m.caPerdu)}</MontantExact></div>
                 </div>
               ));
             })() : (
