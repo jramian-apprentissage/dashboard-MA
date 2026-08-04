@@ -18,6 +18,9 @@ import styles from './Activite.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
 
+// Feuille Google "Meetings Bookés" — source des RDV affichés ici.
+const RDV_SHEET_URL = import.meta.env.VITE_RDV_SHEET_URL || '';
+
 const tickStyle = { color: 'rgba(167,173,170,0.5)', font: { size: 10, family: 'DM Sans' } };
 const gridStyle = { color: 'rgba(227,225,216,0.5)' };
 const borderCol = { color: 'rgba(227,225,216,0.08)' };
@@ -75,11 +78,28 @@ function compareCollabRows(a, b, sort) {
 function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePeriodKey) {
   const { total, argues, decroche, fichesExploitables } = result;
   const tauxDec = total > 0 ? Math.round((decroche / total) * 100) : 0;
-  const argPct  = total > 0 ? Math.round((argues  / total) * 100) : 0;
   const tauxFichesExploit = total > 0 ? Math.round((fichesExploitables / total) * 100) : 0;
   const rdvPris = rdvResult?.rdvPris ?? '—';
   const tauxHon = rdvResult ? `${rdvResult.tauxHonores}%` : '—';
-  const rdvSrc  = rdvResult ? 'Fichier RDV' : 'Fichier RDV non chargé';
+  // Source des RDV : la feuille Google "Meetings Bookés". L'URL vit dans
+  // VITE_RDV_SHEET_URL et non en dur — le backend, lui, ne connaît que
+  // l'Apps Script qui l'expose en CSV, pas l'adresse de la feuille. Sans
+  // l'URL configurée, on affiche le libellé sans lien plutôt qu'un lien mort.
+  const rdvSrc = !rdvResult
+    ? 'Fichier RDV non chargé'
+    : (RDV_SHEET_URL ? (
+        <a
+          href={RDV_SHEET_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.sourceLink}
+          // La carte entière est cliquable sur mobile (retournement) — sans
+          // ça, ouvrir le lien déclencherait aussi le flip derrière.
+          onClick={e => e.stopPropagation()}
+        >
+          Source : Google Sheet « Meetings Bookés »
+        </a>
+      ) : 'Source : Google Sheet « Meetings Bookés »');
 
   const cmp = compareResult;
   // Le total de la période comparée peut être à 0 (aucun appel) — un vrai
@@ -118,7 +138,7 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
   return [
     { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` },        color: 'blue' },
     { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmpTauxDec,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' } },
-    { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: `${argPct}% du total` },     color: 'green' },
+    { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: 'Prospect ayant écouté le pitch (OK + PI)' },     color: 'green' },
     { label: 'Taux fiches exploitables', value: `${tauxFichesExploit}%`, unit: '', compare: cmpTauxFichesExploit, trend: { dir: 'neutral', text: 'Argumentés + CNA - Mail' }, color: 'amber' },
     { label: 'RDV pris',                 value: rdvPris,        unit: '', compare: cmpRdv,      trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'green' },
     { label: 'Taux RDV honorés',         value: tauxHon,        unit: '', compare: cmpTauxHon,  trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'purple' },
