@@ -162,6 +162,60 @@
   40%            { opacity: 1;   transform: scale(1.3); }
 }
 
+/* Réponse en erreur (clé absente, modèle indisponible) — même bulle que
+   l'assistante, teintée pour ne pas se lire comme une vraie réponse. */
+.msgErreur {
+  background: rgba(196,135,106,0.10);
+  border-color: rgba(196,135,106,0.28);
+  color: rgba(226,178,158,0.95);
+}
+
+/* Période analysée, rappelée en tête : l'IA répond sur celle du dashboard,
+   pas sur "en ce moment" — l'afficher évite un contresens de lecture. */
+.periodBadge {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: rgba(255,249,147,0.07);
+  color: rgba(255,249,147,0.70);
+  border: 1px solid rgba(255,249,147,0.18);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Cartes ciblées (mentions "/") ──────────────── */
+.mentions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 12px 8px;
+  flex-shrink: 0;
+}
+.mentionChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  padding: 3px 6px 3px 8px;
+  border-radius: 4px;
+  background: rgba(255,249,147,0.08);
+  border: 1px solid rgba(255,249,147,0.20);
+  color: rgba(255,249,147,0.85);
+  max-width: 100%;
+}
+.mentionChip button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: rgba(255,249,147,0.55);
+  font-size: 13px;
+  line-height: 1;
+  font-family: var(--font);
+}
+.mentionChip button:hover { color: #FFF993; }
+
 /* ─── Zone de saisie ─────────────────────────────── */
 .inputRow {
   display: flex;
@@ -170,6 +224,66 @@
   padding: 10px 12px 12px;
   border-top: 1px solid rgba(227,225,216,0.07);
   flex-shrink: 0;
+  position: relative; /* ancre le menu "/" au-dessus du champ */
+}
+
+/* ─── Menu "/" ───────────────────────────────────── */
+.slashMenu {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 12px;
+  right: 12px;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #241220;
+  border: 1px solid rgba(227,225,216,0.14);
+  border-radius: 9px;
+  box-shadow: 0 -8px 28px rgba(0,0,0,0.45);
+  padding: 5px;
+  z-index: 20;
+}
+.slashMenu::-webkit-scrollbar { width: 3px; }
+.slashMenu::-webkit-scrollbar-thumb { background: rgba(227,225,216,0.12); border-radius: 2px; }
+
+.slashHint {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(167,173,170,0.55);
+  padding: 4px 8px 6px;
+}
+.slashEmpty {
+  font-size: 11.5px;
+  color: rgba(167,173,170,0.6);
+  padding: 8px;
+}
+
+.slashItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+.slashItemActive { background: rgba(255,249,147,0.10); }
+
+.slashCard {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(251,251,251,0.90);
+}
+.slashItemActive .slashCard { color: #FFF993; }
+
+.slashPath {
+  font-size: 10px;
+  color: rgba(167,173,170,0.65);
 }
 
 .input {

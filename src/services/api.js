@@ -30,6 +30,13 @@ async function postAPI(path, body) {
   return { ok: res.ok, status: res.status, data };
 }
 
+/* Assistante IA (Claude, côté backend). Même forme {ok, data} que CloudTalk :
+   une erreur modèle ou une clé absente doit s'afficher dans le fil de
+   conversation, pas faire tomber la page. */
+export const ai = {
+  chat: payload => postAPI('/ai/chat', payload),
+};
+
 // Reporting CloudTalk — proxy backend vers les webhooks n8n existants.
 export const cloudtalk = {
   calculer: payload => postAPI('/cloudtalk/calculer', payload),

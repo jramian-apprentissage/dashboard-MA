@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, DASHBOARDS } from './contexts/AuthContext';
 import { DASHBOARD_ROUTES } from './data/dashboardTabs';
 import { PeriodProvider } from './contexts/PeriodContext';
@@ -67,12 +67,19 @@ function AppShell({ children }) {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Pas d'assistante IA sur le dashboard client ASUS : c'est une vue
+  // partagée avec le client, l'IA est un outil interne (demande de Jimmy,
+  // 2026-08-04). Le bouton flottant lui-même est masqué, pas seulement le
+  // panneau — sinon il reste visible et cliquable côté client.
+  const { pathname } = useLocation();
+  const iaMasquee = pathname.startsWith('/asus');
+
   return (
     <div className={`${styles.shell} ${scrolled ? styles.shellScrolled : ''}`}>
       <PageTracker />
       <Topbar scrolled={scrolled} />
       {children}
-      <AIChat />
+      {!iaMasquee && <AIChat />}
       <BottomNav />
     </div>
   );
