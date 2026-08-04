@@ -511,7 +511,7 @@ export default function FocusCommercial() {
                 ))}
               </div>
               <div className={styles.subnote} style={{ marginTop: 8 }}>
-                Instantané des comptes actifs (pas filtré par période) · {secteurs.data.reduce((s, x) => s + x.nb, 0)} compte(s) avec secteur renseigné sur Monday
+                {secteurs.data.reduce((s, x) => s + x.nb, 0)} compte(s) avec secteur renseigné sur Monday
               </div>
             </>
           ) : secteurs.data ? (
