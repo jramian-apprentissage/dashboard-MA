@@ -397,7 +397,6 @@ export default function FocusCommercial() {
                 <span className={styles.legDot} style={{ background: '#C4876A', marginLeft: 12 }} />Perdus
                 <span className={styles.legDot} style={{ background: '#D4A84B', marginLeft: 12 }} />Stand-by
               </div>
-              <div className={styles.subnote}>{leads.data.evolutionMensuelle.note_limite}</div>
             </>
           ) : (
             <NotConnected>chargement…</NotConnected>

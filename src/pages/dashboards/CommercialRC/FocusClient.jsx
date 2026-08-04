@@ -111,7 +111,7 @@ export default function FocusClient() {
                 value={result.nbClientsActifs}
                 unit=" actifs"
                 compare={cmp(result.nbClientsActifs, c?.nbClientsActifs)}
-                trend={{ dir: 'neutral', text: `Facturés sur la période · ${result.nbClientsTotal} comptes au total` }}
+                trend={{ dir: 'neutral', text: 'Clients ayant généré du CA sur la période' }}
                 color="blue"
               />
               <KPICard
@@ -353,7 +353,7 @@ export default function FocusClient() {
                   </button>
                 )}
                 <div className={styles.subnote} style={{ marginTop: 8 }}>
-                  Classé du score le plus bas au plus élevé · note générée par l'IA Monday — le raisonnement détaillé (survol dans Monday) n'est pas exposé par l'API, seule la note chiffrée l'est · clients actifs sur la période
+                  Classé du score le plus bas au plus élevé · note générée par l'IA Monday, le raisonnement détaillé dispo au survol dans Monday · clients actifs sur la période
                 </div>
               </>
             );
@@ -399,11 +399,11 @@ export default function FocusClient() {
         </Card>
       </div>
 
-      {/* ══ Ligne 5 — Pilotage interne : qui génère la marge, indépendant du churn ══ */}
-      <SectionLabel>Pilotage interne — marge par collaborateur</SectionLabel>
-      <Card title="Classement collaborateurs — marge générée">
-        <NotConnected>aucune répartition de la marge par collaborateur commercial n'est encore calculée côté API</NotConnected>
-      </Card>
+      {/* ══ Ligne 5 — Pilotage interne : qui génère la marge, indépendant du
+          churn. Masquée tant que l'API ne calcule aucune répartition de la
+          marge par collaborateur : afficher une section entière vide
+          n'apporte rien (demande de Jimmy, 2026-08-04). À réafficher le jour
+          où le calcul existe côté API. */}
 
     </div>
   );
