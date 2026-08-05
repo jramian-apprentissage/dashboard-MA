@@ -49,6 +49,33 @@ export function useSalesData() {
   const appliedTo     = useRef(null);
   const rowsCache     = useRef(null);
   const rdvRowsCache  = useRef(null);
+  const rdvRowsEnCours = useRef(null);
+
+  /* Lignes RDV (feuille Google), source distincte des appels Ringover.
+   *
+   * fetchData et fetchCompareData en ont besoin tous les deux et partent en
+   * parallèle au montage du dashboard. fetchCompareData se contentait de lire
+   * rdvRowsCache : quand elle gagnait la course — le cas normal, le fichier
+   * RDV étant plus lent que l'API — elle trouvait le cache vide et renvoyait
+   * rdv: null. Rien ne relançait le calcul une fois les lignes arrivées, donc
+   * les cartes "RDV pris" et "Taux RDV honorés" restaient indéfiniment sur
+   * "Calcul en cours…" alors que les deux chargements avaient réussi.
+   *
+   * On partage ici une seule requête en vol : le second appelant attend la
+   * même promesse au lieu de repartir les mains vides, et aucun des deux ne
+   * déclenche de téléchargement en double.
+   *
+   * Un échec reste non bloquant (null) et remet la promesse à zéro, pour
+   * qu'un chargement ultérieur puisse retenter. */
+  const chargerLignesRdv = useCallback(() => {
+    if (rdvRowsCache.current) return Promise.resolve(rdvRowsCache.current);
+    if (!rdvRowsEnCours.current) {
+      rdvRowsEnCours.current = fetchAPI('/rdv/rows')
+        .then(rows => { rdvRowsCache.current = rows; return rows; })
+        .catch(() => { rdvRowsEnCours.current = null; return null; });
+    }
+    return rdvRowsEnCours.current;
+  }, []);
 
   const fetchData = useCallback(async (from, to, collab = 'Tous') => {
     setLoading(true);
@@ -67,7 +94,7 @@ export function useSalesData() {
          disponibles. */
       const [rows, rdvRows] = await Promise.all([
         fetchAPI(callsUrl),
-        fetchAPI('/rdv/rows').catch(() => null),
+        chargerLignesRdv(),
       ]);
 
       if (!rows.length) throw new Error('Aucun appel dans l\'archive Ringover');
@@ -90,7 +117,6 @@ export function useSalesData() {
         setRdvError('Archive RDV indisponible');
       } else {
         setRdvError(null);
-        rdvRowsCache.current = rdvRows;
 
         // validCollabs = tous les collabs présents dans Ringover (hors Entrant/Management)
         const validCollabs = computed.collabs.filter(c => c !== 'Tous');
@@ -112,7 +138,7 @@ export function useSalesData() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [chargerLignesRdv]);
 
   // Recompute from cache when only collab changes — no re-fetch
   const recomputeCollab = useCallback((collab) => {
@@ -150,18 +176,23 @@ export function useSalesData() {
   // affichée mais présent sur la période comparée.
   const fetchCompareData = useCallback(async (from, to, collab = 'Tous') => {
     try {
-      const rows = await fetchAPI(`/ringover/calls?from=${from}&to=${to}`);
+      // Les deux partent ensemble : la comparaison n'a pas à attendre le
+      // fichier RDV pour interroger l'archive Ringover, ni l'inverse.
+      const [rows, rdvRows] = await Promise.all([
+        fetchAPI(`/ringover/calls?from=${from}&to=${to}`),
+        chargerLignesRdv(),
+      ]);
       const computed = computeSalesData(rows, null, null, collab);
       let rdv = null;
-      if (rdvRowsCache.current) {
+      if (rdvRows) {
         const validCollabs = computed.collabs.filter(c => c !== 'Tous');
-        rdv = computeRDVStatsForRange(rdvRowsCache.current, validCollabs, collab, new Date(from), new Date(to));
+        rdv = computeRDVStatsForRange(rdvRows, validCollabs, collab, new Date(from), new Date(to));
       }
       return { result: computed, rdv };
     } catch {
       return { result: null, rdv: null };
     }
-  }, []);
+  }, [chargerLignesRdv]);
 
   return {
     result,

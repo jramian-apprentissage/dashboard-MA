@@ -48,6 +48,11 @@
 .collabFill { height: 100%; background: var(--pos); border-radius: 2px; opacity: 0.6; }
 .collabMarge { font-size: 13px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
 .chartWrap { position: relative; }
+
+/* Hauteur fixe imposée par Chart.js en mode responsive : sans conteneur
+   dimensionné, le canvas se réduit à zéro. 200 px cadre les 6 mois d'historique
+   sans dominer la colonne voisine. */
+.chartWrapPerdus { position: relative; height: 200px; }
 .donutLegend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; justify-content: center; }
 .legItem { font-size: 10px; color: var(--text2); }
 

@@ -1,4 +1,6 @@
 import { useState, useRef } from 'react';
+import { Bar } from 'react-chartjs-2';
+import { Chart, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
@@ -18,6 +20,12 @@ import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import { fmtEurosExact, fmtEurosDetail } from '../../../utils/formatNumber';
 import { SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 import styles from './FocusClient.module.css';
+
+// Chart.js s'enregistre par fichier dans ce projet (voir Synthese.jsx,
+// FocusCommercial.jsx) : seuls les éléments réellement utilisés ici, pour
+// l'histogramme des revenus perdus. Le donut de la page passe par DonutChart,
+// qui enregistre ArcElement de son côté.
+Chart.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
 const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
 
@@ -385,27 +393,53 @@ export default function FocusClient() {
           ) : perdus.error ? (
             <NotConnected>{perdus.error}</NotConnected>
           ) : perdus.monthly ? (
-            perdus.monthly.some(m => m.caPerdu > 0) ? (() => {
-              const maxCaPerdu = Math.max(...perdus.monthly.map(m => m.caPerdu), 1);
-              return perdus.monthly.map(m => (
-                <div key={m.month} className={styles.hsRow} style={{ gridTemplateColumns: '60px 1fr 90px' }}>
-                  <div className={styles.hsName} style={{ textTransform: 'capitalize' }}>{m.label}</div>
-                  <div className={styles.hsBarCol}>
-                    <div className={styles.hsBar}>
-                      <div
-                        className={styles.hsBarFill}
-                        style={{
-                          width: mounted ? `${Math.max((m.caPerdu / maxCaPerdu) * 100, m.caPerdu > 0 ? 4 : 0)}%` : '0%',
-                          background: 'var(--neg)',
-                          transition: 'width 0.85s cubic-bezier(0.16,1,0.3,1)',
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <div className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}><MontantExact exact={fmtEurosExact(m.caPerdu)}>{fmtEurosDetail(m.caPerdu)}</MontantExact></div>
-                </div>
-              ));
-            })() : (
+            perdus.monthly.some(m => m.caPerdu > 0) ? (
+              /* Histogramme vertical plutôt que la liste de barres
+                 horizontales d'origine : l'axe des mois se lit naturellement
+                 de gauche à droite, ce qui rend la progression du churn
+                 immédiatement visible — une pile de barres horizontales se lit
+                 ligne par ligne et masque la tendance. Le montant exact reste
+                 accessible au survol de chaque barre. */
+              <div className={styles.chartWrapPerdus}>
+                <Bar
+                  data={{
+                    labels: perdus.monthly.map(m => m.label),
+                    datasets: [{
+                      label: 'Revenu perdu',
+                      data: perdus.monthly.map(m => m.caPerdu),
+                      backgroundColor: 'rgba(196,135,106,0.85)',
+                      borderRadius: 4,
+                      borderSkipped: false,
+                      maxBarThickness: 46,
+                    }],
+                  }}
+                  options={{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: mounted ? { duration: 900, easing: 'easeOutQuart' } : false,
+                    plugins: {
+                      legend: { display: false },
+                      // Valeur exacte au centime : l'axe est volontairement
+                      // abrégé en K€, l'infobulle porte le chiffre précis.
+                      tooltip: { callbacks: { label: ctx => fmtEurosExact(ctx.parsed.y) } },
+                    },
+                    scales: {
+                      x: {
+                        ticks: { color: 'rgba(22,5,18,0.35)', font: { size: 10 } },
+                        grid: { display: false },
+                        border: { color: 'rgba(22,5,18,0.08)' },
+                      },
+                      y: {
+                        beginAtZero: true,
+                        ticks: { color: 'rgba(22,5,18,0.35)', font: { size: 10 }, callback: v => fmtEurosDetail(v) },
+                        grid: { color: 'rgba(22,5,18,0.06)' },
+                        border: { color: 'rgba(22,5,18,0.08)' },
+                      },
+                    },
+                  }}
+                />
+              </div>
+            ) : (
               <NotConnected>aucun revenu perdu sur les 6 derniers mois</NotConnected>
             )
           ) : (

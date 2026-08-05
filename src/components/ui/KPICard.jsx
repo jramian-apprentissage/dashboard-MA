@@ -36,12 +36,27 @@ function TrendIcon({ dir }) {
 // reste néanmoins surchargeable à `false` (jamais `null`/`undefined`) par
 // une carte qui n'a structurellement aucune notion de comparaison (ex. un
 // libellé texte plutôt qu'un chiffre) — cas volontairement rare.
-function resolveCompare(compare, compareActive) {
+function resolveCompare(compare, compareActive, attenteTropLongue) {
   if (!compareActive) return null;
   if (compare === false) return null;
   if (compare) return compare;
+  // Au-delà du délai, on cesse d'annoncer un calcul qui n'arrive visiblement
+  // pas : "Calcul en cours…" affiché pendant plusieurs minutes est un
+  // mensonge, et laisse croire qu'il suffit d'attendre.
+  if (attenteTropLongue) return { dir: 'neutral', text: 'Comparaison indisponible' };
   return { dir: 'neutral', text: 'Calcul en cours…' };
 }
+
+/* Délai au-delà duquel une comparaison qui n'est pas arrivée est déclarée
+   indisponible. Large volontairement : le chargement le plus lent mesuré (API
+   à froid, connexion établie depuis Madagascar) tient en ~5 s, donc 20 s ne
+   peut pas se déclencher sur une lecture simplement lente.
+
+   C'est un filet, pas un correctif : une comparaison qui n'arrive jamais est
+   un bug côté données (voir la course corrigée dans useSalesData). Le filet
+   sert à ce qu'aucun futur cas du même genre ne se traduise par une carte
+   figée sans explication. */
+const DELAI_COMPARAISON_MS = 20000;
 
 // Durée d'affichage du montant exact après un tap sur mobile (pas de survol
 // possible au doigt) — la carte se "retourne" automatiquement après ce délai.
@@ -49,7 +64,22 @@ const FLIP_DURATION_MS = 5000;
 
 export default function KPICard({ label, value, unit, trend, compare, color = 'default', variant, source, exactValue }) {
   const { compareActive } = usePeriod();
-  const resolvedCompare = resolveCompare(compare, compareActive);
+
+  // `compare` est un objet reconstruit à chaque rendu : on ne surveille que sa
+  // présence, sinon le minuteur repartirait de zéro en boucle et n'arriverait
+  // jamais à échéance.
+  const comparaisonManquante = compareActive && compare !== false && !compare;
+  const [attenteTropLongue, setAttenteTropLongue] = useState(false);
+  useEffect(() => {
+    if (!comparaisonManquante) return undefined;
+    const minuteur = setTimeout(() => setAttenteTropLongue(true), DELAI_COMPARAISON_MS);
+    // Remise à zéro au démontage de l'attente (comparaison arrivée, ou
+    // désactivée) et non en début d'effet : la carte doit repartir sur
+    // "Calcul en cours…" si une nouvelle période relance un calcul.
+    return () => { clearTimeout(minuteur); setAttenteTropLongue(false); };
+  }, [comparaisonManquante]);
+
+  const resolvedCompare = resolveCompare(compare, compareActive, attenteTropLongue);
   const [flipped, setFlipped] = useState(false);
   const flipTimer = useRef(null);
 

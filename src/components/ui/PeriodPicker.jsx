@@ -208,11 +208,19 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange, ex
 
   const current = ALL_PERIODS.find(p => p.key === value) || ALL_PERIODS.find(p => p.key === 'month');
 
+  // Choisir une période prédéfinie, c'est valider : on referme le menu ET,
+  // sur mobile, la feuille "Filtre" qui le contient (onClose). Sans ça la
+  // feuille restait ouverte par-dessus le dashboard qu'on venait justement de
+  // demander, et il fallait un geste de plus pour voir le résultat — alors
+  // que la 2e date de "Personnaliser" refermait déjà tout (handleDayClick).
+  // "Personnaliser…" fait exception : la sélection n'est pas finie, le
+  // calendrier doit rester visible.
   function selectPeriod(key) {
     if (key !== 'custom') {
       const range = getPeriodRange(key, customFrom, customTo);
       onChange({ key, ...range });
       setOpen(false);
+      onClose?.();
     } else {
       onChange({ key: 'custom', from: customFrom, to: customTo });
     }
@@ -306,7 +314,7 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange, ex
           </div>
           <button
             className={styles.applyBtn}
-            onClick={() => setOpen(false)}
+            onClick={() => { setOpen(false); onClose?.(); }}
             type="button"
           >
             Appliquer

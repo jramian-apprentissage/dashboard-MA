@@ -32,7 +32,7 @@
 /* Âge moyen de l'étape (jours depuis la Date RDV) — volontairement discret,
    c'est une info de contexte à côté de la part du total qui, elle, porte
    la lecture principale de la ligne. */
-.barAge { font-size: 10.5px; color: var(--text3); width: 38px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.barAge { font-size: 10.5px; color: var(--text3); width: 38px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* Stats de cycle intégrées au funnel */
 .cycleStats { display: flex; gap: 28px; }
@@ -136,6 +136,14 @@
 .tbl tr:last-child td { border-bottom: none; }
 .tbl td strong { color: var(--text); font-weight: 500; }
 .tbl tr:hover td { background: rgba(240,238,233,0.6); }
+
+/* Âge en jours ("266 j") : le nombre et son unité se lisent comme un seul mot.
+   La colonne Âge étant la plus étroite du tableau, le texte se coupait à
+   l'espace et renvoyait le "j" seul à la ligne suivante, sous le nombre — la
+   valeur paraissait alors désalignée par rapport aux lignes à deux chiffres.
+   Le nowrap s'applique aussi à l'en-tête, pour que la colonne réserve dès le
+   départ la largeur du plus long âge. */
+.tbl th.thAge, .tbl td.tdAge { white-space: nowrap; }
 
 .linkBtn {
   display: block;

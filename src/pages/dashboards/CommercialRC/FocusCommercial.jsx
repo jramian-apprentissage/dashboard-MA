@@ -467,7 +467,7 @@ export default function FocusCommercial() {
                 <th>Client</th>
                 <th onClick={() => toggleRelanceSort('etat')} style={{ cursor: 'pointer' }}>Étape{sortArrow('etat')}</th>
                 <th onClick={() => toggleRelanceSort('dateRelance')} style={{ cursor: 'pointer' }}>Date de relance{sortArrow('dateRelance')}</th>
-                <th onClick={() => toggleRelanceSort('age')} style={{ cursor: 'pointer' }}>Âge{sortArrow('age')}</th>
+                <th className={styles.thAge} onClick={() => toggleRelanceSort('age')} style={{ cursor: 'pointer' }}>Âge{sortArrow('age')}</th>
               </tr></thead>
               <tbody>
                 {[...leads.data.opportunitesSansAction]
@@ -478,7 +478,7 @@ export default function FocusCommercial() {
                       <td><strong>{o.nom}</strong></td>
                       <td><Pill variant={ETAPE_PILL_VARIANT[o.etat] || 'gray'}>{o.etat}</Pill></td>
                       <td>{fmtDateRelance(o.dateRelance) || '—'}</td>
-                      <td>{o.ageJours != null ? `${o.ageJours} j` : '—'}</td>
+                      <td className={styles.tdAge}>{o.ageJours != null ? `${o.ageJours} j` : '—'}</td>
                     </tr>
                   ))}
               </tbody>
