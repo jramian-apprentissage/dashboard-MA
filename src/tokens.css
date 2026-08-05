@@ -1,14 +1,21 @@
-@font-face { font-family: 'InstrumentSerif'; src: url('./assets/fonts/InstrumentSerif-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
-@font-face { font-family: 'InstrumentSerif'; src: url('./assets/fonts/InstrumentSerif-Italic.ttf') format('truetype'); font-weight: 400; font-style: italic; font-display: swap; }
+/* Polices reduites aux caracteres utiles par scripts/sous-ensemble-polices.py
+   (1010 glyphes -> latin + ponctuation, ~61 Ko -> ~32 Ko par graisse).
 
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-LightItalic.woff2') format('woff2'); font-weight: 300; font-style: italic; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Roman.woff2') format('woff2'); font-weight: 400; font-style: normal; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Book.woff2') format('woff2'); font-weight: 450; font-style: normal; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-BookItalic.woff2') format('woff2'); font-weight: 450; font-style: italic; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; }
-@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; }
+   font-display: swap sur toutes les declarations : sans lui, le navigateur
+   masque le texte jusqu'a 3 s en attendant la police, et la page parait
+   vide alors que les donnees sont deja la. Avec, le texte s'affiche tout
+   de suite dans la police systeme, puis bascule. */
+@font-face { font-family: 'InstrumentSerif'; src: url('./assets/fonts/InstrumentSerif-Regular.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'InstrumentSerif'; src: url('./assets/fonts/InstrumentSerif-Italic.woff2') format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Light.woff2') format('woff2'); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-LightItalic.woff2') format('woff2'); font-weight: 300; font-style: italic; font-display: swap; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Roman.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Book.woff2') format('woff2'); font-weight: 450; font-style: normal; font-display: swap; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-BookItalic.woff2') format('woff2'); font-weight: 450; font-style: italic; font-display: swap; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Medium.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'OverusedGrotesk'; src: url('./assets/fonts/OverusedGrotesk-Bold.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

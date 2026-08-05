@@ -15,6 +15,18 @@
   color: #26001F;
 }
 
+/* Attente du chargement d'un dashboard (voir le Suspense dans AppShell).
+   Hauteur volontairement inférieure à 100vh, contrairement à .authGate :
+   l'entête et la navigation basse restent affichées pendant ce temps, le
+   chargeur ne remplace que la zone de contenu. */
+.routeGate {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #26001F;
+}
+
 /* Espace pour ne pas passer sous BottomNav (fixe, 58px + zone sûre iOS).
    padding-top réactif : l'entête (Topbar) est masquée tant que le hero est
    visible sur mobile — pas besoin de réserver sa hauteur avant qu'elle

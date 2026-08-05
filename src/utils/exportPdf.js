@@ -1,5 +1,12 @@
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+/* jsPDF et html2canvas sont importés dynamiquement, dans la fonction d'export
+   (voir plus bas), et non en tête de fichier.
+
+   Ils pèsent à eux deux ~470 Ko minifiés. Importés statiquement, ils étaient
+   embarqués dans le morceau du dashboard ASUS — donc téléchargés par chaque
+   client à l'ouverture de la page, pour une fonction que la plupart
+   n'utilisent jamais. L'export est déclenché par un clic explicite : y ajouter
+   un aller-retour réseau ne se remarque pas, la génération du PDF prend de
+   toute façon plusieurs secondes. */
 
 // Rasterise un logo (SVG ou PNG importé par Vite) en PNG — jsPDF ne sait pas
 // dessiner de SVG directement, donc on le passe par un <canvas> une fois,
@@ -41,6 +48,13 @@ export async function exportDashboardPdf({
   clientLogoSrc,
 }) {
   if (!contentEl) throw new Error('Contenu à exporter introuvable.');
+
+  // Les deux téléchargements partent ensemble : ils ne dépendent pas l'un de
+  // l'autre, les enchaîner doublerait l'attente pour rien.
+  const [{ jsPDF }, { default: html2canvas }] = await Promise.all([
+    import('jspdf'),
+    import('html2canvas'),
+  ]);
 
   const pdf = new jsPDF({ orientation: 'p', unit: 'pt', format: 'a4' });
   const pageWidth = pdf.internal.pageSize.getWidth();

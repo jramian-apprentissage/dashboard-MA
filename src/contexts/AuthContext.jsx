@@ -10,6 +10,20 @@ import { trackEvent } from '../services/tracking';
 const API_URL = import.meta.env.VITE_API_URL || 'https://dashboard-ma-backend-production.up.railway.app';
 
 const TOKEN_KEY = 'ma_token';
+const USER_KEY  = 'ma_user';
+
+/* Dernier profil connu, relu au démarrage pour afficher la page sans attendre
+   le réseau (voir l'effet de revalidation plus bas). Volontairement tolérant :
+   un contenu illisible ou absent équivaut à "pas de profil en cache" et fait
+   simplement retomber sur l'ancien comportement bloquant. */
+function lireUtilisateurEnCache() {
+  try {
+    const brut = localStorage.getItem(USER_KEY);
+    return brut ? JSON.parse(brut) : null;
+  } catch {
+    return null;
+  }
+}
 
 function authFetch(path, token, options = {}) {
   return fetch(`${API_URL}/api${path}`, {
@@ -25,29 +39,53 @@ function authFetch(path, token, options = {}) {
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(lireUtilisateurEnCache);
   const [token, setToken] = useState(() => localStorage.getItem(TOKEN_KEY));
   // `ready` distingue "pas encore vérifié" de "pas connecté" — évite un
   // flash de redirection vers /login le temps que /me réponde alors qu'un
-  // token valide existe déjà.
-  const [ready, setReady] = useState(false);
+  // token valide existe déjà. Vrai d'emblée quand un profil est en cache :
+  // il n'y a alors rien à attendre pour savoir quoi afficher.
+  const [ready, setReady] = useState(() => !localStorage.getItem(TOKEN_KEY) || !!lireUtilisateurEnCache());
 
-  // Revérifie systématiquement via /me plutôt que de faire confiance à une
-  // copie locale : c'est ce qui garantit qu'un accès révoqué par l'admin
-  // s'applique dès le prochain chargement de page, sur n'importe quel
-  // appareil, sans reconnexion manuelle.
+  /* Revalidation de la session — en arrière-plan, plus en barrage.
+   *
+   * /me reste appelé à chaque montage, et reste la source de vérité : c'est
+   * lui qui applique une révocation d'accès faite par l'admin, sur n'importe
+   * quel appareil, sans reconnexion manuelle. Ce qui change, c'est qu'on
+   * n'attend plus sa réponse pour afficher quoi que ce soit.
+   *
+   * Le blocage coûtait un aller-retour complet avant le moindre pixel, et
+   * surtout il retardait d'autant les appels de données du dashboard, qui ne
+   * partaient qu'ensuite. Mesuré depuis le poste de Jimmy, un aller-retour
+   * vers le backend Railway coûte ~320 ms à connexion ouverte (l'edge qui
+   * répond est jnb1, Johannesburg) : c'était donc une seconde perdue à deux
+   * reprises sur un premier chargement.
+   *
+   * Contrepartie assumée : un accès révoqué reste affiché le temps de cet
+   * aller-retour, avant redirection. La redirection a toujours lieu, sur le
+   * même chargement de page — et aucune donnée n'est exposée pour autant,
+   * les routes de données étant gardées côté backend. */
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (!token) { setReady(true); return; }
+      if (!token) {
+        localStorage.removeItem(USER_KEY);
+        setUser(null);
+        setReady(true);
+        return;
+      }
       try {
         const res = await authFetch('/auth/me', token);
         if (cancelled) return;
         if (res.ok) {
-          setUser(await res.json());
+          const frais = await res.json();
+          setUser(frais);
+          localStorage.setItem(USER_KEY, JSON.stringify(frais));
         } else {
           setToken(null);
+          setUser(null);
           localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(USER_KEY);
         }
       } catch {
         // Backend injoignable : on garde le token, on retentera au prochain montage.
@@ -71,6 +109,7 @@ export function AuthProvider({ children }) {
     if (!res.ok) return false;
     const { token: t, user: u } = await res.json();
     localStorage.setItem(TOKEN_KEY, t);
+    localStorage.setItem(USER_KEY, JSON.stringify(u));
     setToken(t);
     setUser(u);
     trackEvent(u.id, u.name, 'login');
@@ -81,6 +120,7 @@ export function AuthProvider({ children }) {
     setUser(null);
     setToken(null);
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
   }
 
   async function getAllUsers() {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import heroAsus from '../../assets/hero-asus.jpg';
+import heroAsus from '../../assets/hero-asus.webp';
 import maLogo from '../../assets/logo/logo-full-myrtille.svg';
 import asusLogo from '../../assets/asus-logo.svg';
 import ActiviteASUS from './CommercialActivite/ActiviteASUS';

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, DASHBOARDS } from './contexts/AuthContext';
 import { DASHBOARD_ROUTES } from './data/dashboardTabs';
@@ -12,11 +12,22 @@ import { LoaderMark } from './components/ui/Loader';
 import styles from './App.module.css';
 import Login from './pages/Login';
 import Home from './pages/Home';
-import Admin from './pages/Admin';
-import GlossaireKPI from './pages/GlossaireKPI';
-import CommercialRC from './pages/dashboards/CommercialRC';
-import CommercialActivite from './pages/dashboards/CommercialActivite';
-import Asus from './pages/dashboards/Asus';
+
+/* Dashboards chargés à la demande.
+ *
+ * Ils étaient tous importés en statique, donc réunis dans un seul fichier JS :
+ * un utilisateur ASUS téléchargeait le code de Commercial RC et de Activité,
+ * qu'il n'a pas le droit d'ouvrir. Les graphes (chart.js) pèsent le plus lourd
+ * là-dedans et ne servent à aucune des deux pages d'entrée.
+ *
+ * Login et Home restent en statique : ce sont les points d'arrivée de toute
+ * session, les rendre paresseux ajouterait un aller-retour réseau juste avant
+ * le premier affichage — l'inverse du but recherché. */
+const Admin              = lazy(() => import('./pages/Admin'));
+const GlossaireKPI       = lazy(() => import('./pages/GlossaireKPI'));
+const CommercialRC       = lazy(() => import('./pages/dashboards/CommercialRC'));
+const CommercialActivite = lazy(() => import('./pages/dashboards/CommercialActivite'));
+const Asus               = lazy(() => import('./pages/dashboards/Asus'));
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -78,7 +89,13 @@ function AppShell({ children }) {
     <div className={`${styles.shell} ${scrolled ? styles.shellScrolled : ''}`}>
       <PageTracker />
       <Topbar scrolled={scrolled} />
-      {children}
+      {/* Suspense placé ici, et non autour de <Routes>, pour que l'entête et
+          la navigation basse restent en place pendant le chargement d'un
+          dashboard : seule la zone de contenu affiche le chargeur, au lieu de
+          voir toute la page disparaître à chaque changement de page. */}
+      <Suspense fallback={<div className={styles.routeGate}><LoaderMark size={48} /></div>}>
+        {children}
+      </Suspense>
       {!iaMasquee && <AIChat />}
       <BottomNav />
     </div>
