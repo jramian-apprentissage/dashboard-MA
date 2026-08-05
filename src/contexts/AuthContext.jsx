@@ -155,6 +155,30 @@ export function AuthProvider({ children }) {
     }
   }
 
+  /* Changement de mot de passe par l'utilisateur lui-même — distinct de
+     updateUser* qui sont des outils d'administration. Le backend n'accepte
+     que le compte porté par le jeton, l'identifiant n'est donc jamais envoyé
+     depuis ici (voir PATCH /api/auth/password).
+
+     Renvoie le message du backend tel quel : c'est lui qui distingue "mot de
+     passe actuel incorrect" de "trop court", et l'utilisateur doit savoir
+     lequel des deux champs corriger. */
+  async function changePassword(actuel, nouveau) {
+    let res;
+    try {
+      res = await authFetch('/auth/password', token, {
+        method: 'PATCH',
+        body: JSON.stringify({ actuel, nouveau }),
+      });
+    } catch {
+      throw new Error('Connexion au serveur impossible.');
+    }
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      throw new Error(e.error || 'Changement impossible.');
+    }
+  }
+
   // admin et directeur ont accès à tous les dashboards implicitement. `u`
   // est toujours l'utilisateur tel que retourné par /me (jamais une copie
   // figée), donc pas besoin de relire une autre source ici.
@@ -166,7 +190,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, ready, login, logout,
+      user, ready, login, logout, changePassword,
       getAllUsers, createUser, updateUserDashboards, deleteUser,
       hasAccessToDashboard,
     }}>

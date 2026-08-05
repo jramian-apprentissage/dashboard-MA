@@ -4,6 +4,7 @@ import { useAuth, DASHBOARDS } from '../../contexts/AuthContext';
 import { DASHBOARD_ROUTES, DASHBOARD_TABS, DASHBOARD_DEFAULT_TAB } from '../../data/dashboardTabs';
 import logoSun from '../../assets/logo/logo-full-sun.svg';
 import styles from './Topbar.module.css';
+import ChangerMotDePasse from '../ui/ChangerMotDePasse';
 
 export default function Topbar({ scrolled = false }) {
   const { user, logout, hasAccessToDashboard } = useAuth();
@@ -11,6 +12,7 @@ export default function Topbar({ scrolled = false }) {
   const location = useLocation();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState(null); // dashboardId du submenu ouvert
+  const [mdpOuvert, setMdpOuvert] = useState(false);
   const dropRef = useRef(null);
   const submenuRef = useRef(null);
   const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
@@ -177,6 +179,13 @@ export default function Topbar({ scrolled = false }) {
                 Gestion utilisateurs
               </button>
             )}
+            <button className={styles.dropItem} onClick={() => { setMdpOuvert(true); setDropdownOpen(false); }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Changer mon mot de passe
+            </button>
             <div className={styles.dropSep} />
             <button className={`${styles.dropItem} ${styles.dropLogout}`} onClick={handleLogout}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -189,6 +198,8 @@ export default function Topbar({ scrolled = false }) {
           </div>
         )}
       </div>
+
+      {mdpOuvert && <ChangerMotDePasse onClose={() => setMdpOuvert(false)} />}
     </header>
   );
 }

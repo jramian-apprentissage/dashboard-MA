@@ -1,0 +1,189 @@
+/* Modale de changement de mot de passe — voir ChangerMotDePasse.jsx.
+   Reprend délibérément l'apparence de la carte de connexion (blanc
+   translucide, flou, champs Brouillard) : c'est le même geste, saisir son mot
+   de passe, il doit se présenter de la même façon. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22,5,18,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* Au-dessus du panneau de chat (499) et de la nav basse mobile. */
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px 24px 22px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 24px 64px rgba(38,0,31,0.28), 0 4px 16px rgba(38,0,31,0.14);
+  animation: modaleIn 0.22s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes modaleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal { animation: none; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.titre {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--myrtille);
+  letter-spacing: -0.01em;
+}
+.fermer {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 5px;
+  font-family: var(--font);
+  transition: color 0.15s, background 0.15s;
+}
+.fermer:hover { color: var(--myrtille); background: var(--sable-light); }
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(38,0,31,0.55);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input {
+  width: 100%;
+  background: #FBFBFB;
+  border: 1px solid var(--sable);
+  border-radius: 8px;
+  padding: 11px 40px 11px 13px;
+  font-size: 14px;
+  font-family: var(--font);
+  color: var(--encre);
+  outline: none;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  min-height: 44px;
+}
+.input:focus {
+  border-color: var(--myrtille);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px rgba(38,0,31,0.08);
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--ciment);
+  border-radius: 5px;
+  transition: color 0.15s, background 0.15s;
+}
+.eyeBtn:hover { color: var(--myrtille); background: var(--sable-light); }
+
+/* Aide de saisie : ton neutre, ce n'est pas une erreur mais une contrainte
+   pas encore satisfaite pendant que la personne tape. */
+.aide {
+  font-size: 11.5px;
+  color: var(--text2);
+  line-height: 1.5;
+}
+/* Refus du serveur : mot de passe actuel incorrect, principalement. */
+.erreur {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: #8E4F38;
+  background: rgba(184,123,101,0.12);
+  border: 1px solid rgba(184,123,101,0.40);
+  border-radius: 7px;
+  padding: 8px 10px;
+}
+
+.succes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3F7A5E;
+  background: rgba(126,184,154,0.14);
+  border: 1px solid rgba(126,184,154,0.45);
+  border-radius: 8px;
+  padding: 14px 14px;
+}
+
+/* Même Soleil que « Se connecter » : c'est l'action principale de la modale. */
+.valider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 3px;
+  background: var(--soleil);
+  color: var(--myrtille);
+  font-family: var(--font);
+  font-size: 13.5px;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: 99px;
+  border: 1px solid rgba(38,0,31,0.14);
+  cursor: pointer;
+  min-height: 46px;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(38,0,31,0.16);
+}
+.valider:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(38,0,31,0.22);
+}
+.valider:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+.valider:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}

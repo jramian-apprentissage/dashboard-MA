@@ -6,6 +6,7 @@ import { useExtraFilters } from '../../contexts/ExtraFiltersContext';
 import { DASHBOARD_ROUTES, DASHBOARD_DEFAULT_TAB, DASHBOARD_EXCLUDED_PERIODS } from '../../data/dashboardTabs';
 import PeriodPicker, { getPeriodLabel } from '../ui/PeriodPicker';
 import styles from './BottomNav.module.css';
+import ChangerMotDePasse from '../ui/ChangerMotDePasse';
 
 /* Barre de navigation mobile — remplace le dropdown du haut, illisible et non
    scalable à 4-5 dashboards (voir Topbar.jsx). 4 boutons fixes en bas, dans
@@ -21,6 +22,7 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sheet, setSheet] = useState(null); // 'page' | 'filtre' | 'comparer' | 'menu' | null
+  const [mdpOuvert, setMdpOuvert] = useState(false);
   const sheetRef = useRef(null);
 
   const {
@@ -207,6 +209,10 @@ export default function BottomNav() {
                     Gestion utilisateurs
                   </button>
                 )}
+                <button type="button" className={styles.sheetItem} onClick={() => { setMdpOuvert(true); setSheet(null); }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Changer mon mot de passe
+                </button>
                 <button type="button" className={`${styles.sheetItem} ${styles.sheetItemLogout}`} onClick={handleLogout}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
                   Déconnexion
@@ -216,6 +222,8 @@ export default function BottomNav() {
           </div>
         </div>
       )}
+
+      {mdpOuvert && <ChangerMotDePasse onClose={() => setMdpOuvert(false)} />}
     </>
   );
 }
