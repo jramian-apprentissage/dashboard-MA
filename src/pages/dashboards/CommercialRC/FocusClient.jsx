@@ -20,6 +20,9 @@ import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import { fmtEurosExact, fmtEurosDetail } from '../../../utils/formatNumber';
 import { SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 import styles from './FocusClient.module.css';
+import RechercheListe from '../../../components/ui/RechercheListe';
+import { correspond } from '../../../utils/recherche';
+import rechStyles from '../../../components/ui/RechercheListe.module.css';
 
 // Chart.js s'enregistre par fichier dans ce projet (voir Synthese.jsx,
 // FocusCommercial.jsx) : seuls les éléments réellement utilisés ici, pour
@@ -57,6 +60,9 @@ export default function FocusClient() {
   const perdus = useClientsPerdus();
   const { comparePeriodKey } = usePeriod();
   const [showAllSante, setShowAllSante] = useState(false);
+  const [rechercheSante, setRechercheSante] = useState('');
+  // Sens du tri de la liste santé : 'desc' = les mieux notés en tête.
+  const [santeDir, setSanteDir] = useState('desc');
   const santeSectionRef = useRef(null);
   const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
   const c = compareResult;
@@ -324,14 +330,41 @@ export default function FocusClient() {
           <NotConnected>{satisfaction.error}</NotConnected>
         ) : satisfaction.data ? (
           (() => {
-            // Classement du moins bon score au meilleur — les comptes à
-            // risque remontent en premier, c'est ce qui doit être traité.
-            const sorted = satisfaction.data.clients
-              .filter(c => c.note != null)
-              .sort((a, b) => a.note - b.note);
+            /* Les mieux notés en tête par défaut (demande de Jimmy). Le sens
+               se renverse au clic sur l'en-tête « Note », comme les colonnes
+               triables des tableaux du dashboard — remettre les comptes à
+               risque en premier reste donc à un clic.
+
+               La recherche filtre avant le repliement : sinon chercher un
+               client au-delà des 8 premières lignes ne donnait rien tant que
+               la liste n'était pas dépliée. */
+            const notes = satisfaction.data.clients.filter(c => c.note != null);
+            const filtrees = notes.filter(c => correspond(rechercheSante, c.nom, c.sentiment));
+            const sorted = [...filtrees].sort((a, b) =>
+              santeDir === 'desc' ? b.note - a.note : a.note - b.note);
             const visible = sorted.slice(0, showAllSante ? undefined : HEALTH_LIST_STEP);
             return (
               <>
+                <RechercheListe valeur={rechercheSante} onChange={setRechercheSante} />
+                {rechercheSante && (
+                  <div className={rechStyles.compte}>
+                    {filtrees.length} résultat{filtrees.length > 1 ? 's' : ''} sur {notes.length}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  className={styles.hsSortBtn}
+                  onClick={() => setSanteDir(d => (d === 'desc' ? 'asc' : 'desc'))}
+                  aria-label={`Trier par note, actuellement ${santeDir === 'desc' ? 'décroissant' : 'croissant'}`}
+                >
+                  Note{santeDir === 'desc' ? ' ▼' : ' ▲'}
+                </button>
+
+                {sorted.length === 0 && (
+                  <div className={styles.subnote}>Aucun client ne correspond à « {rechercheSante} »</div>
+                )}
+
                 {visible.map((c, i) => {
                   const s = sentimentInfo(c.sentiment);
                   return (
@@ -376,7 +409,7 @@ export default function FocusClient() {
                   </button>
                 )}
                 <div className={styles.subnote} style={{ marginTop: 8 }}>
-                  Classé du score le plus bas au plus élevé · note générée par l'IA Monday, le raisonnement détaillé dispo au survol dans Monday · clients actifs sur la période
+                  Classé du score {santeDir === 'desc' ? 'le plus élevé au plus bas' : 'le plus bas au plus élevé'} · note générée par l'IA Monday, le raisonnement détaillé dispo au survol dans Monday · clients actifs sur la période
                 </div>
               </>
             );

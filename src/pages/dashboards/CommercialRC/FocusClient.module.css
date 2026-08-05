@@ -133,3 +133,25 @@
   .collabRow { flex-wrap: wrap; gap: 8px; }
   .churnHead { flex-wrap: wrap; gap: 14px; }
 }
+
+/* Bascule du sens de tri de la liste santé. Cette liste n'a pas d'en-tête de
+   tableau où loger une colonne cliquable — d'où ce bouton, aligné à droite
+   au-dessus des lignes, qui reprend la flèche ▲/▼ des tableaux triables du
+   dashboard pour que le geste soit reconnaissable. */
+.hsSortBtn {
+  display: block;
+  margin: 0 0 6px auto;
+  padding: 3px 8px;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  font-family: var(--font);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text2);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.hsSortBtn:hover { color: var(--myrtille); background: var(--sable-light); }

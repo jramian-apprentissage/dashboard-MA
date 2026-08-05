@@ -21,6 +21,9 @@ import MontantExact from '../../../components/ui/MontantExact';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 import styles from './FocusCommercial.module.css';
+import RechercheListe from '../../../components/ui/RechercheListe';
+import { correspond } from '../../../utils/recherche';
+import rechStyles from '../../../components/ui/RechercheListe.module.css';
 
 const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
 
@@ -107,6 +110,7 @@ export default function FocusCommercial() {
   const { comparePeriodKey } = usePeriod();
   const [relanceSort, setRelanceSort] = useState({ col: 'etat', dir: 'asc' });
   const [showAllRelances, setShowAllRelances] = useState(false);
+  const [rechercheRelances, setRechercheRelances] = useState('');
   const relanceSectionRef = useRef(null);
   const c = compareResult;
   const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
@@ -457,50 +461,74 @@ export default function FocusCommercial() {
         ) : leads.error ? (
           <NotConnected>{leads.error}</NotConnected>
         ) : leads.data?.opportunitesSansAction ? (
-          <>
-            <div className={styles.alertCount}>
-              <span className={styles.alertNum}>{fmtNumber(leads.data.opportunitesSansAction.length)}</span>
-              <span className={styles.alertSub}>Affaires sans date de relance planifiée ou passée</span>
-            </div>
-            <table className={styles.tbl}>
-              <thead><tr>
-                <th>Client</th>
-                <th onClick={() => toggleRelanceSort('etat')} style={{ cursor: 'pointer' }}>Étape{sortArrow('etat')}</th>
-                <th onClick={() => toggleRelanceSort('dateRelance')} style={{ cursor: 'pointer' }}>Date de relance{sortArrow('dateRelance')}</th>
-                <th className={styles.thAge} onClick={() => toggleRelanceSort('age')} style={{ cursor: 'pointer' }}>Âge{sortArrow('age')}</th>
-              </tr></thead>
-              <tbody>
-                {[...leads.data.opportunitesSansAction]
-                  .sort((a, b) => compareRelances(a, b, relanceSort))
-                  .slice(0, showAllRelances ? undefined : RELANCES_VISIBLE)
-                  .map(o => (
-                    <tr key={o.itemId}>
-                      <td><strong>{o.nom}</strong></td>
-                      <td><Pill variant={ETAPE_PILL_VARIANT[o.etat] || 'gray'}>{o.etat}</Pill></td>
-                      <td>{fmtDateRelance(o.dateRelance) || '—'}</td>
-                      <td className={styles.tdAge}>{o.ageJours != null ? `${o.ageJours} j` : '—'}</td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-            {leads.data.opportunitesSansAction.length > RELANCES_VISIBLE && (
-              <button
-                type="button"
-                className={styles.linkBtn}
-                onClick={() => {
-                  // "Voir moins" : la liste se réduit, mais si on avait scrollé
-                  // en bas du tableau déployé, on restait coincé loin du début
-                  // — on remonte explicitement au début de la section.
-                  if (showAllRelances) relanceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  setShowAllRelances(s => !s);
-                }}
-              >
-                {showAllRelances
-                  ? 'Voir moins'
-                  : `Voir les ${leads.data.opportunitesSansAction.length - RELANCES_VISIBLE} autres`}
-              </button>
-            )}
-          </>
+          (() => {
+            /* La recherche filtre AVANT le repliement : sans ça, chercher un
+               client absent des 8 premières lignes ne donnait rien tant qu'on
+               n'avait pas déplié la liste entière. Le compteur en tête, lui,
+               continue d'annoncer le total réel — c'est l'indicateur de la
+               carte, il ne doit pas varier au gré d'un filtre d'affichage. */
+            const toutes = leads.data.opportunitesSansAction;
+            const filtrees = toutes.filter(o => correspond(rechercheRelances, o.nom, o.etat));
+            const visibles = [...filtrees]
+              .sort((a, b) => compareRelances(a, b, relanceSort))
+              .slice(0, showAllRelances ? undefined : RELANCES_VISIBLE);
+            const enTrop = filtrees.length - RELANCES_VISIBLE;
+
+            return (
+              <>
+                <div className={styles.alertCount}>
+                  <span className={styles.alertNum}>{fmtNumber(toutes.length)}</span>
+                  <span className={styles.alertSub}>Affaires sans date de référence planifiée ou passée, dont les deals en cours</span>
+                </div>
+
+                <RechercheListe valeur={rechercheRelances} onChange={setRechercheRelances} />
+                {rechercheRelances && (
+                  <div className={rechStyles.compte}>
+                    {filtrees.length} résultat{filtrees.length > 1 ? 's' : ''} sur {toutes.length}
+                  </div>
+                )}
+
+                {filtrees.length === 0 ? (
+                  <div className={styles.subnote}>Aucune affaire ne correspond à « {rechercheRelances} »</div>
+                ) : (
+                  <table className={styles.tbl}>
+                    <thead><tr>
+                      <th>Client</th>
+                      <th onClick={() => toggleRelanceSort('etat')} style={{ cursor: 'pointer' }}>Étape{sortArrow('etat')}</th>
+                      <th onClick={() => toggleRelanceSort('dateRelance')} style={{ cursor: 'pointer' }}>Date de relance{sortArrow('dateRelance')}</th>
+                      <th className={styles.thAge} onClick={() => toggleRelanceSort('age')} style={{ cursor: 'pointer' }}>Âge{sortArrow('age')}</th>
+                    </tr></thead>
+                    <tbody>
+                      {visibles.map(o => (
+                        <tr key={o.itemId}>
+                          <td><strong>{o.nom}</strong></td>
+                          <td><Pill variant={ETAPE_PILL_VARIANT[o.etat] || 'gray'}>{o.etat}</Pill></td>
+                          <td>{fmtDateRelance(o.dateRelance) || '—'}</td>
+                          <td className={styles.tdAge}>{o.ageJours != null ? `${o.ageJours} j` : '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+
+                {enTrop > 0 && (
+                  <button
+                    type="button"
+                    className={styles.linkBtn}
+                    onClick={() => {
+                      // "Voir moins" : la liste se réduit, mais si on avait scrollé
+                      // en bas du tableau déployé, on restait coincé loin du début
+                      // — on remonte explicitement au début de la section.
+                      if (showAllRelances) relanceSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      setShowAllRelances(s => !s);
+                    }}
+                  >
+                    {showAllRelances ? 'Voir moins' : `Voir les ${enTrop} autres`}
+                  </button>
+                )}
+              </>
+            );
+          })()
         ) : (
           <NotConnected>chargement…</NotConnected>
         )}

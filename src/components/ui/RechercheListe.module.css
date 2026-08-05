@@ -1,0 +1,68 @@
+/* Champ de recherche d'une liste de carte — voir RechercheListe.jsx.
+   Discret volontairement : c'est un outil de confort posé au-dessus d'un
+   tableau, il ne doit pas concurrencer le titre de la carte ni les chiffres. */
+
+.wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.icone {
+  position: absolute;
+  left: 10px;
+  color: var(--text3);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.champ {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 30px 7px 30px;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--encre);
+  outline: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  min-height: 34px;
+}
+.champ::placeholder { color: var(--text3); }
+.champ:focus {
+  border-color: var(--myrtille);
+  background: var(--blanc);
+  box-shadow: 0 0 0 3px rgba(38,0,31,0.07);
+}
+/* La croix native de <input type="search"> double celle du composant, et son
+   style n'est pas maîtrisable — on garde la nôtre, positionnée et accessible. */
+.champ::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+
+.effacer {
+  position: absolute;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 4px;
+  font-family: var(--font);
+  transition: color 0.15s, background 0.15s;
+}
+.effacer:hover { color: var(--myrtille); background: var(--sable-light); }
+
+/* Nombre de résultats, affiché sous le champ quand un filtre est actif. */
+.compte {
+  font-size: 10.5px;
+  color: var(--text2);
+  margin: -4px 0 8px;
+}
