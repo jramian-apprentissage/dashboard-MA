@@ -181,15 +181,58 @@
 }
 .error svg { flex-shrink: 0; color: #b91c1c; }
 
-/* ─── Bouton submit — myrtille + texte soleil ── */
+/* ─── Bouton submit — soleil, cerclé d'un reflet myrtille tournant ──
+   L'anneau vit dans un conteneur dédié plutôt que dans un ::before du bouton :
+   un pseudo-élément en z-index négatif se peint APRÈS le fond de son parent,
+   donc par-dessus le jaune, et l'arc traversait la face du bouton. Ici le
+   dégradé conique est le fond du conteneur, et le bouton — opaque — masque
+   le centre. Il ne dépasse que les 2px de padding, qui forment l'anneau. */
+@property --angleBtn {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.btnGlow {
+  /* Redéclaré ici pour les navigateurs sans @property : le dégradé reste
+     valide et s'affiche en anneau fixe, au lieu de disparaître entièrement. */
+  --angleBtn: 0deg;
+  position: relative;
+  margin-top: 6px;
+  /* 1,5px et un arc resserré : à 2px avec un arc de 210°, le myrtille pesait
+     autant que le bouton lui-même et tirait l'œil hors du texte « Se
+     connecter ». L'anneau doit se remarquer du coin de l'œil, pas concurrencer
+     l'action. */
+  padding: 1.5px;
+  border-radius: 99px;
+  background: conic-gradient(
+    from var(--angleBtn),
+    rgba(38,0,31,0) 0deg,
+    rgba(38,0,31,0.10) 30deg,
+    rgba(38,0,31,0.72) 60deg,
+    rgba(38,0,31,0.10) 90deg,
+    rgba(38,0,31,0) 130deg,
+    rgba(38,0,31,0) 360deg
+  );
+  animation: tourneAnneau 3.5s linear infinite;
+}
+@keyframes tourneAnneau {
+  to { --angleBtn: 360deg; }
+}
+/* Une rotation perpétuelle dans le champ de vision est un déclencheur connu
+   de gêne vestibulaire : l'anneau se fige, sans disparaître. */
+@media (prefers-reduced-motion: reduce) {
+  .btnGlow { animation: none; }
+}
+
 .btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  margin-top: 6px;
-  background: var(--myrtille);
-  color: var(--soleil);
+  width: 100%;
+  background: var(--soleil);
+  color: var(--myrtille);
   font-family: var(--font);
   font-size: 14px;
   font-weight: 700;
@@ -225,20 +268,9 @@
   to { transform: rotate(360deg); }
 }
 
-/* ─── Hint démo ── */
-.hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin-top: 20px;
-  font-size: 11px;
-  color: var(--ciment);
-  line-height: 1.6;
-  border-top: 1px solid var(--sable);
-  padding-top: 16px;
-}
-.hint svg { flex-shrink: 0; margin-top: 2px; }
-.hint strong { color: rgba(38,0,31,0.6); font-weight: 600; }
+/* Le bloc « Accès Démo » qui affichait en clair l'identifiant et le mot de
+   passe du compte de démonstration a été retiré : la page est publique, et
+   ces identifiants ouvrent un vrai compte sur des données clients. */
 
 /* ─── Responsive mobile ── */
 @media (max-width: 480px) {

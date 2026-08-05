@@ -23,15 +23,17 @@
   gap: 3px;
   line-height: 1.5;
 }
-.list li::marker { color: rgba(255,249,147,0.55); }
+/* Puces : le Soleil disparaissait sur le fond clair du panneau (voir
+   AIChat.module.css), remplacé par un myrtille dilué. */
+.list li::marker { color: rgba(38,0,31,0.40); }
 
 .code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.92em;
   padding: 1px 4px;
   border-radius: 3px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(227,225,216,0.10);
+  background: rgba(44,26,39,0.06);
+  border: 1px solid var(--border);
 }
 
 /* Un tableau peut dépasser la largeur du panneau (fenêtre étroite) : il
@@ -42,7 +44,7 @@
   margin: 2px 0;
 }
 .tableWrap::-webkit-scrollbar { height: 3px; }
-.tableWrap::-webkit-scrollbar-thumb { background: rgba(227,225,216,0.15); border-radius: 2px; }
+.tableWrap::-webkit-scrollbar-thumb { background: rgba(38,0,31,0.15); border-radius: 2px; }
 
 .table {
   border-collapse: collapse;
@@ -54,12 +56,12 @@
 .table td {
   padding: 5px 9px;
   text-align: left;
-  border-bottom: 1px solid rgba(227,225,216,0.10);
+  border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
 .table th {
   font-weight: 600;
-  color: rgba(255,249,147,0.80);
-  border-bottom-color: rgba(255,249,147,0.22);
+  color: var(--myrtille);
+  border-bottom-color: rgba(38,0,31,0.22);
 }
 .table tbody tr:last-child td { border-bottom: none; }
