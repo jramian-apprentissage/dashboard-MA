@@ -1,18 +1,18 @@
-/* Filtrage texte des listes de cartes (opportunités sans prochaine action,
-   santé par client). Séparé du composant RechercheListe : un fichier qui
-   exporte à la fois un composant et des fonctions casse le rechargement à
-   chaud de Vite (react-refresh/only-export-components). */
+/* Filtrage texte des listes de cartes (voir components/ui/RechercheListe.jsx).
+
+   À part du composant : un fichier qui exporte un composant React ne doit
+   exporter que ça, sinon le rafraîchissement à chaud de Vite cesse de
+   fonctionner sur ce fichier (règle react-refresh/only-export-components). */
 
 // Insensible aux accents ET à la casse : « mediatechnologie » doit trouver
 // « MEDIA TECHNOLOGIE ». Personne ne tape les accents dans un champ de
-// recherche — même normalisation que le menu « / » de l'assistante IA.
+// recherche. Même normalisation que le menu « / » de l'assistante IA.
 export function normaliserRecherche(s) {
   return String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
-// Vrai si `terme` est vide (donc pas de filtre) ou contenu dans l'un des
-// champs passés. Le terme est cherché tel quel, sans découpage en mots : sur
-// des noms de sociétés, une recherche par sous-chaîne est plus prévisible.
+// Vrai si le terme est vide (aucun filtre actif) ou contenu dans l'un des
+// champs fournis. Les champs nuls sont ignorés sans planter.
 export function correspond(terme, ...champs) {
   const t = normaliserRecherche(terme).trim();
   if (!t) return true;
