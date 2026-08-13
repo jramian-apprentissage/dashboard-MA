@@ -102,45 +102,81 @@
 }
 .btnAdd:hover { opacity: 0.88; }
 
-/* ─── Table (glassmorphism) ───────────────────────────────────────────────── */
-.table {
-  background: rgba(167,173,170,0.55);
-  border: 1px solid rgba(255,255,255,0.45);
-  border-radius: 16px;
-  overflow: hidden;
+/* ─── Grille de fiches utilisateur ────────────────────────────────────────
+   Un tableau a été remplacé par des fiches : les accès occupaient une colonne
+   chacun, et la liste grandit à chaque dashboard ajouté. À neuf ou dix
+   entrées, les en-têtes se repliaient sur trois lignes sur ordinateur et la
+   ligne devenait interminable sur mobile. Les accès vivent désormais dans une
+   modale (AccesDashboards), la fiche n'en montrant que le décompte.
+
+   La grille s'adapte d'elle-même : autant de colonnes que la largeur permet,
+   sans point de rupture à maintenir. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  background: rgba(255,255,255,0.96);
+  border: 1px solid rgba(255,255,255,0.55);
+  border-radius: 14px;
+  padding: 14px 15px 13px;
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  box-shadow: 0 8px 40px rgba(38,0,31,0.18);
+  box-shadow: 0 6px 26px rgba(38,0,31,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  transition: box-shadow 0.15s, transform 0.15s;
 }
+.card:hover { box-shadow: 0 10px 32px rgba(38,0,31,0.18); transform: translateY(-1px); }
 
-.thead, .tr {
-  display: grid;
-  /* Utilisateur, Rôle, puis une colonne par page togglable (Accueil +
-     DASHBOARDS — TOGGLEABLE_PAGES dans Admin.jsx), puis Actions. */
-  /* Les colonnes d'accès n'ont qu'un commutateur de 38 px à loger : leur
-     donner la même largeur que « Actions », qui porte deux boutons, écrasait
-     ces derniers. Elles rétrécissent, Actions respire. */
-  grid-template-columns: 2fr 1.2fr repeat(4, 0.75fr) 1.7fr;
-  border-bottom: 1px solid rgba(255,255,255,0.3);
-}
-.tr:last-child { border-bottom: none; }
-.tr:hover { background: rgba(255,255,255,0.15); }
-
-.th {
-  padding: 12px 16px;
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(38,0,31,0.55);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.td {
-  padding: 14px 16px;
+.cardHead {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: rgba(38,0,31,0.8);
+  min-width: 0;
+}
+/* min-width: 0 sur l'enfant flex, sinon une adresse longue élargit la fiche
+   au lieu d'être tronquée. */
+.cardIdent { min-width: 0; flex: 1; }
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Le décompte d'accès EST le bouton d'ouverture : l'information et la porte
+   d'entrée au même endroit. */
+.btnAcces {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 11px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--myrtille);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  min-height: 40px;
+}
+.btnAcces:hover { background: var(--sable-light); border-color: var(--myrtille); }
+.btnAccesChevron { margin-left: auto; flex-shrink: 0; color: var(--text3); }
+
+.cardActions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
 }
 
 .userAvatar {
@@ -164,48 +200,9 @@
 .role_responsable { background: rgba(38,0,31,0.06); color: rgba(38,0,31,0.6); border: 1px solid rgba(38,0,31,0.15); }
 .roleCore         { background: rgba(38,0,31,0.06); color: rgba(38,0,31,0.6); border: 1px solid rgba(38,0,31,0.15); }
 
-/* Commutateur à pouce coulissant, plutôt que les anciens boutons portant un
-   « ✓ » ou un « — ». Deux défauts à la fois : rien n'indiquait qu'ils étaient
-   cliquables, et le tiret se lisait comme « vide » — donnée manquante —
-   là où il voulait dire « accès refusé ». La forme d'un interrupteur dit les
-   deux d'un coup : c'est actionnable, et il a deux positions. */
-.toggle {
-  position: relative;
-  width: 38px; height: 22px;
-  flex-shrink: 0;
-  border-radius: 11px;
-  background: rgba(38,0,31,0.10);
-  border: 1px solid rgba(38,0,31,0.18);
-  font-size: 0;               /* masque le texte hérité du markup */
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.18s, border-color 0.18s;
-}
-.toggle::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 2px;
-  width: 16px; height: 16px;
-  margin-top: -8px;
-  border-radius: 50%;
-  background: var(--blanc);
-  box-shadow: 0 1px 3px rgba(38,0,31,0.30);
-  transition: transform 0.18s cubic-bezier(0.22,1,0.36,1);
-}
-.toggle:hover:not(:disabled) { border-color: rgba(38,0,31,0.40); }
-.toggleOn {
-  background: var(--myrtille);
-  border-color: var(--myrtille);
-}
-.toggleOn::after { transform: translateX(16px); }
-
-/* Rôle à accès total : l'interrupteur est verrouillé, pas « éteint ». Il
-   reste donc visuellement allumé — l'accès EST accordé — mais grisé et sans
-   curseur de clic. La raison s'affiche en toutes lettres à côté (voir
-   .accesTotal) : elle ne vivait que dans une infobulle au survol, donc
-   invisible au doigt, et invisible tout court pour qui ne s'attarde pas. */
-.toggle:disabled { opacity: 0.45; cursor: default; }
+/* Les commutateurs d'accès ont migré dans la modale AccesDashboards, où la
+   liste des dashboards est désormais gérée. Seule .accesTotal reste ici :
+   elle qualifie le RÔLE sur la fiche, pas un accès individuel. */
 
 .accesTotal {
   font-size: 9.5px;
@@ -396,59 +393,8 @@
   .title   { font-size: 22px; }
   .header  { flex-direction: column; }
   .btnAdd  { width: 100%; justify-content: center; }
-
-  /* Une carte par utilisateur, plus un tableau qui défile.
-
-     Les 7 colonnes étaient auparavant conservées telles quelles dans un bloc
-     de 620 px avec défilement horizontal. Sur un écran de 375 px on n'en
-     voyait donc que la moitié, et — le plus gênant — le nom sortait de
-     l'écran dès qu'on atteignait les interrupteurs d'accès : on autorisait
-     un dashboard sans plus voir à qui on l'autorisait.
-
-     Chaque cellule porte son intitulé de colonne dans data-libelle (voir
-     Admin.jsx) et le réaffiche ici à gauche de sa valeur, l'en-tête du
-     tableau n'ayant plus de sens une fois les lignes empilées. */
-  .thead { display: none; }
-
-  .table { display: flex; flex-direction: column; gap: 10px; }
-
-  .tr {
-    display: block;
-    background: var(--blanc);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 14px;
-  }
-
-  .td {
-    display: flex;
-    align-items: center;
-    justify-content: space-between !important;
-    gap: 12px;
-    padding: 7px 0;
-    border-bottom: 1px solid var(--sable-light);
-  }
-  .td:last-child { border-bottom: none; padding-bottom: 0; }
-
-  .td[data-libelle]::before {
-    content: attr(data-libelle);
-    font-size: 10.5px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text3);
-    flex-shrink: 0;
-  }
-
-  /* L'identité reste en tête de carte, sans intitulé : c'est le titre. */
-  .tdUser {
-    justify-content: flex-start !important;
-    padding-top: 0;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
-  }
-
-  /* Les deux boutons d'action prennent la largeur restante plutôt que de
-     s'écraser l'un contre l'autre à droite. */
-  .td[data-libelle="Actions"] { flex-wrap: wrap; }
+  /* Une seule colonne de fiches en dessous de 640 px — auto-fill s'en
+     chargerait, mais on force pour éviter une colonne de 280 px sur un
+     écran de 320 px. */
+  .cards   { grid-template-columns: 1fr; }
 }

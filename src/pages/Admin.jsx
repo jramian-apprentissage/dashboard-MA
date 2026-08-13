@@ -7,6 +7,7 @@ import { useAuth, DASHBOARDS, HOME_PAGE, ROLES, roleLabel } from '../contexts/Au
 const TOGGLEABLE_PAGES = [HOME_PAGE, ...DASHBOARDS];
 import { getHistory, clearHistory } from '../services/tracking';
 import heroBg from '../assets/hero-admin.svg';
+import AccesDashboards from '../components/ui/AccesDashboards';
 import styles from './Admin.module.css';
 
 function formatTs(iso) {
@@ -23,6 +24,7 @@ export default function Admin() {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'responsable', dashboards: [] });
   const [formError, setFormError] = useState('');
+  const [accesUser, setAccesUser] = useState(null);
   const [historyUser, setHistoryUser] = useState(null);
   const [historyEvents, setHistoryEvents] = useState([]);
 
@@ -125,67 +127,82 @@ export default function Admin() {
           <div className={styles.formError} style={{ marginBottom: 12 }}>{loadError || actionError}</div>
         )}
 
-        {/* Table */}
-        <div className={styles.table}>
-          <div className={styles.thead}>
-            <div className={styles.th}>Utilisateur</div>
-            <div className={styles.th}>Rôle</div>
-            {TOGGLEABLE_PAGES.map(d => <div key={d.id} className={styles.th}>{d.label}</div>)}
-            <div className={styles.th}>Actions</div>
-          </div>
-          {users.map(u => (
-            <div key={u.id} className={styles.tr}>
-              <div className={`${styles.td} ${styles.tdUser}`}>
-                <div className={styles.userAvatar}>{u.name.charAt(0)}</div>
-                <div>
-                  <div className={styles.userName}>{u.name}</div>
-                  <div className={styles.userEmail}>{u.email}</div>
+        {/* Une carte par utilisateur, plutôt qu'un tableau. Les accès étaient
+            une colonne chacun : la liste grandissant à chaque dashboard
+            ajouté, le tableau devenait illisible par le haut sur ordinateur
+            (en-têtes repliés) et interminable sur mobile. Ils vivent
+            désormais dans une modale, la carte n'en montrant que le
+            décompte. */}
+        <div className={styles.cards}>
+          {users.map(u => {
+            const accesTotal = ['admin', 'directeur'].includes(u.role);
+            const nbAcces = accesTotal
+              ? TOGGLEABLE_PAGES.length
+              : TOGGLEABLE_PAGES.filter(d => u.dashboards?.includes(d.id)).length;
+            return (
+              <div key={u.id} className={styles.card}>
+                <div className={styles.cardHead}>
+                  <div className={styles.userAvatar}>{u.name.charAt(0)}</div>
+                  <div className={styles.cardIdent}>
+                    <div className={styles.userName}>{u.name}</div>
+                    <div className={styles.userEmail}>{u.email}</div>
+                  </div>
+                  {u.id === user.id && <span className={styles.moi}>Vous</span>}
+                </div>
+
+                <div className={styles.cardMeta}>
+                  <span className={`${styles.rolePill} ${styles['role_' + u.role] || styles.roleCore}`}>
+                    {roleLabel(u.role)}
+                  </span>
+                  {accesTotal && <span className={styles.accesTotal}>voit tout</span>}
+                </div>
+
+                {/* Le décompte est le bouton : c'est l'information ET la porte
+                    d'entrée. Un lien « Gérer » séparé aurait ajouté une cible
+                    sans ajouter de sens. */}
+                <button
+                  type="button"
+                  className={styles.btnAcces}
+                  onClick={() => setAccesUser(u)}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  {nbAcces} accès sur {TOGGLEABLE_PAGES.length}
+                  <svg className={styles.btnAccesChevron} width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </button>
+
+                <div className={styles.cardActions}>
+                  {user.role === 'admin' && (
+                    <button className={styles.btnHistory} onClick={() => openHistory(u)}>Historique</button>
+                  )}
+                  {u.id !== user.id && (
+                    <button className={styles.btnDelete} onClick={() => handleDelete(u.id)}>Supprimer</button>
+                  )}
                 </div>
               </div>
-              <div className={styles.td} data-libelle="Rôle">
-                <span className={`${styles.rolePill} ${styles['role_' + u.role] || styles.roleCore}`}>
-                  {roleLabel(u.role)}
-                </span>
-                {/* Mention portée par le rôle, et non répétée sur chacun des
-                    quatre interrupteurs verrouillés : c'est le rôle qui donne
-                    l'accès total, l'information a sa place ici. */}
-                {['admin', 'directeur'].includes(u.role) && (
-                  <span className={styles.accesTotal}>voit tout</span>
-                )}
-              </div>
-              {TOGGLEABLE_PAGES.map(d => {
-                const fullAccess = ['admin', 'directeur'].includes(u.role);
-                const hasAccess  = fullAccess || u.dashboards?.includes(d.id);
-                return (
-                  <div key={d.id} className={styles.td} data-libelle={d.label} style={{ justifyContent: 'center' }}>
-                    {/* Le commutateur n'a plus de texte : son état se lit à sa
-                        position. D'où role/aria-checked, sans quoi un lecteur
-                        d'écran n'annoncerait qu'un bouton anonyme. */}
-                    <button
-                      className={`${styles.toggle} ${hasAccess ? styles.toggleOn : ''}`}
-                      onClick={() => !fullAccess && toggleDashboard(u.id, d.id)}
-                      disabled={fullAccess}
-                      role="switch"
-                      aria-checked={hasAccess}
-                      aria-label={`${d.label} — ${u.name}`}
-                      title={fullAccess ? `${roleLabel(u.role)} voit tout` : (hasAccess ? 'Révoquer' : 'Autoriser')}
-                    />
-                  </div>
-                );
-              })}
-              <div className={styles.td} data-libelle="Actions" style={{ gap: 6 }}>
-                {user.role === 'admin' && (
-                  <button className={styles.btnHistory} onClick={() => openHistory(u)}>Historique</button>
-                )}
-                {u.id !== user.id && (
-                  <button className={styles.btnDelete} onClick={() => handleDelete(u.id)}>Supprimer</button>
-                )}
-                {u.id === user.id && <span className={styles.moi}>Vous</span>}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
+
+      {accesUser && (
+        <AccesDashboards
+          utilisateur={accesUser}
+          pages={TOGGLEABLE_PAGES}
+          accesTotal={['admin', 'directeur'].includes(accesUser.role)}
+          /* Relu depuis `users` et non depuis `accesUser`, qui est une copie
+             figée au moment de l'ouverture : sans ça les bascules ne se
+             voyaient pas tant qu'on n'avait pas refermé la modale. */
+          estActif={pageId => ['admin', 'directeur'].includes(accesUser.role)
+            || users.find(x => x.id === accesUser.id)?.dashboards?.includes(pageId)}
+          onBasculer={pageId => toggleDashboard(accesUser.id, pageId)}
+          onClose={() => setAccesUser(null)}
+        />
+      )}
 
       {/* Panneau historique */}
       {historyUser && (
