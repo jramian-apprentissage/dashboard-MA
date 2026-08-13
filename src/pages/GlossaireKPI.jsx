@@ -107,6 +107,21 @@ export default function GlossaireKPI() {
             </div>
             <div className={styles.terme}>{t.terme}</div>
             <div className={styles.def}>{t.definition}</div>
+            {/* « Ça sort d'où ? » est la première question posée en réunion,
+                avant même le mode de calcul — d'où cette ligne, affichée pour
+                tous les termes qui décrivent un chiffre. Le tiret marque les
+                entrées qui expliquent une mécanique de lecture et non une
+                donnée (période, comparaison, fraîcheur). */}
+            {t.source && t.source !== '—' && (
+              <div className={styles.source}>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                  <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+                  <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                </svg>
+                {t.source}
+              </div>
+            )}
           </div>
         ))}
       </div>

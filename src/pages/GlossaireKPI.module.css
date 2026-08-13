@@ -178,6 +178,23 @@
   line-height: 1.65;
 }
 
+/* Provenance du chiffre — discrète et détachée de la définition par un
+   filet : c'est une métadonnée, elle ne doit pas se lire dans la foulée
+   du texte explicatif. */
+.source {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text3);
+  letter-spacing: 0.01em;
+}
+.source svg { flex-shrink: 0; }
+
 /* État vide */
 .empty {
   grid-column: 1 / -1;
