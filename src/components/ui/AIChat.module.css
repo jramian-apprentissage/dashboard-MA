@@ -58,7 +58,13 @@
      des listes : à 340 px chaque ligne se cassait en trois. Reste sous les
      440 px de l'écran mobile le plus étroit, cf. la media query plus bas. */
   width: 420px;
-  height: 520px;
+  /* Hauteur bornée par l'écran, et non figée à 520 px. Le panneau est ancré
+     en bas (bottom: 82px) : sur une fenêtre de moins de 602 px, les 520 px
+     débordaient par le haut et emportaient l'en-tête — titre et période
+     analysée devenaient invisibles, mesuré à 46 px coupés sur une fenêtre de
+     606 px. La zone de messages absorbe la réduction, elle défile déjà.
+     dvh plutôt que vh : sur mobile, vh ignore la barre d'adresse. */
+  height: min(520px, calc(100dvh - 110px));
   background: rgba(255,255,255,0.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -377,5 +383,7 @@
    sous le FAB/panel sans ce décalage. */
 @media (max-width: 640px) {
   .fab   { bottom: 74px; }
-  .panel { bottom: 132px; right: 12px; left: 12px; width: auto; }
+  /* Ancré 132 px plus haut pour dégager la nav basse : la marge à réserver
+     augmente d'autant. */
+  .panel { bottom: 132px; right: 12px; left: 12px; width: auto; height: min(520px, calc(100dvh - 160px)); }
 }
