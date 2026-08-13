@@ -123,6 +123,26 @@ function buildCalendarCells(monthDate) {
   return cells;
 }
 const WEEKDAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const MOIS_COURTS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
+
+/* Navigation à trois niveaux, sur le modèle de Looker Studio : la vue des
+   jours remonte à celle des mois, qui remonte à celle des années. Les flèches
+   se déplacent dans l'unité de la vue affichée, et la page d'années couvre 12
+   ans — assez pour que l'historique (2023 →) tienne d'un seul écran. */
+const LIBELLE_RECUL  = { jours: 'Mois précédent', mois: 'Année précédente', annees: '12 années précédentes' };
+const LIBELLE_AVANCE = { jours: 'Mois suivant',   mois: 'Année suivante',   annees: '12 années suivantes' };
+
+// Début de la page de 12 ans contenant la date affichée, aligné sur les
+// multiples de 12 pour que la pagination soit stable d'un aller-retour à
+// l'autre (sinon la grille glisserait à chaque ouverture).
+const debutDecennie = d => Math.floor(d.getFullYear() / 12) * 12;
+
+const reculer = (d, vue) => vue === 'jours'  ? new Date(d.getFullYear(), d.getMonth() - 1, 1)
+                          : vue === 'mois'   ? new Date(d.getFullYear() - 1, d.getMonth(), 1)
+                          :                    new Date(d.getFullYear() - 12, d.getMonth(), 1);
+const avancer = (d, vue) => vue === 'jours'  ? new Date(d.getFullYear(), d.getMonth() + 1, 1)
+                          : vue === 'mois'   ? new Date(d.getFullYear() + 1, d.getMonth(), 1)
+                          :                    new Date(d.getFullYear() + 12, d.getMonth(), 1);
 
 export default function PeriodPicker({ value, customFrom, customTo, onChange, excludeKeys = [], theme = 'default', onClose }) {
   const themeCls = theme === 'asus' ? styles.themeAsus : theme === 'argent' ? styles.themeArgent : theme === 'myrtille' ? styles.themeMyrtille : '';
@@ -147,10 +167,15 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange, ex
     const base = customFrom ? new Date(customFrom) : new Date();
     return new Date(base.getFullYear(), base.getMonth(), 1);
   });
+  // Niveau de navigation affiché : jours, mois ou années (voir l'en-tête du
+  // calendrier). Toujours réinitialisé à « jours » en même temps que le mois,
+  // pour qu'une réouverture reparte de la vue la plus fine.
+  const [vueCal, setVueCal] = useState('jours');
   useEffect(() => {
     if (!calOpen) return;
     const base = customFrom ? new Date(customFrom) : new Date();
     setCalMonth(new Date(base.getFullYear(), base.getMonth(), 1));
+    setVueCal('jours');
   }, [calOpen]); // eslint-disable-line
 
   // Rouvrir le picker (le pill) alors que "Personnaliser…" est déjà la
@@ -335,47 +360,98 @@ export default function PeriodPicker({ value, customFrom, customTo, onChange, ex
           <span className={styles.calPanelTitle}>Choisir la période</span>
           <button type="button" className={styles.calClose} onClick={() => setCalOpen(false)} aria-label="Fermer">✕</button>
         </div>
+        {/* En-tête à trois niveaux — le libellé central est un bouton qui
+            remonte d'un cran : jours → mois → années. Les flèches se déplacent
+            dans l'unité de la vue courante (1 mois, 1 an, 12 ans). Sans ça,
+            atteindre janvier 2024 depuis août 2026 demandait 31 clics sur la
+            flèche ; il en faut 3 maintenant. */}
         <div className={styles.calHeader}>
           <button
             type="button"
             className={styles.calNav}
-            onClick={() => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-            aria-label="Mois précédent"
+            onClick={() => setCalMonth(m => reculer(m, vueCal))}
+            aria-label={LIBELLE_RECUL[vueCal]}
           >‹</button>
-          <span className={styles.calLabel}>
-            {calMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-          </span>
+          <button
+            type="button"
+            className={styles.calLabel}
+            onClick={() => setVueCal(v => (v === 'jours' ? 'mois' : v === 'mois' ? 'annees' : 'jours'))}
+            aria-label="Changer de niveau de navigation"
+          >
+            {vueCal === 'jours' && calMonth.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+            {vueCal === 'mois' && calMonth.getFullYear()}
+            {vueCal === 'annees' && `${debutDecennie(calMonth)} – ${debutDecennie(calMonth) + 11}`}
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
           <button
             type="button"
             className={styles.calNav}
-            onClick={() => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
-            aria-label="Mois suivant"
+            onClick={() => setCalMonth(m => avancer(m, vueCal))}
+            aria-label={LIBELLE_AVANCE[vueCal]}
           >›</button>
         </div>
-        <div className={styles.calWeekdays}>
-          {WEEKDAY_LETTERS.map((l, i) => <span key={i}>{l}</span>)}
-        </div>
-        <div className={styles.calGrid}>
-          {buildCalendarCells(calMonth).map((cell, i) => {
-            if (!cell) return <span key={i} className={styles.calDayEmpty} />;
-            const isStart = cell.iso === customFrom;
-            const isEnd = !!customTo && cell.iso === customTo;
-            const isSingle = isStart && (!customTo || customFrom === customTo);
-            const inRange = customFrom && customTo && cell.iso > customFrom && cell.iso < customTo;
-            const cls = [
-              styles.calDay,
-              isSingle ? styles.calDaySingle : '',
-              isStart && !isSingle ? styles.calDayStart : '',
-              isEnd && !isSingle ? styles.calDayEnd : '',
-              inRange ? styles.calDayInRange : '',
-            ].filter(Boolean).join(' ');
-            return (
-              <button key={i} type="button" className={cls} onClick={() => handleDayClick(cell.iso)}>
-                {cell.day}
+
+        {vueCal === 'jours' && (
+          <>
+            <div className={styles.calWeekdays}>
+              {WEEKDAY_LETTERS.map((l, i) => <span key={i}>{l}</span>)}
+            </div>
+            <div className={styles.calGrid}>
+              {buildCalendarCells(calMonth).map((cell, i) => {
+                if (!cell) return <span key={i} className={styles.calDayEmpty} />;
+                const isStart = cell.iso === customFrom;
+                const isEnd = !!customTo && cell.iso === customTo;
+                const isSingle = isStart && (!customTo || customFrom === customTo);
+                const inRange = customFrom && customTo && cell.iso > customFrom && cell.iso < customTo;
+                const cls = [
+                  styles.calDay,
+                  isSingle ? styles.calDaySingle : '',
+                  isStart && !isSingle ? styles.calDayStart : '',
+                  isEnd && !isSingle ? styles.calDayEnd : '',
+                  inRange ? styles.calDayInRange : '',
+                  cell.iso === dateStr(new Date()) ? styles.calDayAujourdhui : '',
+                ].filter(Boolean).join(' ');
+                return (
+                  <button key={i} type="button" className={cls} onClick={() => handleDayClick(cell.iso)}>
+                    {cell.day}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {vueCal === 'mois' && (
+          <div className={styles.calGrille4}>
+            {MOIS_COURTS.map((nom, i) => (
+              <button
+                key={nom}
+                type="button"
+                className={`${styles.calCase} ${i === calMonth.getMonth() ? styles.calCaseActive : ''}`}
+                onClick={() => { setCalMonth(m => new Date(m.getFullYear(), i, 1)); setVueCal('jours'); }}
+              >
+                {nom}
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {vueCal === 'annees' && (
+          <div className={styles.calGrille4}>
+            {Array.from({ length: 12 }, (_, i) => debutDecennie(calMonth) + i).map(an => (
+              <button
+                key={an}
+                type="button"
+                className={`${styles.calCase} ${an === calMonth.getFullYear() ? styles.calCaseActive : ''}`}
+                onClick={() => { setCalMonth(m => new Date(an, m.getMonth(), 1)); setVueCal('mois'); }}
+              >
+                {an}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>,
     document.body,

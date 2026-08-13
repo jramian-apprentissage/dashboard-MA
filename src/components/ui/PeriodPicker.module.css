@@ -151,12 +151,20 @@
    le bas). Sélection de la plage à 2 clics (début puis fin) ; les champs
    Du/Au du dropdown restent utilisables tels quels (saisie directe) et se
    synchronisent avec les clics ici — voir PeriodPicker.jsx. */
+/* ─── Calendrier « Personnaliser » ───────────────────────────────────────
+   Reprend l'apparence de la carte de connexion : même blanc translucide, même
+   flou, mêmes champs sur fond Brouillard. Il était auparavant sombre, seule
+   surface de ce type dans une application claire — et il s'ouvre par-dessus
+   un dashboard clair, ce qui rendait la rupture d'autant plus visible.
+
+   Le Soleil reste la couleur de la sélection : c'est la couleur d'action de
+   l'application, et elle porte le même sens ici que sur « Se connecter ». */
 .calOverlay {
   position: fixed;
   inset: 0;
-  background: rgba(38,0,31,0.45);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  background: rgba(22,5,18,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   z-index: 600;
   display: flex;
   align-items: center;
@@ -164,81 +172,103 @@
   padding: 20px;
 }
 .calPanel {
-  background: rgba(28,8,22,0.98);
-  border: 1px solid rgba(255,249,147,0.12);
-  border-radius: 14px;
+  background: rgba(255,255,255,0.97);
+  border: 1px solid var(--border);
+  border-radius: 16px;
   width: 100%;
-  max-width: 290px;
-  box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
-  padding: 12px 14px 14px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  max-width: 300px;
+  box-shadow: 0 24px 64px rgba(38,0,31,0.28), 0 4px 16px rgba(38,0,31,0.14);
+  padding: 16px 16px 14px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   animation: fadeIn 0.15s ease;
 }
 .calPanelHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
-.calPanelTitle { font-size: 12.5px; font-weight: 700; color: var(--soleil); }
+.calPanelTitle { font-size: 13px; font-weight: 700; color: var(--myrtille); }
 .calClose {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  background: rgba(255,249,147,0.08);
+  background: transparent;
   border-radius: 7px;
-  color: rgba(255,249,147,0.7);
+  color: var(--text3);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-family: var(--font);
   transition: background 0.12s, color 0.12s;
   touch-action: manipulation;
 }
-.calClose:hover { background: rgba(255,249,147,0.16); color: var(--soleil); }
+.calClose:hover { background: var(--sable-light); color: var(--myrtille); }
 
 .calHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 2px 2px 8px;
+  gap: 4px;
+  padding: 2px 0 10px;
 }
+/* Le libellé central est un bouton : il remonte d'un niveau de navigation.
+   Il doit donc se lire comme cliquable — d'où le chevron et le fond au survol,
+   que l'ancien <span> n'avait pas. */
 .calLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--soleil);
-  text-transform: capitalize;
-}
-.calNav {
-  width: 22px;
-  height: 22px;
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
+  padding: 5px 8px;
   border: none;
-  background: rgba(255,249,147,0.08);
-  border-radius: 6px;
-  color: rgba(255,249,147,0.7);
-  cursor: pointer;
-  font-size: 13px;
-  line-height: 1;
+  background: transparent;
+  border-radius: 8px;
   font-family: var(--font);
-  transition: background 0.12s, color 0.12s;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--myrtille);
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: background 0.12s;
   touch-action: manipulation;
 }
-.calNav:hover { background: rgba(255,249,147,0.16); color: var(--soleil); }
+.calLabel:hover { background: var(--sable-light); }
+
+.calNav {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  border-radius: 8px;
+  color: var(--text2);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  font-family: var(--font);
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+  touch-action: manipulation;
+}
+.calNav:hover { background: var(--sable-light); color: var(--myrtille); border-color: var(--myrtille); }
+
 .calWeekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  font-size: 9px;
-  color: rgba(255,249,147,0.35);
+  font-size: 9.5px;
+  color: var(--text3);
   text-align: center;
-  padding: 0 2px 4px;
+  padding: 0 2px 5px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
+  font-weight: 600;
 }
 .calGrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 0 2px; }
 .calDayEmpty { display: block; }
@@ -249,24 +279,56 @@
   justify-content: center;
   border: none;
   background: transparent;
-  border-radius: 6px;
-  font-size: 11px;
-  color: rgba(255,249,147,0.65);
+  border-radius: 7px;
+  font-size: 11.5px;
+  color: var(--encre);
   font-family: var(--font);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
   touch-action: manipulation;
 }
-.calDay:hover { background: rgba(255,249,147,0.10); color: var(--soleil); }
-.calDayInRange { background: rgba(255,249,147,0.08); border-radius: 0; }
+.calDay:hover { background: var(--sable-light); }
+/* Repère du jour même : un simple contour, pour ne pas se confondre avec la
+   sélection qui, elle, est pleine. */
+.calDayAujourdhui { box-shadow: inset 0 0 0 1px rgba(38,0,31,0.30); font-weight: 700; }
+.calDayInRange { background: rgba(255,249,147,0.45); border-radius: 0; }
 .calDayStart, .calDayEnd, .calDaySingle {
   background: var(--soleil);
   color: var(--myrtille);
   font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(38,0,31,0.14);
 }
-.calDayStart { border-radius: 6px 0 0 6px; }
-.calDayEnd { border-radius: 0 6px 6px 0; }
+.calDayStart { border-radius: 7px 0 0 7px; }
+.calDayEnd { border-radius: 0 7px 7px 0; }
+
+/* Grilles mois et années — 4 colonnes, mêmes codes que les jours. */
+.calGrille4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 2px;
+}
+.calCase {
+  padding: 9px 4px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 11.5px;
+  color: var(--encre);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background 0.12s;
+  touch-action: manipulation;
+}
+.calCase:hover { background: var(--sable-light); }
+.calCaseActive {
+  background: var(--soleil);
+  color: var(--myrtille);
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px rgba(38,0,31,0.14);
+}
 
 .applyBtn {
   align-self: flex-end;
