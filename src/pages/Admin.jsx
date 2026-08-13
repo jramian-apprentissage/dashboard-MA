@@ -135,35 +135,45 @@ export default function Admin() {
           </div>
           {users.map(u => (
             <div key={u.id} className={styles.tr}>
-              <div className={styles.td}>
+              <div className={`${styles.td} ${styles.tdUser}`}>
                 <div className={styles.userAvatar}>{u.name.charAt(0)}</div>
                 <div>
                   <div className={styles.userName}>{u.name}</div>
                   <div className={styles.userEmail}>{u.email}</div>
                 </div>
               </div>
-              <div className={styles.td}>
+              <div className={styles.td} data-libelle="Rôle">
                 <span className={`${styles.rolePill} ${styles['role_' + u.role] || styles.roleCore}`}>
                   {roleLabel(u.role)}
                 </span>
+                {/* Mention portée par le rôle, et non répétée sur chacun des
+                    quatre interrupteurs verrouillés : c'est le rôle qui donne
+                    l'accès total, l'information a sa place ici. */}
+                {['admin', 'directeur'].includes(u.role) && (
+                  <span className={styles.accesTotal}>voit tout</span>
+                )}
               </div>
               {TOGGLEABLE_PAGES.map(d => {
                 const fullAccess = ['admin', 'directeur'].includes(u.role);
                 const hasAccess  = fullAccess || u.dashboards?.includes(d.id);
                 return (
-                  <div key={d.id} className={styles.td} style={{ justifyContent: 'center' }}>
+                  <div key={d.id} className={styles.td} data-libelle={d.label} style={{ justifyContent: 'center' }}>
+                    {/* Le commutateur n'a plus de texte : son état se lit à sa
+                        position. D'où role/aria-checked, sans quoi un lecteur
+                        d'écran n'annoncerait qu'un bouton anonyme. */}
                     <button
                       className={`${styles.toggle} ${hasAccess ? styles.toggleOn : ''}`}
                       onClick={() => !fullAccess && toggleDashboard(u.id, d.id)}
                       disabled={fullAccess}
+                      role="switch"
+                      aria-checked={hasAccess}
+                      aria-label={`${d.label} — ${u.name}`}
                       title={fullAccess ? `${roleLabel(u.role)} voit tout` : (hasAccess ? 'Révoquer' : 'Autoriser')}
-                    >
-                      {hasAccess ? '✓' : '—'}
-                    </button>
+                    />
                   </div>
                 );
               })}
-              <div className={styles.td} style={{ gap: 6 }}>
+              <div className={styles.td} data-libelle="Actions" style={{ gap: 6 }}>
                 {user.role === 'admin' && (
                   <button className={styles.btnHistory} onClick={() => openHistory(u)}>Historique</button>
                 )}
