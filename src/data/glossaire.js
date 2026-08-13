@@ -11,46 +11,51 @@
  * `source` indique d'où vient le chiffre. C'est volontairement affiché : la
  * question posée en réunion n'est jamais « comment c'est calculé » mais
  * « ça sort d'où ». Trois valeurs possibles — Monday CRM (extraction chaque
- * soir à 21 h), le compte d'exploitation (historique reconstruit), et les
- * archives d'appels Ringover / CloudTalk.
+ * soir à 21 h), les archives d'appels Ringover / CloudTalk, et le fichier
+ * RDV.
+ *
+ * Le compte d'exploitation n'y figure pas, bien qu'il ait servi à
+ * reconstituer l'historique : c'est un travail interne de reprise, pas une
+ * source que les utilisateurs consultent. Pour eux, la donnée vient de
+ * Monday (décision de Jimmy, 2026-08-13).
  */
 export const glossaireData = [
 
   /* ── Revenus et marge ─────────────────────────────────────────────── */
   {
     terme: 'CA',
-    definition: "Somme des montants réellement facturés sur la période. L'historique est stocké en intervalles mensuels : chaque mois dont le début tombe dans la période sélectionnée compte pour un mois facturé. Ce sont les montants réels après prorata, et non les tarifs pleins prévus au contrat — l'écart entre les deux atteignait 7 %.",
-    source: "Compte d'exploitation",
+    definition: "Somme des montants réellement facturés sur la période. L'historique est stocké en intervalles mensuels : chaque mois dont le début tombe dans la période sélectionnée compte pour un mois facturé. Ce sont les montants effectivement facturés, après prorata des entrées et sorties en cours de mois.",
+    source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
   {
     terme: 'Marge brute',
     definition: "Prix de vente moins prix d'achat, sur les mêmes montants réels que le CA. Le prix d'achat correspond à la rémunération du collaborateur placé. C'est l'indicateur central de rentabilité.",
-    source: "Compte d'exploitation",
+    source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
   {
     terme: 'Taux de marge brute',
     definition: 'Marge brute rapportée au CA, en pourcentage.',
-    source: "Compte d'exploitation",
+    source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
   {
     terme: 'CA par client / Marge brute par client',
     definition: "Ventilation du CA et de la marge sur la période, client par client. Les parts sont calculées sur le total de la période, ce qui permet de les additionner jusqu'à 100 %.",
-    source: "Compte d'exploitation",
+    source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
   {
     terme: 'Concentration du CA',
     definition: "Part du CA réalisée par les plus gros clients. Mesure le risque de dépendance : plus la concentration est forte, plus la perte d'un seul compte pèse.",
-    source: "Compte d'exploitation",
+    source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
   {
     terme: 'Répartition du revenu par type de mission',
     definition: "CA ventilé par poste occupé par les collaborateurs placés. Le total correspond au CA de la période — chaque mois d'un intervalle est compté une fois.",
-    source: "Compte d'exploitation",
+    source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
   {
@@ -64,7 +69,7 @@ export const glossaireData = [
   {
     terme: 'Portefeuille de clients actifs',
     definition: "Clients ayant généré du CA sur la période sélectionnée. Différent du nombre total de comptes existants, qui inclut les comptes non facturés sur la période.",
-    source: "Compte d'exploitation",
+    source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
   {

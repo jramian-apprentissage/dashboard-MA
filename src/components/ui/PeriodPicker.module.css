@@ -411,52 +411,13 @@
 }
 .dropdown.themeArgent .applyBtn { background: var(--ciment); color: var(--myrtille); }
 
-/* ─── Pop-up calendrier thématisé — même logique que le dropdown ci-dessus,
-   appliquée à .calPanel (élément séparé, portail indépendant). ─── */
-.calPanel.themeAsus,
-.calPanel.themeMyrtille {
-  background: rgba(255,255,255,0.98);
-  border-color: rgba(38,0,31,0.1);
-}
-.calPanel.themeAsus .calPanelTitle { color: var(--asus-blue); }
-.calPanel.themeAsus .calClose { background: rgba(0,108,225,0.08); color: rgba(0,108,225,0.7); }
-.calPanel.themeAsus .calClose:hover { background: rgba(0,108,225,0.16); color: var(--asus-blue); }
-.calPanel.themeAsus .calLabel { color: var(--asus-blue); }
-.calPanel.themeAsus .calNav { background: rgba(0,108,225,0.08); color: rgba(0,108,225,0.7); }
-.calPanel.themeAsus .calNav:hover { background: rgba(0,108,225,0.16); color: var(--asus-blue); }
-.calPanel.themeAsus .calWeekdays { color: rgba(0,44,92,0.35); }
-.calPanel.themeAsus .calDay { color: rgba(0,44,92,0.6); }
-.calPanel.themeAsus .calDay:hover { background: rgba(0,108,225,0.08); color: var(--asus-blue); }
-.calPanel.themeAsus .calDayInRange { background: rgba(0,108,225,0.08); }
-.calPanel.themeAsus .calDayStart,
-.calPanel.themeAsus .calDayEnd,
-.calPanel.themeAsus .calDaySingle { background: var(--asus-blue); color: #fff; }
+/* Le calendrier n'est plus thématisé par dashboard. Il l'était du temps où
+   il était sombre : le panneau reprenait alors la teinte du bouton qui
+   l'avait ouvert. Ces surcharges avaient été écrites pour ce fond sombre et
+   sont devenues nuisibles une fois le panneau passé en clair — elles
+   peignaient les jours en ciment à 60 % d'opacité, illisible sur blanc, et
+   remplaçaient le Soleil de la sélection par du gris.
 
-.calPanel.themeMyrtille .calPanelTitle { color: var(--myrtille); }
-.calPanel.themeMyrtille .calClose { background: rgba(38,0,31,0.08); color: rgba(38,0,31,0.6); }
-.calPanel.themeMyrtille .calClose:hover { background: rgba(38,0,31,0.16); color: var(--myrtille); }
-.calPanel.themeMyrtille .calLabel { color: var(--myrtille); }
-.calPanel.themeMyrtille .calNav { background: rgba(38,0,31,0.08); color: rgba(38,0,31,0.6); }
-.calPanel.themeMyrtille .calNav:hover { background: rgba(38,0,31,0.16); color: var(--myrtille); }
-.calPanel.themeMyrtille .calWeekdays { color: rgba(38,0,31,0.35); }
-.calPanel.themeMyrtille .calDay { color: rgba(38,0,31,0.6); }
-.calPanel.themeMyrtille .calDay:hover { background: rgba(38,0,31,0.08); color: var(--myrtille); }
-.calPanel.themeMyrtille .calDayInRange { background: rgba(38,0,31,0.08); }
-.calPanel.themeMyrtille .calDayStart,
-.calPanel.themeMyrtille .calDayEnd,
-.calPanel.themeMyrtille .calDaySingle { background: var(--myrtille); color: #fff; }
-
-.calPanel.themeArgent { border-color: rgba(167,173,170,0.18); }
-.calPanel.themeArgent .calPanelTitle { color: var(--ciment); }
-.calPanel.themeArgent .calClose { background: rgba(167,173,170,0.08); color: rgba(167,173,170,0.6); }
-.calPanel.themeArgent .calClose:hover { background: rgba(167,173,170,0.16); color: var(--ciment); }
-.calPanel.themeArgent .calLabel { color: var(--ciment); }
-.calPanel.themeArgent .calNav { background: rgba(167,173,170,0.08); color: rgba(167,173,170,0.6); }
-.calPanel.themeArgent .calNav:hover { background: rgba(167,173,170,0.16); color: var(--ciment); }
-.calPanel.themeArgent .calWeekdays { color: rgba(167,173,170,0.35); }
-.calPanel.themeArgent .calDay { color: rgba(167,173,170,0.6); }
-.calPanel.themeArgent .calDay:hover { background: rgba(167,173,170,0.12); color: var(--ciment); }
-.calPanel.themeArgent .calDayInRange { background: rgba(167,173,170,0.10); }
-.calPanel.themeArgent .calDayStart,
-.calPanel.themeArgent .calDayEnd,
-.calPanel.themeArgent .calDaySingle { background: var(--ciment); color: var(--myrtille); }
+   Le calendrier suit désormais la carte de connexion, qui n'a qu'une seule
+   apparence. Le dropdown des périodes, lui, reste thématisé (voir plus
+   haut) : il jouxte le bouton, la continuité de teinte y a du sens. */
