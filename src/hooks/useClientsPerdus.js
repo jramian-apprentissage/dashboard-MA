@@ -9,6 +9,9 @@ import { fetchAPI } from '../services/api';
    derniers mois, comme le graphique CA/marge de Synthèse. */
 export function useClientsPerdus() {
   const [detail,  setDetail]  = useState(null);
+  // Profils dont la mission s'arrête alors que le contrat client se poursuit :
+  // ce n'est pas une perte de client, et la carte les confondait.
+  const [collaborateurs, setCollaborateurs] = useState(null);
   const [monthly, setMonthly] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState(null);
@@ -30,11 +33,16 @@ export function useClientsPerdus() {
     if (from) qs.set('from', from);
     if (to)   qs.set('to', to);
     fetchAPI(`/comptes/perdus?${qs}`)
-      .then(data => { if (!cancelled) { setDetail(data); setError(null); } })
+      .then(data => {
+        if (cancelled) return;
+        setDetail(data.contrats || []);
+        setCollaborateurs(data.collaborateurs || []);
+        setError(null);
+      })
       .catch(e => { if (!cancelled) setError(e.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, [from, to]);
 
-  return { detail, monthly, loading, error };
+  return { detail, collaborateurs, monthly, loading, error };
 }

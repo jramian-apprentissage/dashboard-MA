@@ -300,11 +300,24 @@ export default function FocusClient() {
           ) : perdus.detail ? (
             perdus.detail.length > 0 ? (
               <table className={styles.tbl}>
-                <thead><tr><th></th><th>Fin de contrat</th><th>CA</th></tr></thead>
+                <thead><tr><th></th><th>Missions perdues</th><th>Fin de contrat</th><th>CA</th></tr></thead>
                 <tbody>
                   {perdus.detail.map(c => (
                     <tr key={c.compteId}>
                       <td className={styles.tdName}>{c.nom}</td>
+                      {/* Le poste, pas le nom de la personne : sur un dashboard
+                          commercial c'est le type de mission perdue qui se
+                          pilote. Le nom reste accessible au survol — un contrat
+                          porte souvent plusieurs profils, jusqu'à 5. */}
+                      <td className={styles.tdPostes}>
+                        {c.profils?.length
+                          ? c.profils.map((p, i) => (
+                              <span key={i} className={styles.postePill} title={p.nom || undefined}>
+                                {p.poste || 'Poste non renseigné'}
+                              </span>
+                            ))
+                          : <span className={styles.subnote}>—</span>}
+                      </td>
                       <td>{c.dateFin ? new Date(`${c.dateFin}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
                       <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}><MontantExact exact={fmtEurosExact(c.ca)}>{fmtEurosDetail(c.ca)}</MontantExact></td>
                     </tr>
@@ -316,6 +329,35 @@ export default function FocusClient() {
             )
           ) : (
             <NotConnected>chargement…</NotConnected>
+          )}
+
+          {/* Perdre un collaborateur n'est pas perdre un client : la mission
+              s'arrête, le contrat continue. Ces cas n'apparaissaient nulle
+              part — ils étaient soit absents, soit confondus avec une perte de
+              client (demande de Tahina, 14/08). Bloc affiché seulement s'il y
+              en a : une section vide en permanence serait du bruit. */}
+          {perdus.collaborateurs?.length > 0 && (
+            <>
+              <div className={styles.sep} />
+              <div className={styles.metaSub}>Collaborateurs perdus — contrat toujours actif</div>
+              <table className={styles.tbl}>
+                <thead><tr><th></th><th>Mission</th><th>Fin</th><th>Motif</th></tr></thead>
+                <tbody>
+                  {perdus.collaborateurs.map((c, i) => (
+                    <tr key={i}>
+                      <td className={styles.tdName}>{c.client}</td>
+                      <td className={styles.tdPostes}>
+                        <span className={styles.postePill} title={c.collaborateur || undefined}>
+                          {c.poste || 'Poste non renseigné'}
+                        </span>
+                      </td>
+                      <td>{c.dateFin ? new Date(`${c.dateFin}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
+                      <td className={styles.subnote}>{c.motif || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </Card>
       </div>
