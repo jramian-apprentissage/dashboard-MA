@@ -452,9 +452,45 @@ export default function FocusClient() {
                     animation: mounted ? { duration: 900, easing: 'easeOutQuart' } : false,
                     plugins: {
                       legend: { display: false },
-                      // Valeur exacte au centime : l'axe est volontairement
-                      // abrégé en K€, l'infobulle porte le chiffre précis.
-                      tooltip: { callbacks: { label: ctx => fmtEurosExact(ctx.parsed.y) } },
+                      /* L'infobulle porte le montant exact au centime — l'axe
+                         est volontairement abrégé en K€ — puis la liste des
+                         clients perdus ce mois-là, du plus gros au plus petit.
+                         Sans elle, lire une barre obligeait à remonter dans la
+                         page pour savoir qui on avait perdu (demande de
+                         Tahina, 14/08).
+
+                         Chart.js déclenche l'infobulle au survol sur
+                         ordinateur et au toucher sur mobile : le comportement
+                         demandé pour les deux supports vient sans code. */
+                      tooltip: {
+                        displayColors: false,
+                        callbacks: {
+                          label: ctx => fmtEurosExact(ctx.parsed.y),
+                          afterBody: ctx => {
+                            const clients = perdus.monthly[ctx[0].dataIndex]?.clients || [];
+                            if (!clients.length) return [];
+                            /* Seuls les comptes qui portaient du revenu sont
+                               nommés : sur septembre, 14 des 15 comptes perdus
+                               sont à 0 €, les lister remplirait l'infobulle de
+                               lignes sans information. Ils restent comptés à
+                               part — ce sont de vraies pertes, simplement sans
+                               effet sur le montant de la barre. */
+                            const avecRevenu = clients.filter(c => c.ca > 0);
+                            const sansRevenu = clients.length - avecRevenu.length;
+                            // Au-delà de 6 noms, l'infobulle dépasse la carte.
+                            const visibles = avecRevenu.slice(0, 6);
+                            const reste = avecRevenu.length - visibles.length;
+                            return [
+                              '',
+                              ...visibles.map(c => `${c.nom} — ${fmtEurosDetail(c.ca)}`),
+                              ...(reste > 0 ? [`+ ${reste} autre${reste > 1 ? 's' : ''}`] : []),
+                              ...(sansRevenu > 0
+                                ? [`${sansRevenu} compte${sansRevenu > 1 ? 's' : ''} sans revenu récurrent`]
+                                : []),
+                            ];
+                          },
+                        },
+                      },
                     },
                     scales: {
                       x: {
