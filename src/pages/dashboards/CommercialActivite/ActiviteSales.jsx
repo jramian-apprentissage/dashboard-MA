@@ -76,11 +76,23 @@ function compareCollabRows(a, b, sort) {
 
 // KPIs depuis l'archive Ringover (seule source pour cet onglet)
 function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePeriodKey) {
-  const { total, argues, decroches, echanges30s, fichesExploitables } = result;
-  const tauxDec = total > 0 ? Math.round((decroches / total) * 100) : 0;
-  const tauxEchange30s = total > 0 ? Math.round((echanges30s / total) * 100) : 0;
-  const tauxFichesExploit = total > 0 ? Math.round((fichesExploitables / total) * 100) : 0;
-  const rdvPris = rdvResult?.rdvPris ?? '—';
+  /* `decroches` et `argues` ne sont plus des cartes : le décroché est
+     désormais porté par « Échanges > 1s » — un appel décroché dont la
+     conversation dépasse la seconde — et « Appels argumentés » a fusionné
+     avec « Fiches exploitables » en « Échanges exploitables ». Les deux
+     restent calculés dans computeSalesData, où le tableau par collaborateur
+     les consomme. */
+  const { total, echanges1s, echanges30s, fichesExploitables } = result;
+  /* Les taux de décroché, d'échanges > 30 s et de fiches exploitables ne sont
+     plus calculés ici : ces paliers s'affichent en volume. La part relative
+     reste lisible dans le tableau par collaborateur, où elle sert à comparer
+     des agents entre eux — c'est là qu'un pourcentage a du sens. */
+  /* Part relative de chaque palier, affichée au survol de la carte via le
+     mécanisme d'infobulle de KPICard — la carte ne porte que le volume. */
+  const part = (n, base, nomBase) => (base > 0 ? `${Math.round((n / base) * 100)} % ${nomBase}` : undefined);
+
+  const rdvPris    = rdvResult?.rdvPris ?? '—';
+  const rdvHonores = rdvResult?.rdvHonores ?? '—';
   const tauxHon = rdvResult ? `${rdvResult.tauxHonores}%` : '—';
   // Source des RDV : la feuille Google "Meetings Bookés". L'URL vit dans
   // VITE_RDV_SHEET_URL et non en dur — le backend, lui, ne connaît que
@@ -107,21 +119,9 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
   // résultat, pas une donnée manquante : comparePtsText doit recevoir un
   // taux "0" explicite dans ce cas, jamais null (qui signifierait "pas
   // encore chargé" pour KPICard et masquerait la ligne à tort).
-  const cmpTauxDec = cmp
-    ? (cmp.total > 0
-        ? comparePtsText(tauxDec, Math.round((cmp.decroches / cmp.total) * 100), comparePeriodKey)
-        : compareZeroRefText(comparePeriodKey))
-    : null;
-  const cmpTauxEchange30s = cmp
-    ? (cmp.total > 0
-        ? comparePtsText(tauxEchange30s, Math.round((cmp.echanges30s / cmp.total) * 100), comparePeriodKey)
-        : compareZeroRefText(comparePeriodKey))
-    : null;
-  const cmpTauxFichesExploit = cmp
-    ? (cmp.total > 0
-        ? comparePtsText(tauxFichesExploit, Math.round((cmp.fichesExploitables / cmp.total) * 100), comparePeriodKey)
-        : compareZeroRefText(comparePeriodKey))
-    : null;
+  /* Les comparaisons en points ont disparu avec les cartes de taux : décroché,
+     échanges > 30 s et fiches exploitables s'affichent désormais en volume et
+     se comparent donc en volume, comme les autres paliers. */
   const nbCollabActifs = Object.values(result.perCollab || {}).filter(c => (c.appels || 0) > 0).length;
 
   // Comparatif RDV — même logique : 0 RDV sur la période comparée est un
@@ -133,30 +133,37 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
         ? compareValueText(rdvResult.rdvPris, compareRdvResult.rdvPris, comparePeriodKey)
         : compareZeroRefText(comparePeriodKey))
     : null);
+  const cmpRdvHonores = !rdvResult ? null : (compareRdvResult
+    ? (compareRdvResult.rdvHonores > 0
+        ? compareValueText(rdvResult.rdvHonores, compareRdvResult.rdvHonores, comparePeriodKey)
+        : compareZeroRefText(comparePeriodKey))
+    : null);
   const cmpTauxHon = !rdvResult ? null : (compareRdvResult
     ? (compareRdvResult.rdvPris > 0
         ? comparePtsText(rdvResult.tauxHonores, compareRdvResult.tauxHonores, comparePeriodKey)
         : compareZeroRefText(comparePeriodKey))
     : null);
 
-  // Ordre "funnel" : on émet un appel, il est décroché, puis argumenté,
-  // enfin une fiche est complétée — plus logique à lire que émis→argumenté→décroché.
-  return [
-    { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` },        color: 'blue' },
-    /* Deux paliers au lieu d'un, comme sur le TLM (décision de Christophe,
-       14/08) : le décroché dit que la jonction a eu lieu, l'échange de plus
-       de 30 secondes dit qu'il s'est passé quelque chose.
+  /* Entonnoir Sales, strictement calqué sur celui du TLM (Jimmy, 15/08) :
+     appels émis, échanges > 1 s, échanges > 30 s, échanges exploitables,
+     rendez-vous pris, rendez-vous honorés, puis le taux d'honoration en
+     dernier — le seul taux de la rangée.
 
-       Le décroché se lit sur le statut Ringover, pas sur la durée : celle-ci
-       inclut la sonnerie, et l'ancien « Taux décrochés > 30s » comptait 1 617
-       appels jamais décrochés — messageries vocales comprises. */
-    { label: 'Taux de décroché',         value: `${tauxDec}%`,          unit: '', compare: cmpTauxDec,        trend: { dir: 'neutral', text: `${decroches} appels décrochés — un interlocuteur a répondu` } },
-    { label: 'Taux d\'échanges > 30s',   value: `${tauxEchange30s}%`,   unit: '', compare: cmpTauxEchange30s, trend: { dir: 'neutral', text: `${echanges30s} échanges — ${decroches > 0 ? Math.round((echanges30s / decroches) * 100) : 0}% des décrochés` } },
-    { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: 'Prospect ayant écouté le pitch (OK + PI)' },     color: 'green' },
-    { label: 'Taux fiches exploitables', value: `${tauxFichesExploit}%`, unit: '', compare: cmpTauxFichesExploit, trend: { dir: 'neutral', text: 'Argumentés + CNA - Mail' }, color: 'amber' },
-    { label: 'RDV pris',                 value: rdvPris,        unit: '', compare: cmpRdv,      trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'green' },
-    { label: 'Taux RDV honorés',         value: tauxHon,        unit: '', compare: cmpTauxHon,  trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'purple' },
+     « Appels argumentés » et « Fiches exploitables » fusionnent en un unique
+     palier « Échanges exploitables » : le prospect a écouté le pitch, qu'il
+     ait dit oui, non, ou qu'il ait donné l'information par mail
+     (OK + PI + CNA - Mail). Deux cartes pour deux nuances du même fait
+     coupaient l'entonnoir en deux sans rien apprendre. */
+  return [
+    { label: 'Appels émis',              value: total,              unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null, trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` }, color: 'blue' },
+    { label: 'Échanges > 1s',            value: echanges1s,         unit: '', compare: cmp ? compareValueText(echanges1s, cmp.echanges1s, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Un interlocuteur a répondu et la conversation a dépassé une seconde' }, exactValue: part(echanges1s, total, 'des appels émis') },
+    { label: 'Échanges > 30s',           value: echanges30s,        unit: '', compare: cmp ? compareValueText(echanges30s, cmp.echanges30s, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation de plus de 30 secondes, hors sonnerie' }, exactValue: part(echanges30s, echanges1s, 'des échanges > 1s') },
+    { label: 'Échanges exploitables',    value: fichesExploitables, unit: '', compare: cmp ? compareValueText(fichesExploitables, cmp.fichesExploitables, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Prospect ayant écouté le pitch (OK + PI + CNA - Mail)' }, color: 'amber', exactValue: part(fichesExploitables, echanges30s, 'des échanges > 30s') },
+    { label: 'RDV pris',                 value: rdvPris,            unit: '', compare: cmpRdv,     trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
+    { label: 'RDV honorés',              value: rdvHonores,         unit: '', compare: cmpRdvHonores, trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
+    { label: 'Taux RDV honorés',         value: tauxHon,            unit: '', compare: cmpTauxHon, trend: { dir: 'neutral', text: rdvSrc }, color: 'purple' },
   ];
+
 }
 
 export default function ActiviteSales({ selectedCollab = 'Tous', salesData, compareResult = null, compareRdvResult = null }) {
@@ -259,12 +266,16 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               return {
                 nom: name,
                 appels: ring?.appels ?? null,
+                echanges1s: ring?.echanges1s ?? null,
+                echanges30s: ring?.echanges30s ?? null,
                 tauxDecroche: isNaN(tauxN) ? null : tauxN,
                 tauxLabel: ring?.taux ?? '—',
                 tauxEchange30s: ring?.tauxEchange30s ?? null,
                 argues: ring?.argues ?? null,
+                fichesExploitables: ring?.fichesExploitables ?? null,
                 tauxFichesExploit: ring?.tauxFichesExploit ?? null,
                 rdvPris,
+                rdvHonores,
                 tauxRdvHonores: rdvPris > 0 ? Math.round((rdvHonores / rdvPris) * 100) : null,
               };
             })
@@ -275,11 +286,16 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               <thead><tr>
                 <th onClick={() => toggleCollabSort('nom')} style={{ cursor: 'pointer' }}>Collaborateur{collabSortArrow('nom')}</th>
                 <th onClick={() => toggleCollabSort('appels')} style={{ cursor: 'pointer' }}>Appels émis{collabSortArrow('appels')}</th>
-                <th onClick={() => toggleCollabSort('tauxDecroche')} style={{ cursor: 'pointer' }}>Taux de décroché{collabSortArrow('tauxDecroche')}</th>
-                <th onClick={() => toggleCollabSort('tauxEchange30s')} style={{ cursor: 'pointer' }}>Échanges &gt; 30s{collabSortArrow('tauxEchange30s')}</th>
-                <th onClick={() => toggleCollabSort('argues')} style={{ cursor: 'pointer' }}>Appels argumentés{collabSortArrow('argues')}</th>
-                <th onClick={() => toggleCollabSort('tauxFichesExploit')} style={{ cursor: 'pointer' }}>Taux fiches exploitables{collabSortArrow('tauxFichesExploit')}</th>
+                {/* Exactement les paliers des cartes d'en-tête, en volumes et
+                    dans le même ordre : c'est le jeu d'indicateurs qu'on
+                    reprend pour tous les tableaux par collaborateur (Jimmy,
+                    15/08). Le taux de décroché reste porté par la pastille de
+                    couleur, qui situe l'agent d'un coup d'œil. */}
+                <th onClick={() => toggleCollabSort('echanges1s')} style={{ cursor: 'pointer' }}>Échanges &gt; 1s{collabSortArrow('echanges1s')}</th>
+                <th onClick={() => toggleCollabSort('echanges30s')} style={{ cursor: 'pointer' }}>Échanges &gt; 30s{collabSortArrow('echanges30s')}</th>
+                <th onClick={() => toggleCollabSort('fichesExploitables')} style={{ cursor: 'pointer' }}>Échanges exploitables{collabSortArrow('fichesExploitables')}</th>
                 <th onClick={() => toggleCollabSort('rdvPris')} style={{ cursor: 'pointer' }}>RDV pris{collabSortArrow('rdvPris')}</th>
+                <th onClick={() => toggleCollabSort('rdvHonores')} style={{ cursor: 'pointer' }}>RDV honorés{collabSortArrow('rdvHonores')}</th>
                 <th onClick={() => toggleCollabSort('tauxRdvHonores')} style={{ cursor: 'pointer' }}>Taux RDV honorés{collabSortArrow('tauxRdvHonores')}</th>
               </tr></thead>
               <tbody>
@@ -294,11 +310,11 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                     <tr key={row.nom} className={row.nom === selectedCollab ? styles.highlightRow : ''}>
                       <td className={styles.tdName}>{row.nom}</td>
                       <td className={styles.tdNum}>{fmtNumber(row.appels) ?? '—'}</td>
-                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: tauxColor }}>{row.tauxLabel}</span></td>
-                      <td className={styles.tdNum}>{row.tauxEchange30s != null ? `${row.tauxEchange30s}%` : '—'}</td>
-                      <td className={styles.tdNum}>{fmtNumber(row.argues) ?? '—'}</td>
-                      <td className={styles.tdNum}>{row.tauxFichesExploit != null ? `${row.tauxFichesExploit}%` : '—'}</td>
+                      <td className={styles.tdNum} title={row.tauxLabel !== '—' ? `${row.tauxLabel} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: tauxColor }}>{fmtNumber(row.echanges1s) ?? '—'}</span></td>
+                      <td className={styles.tdNum}>{fmtNumber(row.echanges30s) ?? '—'}</td>
+                      <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '—'}</td>
                       <td className={styles.tdNum} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</td>
+                      <td className={styles.tdNum} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</td>
                       <td className={styles.tdNum} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? `${row.tauxRdvHonores}%` : '—'}</td>
                     </tr>
                   );

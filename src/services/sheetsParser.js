@@ -169,6 +169,13 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
      Repli sur `duration` pour les lignes antérieures à la migration 027, qui
      n'ont pas encore la conversation : mieux vaut la vieille mesure que zéro. */
   const dureeEchange = r => (r.conversation ?? r.duration ?? 0);
+  /* Deux seuils, comme sur le TLM : au-delà d'une seconde la jonction a eu
+     lieu, au-delà de trente il s'est passé quelque chose. Le seuil à 1 s n'a
+     de sens QUE depuis qu'on dispose de la durée de conversation (migration
+     027) : sur `total_duration`, qui inclut la sonnerie, il aurait compté des
+     appels jamais décrochés. La condition sur le statut le protège de toute
+     façon, y compris sur l'historique antérieur au repli. */
+  const echanges1s  = filtered.filter(r => estDecroche(r) && dureeEchange(r) > 1).length;
   const echanges30s = filtered.filter(r => estDecroche(r) && dureeEchange(r) > 30).length;
 
   // Contact argumenté = OK (RDV pris) + PI (Pas intéressé) — le prospect a écouté le pitch
@@ -257,17 +264,27 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   // ── Statistiques par collaborateur ──────────────────────────────────────────
   const collabStats = {};
   filtered.forEach(r => {
-    if (!collabStats[r.collab]) collabStats[r.collab] = { appels: 0, decroche: 0, echange30s: 0, argues: 0, fichesExploitables: 0 };
+    if (!collabStats[r.collab]) collabStats[r.collab] = { appels: 0, decroche: 0, echange1s: 0, echange30s: 0, argues: 0, fichesExploitables: 0 };
     collabStats[r.collab].appels++;
     if (estDecroche(r)) collabStats[r.collab].decroche++;
+    if (estDecroche(r) && dureeEchange(r) > 1) collabStats[r.collab].echange1s++;
     if (estDecroche(r) && dureeEchange(r) > 30) collabStats[r.collab].echange30s++;
     const estArgue = hasTagCat(r.tags, 'OK') || hasTagCat(r.tags, 'PI');
     if (estArgue) collabStats[r.collab].argues++;
     if (estArgue || hasTagPrefix(r.tags, 'CNA - Mail')) collabStats[r.collab].fichesExploitables++;
   });
+  /* Le détail par collaborateur porte EXACTEMENT les mêmes paliers que les
+     cartes d'en-tête, et dans le même ordre : appels émis, décrochés,
+     échanges > 30 s, argumentés, fiches exploitables (décision de Jimmy,
+     15/08 — c'est le jeu d'indicateurs qu'on reprendra pour tous les tableaux
+     par collaborateur). Les volumes servent l'affichage, les taux restent
+     disponibles pour le tri et la colorisation. */
   const perCollab = Object.fromEntries(
     Object.entries(collabStats).map(([name, v]) => [name, {
       appels: v.appels,
+      decroches: v.decroche,
+      echanges1s: v.echange1s,
+      echanges30s: v.echange30s,
       argues: v.argues,
       fichesExploitables: v.fichesExploitables,
       tauxFichesExploit: v.appels > 0 ? Math.round((v.fichesExploitables / v.appels) * 100) : 0,
@@ -280,7 +297,7 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   );
 
   return {
-    total, decroches, echanges30s, argues, fichesExploitables, rdv,
+    total, decroches, echanges1s, echanges30s, argues, fichesExploitables, rdv,
     tranches, collabs, categStats, tagStats, perCollab,
   };
 }

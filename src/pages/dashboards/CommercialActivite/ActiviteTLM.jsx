@@ -223,8 +223,10 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
      porte donc que sur la data réellement travaillable. */
   const baseExploitable   = Math.max(appelsEmis - nonExploitables, 0);
   const transfoNette      = baseExploitable > 0 ? Math.round((rdvPris / baseExploitable) * 1000) / 10 : 0;
-  const tauxDecroche30s   = appelsEmis > 0 ? Math.round((decroches30s / appelsEmis) * 100) : 0;
-  const tauxFichesExploit = appelsExploitables > 0 ? Math.round((fichesCompletees / appelsExploitables) * 100) : 0;
+  /* Les taux des paliers ne sont plus calculés ici : les cartes affichent des
+     volumes, et leur part relative se calcule à la volée par `part()` pour
+     l'infobulle de survol. Seule la transformation nette reste un taux
+     affiché en dur, faute de palier correspondant. */
 
   // Motif de refus / Statut des appels : aucune décomposition par agent côté
   // CloudTalk — masqués (pas juste à 0) quand un agent précis est sélectionné.
@@ -289,17 +291,11 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
   // de comparaison à partir des mêmes champs bruts). Le dénominateur peut
   // être à 0 sur la période comparée (aucune activité) — résultat réel,
   // affiché explicitement plutôt que masqué.
+  /* Les comparaisons en points des taux « échanges > 30 s » et « fiches
+     exploitables » ont disparu avec leurs cartes : ces deux paliers sont
+     désormais affichés en volume, et se comparent donc en volume comme les
+     autres. Restent les bases nécessaires à la transformation nette. */
   const compareBaseAppelsEmis = isFilteredToAgent ? (compareAgentRow?.appels_emis ?? 0) : (compareSummary?.appels_emis ?? 0);
-  const compareBaseDecroches30s = isFilteredToAgent ? (compareAgentRow?.appels_decroches_30s ?? 0) : (compareSummary?.appels_decroches_30s ?? 0);
-  const cmpDecroche30s = !compareDataLoaded ? null
-    : (compareBaseAppelsEmis > 0
-        ? comparePtsText(tauxDecroche30s, Math.round((compareBaseDecroches30s / compareBaseAppelsEmis) * 100), comparePeriodKey)
-        : compareZeroRefText(comparePeriodKey));
-  const compareBaseAppelsExploitables = isFilteredToAgent ? (compareAgentRow?.appels_exploitables ?? 0) : (compareSummary?.appels_exploitables ?? 0);
-  const cmpFichesExploit = !compareDataLoaded ? null
-    : (compareBaseAppelsExploitables > 0
-        ? comparePtsText(tauxFichesExploit, Math.round((compareFichesCompletees / compareBaseAppelsExploitables) * 100), comparePeriodKey)
-        : compareZeroRefText(comparePeriodKey));
   const compareBaseRdv = isFilteredToAgent ? (compareAgentRow?.rdvs_pris ?? 0) : (compareSummary?.rdvs_bookes_tlm ?? 0);
   // Même dénominateur que transfoNette sur la période de référence, sinon la
   // comparaison opposerait un taux net à un taux brut.
@@ -312,24 +308,53 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
         ? comparePtsText(transfoNette, Math.round((compareBaseRdv / compareBaseExploitable) * 1000) / 10, comparePeriodKey)
         : compareZeroRefText(comparePeriodKey));
 
-  // Ordre "tunnel" : émis → décroché → joint → exploitable → taux exploit. →
-  // non exploitable → fiche → rdv → taux honoré → transfo nette. Les KPIs
-  // liés se retrouvent ainsi sur la même ligne (grille 2 colonnes mobile).
+  /* Les cartes reprennent exactement les paliers de l'entonnoir, dans le même
+     ordre et EN NOMBRES : appels émis, échanges > 1 s, échanges > 30 s,
+     échanges exploitables, fiches complétées, rendez-vous pris (Christophe,
+     14/08). « Si je vois directement le chiffre, je sais qu'il y en a eu 60 ;
+     si je ne vois que des pourcentages, je vois un pourcentage de
+     pourcentage. »
+
+     Les taux qui doublonnaient un palier sont retirés — « Taux d'échanges
+     > 30 s » et « Taux fiches exploitables » disaient en pourcentage ce que
+     la carte voisine disait en volume, et la rangée se lisait comme une
+     alternance sans logique. Le pourcentage de chaque palier reste accessible
+     au survol de l'entonnoir juste en dessous.
+
+     Seule la transformation nette reste un taux : c'est le seul indicateur
+     qui ne corresponde à aucun palier, et Christophe l'a explicitement gardé.
+
+     « Contacts joints » est retiré : la mesure venait des tags et
+     sous-comptait gravement — 3 700 contacts joints pour 5 119 échanges de
+     plus de 30 secondes sur la même période. Un sous-ensemble plus grand que
+     son ensemble ; le chiffre ne voulait rien dire. */
+  /* Le pourcentage de chaque palier passe au survol de la carte, via le même
+     mécanisme que le montant exact (voir KPICard) : lisible d'un geste sur
+     ordinateur, accessible au toucher sur mobile par retournement. La carte
+     elle-même ne porte que le volume. Chaque part se rapporte au palier
+     précédent, comme dans l'entonnoir. */
+  const part = (n, base, nomBase) => (base > 0
+    ? `${Math.round((n / base) * 100)} % ${nomBase}`
+    : undefined);
+
   const kpis = [
-    { label: 'Appels émis',                value: appelsEmis,                       unit: '', compare: cmp(appelsEmis, 'appels_emis', 'appels_emis'),           trend: trend(isFilteredToAgent ? selectedCollab : `${summary?.nb_clients ?? 0} clients TLM actifs`) },
-    { label: 'Taux d\'échanges > 30s',      value: `${tauxDecroche30s}%`,            unit: '', compare: cmpDecroche30s,   trend: trend('Durée de conversation > 30s (talking_time)') },
-    /* « Contacts joints » retiré : la mesure venait des tags et sous-comptait
-       gravement — 3 700 contacts joints pour 5 119 échanges de plus de 30
-       secondes sur la même période. Un sous-ensemble plus grand que son
-       ensemble ; le chiffre ne voulait rien dire (constat du 14/08). */
-    { label: 'Appels exploitables',        value: appelsExploitables,               unit: '', compare: cmp(appelsExploitables, 'appels_exploitables', 'appels_exploitables'), trend: trend('Enquête complétée/partielle, RDV pris, Rappel') },
-    { label: 'Taux fiches exploitables',   value: `${tauxFichesExploit}%`,          unit: '', compare: cmpFichesExploit, trend: trend('Fiches complétées / Appels exploitables') },
-    { label: 'Appels non exploitables',    value: nonExploitables,                  unit: '', compare: cmp(nonExploitables, 'data_non_exploitable', 'appels_non_exploitables'), trend: trend('Contact joint sans info business') },
-    { label: 'Fiches complétées',          value: fichesCompletees,                 unit: '', compare: cmpFichesCompletees, trend: trend('Enquête complétée + RDV pris') },
-    { label: 'RDV pris',                   value: rdvPris,                          unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm', 'rdvs_pris'),           trend: trend('Transformation TLM → RDV'), color: 'green' },
-    { label: 'Taux RDV honorés',           value: '-',                              unit: '', compare: false, trend: trend('Pas de suivi de présence côté CloudTalk') },
-    { label: 'Transformation nette',       value: `${transfoNette}%`,               unit: '', compare: cmpTransfoNette, trend: trend('RDV pris / appels émis hors data non exploitable') },
+    { label: 'Appels émis',                value: appelsEmis,          unit: '', compare: cmp(appelsEmis, 'appels_emis', 'appels_emis'), trend: trend(isFilteredToAgent ? selectedCollab : `${summary?.nb_clients ?? 0} client${(summary?.nb_clients ?? 0) > 1 ? 's' : ''} TLM avec activité`) },
+    // Masqué tant que n8n n'a pas produit le comptage : un zéro se lirait
+    // « aucun décroché » au lieu de « pas encore mesuré ».
+    ...(decroches1s != null
+      ? [{ label: 'Échanges > 1s', value: decroches1s, unit: '', compare: cmp(decroches1s, 'appels_decroches_1s', 'appels_decroches_1s'), trend: trend('Conversation de plus d’une seconde'), exactValue: part(decroches1s, appelsEmis, 'des appels émis') }]
+      : []),
+    { label: 'Échanges > 30s',             value: decroches30s,        unit: '', compare: cmp(decroches30s, 'appels_decroches_30s', 'appels_decroches_30s'), trend: trend('Conversation de plus de 30 secondes'), exactValue: part(decroches30s, decroches1s ?? appelsEmis, decroches1s != null ? 'des échanges > 1s' : 'des appels émis') },
+    { label: 'Échanges exploitables',      value: appelsExploitables,  unit: '', compare: cmp(appelsExploitables, 'appels_exploitables', 'appels_exploitables'), trend: trend('Enquête complétée/partielle, RDV pris, Rappel'), exactValue: part(appelsExploitables, decroches30s, 'des échanges > 30s') },
+    { label: 'Fiches complétées',          value: fichesCompletees,    unit: '', compare: cmpFichesCompletees, trend: trend('Enquête complétée + RDV pris'), exactValue: part(fichesCompletees, appelsExploitables, 'des échanges exploitables') },
+    { label: 'Rendez-vous pris',           value: rdvPris,             unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm', 'rdvs_pris'), trend: trend('Transformation TLM → RDV'), color: 'green', exactValue: part(rdvPris, fichesCompletees, 'des fiches complétées') },
+    // Hors parcours, comme dans l'entonnoir : elle explique le taux de
+    // transformation sans être une étape.
+    { label: 'Data non exploitable',       value: nonExploitables,     unit: '', compare: cmp(nonExploitables, 'data_non_exploitable', 'appels_non_exploitables'), trend: trend('Tags Faux numéro, Doublon, Hors service'), exactValue: part(nonExploitables, appelsEmis, 'des appels émis') },
+    { label: 'Transformation nette',       value: `${transfoNette}%`,  unit: '', compare: cmpTransfoNette, trend: trend('RDV pris / appels émis hors data non exploitable') },
+    { label: 'Taux RDV honorés',           value: '-',                 unit: '', compare: false, trend: trend('Pas de suivi de présence côté CloudTalk') },
   ];
+
 
   /* Entonnoir dans l'ordre arrêté par Christophe (réunion du 14/08) : appels
      émis, décroché > 1s, échanges > 30s, exploitable, fiche complétée, RDV
@@ -424,12 +449,12 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                   14/08). « Contact joint » est retiré comme ailleurs : mesure
                   issue des tags, inférieure aux échanges de plus de 30 s
                   qu'elle est censée contenir. */}
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_decroches_1s')}>Échanges &gt; 1s{agentSortArrow('appels_decroches_1s')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_decroches_30s')}>Échanges &gt; 30s{agentSortArrow('appels_decroches_30s')}</th>
-              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_exploitables')}>Exploitables{agentSortArrow('appels_exploitables')}</th>
-              <th className={styles.thSortable} onClick={() => toggleAgentSort('tauxCompletion')}>Taux fiches exploitables{agentSortArrow('tauxCompletion')}</th>
-              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_non_exploitables')}>Non exploitables{agentSortArrow('appels_non_exploitables')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_exploitables')}>Échanges exploitables{agentSortArrow('appels_exploitables')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('fichesAgent')}>Fiches complétées{agentSortArrow('fichesAgent')}</th>
-              <th className={styles.thSortable} onClick={() => toggleAgentSort('rdvs_pris')}>RDV pris{agentSortArrow('rdvs_pris')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('rdvs_pris')}>Rendez-vous pris{agentSortArrow('rdvs_pris')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_non_exploitables')}>Data non exploitable{agentSortArrow('appels_non_exploitables')}</th>
               <th>Taux RDV honorés</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('transfoNette')}>Transformation nette{agentSortArrow('transfoNette')}</th>
             </tr></thead>
@@ -452,12 +477,12 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                     <td className={styles.tdNum}>{fmtNumber(a.appels_emis)}</td>
                     {/* Le volume, le taux au survol — même arbitrage que
                         l'entonnoir : « la valeur numéraire est plus utile ». */}
+                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${Math.round((a.appels_decroches_1s / Math.max(a.appels_emis, 1)) * 100)}% des appels émis` : undefined}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '—'}</td>
                     <td className={styles.tdNum} title={`${a.tauxDecroche30s}% des appels émis`}>{fmtNumber(a.appels_decroches_30s)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_exploitables)}</td>
-                    <td className={styles.tdNum}><span className={styles.tauxPill}>{a.tauxCompletion}%</span></td>
-                    <td className={styles.tdNum}>{fmtNumber(a.appels_non_exploitables)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.fichesAgent)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.rdvs_pris)}</td>
+                    <td className={styles.tdNum}>{fmtNumber(a.appels_non_exploitables)}</td>
                     <td className={styles.tdNum}>-</td>
                     <td className={styles.tdNum}>{a.transfoNette}%</td>
                   </tr>
