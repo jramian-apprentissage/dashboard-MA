@@ -361,19 +361,26 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
      cinq dont une inventée. */
   const funnelSteps = [
     { label: 'Appels émis',      value: appelsEmis },
-    /* Nomenclature en noms et non en taux, puisque les paliers portent
-       désormais des volumes : « appel émis, appel décroché, appel exploitable »
-       (Christophe, 14/08). Le palier des 30 secondes garde son seuil dans le
-       libellé : il l'appelait « appel argumenté », mais ce mot désigne déjà un
-       statut issu des tags dans la carte « Statut des appels » juste en
-       dessous. Deux définitions du même mot sur un même écran, c'est
-       précisément ce qui a rendu « Contact joint » illisible — à trancher avec
-       lui avant de renommer. */
-    ...(decroches1s != null ? [{ label: 'Appels décrochés', value: decroches1s }] : []),
-    { label: 'Échanges > 30s',     value: decroches30s },
-    { label: 'Appels exploitables', value: appelsExploitables },
-    { label: 'Fiches complétées',  value: fichesCompletees },
-    { label: 'RDV pris',           value: rdvPris },
+    /* Nomenclature en noms et non en taux, puisque les paliers portent des
+       volumes, et suite de libellés homogène : appels émis, échanges > 1 s,
+       échanges > 30 s, échanges exploitables, fiches complétées, rendez-vous
+       pris (Christophe, 14/08).
+
+       « Échanges » plutôt qu'« appels » dès le deuxième palier : à partir de
+       la seconde, il ne s'agit plus d'un appel émis mais d'une conversation
+       établie. Le mot reste le même jusqu'au bout du parcours, ce qui évite
+       l'alternance appel/échange qui rendait l'entonnoir difficile à suivre.
+
+       Le seuil figure dans le libellé plutôt que le mot « argumenté » que
+       Christophe employait : celui-ci désigne déjà un statut issu des tags
+       dans la carte « Statut des appels » juste en dessous, et deux
+       définitions du même mot sur un écran, c'est ce qui a rendu « Contact
+       joint » illisible. */
+    ...(decroches1s != null ? [{ label: 'Échanges > 1s', value: decroches1s }] : []),
+    { label: 'Échanges > 30s',       value: decroches30s },
+    { label: 'Échanges exploitables', value: appelsExploitables },
+    { label: 'Fiches complétées',    value: fichesCompletees },
+    { label: 'Rendez-vous pris',     value: rdvPris },
     // Hors parcours : ne descend pas du palier précédent, se rapporte aux
     // appels émis. Le rendu la traite donc à part (voir `aPart`).
     { label: 'Data non exploitable', value: nonExploitables, aPart: true },
@@ -478,20 +485,28 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
             const precedent = s.aPart ? funnelSteps[0] : funnelSteps[i - 1];
             const pctRef = !precedent ? 0
               : (precedent.value > 0 ? Math.round((s.value / precedent.value) * 100) : 0);
-            const survol = !precedent
-              ? `${fmtNumber(s.value)} appels émis sur la période`
-              : `${pctRef}% de « ${precedent.label} » (${fmtNumber(precedent.value)})`;
             return (
               <div
                 key={s.label}
                 className={s.aPart ? `${styles.funnelRow} ${styles.funnelAPart}` : styles.funnelRow}
-                title={survol}
               >
+                {/* Infobulle maison plutôt que l'attribut `title` : celui-ci
+                    n'apparaît qu'après une seconde d'immobilité, dans un style
+                    système que personne ne remarque — le pourcentage y était
+                    mais restait invisible. */}
+                {precedent && (
+                  <div className={styles.funnelBulle}>
+                    <strong>{pctRef}%</strong> de « {precedent.label} » ({fmtNumber(precedent.value)})
+                  </div>
+                )}
                 <div className={styles.funnelLabel}>{s.label}</div>
                 <div className={styles.funnelTrack}>
                   <div className={styles.funnelFill} style={{ width: `${pctOfMax}%` }} />
                 </div>
-                <div className={styles.funnelValue}>{fmtNumber(s.value)}</div>
+                <div className={styles.funnelValue}>
+                  {fmtNumber(s.value)}
+                  {precedent && <span className={styles.funnelPctInline}> · {pctRef}%</span>}
+                </div>
               </div>
             );
           })}

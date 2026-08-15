@@ -137,6 +137,32 @@
 .funnelAPart { margin-top: 6px; padding-top: 10px; border-top: 1px dashed var(--border); }
 .funnelAPart .funnelLabel, .funnelAPart .funnelValue { color: var(--text2); }
 
+/* Infobulle du palier — remplace l'attribut `title` natif, qui n'apparaît
+   qu'après une seconde d'immobilité et dans un style système discret : le
+   pourcentage était bien là mais personne ne le voyait. Celle-ci s'affiche
+   immédiatement au survol de la ligne, dans la charte. */
+.funnelRow { position: relative; }
+.funnelBulle {
+  position: absolute; right: 0; bottom: calc(100% + 6px);
+  background: var(--myrtille); color: var(--blanc);
+  border-radius: 8px; padding: 7px 11px;
+  font-size: 11px; line-height: 1.45; white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(38,0,31,0.24);
+  opacity: 0; transform: translateY(3px);
+  transition: opacity 0.14s, transform 0.14s;
+  pointer-events: none; z-index: 30;
+}
+.funnelRow:hover .funnelBulle { opacity: 1; transform: translateY(0); }
+.funnelBulle strong { font-weight: 700; }
+/* Sans survol (mobile), la ligne entière reste lisible : le pourcentage
+   s'affiche alors en clair à côté du nombre plutôt que dans une bulle
+   inatteignable au doigt. */
+.funnelPctInline { display: none; font-weight: 400; color: var(--text2); }
+@media (hover: none) {
+  .funnelBulle { display: none; }
+  .funnelPctInline { display: inline; }
+}
+
 .subNote { font-size: 10.5px; color: var(--text2); }
 .legend { display: flex; align-items: center; font-size: 10.5px; color: var(--text2); gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
