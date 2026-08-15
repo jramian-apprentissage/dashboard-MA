@@ -19,7 +19,7 @@ import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnect
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import MontantExact from '../../../components/ui/MontantExact';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
-import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
+import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS, SHOW_MONDAY_KPIS } from '../../../config/featureFlags';
 import styles from './FocusCommercial.module.css';
 import RechercheListe from '../../../components/ui/RechercheListe';
 import { correspond } from '../../../utils/recherche';
@@ -536,7 +536,14 @@ export default function FocusCommercial() {
 
       {/* ══ Ligne 5 — Segments : lecture stratégique ══ */}
       <SectionLabel>Performance par segment</SectionLabel>
-      <div className={styles.twoCol}>
+      <div className={SHOW_MONDAY_KPIS ? styles.twoCol : undefined}>
+        {/* Le secteur d'activité n'existe que sur Monday : 68 comptes sur 88 y
+            sont renseignés, aucun des 117 comptes reconstruits depuis l'Excel.
+            La carte ne peut donc pas être « filtrée » sur l'Excel, elle serait
+            vide — elle est retirée de l'affichage tant qu'on travaille sur la
+            seule base Excel (décision de Jimmy, 15/08). Remettre
+            SHOW_MONDAY_KPIS à true la fait revenir telle quelle. */}
+        {SHOW_MONDAY_KPIS && (
         <Card title="CA par secteur d'activité">
           {!SHOW_COMPTES_KPIS ? (
             <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
@@ -552,11 +559,23 @@ export default function FocusCommercial() {
                 height={210}
                 tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${pct}%)`}
               />
-              <div className={styles.donutLegend}>
+              {/* Tableau plutôt que légende : avec 37 secteurs, les pastilles
+                  débordaient sur six lignes et devenaient illisibles. Même
+                  motif que « Répartition par qualification » côté Sales
+                  (retour de Jimmy, 15/08). */}
+              <div className={styles.tagTable}>
+                <div className={styles.tagTableHead}>
+                  <span>Secteur</span><span>CA</span><span>%</span>
+                </div>
                 {secteurs.data.map((s, i) => (
-                  <span key={s.label} className={styles.legItem}>
-                    <span className={styles.legDot} style={{ background: sourceColors[i % sourceColors.length] }} />{s.label}
-                  </span>
+                  <div key={s.label} className={styles.tagRow}>
+                    <div className={styles.tagName}>
+                      <span className={styles.tagDot} style={{ background: sourceColors[i % sourceColors.length] }} />
+                      {s.label}
+                    </div>
+                    <span className={styles.tagCount}>{fmt(s.ca)}</span>
+                    <span className={styles.tagPct}>{s.pct}%</span>
+                  </div>
                 ))}
               </div>
               <div className={styles.subnote} style={{ marginTop: 8 }}>
@@ -569,6 +588,7 @@ export default function FocusCommercial() {
             <NotConnected>chargement…</NotConnected>
           )}
         </Card>
+        )}
         {/* Sources de lead — colonne "Canaux d'acquisition" du board Leads */}
         <Card title="Performance par source de lead">
           {!SHOW_LEADS_KPIS ? (

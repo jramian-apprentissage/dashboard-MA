@@ -1,0 +1,101 @@
+/* Modale des listes longues — voir ListeModale.jsx.
+   Même vocabulaire visuel que la modale des accès et que la carte de
+   connexion : blanc translucide, flou, bordure Sable. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22,5,18,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal {
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 20px 18px;
+  width: 100%;
+  /* Plus large que la modale des accès : celle-ci porte un tableau à quatre
+     colonnes, pas une liste de commutateurs. */
+  max-width: 620px;
+  box-shadow: 0 24px 64px rgba(38,0,31,0.28), 0 4px 16px rgba(38,0,31,0.14);
+  animation: modaleIn 0.22s cubic-bezier(0.22,1,0.36,1) both;
+  display: flex;
+  flex-direction: column;
+  /* La modale ne dépasse jamais l'écran : c'est la liste qui défile, pas la
+     page derrière. dvh plutôt que vh — sur mobile la barre d'adresse mange
+     une partie de vh et coupait le bas de la liste. */
+  max-height: calc(100dvh - 40px);
+}
+@keyframes modaleIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .modal { animation: none; }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+.identite { min-width: 0; }
+.titre {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--myrtille);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sousTitre {
+  font-size: 11.5px;
+  color: var(--text3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fermer {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text3);
+  font-size: 15px;
+  line-height: 1;
+  padding: 4px;
+  border-radius: 5px;
+  font-family: var(--font);
+  transition: color 0.15s, background 0.15s;
+}
+.fermer:hover { color: var(--myrtille); background: var(--sable-light); }
+
+.corps {
+  overflow-y: auto;
+  min-height: 0;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+.corps::-webkit-scrollbar { width: 4px; }
+.corps::-webkit-scrollbar-track { background: transparent; }
+.corps::-webkit-scrollbar-thumb { background: rgba(38,0,31,0.18); border-radius: 2px; }
+
+/* Un tableau à quatre colonnes ne rentre pas dans 620 px moins les marges sur
+   petit écran : il défile horizontalement dans son propre conteneur plutôt que
+   de faire déborder la modale. */
+@media (max-width: 560px) {
+  .corps { overflow-x: auto; }
+}

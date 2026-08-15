@@ -8,6 +8,7 @@ import NotConnected from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
+import MotifBar from '../../../components/ui/MotifBar';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText } from '../../../utils/compareText';
 import { fmtNumber } from '../../../utils/formatNumber';
@@ -32,23 +33,94 @@ function fmtDuree(s) {
   return `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-// Une carte par tag, dans l'ordre transmis par Jimmy — la première (total)
-// reçoit la variante accent, c'est l'indicateur "plus important".
-function buildTagCards(directionStats, totalLabel, compareStats, comparePeriodKey) {
-  const cmpTotal = compareStats ? compareValueText(directionStats.total, compareStats.total, comparePeriodKey) : null;
-  const cmpSansTag = compareStats ? compareValueText(directionStats.sansTag, compareStats.sansTag, comparePeriodKey) : null;
-  const cards = [
-    { label: totalLabel, value: directionStats.total, unit: '', compare: cmpTotal, color: 'accentAsus' },
-    ...directionStats.parTag.map(t => {
-      const ct = compareStats?.parTag.find(x => x.label === t.label);
-      return { label: t.label, value: t.count, unit: '', compare: ct ? compareValueText(t.count, ct.count, comparePeriodKey) : null, color: 'default' };
-    }),
-    // Appels dont le tag ne correspond à aucune des catégories ci-dessus (ou
-    // sans tag du tout) — complète le total pour qu'on puisse voir d'un coup
-    // d'œil si des appels échappent au suivi qualitatif.
-    { label: 'Sans tag', value: directionStats.sansTag, unit: '', compare: cmpSansTag, color: 'default' },
+/* Répartition d'une direction d'appels par qualification.
+ *
+ * Remplace l'alignement d'une dizaine de cartes chiffrées : « aligner une
+ * dizaine de KPI appel sortant puis une dizaine appel entrant n'est pas une
+ * bonne pratique — ce n'est pas assez visuel, on ne sait pas où regarder »
+ * (retour de Clémence, 14/08).
+ *
+ * Une barre par qualification, longueur proportionnelle au volume, triée par
+ * effectif décroissant : la plus longue dit où regarder. Le total reste le
+ * seul chiffre mis en avant.
+ *
+ * Deux groupes séparés, et c'est le point important : ce que l'appel a produit
+ * d'un côté, les appels sans interlocuteur de l'autre. Mélangés, répondeurs et
+ * NRP prennent l'essentiel du volume et écrasent visuellement les ventes et
+ * les rendez-vous, qui sont pourtant la raison d'être du dashboard. */
+function QualifBreakdown({ stats, compareStats, comparePeriodKey, titre, entete = true }) {
+  const total = stats.total;
+  /* Un effectif non nul ne doit jamais s'afficher « 0 % » : « Ventes gagnées
+     — 0 % — 2 » se contredit à la lecture (retour de Jimmy, 15/08). Sous 1 %,
+     on garde une décimale ; au-dessus, l'entier suffit — écrire « 24,2 % » là
+     où « 24 % » dit la même chose n'ajoute que du bruit. */
+  const pct = n => {
+    if (total <= 0 || n === 0) return 0;
+    const p = (n / total) * 100;
+    return p < 1 ? Math.max(0.1, Math.round(p * 10) / 10) : Math.round(p);
+  };
+
+  // La comparaison passe au survol plutôt qu'en colonne : elle intéresse qui
+  // la cherche, sans alourdir la lecture d'ensemble.
+  const survol = (label, count) => {
+    if (!compareStats) return undefined;
+    const periode = comparePeriodKey === 'previous-year' ? "l'année précédente" : 'la période précédente';
+    /* Aucun appel sur la période comparée : il n'y a pas de référence, donc
+       pas de progression. Annoncer « +125 » alors que le point de départ
+       n'existe pas est faux, et transforme un démarrage de mission en écart
+       spectaculaire (retour de Clémence, 14/08 : les zéros affichés en
+       période précédente ne mettent pas en valeur le travail des équipes). */
+    if (!compareStats.total) return `${fmtNumber(count)} — aucune donnée sur ${periode}, pas de comparaison possible`;
+
+    const ref = label === 'Sans tag'
+      ? compareStats.sansTag
+      : compareStats.parTag.find(x => x.label === label)?.count;
+    if (ref === undefined || ref === null) return undefined;
+    const ecart = count - ref;
+    if (ecart === 0) return `${fmtNumber(count)} — inchangé vs ${periode}`;
+    return `${fmtNumber(count)} — ${ecart > 0 ? '+' : ''}${fmtNumber(ecart)} vs ${periode} (${fmtNumber(ref)})`;
+  };
+
+  const lignes = [
+    ...stats.parTag,
+    { label: 'Sans tag', count: stats.sansTag, technique: true },
   ];
-  return cards;
+  /* Les qualifications commerciales restent affichées même à zéro : « Ventes
+     gagnées — 0 » est un résultat, pas un vide. Les issues techniques à zéro
+     sont en revanche masquées — qu'un agent n'ait eu aucun répondeur n'apprend
+     rien et remplissait la moitié de la modale de barres vides. */
+  const groupes = [
+    { nom: 'Qualifications commerciales',    items: lignes.filter(l => !l.technique),                couleur: 'var(--asus-blue)' },
+    { nom: 'Sans qualification commerciale', items: lignes.filter(l => l.technique && l.count > 0),  couleur: 'rgba(167,173,170,0.9)' },
+  ].filter(g => g.items.length > 0);
+
+  return (
+    <>
+      {/* `entete={false}` dans la modale par agent : le total y est déjà porté
+          par l'en-tête du panneau, le répéter ici ferait doublon. */}
+      {entete && (
+        <div className={styles.cardHeadRow}>
+          <span className={styles.subNote} style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12 }}>{titre}</span>
+          <span style={{ fontWeight: 700, color: 'var(--asus-blue)', fontSize: 17, letterSpacing: '-0.02em' }}>{fmtNumber(total)}</span>
+        </div>
+      )}
+      {groupes.map((g, i) => (
+        <div key={g.nom} style={{ marginTop: !entete && i === 0 ? 0 : 14 }}>
+          <div className={styles.subNote} style={{ marginBottom: 7 }}>{g.nom}</div>
+          {[...g.items].sort((a, b) => b.count - a.count).map(i => (
+            <MotifBar
+              key={i.label}
+              label={i.label}
+              pct={pct(i.count)}
+              count={i.count}
+              fillColor={g.couleur}
+              title={survol(i.label, i.count)}
+            />
+          ))}
+        </div>
+      ))}
+    </>
+  );
 }
 
 function ClickIcon() {
@@ -182,88 +254,14 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
         )}
       </Card>
 
-      <SectionLabel>Appels sortants</SectionLabel>
-      <Card>
-        {hasData ? (
-          <div className={styles.kpiGrid5}>
-            {buildTagCards(r.sortant, 'Appels sortants', compareResult?.sortant, comparePeriodKey).map(k => <KPICard key={k.label} {...k} />)}
-          </div>
-        ) : (
-          <NotConnected>en attente de l'archive Ringover</NotConnected>
-        )}
-      </Card>
-
-      <SectionLabel>Appels entrants</SectionLabel>
-      <Card>
-        {hasData ? (
-          <div className={styles.kpiGrid5}>
-            {buildTagCards(r.entrant, 'Appels entrants', compareResult?.entrant, comparePeriodKey).map(k => <KPICard key={k.label} {...k} />)}
-          </div>
-        ) : (
-          <NotConnected>en attente de l'archive Ringover</NotConnected>
-        )}
-      </Card>
-
-      <SectionLabel>Qualité des appels — TMC</SectionLabel>
-      <Card>
-        {hasData ? (
-          <div className={styles.kpiGridAuto}>
-            <KPICard
-              label="Durée moyenne (TMC)"
-              value={fmtDuree(r.dureeMoyenneS)}
-              unit="min"
-              compare={compareResult ? compareValueText(r.dureeMoyenneS, compareResult.dureeMoyenneS, comparePeriodKey) : null}
-              trend={{ dir: 'neutral', text: `${fmtDuree(r.dureeMoyenneSortantS)} sortant · ${fmtDuree(r.dureeMoyenneEntrantS)} entrant` }}
-              color="default"
-            />
-            <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null} trend={{ dir: 'neutral', text: `${r.tauxBons}% du total` }} color="default" />
-          </div>
-        ) : (
-          <NotConnected>en attente de l'archive Ringover</NotConnected>
-        )}
-      </Card>
-
-      <SectionLabel>Statistiques par collaborateur</SectionLabel>
-      <Card title="Détail des appels par collaborateur">
-        {hasData && perCollabEntries.length > 0 ? (
-          <table className={styles.perfTable}>
-            <thead><tr>
-              <th>Collaborateur</th>
-              <th>Appels sortants</th>
-              <th>Appels entrants</th>
-              <th>TMC</th>
-              <th>Bons appels (≥ 5 min)</th>
-            </tr></thead>
-            <tbody>
-              {perCollabEntries.map(([name, c]) => (
-                <tr key={name} className={name === selectedCollab ? styles.highlightRow : ''}>
-                  <td className={styles.tdName}>{name}</td>
-                  <td className={styles.tdNum}>
-                    <button type="button" className={styles.clickableStat} onClick={() => setQualifOpen({ collab: name, direction: 'sortant' })}>
-                      {fmtNumber(c.sortant.total)}<ClickIcon />
-                    </button>
-                  </td>
-                  <td className={styles.tdNum}>
-                    <button type="button" className={styles.clickableStat} onClick={() => setQualifOpen({ collab: name, direction: 'entrant' })}>
-                      {fmtNumber(c.entrant.total)}<ClickIcon />
-                    </button>
-                  </td>
-                  <td className={styles.tdNum}>{fmtDuree(c.dureeMoyenneS)}</td>
-                  <td className={styles.tdNum}>{fmtNumber(c.bonsAppels)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <NotConnected>en attente de l'archive Ringover</NotConnected>
-        )}
-        <div className={styles.subNote} style={{ marginTop: 8 }}>Cliquer sur un nombre d'appels affiche le détail des qualifications</div>
-      </Card>
-
       <SectionLabel>Évolution du nombre d'appels</SectionLabel>
       <Card>
         <div className={styles.cardHeadRow}>
-          <span className={styles.subNote} style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12 }}>Nombre d'appels</span>
+          {/* « Nombre d'appels » seul laissait la question ouverte : entrants,
+              sortants, ou les deux ? (retour de Clémence, 14/08).
+              computeAsusEvolution ne filtre que par collaborateur et par date,
+              c'est donc bien le total. */}
+          <span className={styles.subNote} style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12 }}>Nombre total d&apos;appels — entrants et sortants</span>
           <div className={styles.evoToggle}>
             {EVO_OPTIONS.map(o => (
               <button
@@ -309,13 +307,103 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
           <NotConnected>en attente de l'archive Ringover</NotConnected>
         )}
       </Card>
+
+      <SectionLabel>Appels sortants</SectionLabel>
+      <Card>
+        {hasData ? (
+          <QualifBreakdown
+            stats={r.sortant}
+            compareStats={compareResult?.sortant}
+            comparePeriodKey={comparePeriodKey}
+            titre="Appels sortants"
+          />
+        ) : (
+          <NotConnected>en attente de l'archive Ringover</NotConnected>
+        )}
+      </Card>
+
+      <SectionLabel>Appels entrants</SectionLabel>
+      <Card>
+        {hasData ? (
+          <QualifBreakdown
+            stats={r.entrant}
+            compareStats={compareResult?.entrant}
+            comparePeriodKey={comparePeriodKey}
+            titre="Appels entrants"
+          />
+        ) : (
+          <NotConnected>en attente de l'archive Ringover</NotConnected>
+        )}
+      </Card>
+
+      {/* Sigle développé partout : « TMC » n'était clair pour personne hors de
+          l'équipe, et c'est un dashboard client (retour de Clémence, 14/08). */}
+      <SectionLabel>Qualité des appels</SectionLabel>
+      <Card>
+        {hasData ? (
+          <div className={styles.kpiGridAuto}>
+            <KPICard
+              label="Temps moyen de communication"
+              value={fmtDuree(r.dureeMoyenneS)}
+              unit="min"
+              compare={compareResult ? compareValueText(r.dureeMoyenneS, compareResult.dureeMoyenneS, comparePeriodKey) : null}
+              trend={{ dir: 'neutral', text: `${fmtDuree(r.dureeMoyenneSortantS)} — appels sortants · ${fmtDuree(r.dureeMoyenneEntrantS)} — appels entrants` }}
+              color="default"
+            />
+            <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null} trend={{ dir: 'neutral', text: `${r.tauxBons}% du total` }} color="default" />
+          </div>
+        ) : (
+          <NotConnected>en attente de l'archive Ringover</NotConnected>
+        )}
+      </Card>
+
+      <SectionLabel>Statistiques par collaborateur</SectionLabel>
+      {/* Sans titre de carte : « Détail des appels par collaborateur » répétait
+          le libellé de section juste au-dessus (retour de Clémence, 14/08). */}
+      <Card>
+        {hasData && perCollabEntries.length > 0 ? (
+          <table className={styles.perfTable}>
+            <thead><tr>
+              <th>Collaborateur</th>
+              <th>Appels sortants</th>
+              <th>Appels entrants</th>
+              <th>Temps moyen de communication</th>
+              <th>Bons appels (≥ 5 min)</th>
+            </tr></thead>
+            <tbody>
+              {perCollabEntries.map(([name, c]) => (
+                <tr key={name} className={name === selectedCollab ? styles.highlightRow : ''}>
+                  <td className={styles.tdName}>{name}</td>
+                  <td className={styles.tdNum}>
+                    <button type="button" className={styles.clickableStat} onClick={() => setQualifOpen({ collab: name, direction: 'sortant' })}>
+                      {fmtNumber(c.sortant.total)}<ClickIcon />
+                    </button>
+                  </td>
+                  <td className={styles.tdNum}>
+                    <button type="button" className={styles.clickableStat} onClick={() => setQualifOpen({ collab: name, direction: 'entrant' })}>
+                      {fmtNumber(c.entrant.total)}<ClickIcon />
+                    </button>
+                  </td>
+                  <td className={styles.tdNum}>{fmtDuree(c.dureeMoyenneS)}</td>
+                  <td className={styles.tdNum}>{fmtNumber(c.bonsAppels)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <NotConnected>en attente de l'archive Ringover</NotConnected>
+        )}
+        {/* Mode d'emploi retiré : l'icône loupe sur chaque nombre dit déjà
+            qu'on peut cliquer (retour de Clémence, 14/08). */}
+      </Card>
+
       </>
       )}
     </div>
 
     {qualifOpen && qualifStats && (
       <div className={styles.qualifOverlay} onClick={() => setQualifOpen(null)}>
-        <div className={styles.qualifPanel} onClick={e => e.stopPropagation()}>
+        <div className={`${styles.qualifPanel} ${styles.qualifPanelLarge}`} onClick={e => e.stopPropagation()}>
           <div className={styles.qualifHeader}>
             <div>
               <div className={styles.qualifTitle}>
@@ -323,16 +411,21 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               </div>
               <div className={styles.qualifSub}>Répartition par qualification</div>
             </div>
-            <button type="button" className={styles.qualifClose} onClick={() => setQualifOpen(null)}>✕</button>
+            {/* Le total quitte la grille pour se poser ici : c'est la référence
+                à laquelle toutes les barres se rapportent, pas un indicateur
+                parmi d'autres (demande de Jimmy, 15/08). */}
+            <div className={styles.qualifHeadRight}>
+              <div className={styles.qualifTotalBloc}>
+                <span className={styles.qualifTotalVal}>{fmtNumber(qualifStats.total)}</span>
+                <span className={styles.qualifTotalUnit}>appels</span>
+              </div>
+              <button type="button" className={styles.qualifClose} onClick={() => setQualifOpen(null)}>✕</button>
+            </div>
           </div>
-          <div className={styles.kpiGridAuto}>
-            {/* Pas de comparatif dans ce détail par agent (pas de donnée de
-                période comparée plombée jusqu'ici) — compare={false} explicite,
-                sinon KPICard afficherait "Calcul en cours…" indéfiniment. */}
-            {buildTagCards(qualifStats, qualifOpen.direction === 'sortant' ? 'Appels sortants' : 'Appels entrants').map(k => (
-              <KPICard key={k.label} {...k} compare={false} />
-            ))}
-          </div>
+          {/* Même répartition visuelle que les sections principales, plutôt
+              qu'une grille de cartes chiffrées. Aucun comparatif ici : la
+              période comparée n'est pas calculée par agent. */}
+          <QualifBreakdown stats={qualifStats} entete={false} />
         </div>
       </div>
     )}

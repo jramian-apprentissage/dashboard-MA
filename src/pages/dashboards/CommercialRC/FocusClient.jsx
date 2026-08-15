@@ -18,11 +18,12 @@ import NoPeriodData from '../../../components/ui/NoPeriodData';
 import MontantExact from '../../../components/ui/MontantExact';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import { fmtEurosExact, fmtEurosDetail } from '../../../utils/formatNumber';
-import { SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
+import { SHOW_COMPTES_KPIS, SHOW_MONDAY_KPIS } from '../../../config/featureFlags';
 import styles from './FocusClient.module.css';
 import RechercheListe from '../../../components/ui/RechercheListe';
 import { correspond } from '../../../utils/recherche';
 import rechStyles from '../../../components/ui/RechercheListe.module.css';
+import ListeModale from '../../../components/ui/ListeModale';
 
 // Chart.js s'enregistre par fichier dans ce projet (voir Synthese.jsx,
 // FocusCommercial.jsx) : seuls les éléments réellement utilisés ici, pour
@@ -46,6 +47,12 @@ const fmtEuros = v => {
 };
 
 const HEALTH_LIST_STEP = 8;
+/* Lignes affichées dans la carte — une ligne = un client et un poste, après
+   regroupement. Le reste passe par la modale : le nombre de groupes varie
+   d'une période à l'autre, jusqu'à 12 sur le mois le plus chargé de
+   l'historique, et le laisser dicter la hauteur de la carte déplaçait tout le
+   bas de la page à chaque changement de période. */
+const MISSIONS_APERCU = 5;
 const BUCKET_MATCH = {
   sain:    c => c.sentiment?.includes('Sain'),
   warning: c => c.sentiment?.includes('Warning'),
@@ -65,7 +72,72 @@ export default function FocusClient() {
   const [santeDir, setSanteDir] = useState('desc');
   const santeSectionRef = useRef(null);
   const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
+  const [missionsOuvertes, setMissionsOuvertes] = useState(false);
   const c = compareResult;
+
+  /* Regroupe les missions par client ET par poste, en sommant les montants
+     (demande de Jimmy, 15/08). Un client qui perd trois téléprospecteurs
+     occupait trois lignes identiques à l'œil, qu'il fallait additionner de
+     tête ; il en occupe une, avec le nombre de profils et le total.
+
+     La date retenue est la plus tardive du groupe — c'est celle à laquelle le
+     client a fini de perdre ces postes. L'étendue complète et le nom des
+     personnes restent au survol. */
+  const regrouperMissions = lignes => {
+    const groupes = new Map();
+    for (const p of lignes) {
+      const cle = `${p.compteId}|${p.poste || ''}`;
+      let g = groupes.get(cle);
+      if (!g) {
+        g = { cle, client: p.client, poste: p.poste, ca: 0, dates: [], noms: [], motifs: new Set() };
+        groupes.set(cle, g);
+      }
+      g.ca += p.ca;
+      if (p.dateFin) g.dates.push(p.dateFin);
+      if (p.collaborateur) g.noms.push(p.collaborateur);
+      if (p.motif) g.motifs.add(p.motif);
+    }
+    return [...groupes.values()]
+      .map(g => {
+        const dates = [...g.dates].sort();
+        return { ...g, nb: g.noms.length || g.dates.length || 1, dateFin: dates.at(-1) || null, datePremiere: dates[0] || null };
+      })
+      .sort((a, b) => (b.dateFin || '').localeCompare(a.dateFin || '') || b.ca - a.ca);
+  };
+
+  const fmtJour = d => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('fr-FR') : '—');
+
+  /* Même tableau dans la carte (extrait) et dans la modale (liste entière) :
+     une seule définition, sinon les deux divergent au premier ajustement. */
+  const tableauMissions = groupes => (
+    <table className={styles.tbl}>
+      {/* Client en tête : c'est par lui qu'on cherche une perte (demande de
+          Jimmy, 15/08). Le poste vient ensuite préciser ce qui a été perdu. */}
+      <thead><tr><th>Client</th><th>Mission</th><th>Profils</th><th>Fin</th><th>CA</th></tr></thead>
+      <tbody>
+        {groupes.map(g => (
+          <tr key={g.cle}>
+            <td className={styles.tdName} title={g.motifs.size ? [...g.motifs].join(' · ') : undefined}>{g.client}</td>
+            {/* Le poste, pas le nom de la personne : sur un dashboard commercial
+                c'est le type de mission perdue qui se pilote. Les noms restent
+                accessibles au survol. */}
+            <td className={styles.tdPostes}>
+              <span className={styles.postePill} title={g.noms.join(', ') || undefined}>
+                {g.poste || 'Poste non renseigné'}
+              </span>
+            </td>
+            <td className={styles.tdRight}>{g.nb}</td>
+            <td title={g.datePremiere && g.datePremiere !== g.dateFin ? `du ${fmtJour(g.datePremiere)} au ${fmtJour(g.dateFin)}` : undefined}>
+              {fmtJour(g.dateFin)}
+            </td>
+            <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>
+              <MontantExact exact={fmtEurosExact(g.ca)}>{fmtEurosDetail(g.ca)}</MontantExact>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
   const cmp = (current, ref, invert) => c ? compareValueText(current, ref, comparePeriodKey, invert) : null;
   // Connecté, données chargées, mais aucun compte facturé sur la période
   // choisie — même traitement que Synthèse/Sales/ASUS/TLM : un seul message
@@ -115,12 +187,20 @@ export default function FocusClient() {
                 trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.caNouveauxClients)}` }}
                 color="green"
               />
+              {/* La perte se compte en missions, pas en clients : un contrat
+                  qui porte cinq profils dont un s'arrête ne « perd » pas un
+                  client, mais perd bien du revenu. Le nombre de clients
+                  touchés reste lisible juste en dessous — plusieurs missions
+                  peuvent s'arrêter chez le même client sur une période. */}
               <KPICard
-                label="Clients perdus"
-                value={result.nbClientsPerdus}
-                unit=" clients"
-                compare={cmp(result.nbClientsPerdus, c?.nbClientsPerdus, true)}
-                trend={{ dir: 'neutral', text: `CA perdu : ${fmtEuros(result.caPerdu)}` }}
+                label="Missions perdues"
+                value={result.nbProfilsPerdus}
+                unit=" missions"
+                compare={cmp(result.nbProfilsPerdus, c?.nbProfilsPerdus, true)}
+                trend={{
+                  dir: 'neutral',
+                  text: `CA perdu : ${fmtEuros(result.caPerdu)} · ${result.nbClientsPerdus} client${result.nbClientsPerdus > 1 ? 's' : ''}`,
+                }}
                 color="red"
               />
               <KPICard
@@ -227,7 +307,12 @@ export default function FocusClient() {
 
       {/* ══ Ligne 3 — La santé : où on va, ce que ça a déjà coûté ══ */}
       <SectionLabel badge="IA">Santé du portefeuille client</SectionLabel>
-      <div className={styles.twoCol}>
+      <div className={SHOW_MONDAY_KPIS ? styles.twoCol : undefined}>
+        {/* La note de satisfaction vient de Monday : aucun des 117 comptes
+            reconstruits depuis l'Excel n'en porte. La carte serait vide et
+            non filtrée — elle est retirée tant qu'on travaille sur la seule
+            base Excel (décision de Jimmy, 15/08). */}
+        {SHOW_MONDAY_KPIS && (
         <Card title="Niveau de santé client">
           {!SHOW_COMPTES_KPIS ? (
             <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
@@ -291,73 +376,58 @@ export default function FocusClient() {
             <NotConnected>chargement…</NotConnected>
           )}
         </Card>
+        )}
 
-        <Card title="Détail des clients perdus">
+        {/* L'unité est la mission arrêtée, pas le client : ce qu'on lit c'est
+            un poste, un montant, une date — et en dernière colonne seulement,
+            chez qui (arbitrage de Jimmy, 14/08). La version précédente
+            séparait « clients perdus » et « collaborateurs perdus », une
+            distinction qui reposait sur la date de fin de contrat du compte,
+            absente de tout l'historique reconstruit depuis l'Excel. */}
+        <Card title="Détail des missions perdues">
           {!SHOW_COMPTES_KPIS ? (
             <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
           ) : perdus.error ? (
             <NotConnected>{perdus.error}</NotConnected>
-          ) : perdus.detail ? (
-            perdus.detail.length > 0 ? (
-              <table className={styles.tbl}>
-                <thead><tr><th></th><th>Missions perdues</th><th>Fin de contrat</th><th>CA</th></tr></thead>
-                <tbody>
-                  {perdus.detail.map(c => (
-                    <tr key={c.compteId}>
-                      <td className={styles.tdName}>{c.nom}</td>
-                      {/* Le poste, pas le nom de la personne : sur un dashboard
-                          commercial c'est le type de mission perdue qui se
-                          pilote. Le nom reste accessible au survol — un contrat
-                          porte souvent plusieurs profils, jusqu'à 5. */}
-                      <td className={styles.tdPostes}>
-                        {c.profils?.length
-                          ? c.profils.map((p, i) => (
-                              <span key={i} className={styles.postePill} title={p.nom || undefined}>
-                                {p.poste || 'Poste non renseigné'}
-                              </span>
-                            ))
-                          : <span className={styles.subnote}>—</span>}
-                      </td>
-                      <td>{c.dateFin ? new Date(`${c.dateFin}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
-                      <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}><MontantExact exact={fmtEurosExact(c.ca)}>{fmtEurosDetail(c.ca)}</MontantExact></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <NotConnected>aucun client perdu sur la période</NotConnected>
+          ) : perdus.profils ? (
+            perdus.profils.length > 0 ? (() => {
+              /* Le regroupement précède le découpage : tronquer les profils
+                 puis regrouper donnerait des groupes incomplets, avec des
+                 totaux faux dans la carte. */
+              const groupes = regrouperMissions(perdus.profils);
+              return (
+                <>
+                  {/* La carte n'affiche qu'un extrait de hauteur fixe : le
+                      nombre de groupes change d'une période à l'autre, et le
+                      laisser s'allonger déformait la page. Le reste vit dans
+                      la modale. */}
+                  {tableauMissions(groupes.slice(0, MISSIONS_APERCU))}
+                  {groupes.length > MISSIONS_APERCU && (
+                    <button
+                      type="button"
+                      className={styles.hsMore}
+                      onClick={() => setMissionsOuvertes(true)}
+                    >
+                      Voir les {perdus.profils.length} missions
+                    </button>
+                  )}
+                </>
+              );
+            })() : (
+              <NotConnected>aucune mission arrêtée sur la période</NotConnected>
             )
           ) : (
             <NotConnected>chargement…</NotConnected>
           )}
 
-          {/* Perdre un collaborateur n'est pas perdre un client : la mission
-              s'arrête, le contrat continue. Ces cas n'apparaissaient nulle
-              part — ils étaient soit absents, soit confondus avec une perte de
-              client (demande de Tahina, 14/08). Bloc affiché seulement s'il y
-              en a : une section vide en permanence serait du bruit. */}
-          {perdus.collaborateurs?.length > 0 && (
-            <>
-              <div className={styles.sep} />
-              <div className={styles.metaSub}>Collaborateurs perdus — contrat toujours actif</div>
-              <table className={styles.tbl}>
-                <thead><tr><th></th><th>Mission</th><th>Fin</th><th>Motif</th></tr></thead>
-                <tbody>
-                  {perdus.collaborateurs.map((c, i) => (
-                    <tr key={i}>
-                      <td className={styles.tdName}>{c.client}</td>
-                      <td className={styles.tdPostes}>
-                        <span className={styles.postePill} title={c.collaborateur || undefined}>
-                          {c.poste || 'Poste non renseigné'}
-                        </span>
-                      </td>
-                      <td>{c.dateFin ? new Date(`${c.dateFin}T00:00:00`).toLocaleDateString('fr-FR') : '—'}</td>
-                      <td className={styles.subnote}>{c.motif || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </>
+          {missionsOuvertes && (
+            <ListeModale
+              titre="Missions perdues"
+              sousTitre={`${perdus.profils.length} missions arrêtées sur la période · ${fmtEurosDetail(perdus.profils.reduce((s, p) => s + p.ca, 0))}`}
+              onClose={() => setMissionsOuvertes(false)}
+            >
+              {tableauMissions(regrouperMissions(perdus.profils))}
+            </ListeModale>
           )}
         </Card>
       </div>
@@ -365,6 +435,9 @@ export default function FocusClient() {
       {/* Détail par client — regroupé juste sous "Niveau de santé client", en
           l'absence de KPI clients/revenus perdus à intercaler pour l'instant. */}
       <div ref={santeSectionRef} />
+      {/* Même raison que la carte ci-dessus : la note vient de Monday, aucun
+          compte Excel n'en a. */}
+      {SHOW_MONDAY_KPIS && (
       <Card title="Détails du niveau de Santé par Client">
         {!SHOW_COMPTES_KPIS ? (
           <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
@@ -460,6 +533,7 @@ export default function FocusClient() {
           <NotConnected>chargement…</NotConnected>
         )}
       </Card>
+      )}
 
       <div style={{ marginTop: 20 }}>
         <Card title="Évolution mensuelle des revenus perdus">
@@ -509,25 +583,29 @@ export default function FocusClient() {
                         callbacks: {
                           label: ctx => fmtEurosExact(ctx.parsed.y),
                           afterBody: ctx => {
-                            const clients = perdus.monthly[ctx[0].dataIndex]?.clients || [];
-                            if (!clients.length) return [];
-                            /* Seuls les comptes qui portaient du revenu sont
-                               nommés : sur septembre, 14 des 15 comptes perdus
-                               sont à 0 €, les lister remplirait l'infobulle de
-                               lignes sans information. Ils restent comptés à
-                               part — ce sont de vraies pertes, simplement sans
-                               effet sur le montant de la barre. */
-                            const avecRevenu = clients.filter(c => c.ca > 0);
-                            const sansRevenu = clients.length - avecRevenu.length;
-                            // Au-delà de 6 noms, l'infobulle dépasse la carte.
+                            const missions = perdus.monthly[ctx[0].dataIndex]?.clients || [];
+                            if (!missions.length) return [];
+                            /* Seules les missions qui portaient du revenu sont
+                               nommées : les lister toutes remplirait
+                               l'infobulle de lignes à 0 €. Elles restent
+                               comptées à part — ce sont de vraies pertes,
+                               simplement sans effet sur la hauteur de la barre.
+
+                               Le poste accompagne le client : plusieurs
+                               missions peuvent s'arrêter le même mois chez le
+                               même client, et deux lignes au même nom seraient
+                               illisibles. */
+                            const avecRevenu = missions.filter(m => m.ca > 0);
+                            const sansRevenu = missions.length - avecRevenu.length;
+                            // Au-delà de 6 lignes, l'infobulle dépasse la carte.
                             const visibles = avecRevenu.slice(0, 6);
                             const reste = avecRevenu.length - visibles.length;
                             return [
                               '',
-                              ...visibles.map(c => `${c.nom} — ${fmtEurosDetail(c.ca)}`),
+                              ...visibles.map(m => `${m.nom}${m.poste ? ` · ${m.poste}` : ''} — ${fmtEurosDetail(m.ca)}`),
                               ...(reste > 0 ? [`+ ${reste} autre${reste > 1 ? 's' : ''}`] : []),
                               ...(sansRevenu > 0
-                                ? [`${sansRevenu} compte${sansRevenu > 1 ? 's' : ''} sans revenu récurrent`]
+                                ? [`${sansRevenu} mission${sansRevenu > 1 ? 's' : ''} sans revenu récurrent`]
                                 : []),
                             ];
                           },

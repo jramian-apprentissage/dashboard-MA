@@ -95,6 +95,21 @@
   border-radius: 8px; padding: 4px 10px; cursor: pointer; font-family: var(--font); font-size: 13px; flex-shrink: 0;
 }
 
+/* Total de la direction, à droite de l'en-tête de la modale. Il servait
+   auparavant de première carte dans la grille, au même rang que les
+   qualifications — alors qu'il est le dénominateur de toutes les barres. */
+.qualifHeadRight { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.qualifTotalBloc { display: flex; align-items: baseline; gap: 5px; }
+.qualifTotalVal {
+  font-size: 22px; font-weight: 700; color: var(--asus-blue);
+  letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+}
+.qualifTotalUnit { font-size: 10.5px; color: var(--text2); }
+
+/* Un peu plus large que la modale d'origine : une barre porte un libellé, une
+   piste et une valeur, là où une carte tenait dans une colonne étroite. */
+.qualifPanelLarge { max-width: 520px; }
+
 /* Toggle granularité du graphe d'évolution */
 .evoToggle { display: flex; gap: 4px; background: var(--sable-light); border-radius: 99px; padding: 3px; }
 .evoToggleBtn {
@@ -116,6 +131,11 @@
 .funnelFill { height: 100%; background: var(--myrtille); border-radius: 3px; opacity: 0.75; transition: width 0.85s cubic-bezier(0.16,1,0.3,1); }
 .funnelValue { font-size: 11.5px; color: var(--text); font-weight: 600; width: 110px; flex-shrink: 0; text-align: right; font-variant-numeric: tabular-nums; }
 .funnelPct { font-weight: 400; color: var(--text2); }
+/* Data non exploitable : dernier palier, mais hors parcours — elle explique le
+   taux de transformation sans en être une étape. Détachée par un filet et
+   posée en retrait, pour qu'on ne la lise pas comme la suite de l'entonnoir. */
+.funnelAPart { margin-top: 6px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.funnelAPart .funnelLabel, .funnelAPart .funnelValue { color: var(--text2); }
 
 .subNote { font-size: 10.5px; color: var(--text2); }
 .legend { display: flex; align-items: center; font-size: 10.5px; color: var(--text2); gap: 6px; flex-wrap: wrap; margin-top: 8px; }
@@ -169,6 +189,19 @@
   .asusTotalStats { flex-direction: row; gap: 56px; }
   .asusTotalGroup:first-child { order: 2; }
   .asusTotalGroup:last-child { order: 1; }
+}
+
+/* Grand écran : tout se déploie sur une seule ligne, donut à gauche et
+   groupes étalés à droite. En colonne centrée, la carte prenait toute la
+   largeur pour un contenu resserré au milieu — « beaucoup de place pour peu
+   d'information, trop vide visuellement sur desktop » (retour de Clémence,
+   14/08). L'ordre entrant/sortant reste celui du palier précédent, pour ne
+   pas déplacer les colonnes en cours de redimensionnement. */
+@media (min-width: 1024px) {
+  .asusTotalWrap { flex-direction: row; align-items: center; gap: 44px; }
+  .asusTotalDonut { width: 190px; }
+  .asusTotalStats { flex: 1; gap: 48px; }
+  .asusTotalGroup { flex: 1; max-width: none; }
 }
 
 .asusTotalRowPct {

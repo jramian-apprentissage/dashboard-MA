@@ -9,6 +9,18 @@
   border-top: 1.5px solid var(--sable);
 }
 
+/* Plus d'air au-dessus des sections sur grand écran (retour de Jimmy, 15/08).
+   Sur desktop les cartes occupent toute la largeur et se touchent
+   visuellement : 28 px de marge ne marquaient plus la rupture entre deux
+   sections, le filet de séparation semblait collé à la carte précédente.
+   Le mobile garde l'espacement serré, où la hauteur d'écran est comptée. */
+@media (min-width: 900px) {
+  .label {
+    margin-top: 46px;
+    padding-top: 18px;
+  }
+}
+
 /* Barre verticale colorée gauche — signature v4 */
 .label::before {
   content: '';

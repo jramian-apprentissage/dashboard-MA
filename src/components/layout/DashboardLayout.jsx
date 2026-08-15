@@ -178,9 +178,14 @@ export default function DashboardLayout({
             <p className={styles.subtitle}>
               {clientFacingSubtitle ? (
                 <>
-                  Vous analysez la performance des agents de Mon Ambassadeur
-                  travaillant pour le compte de votre entreprise en mesurant
-                  les indicateurs&nbsp;
+                  {/* « Collaborateurs » et non « agents » : c'est le terme
+                      employé partout ailleurs — sélecteur de filtre, tableau
+                      « Statistiques par collaborateur ». Deux mots pour la
+                      même personne sur un seul écran (retour de Clémence,
+                      14/08). */}
+                  Vous analysez la performance des collaborateurs de Mon
+                  Ambassadeur travaillant pour le compte de votre entreprise
+                  en mesurant les indicateurs&nbsp;
                   <span className={styles.subtitlePeriod}>{subtitle}</span>
                   {compareActive && (
                     <> versus <span className={styles.subtitlePeriod}>{comparePeriodKey === 'previous-year' ? "l'année précédente" : 'la période précédente'}</span></>

@@ -76,8 +76,9 @@ function compareCollabRows(a, b, sort) {
 
 // KPIs depuis l'archive Ringover (seule source pour cet onglet)
 function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePeriodKey) {
-  const { total, argues, decroche, fichesExploitables } = result;
-  const tauxDec = total > 0 ? Math.round((decroche / total) * 100) : 0;
+  const { total, argues, decroches, echanges30s, fichesExploitables } = result;
+  const tauxDec = total > 0 ? Math.round((decroches / total) * 100) : 0;
+  const tauxEchange30s = total > 0 ? Math.round((echanges30s / total) * 100) : 0;
   const tauxFichesExploit = total > 0 ? Math.round((fichesExploitables / total) * 100) : 0;
   const rdvPris = rdvResult?.rdvPris ?? '—';
   const tauxHon = rdvResult ? `${rdvResult.tauxHonores}%` : '—';
@@ -108,7 +109,12 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
   // encore chargé" pour KPICard et masquerait la ligne à tort).
   const cmpTauxDec = cmp
     ? (cmp.total > 0
-        ? comparePtsText(tauxDec, Math.round((cmp.decroche / cmp.total) * 100), comparePeriodKey)
+        ? comparePtsText(tauxDec, Math.round((cmp.decroches / cmp.total) * 100), comparePeriodKey)
+        : compareZeroRefText(comparePeriodKey))
+    : null;
+  const cmpTauxEchange30s = cmp
+    ? (cmp.total > 0
+        ? comparePtsText(tauxEchange30s, Math.round((cmp.echanges30s / cmp.total) * 100), comparePeriodKey)
         : compareZeroRefText(comparePeriodKey))
     : null;
   const cmpTauxFichesExploit = cmp
@@ -137,7 +143,15 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
   // enfin une fiche est complétée — plus logique à lire que émis→argumenté→décroché.
   return [
     { label: 'Appels émis',              value: total,          unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null,        trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` },        color: 'blue' },
-    { label: 'Taux décrochés >30s',      value: `${tauxDec}%`, unit: '', compare: cmpTauxDec,        trend: { dir: 'neutral', text: 'Durée > 30 secondes' } },
+    /* Deux paliers au lieu d'un, comme sur le TLM (décision de Christophe,
+       14/08) : le décroché dit que la jonction a eu lieu, l'échange de plus
+       de 30 secondes dit qu'il s'est passé quelque chose.
+
+       Le décroché se lit sur le statut Ringover, pas sur la durée : celle-ci
+       inclut la sonnerie, et l'ancien « Taux décrochés > 30s » comptait 1 617
+       appels jamais décrochés — messageries vocales comprises. */
+    { label: 'Taux de décroché',         value: `${tauxDec}%`,          unit: '', compare: cmpTauxDec,        trend: { dir: 'neutral', text: `${decroches} appels décrochés — un interlocuteur a répondu` } },
+    { label: 'Taux d\'échanges > 30s',   value: `${tauxEchange30s}%`,   unit: '', compare: cmpTauxEchange30s, trend: { dir: 'neutral', text: `${echanges30s} échanges — ${decroches > 0 ? Math.round((echanges30s / decroches) * 100) : 0}% des décrochés` } },
     { label: 'Appels argumentés',        value: argues,         unit: '', compare: cmp ? compareValueText(argues, cmp.argues, comparePeriodKey) : null,      trend: { dir: 'neutral', text: 'Prospect ayant écouté le pitch (OK + PI)' },     color: 'green' },
     { label: 'Taux fiches exploitables', value: `${tauxFichesExploit}%`, unit: '', compare: cmpTauxFichesExploit, trend: { dir: 'neutral', text: 'Argumentés + CNA - Mail' }, color: 'amber' },
     { label: 'RDV pris',                 value: rdvPris,        unit: '', compare: cmpRdv,      trend: { dir: 'neutral', text: rdvSrc },                                                                       color: 'green' },
@@ -247,6 +261,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                 appels: ring?.appels ?? null,
                 tauxDecroche: isNaN(tauxN) ? null : tauxN,
                 tauxLabel: ring?.taux ?? '—',
+                tauxEchange30s: ring?.tauxEchange30s ?? null,
                 argues: ring?.argues ?? null,
                 tauxFichesExploit: ring?.tauxFichesExploit ?? null,
                 rdvPris,
@@ -260,7 +275,8 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               <thead><tr>
                 <th onClick={() => toggleCollabSort('nom')} style={{ cursor: 'pointer' }}>Collaborateur{collabSortArrow('nom')}</th>
                 <th onClick={() => toggleCollabSort('appels')} style={{ cursor: 'pointer' }}>Appels émis{collabSortArrow('appels')}</th>
-                <th onClick={() => toggleCollabSort('tauxDecroche')} style={{ cursor: 'pointer' }}>Taux décrochés &gt;30s{collabSortArrow('tauxDecroche')}</th>
+                <th onClick={() => toggleCollabSort('tauxDecroche')} style={{ cursor: 'pointer' }}>Taux de décroché{collabSortArrow('tauxDecroche')}</th>
+                <th onClick={() => toggleCollabSort('tauxEchange30s')} style={{ cursor: 'pointer' }}>Échanges &gt; 30s{collabSortArrow('tauxEchange30s')}</th>
                 <th onClick={() => toggleCollabSort('argues')} style={{ cursor: 'pointer' }}>Appels argumentés{collabSortArrow('argues')}</th>
                 <th onClick={() => toggleCollabSort('tauxFichesExploit')} style={{ cursor: 'pointer' }}>Taux fiches exploitables{collabSortArrow('tauxFichesExploit')}</th>
                 <th onClick={() => toggleCollabSort('rdvPris')} style={{ cursor: 'pointer' }}>RDV pris{collabSortArrow('rdvPris')}</th>
@@ -268,12 +284,18 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               </tr></thead>
               <tbody>
                 {rows.map(row => {
-                  const tauxColor = row.tauxDecroche == null ? undefined : row.tauxDecroche >= 35 ? 'var(--pos)' : row.tauxDecroche >= 25 ? 'var(--warn)' : 'var(--neg)';
+                  /* Seuils recalibrés sur la nouvelle métrique. Les anciens
+                     (35 % bon, 25 % moyen) visaient le taux d'appels de plus
+                     de 30 secondes ; le décroché se situe entre 59 % et 92 %
+                     selon les collaborateurs, médiane 85 %. Tout le monde
+                     serait vert avec l'ancien barème. */
+                  const tauxColor = row.tauxDecroche == null ? undefined : row.tauxDecroche >= 85 ? 'var(--pos)' : row.tauxDecroche >= 70 ? 'var(--warn)' : 'var(--neg)';
                   return (
                     <tr key={row.nom} className={row.nom === selectedCollab ? styles.highlightRow : ''}>
                       <td className={styles.tdName}>{row.nom}</td>
                       <td className={styles.tdNum}>{fmtNumber(row.appels) ?? '—'}</td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: tauxColor }}>{row.tauxLabel}</span></td>
+                      <td className={styles.tdNum}>{row.tauxEchange30s != null ? `${row.tauxEchange30s}%` : '—'}</td>
                       <td className={styles.tdNum}>{fmtNumber(row.argues) ?? '—'}</td>
                       <td className={styles.tdNum}>{row.tauxFichesExploit != null ? `${row.tauxFichesExploit}%` : '—'}</td>
                       <td className={styles.tdNum} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</td>
@@ -290,7 +312,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       </Card>
 
       <SectionLabel>Détails des appels</SectionLabel>
-      <Card title={`Joignabilité par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
+      <Card title={`Taux de décroché par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
         {hasData && trancheRows.length > 0 ? (
           <>
             <div className={styles.chartWrap} style={{ height: 240 }}>
@@ -311,7 +333,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                     },
                     {
                       type: 'line',
-                      label: 'Joignabilité %',
+                      label: 'Taux de décroché %',
                       data: trancheRows.map(r => r.appels > 0 ? r.join : null),
                       borderColor: 'rgba(169,141,196,0.9)',
                       backgroundColor: 'rgba(169,141,196,0.04)',
@@ -334,16 +356,38 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                     legend: { display: false },
                     tooltip: {
                       callbacks: {
-                        label: ctx => ctx.dataset.label === 'Joignabilité %'
+                        label: ctx => ctx.dataset.label === 'Taux de décroché %'
                           ? `${ctx.dataset.label}: ${ctx.parsed.y}%`
                           : `${ctx.dataset.label}: ${ctx.parsed.y} appels`,
+                        /* Détail par agent de la tranche survolée (demande de
+                           Christophe, 14/08). Un creux de joignabilité à 14h
+                           ne se pilote pas tant qu'on ignore s'il vient de
+                           toute l'équipe ou d'une seule personne absente.
+
+                           N'apparaît que sur la vue Équipe : filtré sur un
+                           collaborateur, la ventilation n'aurait qu'une ligne,
+                           déjà lisible dans le titre de la carte. */
+                        afterBody: ctx => {
+                          if (selectedCollab !== 'Tous') return [];
+                          const agents = trancheRows[ctx[0].dataIndex]?.agents || [];
+                          if (agents.length < 2) return [];
+                          // Au-delà de 6 agents l'infobulle dépasse la carte.
+                          const visibles = agents.slice(0, 6);
+                          const reste = agents.length - visibles.length;
+                          return [
+                            '',
+                            ...visibles.map(a =>
+                              `${a.nom} — ${a.appels} appel${a.appels > 1 ? 's' : ''}, ${a.join}%${a.rdv ? `, ${a.rdv} RDV` : ''}`),
+                            ...(reste > 0 ? [`+ ${reste} autre${reste > 1 ? 's' : ''}`] : []),
+                          ];
+                        },
                       },
                     },
                   },
                   scales: {
                     x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol },
                     y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', title: { display: true, text: 'Nb appels', color: 'rgba(167,173,170,0.4)', font: { size: 9 } } },
-                    y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Joignabilité %', color: 'rgba(169,141,196,0.6)', font: { size: 9 } } },
+                    y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Taux de décroché %', color: 'rgba(169,141,196,0.6)', font: { size: 9 } } },
                   },
                 }}
               />
@@ -351,7 +395,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
             <div className={styles.legend}>
               <span className={styles.legDot} style={{ background: 'rgba(123,170,191,0.7)' }} />Appels émis
               <span style={{ color: 'rgba(142,207,170,0.9)', fontWeight: 600, marginLeft: 14, fontSize: 10 }}>RDV : n</span> affiché sur chaque barre
-              <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Joignabilité %
+              <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Taux de décroché %
             </div>
           </>
         ) : (
@@ -362,8 +406,8 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       <div className={styles.twoCol}>
         {/* Répartition par qualification — c'est le widget que l'équipe appelle
             "Détails des appels" au quotidien, mais le nom exact est repris par
-            la section elle-même juste au-dessus (elle couvre aussi Joignabilité
-            et Motifs) : éviter le doublon de titre section/widget. */}
+            la section elle-même juste au-dessus (elle couvre aussi le taux de
+            décroché et les motifs) : éviter le doublon section/widget. */}
         <Card title="Répartition par qualification">
           {hasData && salesData.result.categStats?.length > 0 ? (
             <>

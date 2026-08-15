@@ -200,8 +200,14 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
   const compareAgentRow = isFilteredToAgent ? compareAgents.find(a => a.agent_label === selectedCollab) : null;
 
   const appelsEmis        = isFilteredToAgent ? (agentRow?.appels_emis ?? 0)          : (summary?.appels_emis ?? 0);
-  const contactsJoints    = isFilteredToAgent ? (agentRow?.contacts_joints ?? 0)       : (summary?.leads_decroches ?? 0);
+  // `contacts_joints` / `leads_decroches` ne sont plus lus : mesure issue des
+  // tags, sous-comptée au point d'être inférieure aux échanges de plus de 30
+  // secondes qu'elle est censée contenir (voir la liste des KPIs plus bas).
   const decroches30s      = isFilteredToAgent ? (agentRow?.appels_decroches_30s ?? 0)  : (summary?.appels_decroches_30s ?? 0);
+  /* Décroché réel (durée > 1 s). Reste `null` tant que n8n n'agrège pas ce
+     seuil — surtout pas 0, qui se lirait « aucun décroché ». Le palier
+     s'ajoute alors tout seul à l'entonnoir, sans autre intervention. */
+  const decroches1s       = isFilteredToAgent ? (agentRow?.appels_decroches_1s ?? null) : (summary?.appels_decroches_1s ?? null);
   const appelsExploitables = isFilteredToAgent ? (agentRow?.appels_exploitables ?? 0)  : (summary?.appels_exploitables ?? 0);
   const nonExploitables   = isFilteredToAgent ? (agentRow?.appels_non_exploitables ?? 0) : (summary?.data_non_exploitable ?? 0);
   const rdvPris           = isFilteredToAgent ? (agentRow?.rdvs_pris ?? 0)             : (summary?.rdvs_bookes_tlm ?? 0);
@@ -209,7 +215,14 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
   // comme une fiche complétée (définition validée par Jimmy).
   const fichesCompletees  = (isFilteredToAgent ? (agentRow?.fiches_completees ?? 0) : (summary?.fiches_completees ?? 0)) + rdvPris;
   const leadsARecycler    = isFilteredToAgent ? null : (summary?.leads_a_recycler ?? 0);
-  const transfoNette      = appelsEmis > 0 ? Math.round((rdvPris / appelsEmis) * 1000) / 10 : 0;
+  /* Transformation NETTE : la data non exploitable est retirée du dénominateur
+     (demande de Christophe, 14/08). Un fichier truffé de faux numéros écrasait
+     le taux sans rien dire de la performance des agents — « le client va se
+     dire vous avez un taux très faible, mais dans les appels émis on aura
+     identifié des faux numéros dont on n'aurait rien pu faire ». Le taux ne
+     porte donc que sur la data réellement travaillable. */
+  const baseExploitable   = Math.max(appelsEmis - nonExploitables, 0);
+  const transfoNette      = baseExploitable > 0 ? Math.round((rdvPris / baseExploitable) * 1000) / 10 : 0;
   const tauxDecroche30s   = appelsEmis > 0 ? Math.round((decroches30s / appelsEmis) * 100) : 0;
   const tauxFichesExploit = appelsExploitables > 0 ? Math.round((fichesCompletees / appelsExploitables) * 100) : 0;
 
@@ -288,9 +301,15 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
         ? comparePtsText(tauxFichesExploit, Math.round((compareFichesCompletees / compareBaseAppelsExploitables) * 100), comparePeriodKey)
         : compareZeroRefText(comparePeriodKey));
   const compareBaseRdv = isFilteredToAgent ? (compareAgentRow?.rdvs_pris ?? 0) : (compareSummary?.rdvs_bookes_tlm ?? 0);
+  // Même dénominateur que transfoNette sur la période de référence, sinon la
+  // comparaison opposerait un taux net à un taux brut.
+  const compareBaseNonExploitables = isFilteredToAgent
+    ? (compareAgentRow?.appels_non_exploitables ?? 0)
+    : (compareSummary?.data_non_exploitable ?? 0);
+  const compareBaseExploitable = Math.max(compareBaseAppelsEmis - compareBaseNonExploitables, 0);
   const cmpTransfoNette = !compareDataLoaded ? null
-    : (compareBaseAppelsEmis > 0
-        ? comparePtsText(transfoNette, Math.round((compareBaseRdv / compareBaseAppelsEmis) * 1000) / 10, comparePeriodKey)
+    : (compareBaseExploitable > 0
+        ? comparePtsText(transfoNette, Math.round((compareBaseRdv / compareBaseExploitable) * 1000) / 10, comparePeriodKey)
         : compareZeroRefText(comparePeriodKey));
 
   // Ordre "tunnel" : émis → décroché → joint → exploitable → taux exploit. →
@@ -298,24 +317,66 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
   // liés se retrouvent ainsi sur la même ligne (grille 2 colonnes mobile).
   const kpis = [
     { label: 'Appels émis',                value: appelsEmis,                       unit: '', compare: cmp(appelsEmis, 'appels_emis', 'appels_emis'),           trend: trend(isFilteredToAgent ? selectedCollab : `${summary?.nb_clients ?? 0} clients TLM actifs`) },
-    { label: 'Taux décroché > 30s',        value: `${tauxDecroche30s}%`,            unit: '', compare: cmpDecroche30s,   trend: trend('Durée de conversation > 30s (talking_time)') },
-    { label: 'Contacts joints',            value: contactsJoints,                   unit: '', compare: cmp(contactsJoints, 'leads_decroches', 'contacts_joints'),   trend: trend(appelsEmis ? `${Math.round(contactsJoints / appelsEmis * 100)}% des appels émis` : '—') },
+    { label: 'Taux d\'échanges > 30s',      value: `${tauxDecroche30s}%`,            unit: '', compare: cmpDecroche30s,   trend: trend('Durée de conversation > 30s (talking_time)') },
+    /* « Contacts joints » retiré : la mesure venait des tags et sous-comptait
+       gravement — 3 700 contacts joints pour 5 119 échanges de plus de 30
+       secondes sur la même période. Un sous-ensemble plus grand que son
+       ensemble ; le chiffre ne voulait rien dire (constat du 14/08). */
     { label: 'Appels exploitables',        value: appelsExploitables,               unit: '', compare: cmp(appelsExploitables, 'appels_exploitables', 'appels_exploitables'), trend: trend('Enquête complétée/partielle, RDV pris, Rappel') },
     { label: 'Taux fiches exploitables',   value: `${tauxFichesExploit}%`,          unit: '', compare: cmpFichesExploit, trend: trend('Fiches complétées / Appels exploitables') },
     { label: 'Appels non exploitables',    value: nonExploitables,                  unit: '', compare: cmp(nonExploitables, 'data_non_exploitable', 'appels_non_exploitables'), trend: trend('Contact joint sans info business') },
     { label: 'Fiches complétées',          value: fichesCompletees,                 unit: '', compare: cmpFichesCompletees, trend: trend('Enquête complétée + RDV pris') },
     { label: 'RDV pris',                   value: rdvPris,                          unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm', 'rdvs_pris'),           trend: trend('Transformation TLM → RDV'), color: 'green' },
     { label: 'Taux RDV honorés',           value: '-',                              unit: '', compare: false, trend: trend('Pas de suivi de présence côté CloudTalk') },
-    { label: 'Transformation nette',       value: `${transfoNette}%`,               unit: '', compare: cmpTransfoNette, trend: trend('RDV pris / appels émis') },
+    { label: 'Transformation nette',       value: `${transfoNette}%`,               unit: '', compare: cmpTransfoNette, trend: trend('RDV pris / appels émis hors data non exploitable') },
   ];
 
-  // Funnel entièrement réel — 5 paliers, tous calculés côté CloudTalk.
+  /* Entonnoir dans l'ordre arrêté par Christophe (réunion du 14/08) : appels
+     émis, décroché > 1s, échanges > 30s, exploitable, fiche complétée, RDV
+     pris — puis la data non exploitable, volontairement reléguée en dernier.
+
+     Elle n'est pas une étape du parcours mais son explication : « ça explique
+     en grande partie ce pourcentage, et ce n'est pas le KPI qu'on veut
+     regarder en priorité ». La mettre en tête aurait fait démarrer l'entonnoir
+     sur un échec.
+
+     Le NOMBRE porte la lecture, le pourcentage passe au survol. Christophe a
+     tranché dans ce sens après avoir envisagé l'inverse : « si je vois
+     directement le chiffre, je sais qu'il y en a eu 60 ; si je ne vois que des
+     pourcentages, je vois un pourcentage de pourcentage ». Seul le taux de
+     transformation nette reste exprimé en pourcentage.
+
+     « Contact joint » est retiré. Christophe ne savait pas ce que le palier
+     recouvrait, et la donnée lui donne raison : il s'appuyait sur
+     `leads_decroches`, issu des tags, qui compte 3 700 décrochés là où la
+     durée en relève 5 119 de plus de 30 secondes sur la même période. Plus
+     d'appels longs que d'appels décrochés est impossible dans un entonnoir :
+     les tags sous-comptent, le palier était faux.
+
+     Le palier « décroché > 1 seconde » qu'il a demandé s'intercale dès que la
+     donnée existe. Elle vient de la même source que le seuil à 30 secondes —
+     Cdr.billsec, que CloudTalk restitue par appel — seule l'agrégation côté
+     n8n reste à ajouter (migration 026). Tant qu'elle est absente, le palier
+     ne s'affiche pas : mieux vaut un entonnoir à quatre étapes justes qu'à
+     cinq dont une inventée. */
   const funnelSteps = [
     { label: 'Appels émis',      value: appelsEmis },
-    { label: 'Contact joint',    value: contactsJoints },
-    { label: 'Exploitable',      value: appelsExploitables },
-    { label: 'Fiche complétée',  value: fichesCompletees },
-    { label: 'RDV pris',         value: rdvPris },
+    /* Nomenclature en noms et non en taux, puisque les paliers portent
+       désormais des volumes : « appel émis, appel décroché, appel exploitable »
+       (Christophe, 14/08). Le palier des 30 secondes garde son seuil dans le
+       libellé : il l'appelait « appel argumenté », mais ce mot désigne déjà un
+       statut issu des tags dans la carte « Statut des appels » juste en
+       dessous. Deux définitions du même mot sur un même écran, c'est
+       précisément ce qui a rendu « Contact joint » illisible — à trancher avec
+       lui avant de renommer. */
+    ...(decroches1s != null ? [{ label: 'Appels décrochés', value: decroches1s }] : []),
+    { label: 'Échanges > 30s',     value: decroches30s },
+    { label: 'Appels exploitables', value: appelsExploitables },
+    { label: 'Fiches complétées',  value: fichesCompletees },
+    { label: 'RDV pris',           value: rdvPris },
+    // Hors parcours : ne descend pas du palier précédent, se rapporte aux
+    // appels émis. Le rendu la traite donc à part (voir `aPart`).
+    { label: 'Data non exploitable', value: nonExploitables, aPart: true },
   ];
 
   return (
@@ -351,8 +412,12 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
             <thead><tr>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('agent_label')}>Collaborateur{agentSortArrow('agent_label')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_emis')}>Appels émis{agentSortArrow('appels_emis')}</th>
-              <th className={styles.thSortable} onClick={() => toggleAgentSort('tauxDecroche30s')}>Taux décroché &gt; 30s{agentSortArrow('tauxDecroche30s')}</th>
-              <th className={styles.thSortable} onClick={() => toggleAgentSort('contacts_joints')}>Contact joint{agentSortArrow('contacts_joints')}</th>
+              {/* Colonnes dans l'ordre de l'entonnoir, pour qu'on lise ici le
+                  parcours d'un agent et l'endroit où il bloque (Christophe,
+                  14/08). « Contact joint » est retiré comme ailleurs : mesure
+                  issue des tags, inférieure aux échanges de plus de 30 s
+                  qu'elle est censée contenir. */}
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_decroches_30s')}>Échanges &gt; 30s{agentSortArrow('appels_decroches_30s')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_exploitables')}>Exploitables{agentSortArrow('appels_exploitables')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('tauxCompletion')}>Taux fiches exploitables{agentSortArrow('tauxCompletion')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_non_exploitables')}>Non exploitables{agentSortArrow('appels_non_exploitables')}</th>
@@ -367,7 +432,10 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                   const fichesAgent = a.fiches_completees + a.rdvs_pris;
                   const tauxCompletion = a.appels_exploitables > 0 ? Math.round((fichesAgent / a.appels_exploitables) * 100) : 0;
                   const tauxDecroche30s = a.appels_emis > 0 ? Math.round((a.appels_decroches_30s / a.appels_emis) * 100) : 0;
-                  const transfoNette = a.appels_emis > 0 ? Math.round((a.rdvs_pris / a.appels_emis) * 1000) / 10 : 0;
+                  // Même base nette que le KPI : appels émis moins la data non
+                  // exploitable, sinon la colonne contredirait la carte.
+                  const baseNette = Math.max(a.appels_emis - (a.appels_non_exploitables ?? 0), 0);
+                  const transfoNette = baseNette > 0 ? Math.round((a.rdvs_pris / baseNette) * 1000) / 10 : 0;
                   return { ...a, fichesAgent, tauxCompletion, tauxDecroche30s, transfoNette };
                 })
                 .sort((a, b) => compareAgentRows(a, b, agentSort))
@@ -375,8 +443,9 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                   <tr key={a.agent_label} className={a.agent_label === selectedCollab ? styles.highlightRow : ''}>
                     <td className={styles.tdName}>{a.agent_label}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_emis)}</td>
-                    <td className={styles.tdNum}>{a.tauxDecroche30s}%</td>
-                    <td className={styles.tdNum}>{fmtNumber(a.contacts_joints)}</td>
+                    {/* Le volume, le taux au survol — même arbitrage que
+                        l'entonnoir : « la valeur numéraire est plus utile ». */}
+                    <td className={styles.tdNum} title={`${a.tauxDecroche30s}% des appels émis`}>{fmtNumber(a.appels_decroches_30s)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_exploitables)}</td>
                     <td className={styles.tdNum}><span className={styles.tauxPill}>{a.tauxCompletion}%</span></td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_non_exploitables)}</td>
@@ -398,14 +467,31 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
         <div className={styles.funnelWrap}>
           {funnelSteps.map((s, i) => {
             const pctOfMax = funnelSteps[0].value > 0 ? Math.round((s.value / funnelSteps[0].value) * 100) : 0;
-            const pctPrev  = i === 0 ? 100 : (funnelSteps[i - 1].value > 0 ? Math.round((s.value / funnelSteps[i - 1].value) * 100) : 0);
+            /* Le nombre porte la lecture, le pourcentage passe au survol.
+               Le titre nomme le palier de référence et rappelle son volume :
+               « 27% de "Échanges > 30s" (4 221) » se lit sans remonter d'une
+               ligne.
+
+               La data non exploitable se rapporte aux appels émis et non au
+               palier qui la précède — elle ne descend pas du parcours, un
+               pourcentage des RDV pris n'aurait aucun sens. */
+            const precedent = s.aPart ? funnelSteps[0] : funnelSteps[i - 1];
+            const pctRef = !precedent ? 0
+              : (precedent.value > 0 ? Math.round((s.value / precedent.value) * 100) : 0);
+            const survol = !precedent
+              ? `${fmtNumber(s.value)} appels émis sur la période`
+              : `${pctRef}% de « ${precedent.label} » (${fmtNumber(precedent.value)})`;
             return (
-              <div key={s.label} className={styles.funnelRow}>
+              <div
+                key={s.label}
+                className={s.aPart ? `${styles.funnelRow} ${styles.funnelAPart}` : styles.funnelRow}
+                title={survol}
+              >
                 <div className={styles.funnelLabel}>{s.label}</div>
                 <div className={styles.funnelTrack}>
                   <div className={styles.funnelFill} style={{ width: `${pctOfMax}%` }} />
                 </div>
-                <div className={styles.funnelValue}>{fmtNumber(s.value)}{i > 0 && <span className={styles.funnelPct}> · {pctPrev}%</span>}</div>
+                <div className={styles.funnelValue}>{fmtNumber(s.value)}</div>
               </div>
             );
           })}

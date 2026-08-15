@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { fmtNumber } from '../../utils/formatNumber';
 import styles from './MotifBar.module.css';
 
-export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)' }) {
+export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)', title }) {
   const [w, setW] = useState(0);
   useEffect(() => {
     const raf = requestAnimationFrame(() => setW(pct));
@@ -10,7 +10,10 @@ export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)' }
   }, [pct]);
 
   return (
-    <div className={styles.row}>
+    // `title` optionnel : porte la comparaison à la période précédente sans
+    // ajouter de colonne — la barre reste lisible d'un coup d'œil, le détail
+    // vient au survol pour qui le cherche.
+    <div className={styles.row} title={title || undefined}>
       <div className={styles.label}>{label}</div>
       <div className={styles.track}>
         <div
@@ -28,7 +31,10 @@ export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)' }
         />
       </div>
       <div className={styles.val}>
-        {pct}%{count !== undefined && <span> → {fmtNumber(count)}</span>}
+        {/* Virgule décimale française : une part sous 1 % s'écrit « 0,2 % ».
+            Les valeurs entières passent inchangées. */}
+        {typeof pct === 'number' ? pct.toLocaleString('fr-FR') : pct}%
+        {count !== undefined && <span> → {fmtNumber(count)}</span>}
       </div>
     </div>
   );

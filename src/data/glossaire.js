@@ -79,15 +79,15 @@ export const glossaireData = [
     dashboards: ['commercial-rc'],
   },
   {
-    terme: 'Clients perdus',
-    definition: "Comptes dont la date de fin de contrat tombe dans la période. Sur les cartes de perte, les couleurs de comparaison sont inversées : une baisse s'affiche en vert, puisqu'une baisse des pertes est une bonne nouvelle.",
-    source: 'Monday CRM',
+    terme: 'Missions perdues',
+    definition: "Profils dont la date de fin tombe dans la période. C'est la mission qui est comptée, pas le client : un contrat qui porte cinq profils dont un s'arrête ne perd pas un client, mais perd bien du revenu. Le critère est la date de fin et elle seule, jamais le statut — celui-ci est souvent laissé en « préavis » longtemps après l'arrêt réel. Sur les cartes de perte, les couleurs de comparaison sont inversées : une baisse s'affiche en vert, puisqu'une baisse des pertes est une bonne nouvelle.",
+    source: 'Historique Excel',
     dashboards: ['commercial-rc'],
   },
   {
     terme: 'Revenus perdus',
-    definition: "CA mensuel que représentaient les clients dont le contrat s'est terminé. C'est un revenu récurrent qui disparaît, pas une perte ponctuelle.",
-    source: 'Monday CRM',
+    definition: "CA mensuel que représentaient les missions arrêtées sur le mois. C'est un revenu récurrent qui disparaît, pas une perte ponctuelle.",
+    source: 'Historique Excel',
     dashboards: ['commercial-rc'],
   },
   {
@@ -179,8 +179,14 @@ export const glossaireData = [
     dashboards: ['commercial-activite'],
   },
   {
-    terme: 'Taux de décrochés > 30 s',
-    definition: "Part des appels ayant duré plus de 30 secondes. Mesure la capacité à joindre réellement un interlocuteur, un décroché immédiatement raccroché ne comptant pas.",
+    terme: 'Taux de décroché',
+    definition: "Part des appels auxquels un interlocuteur a répondu, d'après le statut Ringover et non d'après une durée. La durée totale d'un appel inclut la sonnerie : 3 670 appels annulés et 1 558 manqués dépassent la seconde sans que personne n'ait décroché, et l'ancien seuil de 30 secondes en comptait 1 617 à tort, messageries vocales comprises.",
+    source: 'Ringover',
+    dashboards: ['commercial-activite'],
+  },
+  {
+    terme: "Taux d'échanges > 30 s",
+    definition: "Part des appels décrochés dont la conversation a dépassé 30 secondes. Mesurée sur la durée de communication seule — hors sonnerie, attente et post-appel, qui surestimaient le compte de 27 %.",
     source: 'Ringover',
     dashboards: ['commercial-activite'],
   },
@@ -223,12 +229,6 @@ export const glossaireData = [
 
   /* ── Activité téléphonique : TLM ──────────────────────────────────── */
   {
-    terme: 'Contacts joints',
-    definition: "Appels ayant abouti à un échange avec l'interlocuteur recherché.",
-    source: 'CloudTalk',
-    dashboards: ['commercial-activite'],
-  },
-  {
     terme: 'Appels exploitables',
     definition: "Appels ayant permis de collecter une information business utile : besoin, décisionnaire ou échéance.",
     source: 'CloudTalk',
@@ -248,7 +248,7 @@ export const glossaireData = [
   },
   {
     terme: 'Taux de transformation nette',
-    definition: 'Rendez-vous pris rapportés au total des appels émis. Mesure le rendement global de la prospection.',
+    definition: "Rendez-vous pris rapportés aux appels émis, hors data non exploitable. Le dénominateur écarte les fiches qu'aucun agent ne pouvait exploiter, pour ne pas pénaliser la prospection avec des contacts inutilisables.",
     source: 'CloudTalk',
     dashboards: ['commercial-activite'],
   },

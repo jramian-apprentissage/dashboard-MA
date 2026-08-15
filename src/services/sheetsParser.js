@@ -138,8 +138,38 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
     return true;
   });
 
-  const total    = filtered.length;
-  const decroche = filtered.filter(r => r.duration > 30).length;
+  const total = filtered.length;
+
+  /* Décroché = quelqu'un a répondu. C'est le statut Ringover qui le dit, PAS
+     la durée : `duration` est le total_duration de l'API, sonnerie comprise.
+     Sur l'archive complète, 3 670 appels CANCELLED, 1 558 MISSED et 865
+     FAILED dépassent la seconde sans qu'aucun interlocuteur n'ait décroché.
+     Un seuil de durée mesurerait donc la patience de l'agent, pas la
+     joignabilité.
+
+     Ce point corrige aussi la mesure précédente : « décroché » valait
+     `duration > 30`, ce qui comptait 1 617 appels jamais décrochés — dont
+     282 messageries vocales — comme des conversations de plus de 30
+     secondes. La joignabilité affichée en était faussée.
+
+     VOICEMAIL reste exclu : la boîte vocale n'est pas un interlocuteur. */
+  const estDecroche = r => r.statut === 'ANSWERED';
+  const decroches = filtered.filter(estDecroche).length;
+
+  /* Second palier, sur le modèle du TLM (décision de Christophe, 14/08) : le
+     décroché dit que la jonction a eu lieu, l'échange de plus de 30 secondes
+     dit qu'il s'est passé quelque chose.
+
+     On mesure sur `conversation` (incall_duration Ringover) et non sur
+     `duration` (total_duration) : ce dernier additionne sonnerie, attente,
+     serveur vocal et post-appel. Sur 1 000 appels échantillonnés, il
+     surestimait de 27 % le nombre d'échanges de plus de 30 secondes — un
+     appel décroché affichait 43 s au total pour 11 s de conversation réelle.
+
+     Repli sur `duration` pour les lignes antérieures à la migration 027, qui
+     n'ont pas encore la conversation : mieux vaut la vieille mesure que zéro. */
+  const dureeEchange = r => (r.conversation ?? r.duration ?? 0);
+  const echanges30s = filtered.filter(r => estDecroche(r) && dureeEchange(r) > 30).length;
 
   // Contact argumenté = OK (RDV pris) + PI (Pas intéressé) — le prospect a écouté le pitch
   const argues = filtered.filter(r => hasTagCat(r.tags, 'OK') || hasTagCat(r.tags, 'PI')).length;
@@ -154,10 +184,21 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   const trancheMap = {};
   filtered.forEach(r => {
     const t = r.heure || '?';
-    if (!trancheMap[t]) trancheMap[t] = { appels: 0, decroche: 0, rdv: 0 };
+    if (!trancheMap[t]) trancheMap[t] = { appels: 0, decroche: 0, echange30s: 0, rdv: 0, agents: {} };
     trancheMap[t].appels++;
-    if (r.duration > 30) trancheMap[t].decroche++;
+    if (estDecroche(r)) trancheMap[t].decroche++;
+    if (estDecroche(r) && dureeEchange(r) > 30) trancheMap[t].echange30s++;
     if (hasTagCat(r.tags, 'OK')) trancheMap[t].rdv++;
+
+    /* Ventilation par agent de chaque tranche (demande de Christophe, 14/08).
+       L'agrégat seul ne dit pas si un creux de joignabilité à 14h vient de
+       toute l'équipe ou d'une seule personne : sans le détail, la tranche se
+       lit mais ne s'explique pas. */
+    const nom = r.collab || '(sans agent)';
+    if (!trancheMap[t].agents[nom]) trancheMap[t].agents[nom] = { appels: 0, decroche: 0, rdv: 0 };
+    trancheMap[t].agents[nom].appels++;
+    if (estDecroche(r)) trancheMap[t].agents[nom].decroche++;
+    if (hasTagCat(r.tags, 'OK')) trancheMap[t].agents[nom].rdv++;
   });
 
   const tranches = Object.entries(trancheMap)
@@ -170,7 +211,18 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
       t,
       appels: v.appels,
       join:   v.appels > 0 ? Math.round((v.decroche / v.appels) * 100) : 0,
+      // Part des appels décrochés qui ont donné plus de 30 secondes d'échange.
+      echange30s: v.appels > 0 ? Math.round((v.echange30s / v.appels) * 100) : 0,
       rdv:    v.rdv,
+      // Trié par volume : au survol, on veut voir d'abord qui porte la tranche.
+      agents: Object.entries(v.agents)
+        .map(([nom, a]) => ({
+          nom,
+          appels: a.appels,
+          join:   a.appels > 0 ? Math.round((a.decroche / a.appels) * 100) : 0,
+          rdv:    a.rdv,
+        }))
+        .sort((a, b) => b.appels - a.appels),
     }));
 
   // Collabs list : exclure Entrant & Management
@@ -205,9 +257,10 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   // ── Statistiques par collaborateur ──────────────────────────────────────────
   const collabStats = {};
   filtered.forEach(r => {
-    if (!collabStats[r.collab]) collabStats[r.collab] = { appels: 0, decroche: 0, argues: 0, fichesExploitables: 0 };
+    if (!collabStats[r.collab]) collabStats[r.collab] = { appels: 0, decroche: 0, echange30s: 0, argues: 0, fichesExploitables: 0 };
     collabStats[r.collab].appels++;
-    if (r.duration > 30) collabStats[r.collab].decroche++;
+    if (estDecroche(r)) collabStats[r.collab].decroche++;
+    if (estDecroche(r) && dureeEchange(r) > 30) collabStats[r.collab].echange30s++;
     const estArgue = hasTagCat(r.tags, 'OK') || hasTagCat(r.tags, 'PI');
     if (estArgue) collabStats[r.collab].argues++;
     if (estArgue || hasTagPrefix(r.tags, 'CNA - Mail')) collabStats[r.collab].fichesExploitables++;
@@ -218,11 +271,18 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
       argues: v.argues,
       fichesExploitables: v.fichesExploitables,
       tauxFichesExploit: v.appels > 0 ? Math.round((v.fichesExploitables / v.appels) * 100) : 0,
+      // `taux` = taux de décroché. Conservé sous ce nom pour ne pas casser le
+      // tri du tableau par collaborateur, mais il mesure désormais le statut
+      // et non plus une durée.
       taux:   v.appels > 0 ? `${Math.round((v.decroche / v.appels) * 100)}%` : '—',
+      tauxEchange30s: v.appels > 0 ? Math.round((v.echange30s / v.appels) * 100) : 0,
     }])
   );
 
-  return { total, decroche, argues, fichesExploitables, rdv, tranches, collabs, categStats, tagStats, perCollab };
+  return {
+    total, decroches, echanges30s, argues, fichesExploitables, rdv,
+    tranches, collabs, categStats, tagStats, perCollab,
+  };
 }
 
 // ─── ASUS (client) ───────────────────────────────────────────────────────────
@@ -242,25 +302,30 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
 // l'appel) d'abord, les tags "techniques" (répondeur/NRP/sans tag) ensuite —
 // "Sans tag" reste toujours en toute dernière position (ajouté par
 // statsDirection/buildTagCards, pas dans cette liste).
+/* `label` est le texte affiché, `tags` les valeurs brutes Ringover à matcher.
+   Les libellés sont au pluriel : une carte porte un NOMBRE d'appels, pas un
+   tag. « Appels sortants : 12 » puis « Vente gagnée : 2 » juste à côté se
+   contredisaient (retour de Clémence, 14/08). Les invariants restent tels
+   quels — « Rendez-vous » et le sigle « NRP » ne se pluralisent pas. */
 export const ASUS_TAGS_SORTANT = [
-  { label: 'Opportunité détectée',  tags: ['Opportunité détectée'] },
-  { label: 'Envoi catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
-  { label: 'Rendez-vous',           tags: ['Rendez-vous'] },
-  { label: 'Vente gagnée',          tags: ['Vente gagnée'] },
-  { label: 'Vente perdue',          tags: ['Vente perdue'] },
-  { label: 'Rappel',                tags: ['Rappel'] },
-  { label: 'Répondeur',             tags: ['Répondeur'] },
-  { label: 'NRP',                   tags: ['NRP'], prefix: true },
-  { label: 'Pas intéressé',         tags: ['Pas intéressé', 'Pas intéresser'] },
+  { label: 'Opportunités détectées', tags: ['Opportunité détectée'] },
+  { label: 'Envois catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
+  { label: 'Rendez-vous',            tags: ['Rendez-vous'] },
+  { label: 'Ventes gagnées',         tags: ['Vente gagnée'] },
+  { label: 'Ventes perdues',         tags: ['Vente perdue'] },
+  { label: 'Rappels',                tags: ['Rappel'] },
+  { label: 'Répondeurs',             tags: ['Répondeur'], technique: true },
+  { label: 'NRP',                    tags: ['NRP'], prefix: true, technique: true },
+  { label: 'Pas intéressés',         tags: ['Pas intéressé', 'Pas intéresser'] },
 ];
 export const ASUS_TAGS_ENTRANT = [
-  { label: 'Opportunité détectée',  tags: ['Opportunité détectée'] },
-  { label: 'Envoi catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
-  { label: 'Rendez-vous',           tags: ['Rendez-vous'] },
-  { label: 'Vente gagnée',          tags: ['Vente gagnée'] },
-  { label: 'Vente perdue',          tags: ['Vente perdue'] },
-  { label: 'Rappel',                tags: ['Rappel'] },
-  { label: 'Pas intéressé',         tags: ['Pas intéressé', 'Pas intéresser'] },
+  { label: 'Opportunités détectées', tags: ['Opportunité détectée'] },
+  { label: 'Envois catalogue',       tags: ['Envoi catalogue', 'Envoie catalogue'] },
+  { label: 'Rendez-vous',            tags: ['Rendez-vous'] },
+  { label: 'Ventes gagnées',         tags: ['Vente gagnée'] },
+  { label: 'Ventes perdues',         tags: ['Vente perdue'] },
+  { label: 'Rappels',                tags: ['Rappel'] },
+  { label: 'Pas intéressés',         tags: ['Pas intéressé', 'Pas intéresser'] },
 ];
 
 const BON_APPEL_SECONDES = 300; // 5 min — seuil convenu avec Jimmy
@@ -281,6 +346,11 @@ function statsDirection(rows, direction, tagDefs) {
   const parTag = tagDefs.map(def => ({
     label: def.label,
     count: set.filter(r => matchesTag(r, def)).length,
+    // `technique` distingue les qualifications commerciales (ce que l'appel a
+    // produit) des issues techniques (personne au bout du fil). L'affichage
+    // les sépare en deux groupes : mélangés, les répondeurs et NRP dominent
+    // le volume et enterrent les tags qui portent l'information business.
+    technique: !!def.technique,
   }));
   const sansTag = set.filter(r => !r.tag || !tagDefs.some(def => matchesTag(r, def))).length;
   return { total: set.length, parTag, sansTag };
@@ -304,15 +374,27 @@ export function computeAsusData(rows, dateFrom, dateTo, collab = 'Tous') {
   const entrant = statsDirection(filtered, 'in',  ASUS_TAGS_ENTRANT);
 
   const totalAppels    = filtered.length;
-  const dureeMoyenneS  = totalAppels ? Math.round(filtered.reduce((s, r) => s + (r.duration || 0), 0) / totalAppels) : 0;
-  const bonsAppels     = filtered.filter(r => (r.duration || 0) >= BON_APPEL_SECONDES).length;
+
+  /* TMC = temps moyen de COMMUNICATION. Le libellé disait donc déjà ce qu'il
+     fallait mesurer, mais le calcul portait sur `duration` — le
+     total_duration de Ringover, qui additionne sonnerie, file d'attente,
+     mise en attente, serveur vocal et post-appel. Sur les appels décrochés,
+     l'écart moyen est de 10 secondes ; un appel affichait 43 s au total pour
+     11 s de conversation réelle.
+     Idem pour les « bons appels » : cinq minutes de ligne ouverte ne sont pas
+     cinq minutes d'échange.
+     Repli sur `duration` pour l'historique antérieur à la migration 027, qui
+     n'a pas la conversation — mieux vaut l'ancienne mesure que zéro. */
+  const dureeComm      = r => (r.conversation ?? r.duration ?? 0);
+  const dureeMoyenneS  = totalAppels ? Math.round(filtered.reduce((s, r) => s + dureeComm(r), 0) / totalAppels) : 0;
+  const bonsAppels     = filtered.filter(r => dureeComm(r) >= BON_APPEL_SECONDES).length;
   const tauxBons       = totalAppels ? Math.round((bonsAppels / totalAppels) * 100) : 0;
 
   // TMC par sens — même donnée que sortant.total/entrant.total, calculée à
   // part pour ne pas faire dépendre computeAsusData() du contenu de parTag.
   const dureeMoyenne = (direction) => {
     const set = filtered.filter(r => r.direction === direction);
-    return set.length ? Math.round(set.reduce((s, r) => s + (r.duration || 0), 0) / set.length) : 0;
+    return set.length ? Math.round(set.reduce((s, r) => s + dureeComm(r), 0) / set.length) : 0;
   };
   const dureeMoyenneSortantS = dureeMoyenne('out');
   const dureeMoyenneEntrantS = dureeMoyenne('in');
@@ -348,8 +430,9 @@ export function computeAsusData(rows, dateFrom, dateTo, collab = 'Tous') {
       sortant:       statsDirection(rowsC, 'out', ASUS_TAGS_SORTANT),
       entrant:       statsDirection(rowsC, 'in',  ASUS_TAGS_ENTRANT),
       totalAppels:   totalC,
-      dureeMoyenneS: totalC ? Math.round(rowsC.reduce((s, r) => s + (r.duration || 0), 0) / totalC) : 0,
-      bonsAppels:    rowsC.filter(r => (r.duration || 0) >= BON_APPEL_SECONDES).length,
+      // Même mesure que le TMC global : la communication, pas la ligne ouverte.
+      dureeMoyenneS: totalC ? Math.round(rowsC.reduce((s, r) => s + dureeComm(r), 0) / totalC) : 0,
+      bonsAppels:    rowsC.filter(r => dureeComm(r) >= BON_APPEL_SECONDES).length,
     };
   });
 

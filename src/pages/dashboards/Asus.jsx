@@ -38,8 +38,8 @@ export default function Asus() {
       const periodLabel = `${PERIOD_LABELS[periodKey] || 'de la période sélectionnée'}${compareActive ? ` · vs ${comparePeriodKey === 'previous-year' ? "l'année précédente" : 'la période précédente'}` : ''}`;
       await exportDashboardPdf({
         contentEl: contentRef.current,
-        fileName: `Dashboard-Performance-Agent-Asus-${new Date().toISOString().slice(0, 10)}.pdf`,
-        title: 'Dashboard Performance Agent - Asus',
+        fileName: `Dashboard-Performance-Commerciale-Asus-${new Date().toISOString().slice(0, 10)}.pdf`,
+        title: 'Dashboard Performance Commerciale - Asus',
         periodLabel,
         maLogoSrc: maLogo,
         clientLogoSrc: asusLogo,
@@ -90,7 +90,7 @@ export default function Asus() {
   return (
     <DashboardLayout
       dashboardId="asus"
-      dashboardName="Dashboard Performance Agent - Asus"
+      dashboardName="Dashboard Performance Commerciale - Asus"
       clientFacingSubtitle
       extraFilters={extraFilters}
       activeFilters={activeFilters}

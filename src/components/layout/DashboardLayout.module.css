@@ -37,24 +37,48 @@
    gris clair sur la moitié gauche, photo nette sur la droite, texte sombre
    plutôt que le blanc/soleil pensé pour un fond myrtille). */
 .heroAsus { background: #F2F2F0; }
-.heroAsus .heroBg { opacity: 1; }
+
+/* Photo atténuée et voile clair prolongé (retour de Clémence, 14/08 : la
+   photo gêne la lecture). Le voile était opaque jusqu'à 42 % de la largeur
+   puis nul dès 62 %, alors que le bloc titre + sous-titre s'étend bien
+   au-delà : la fin des phrases tombait sur la photo à pleine opacité. Il
+   couvre maintenant toute la colonne de texte et ne s'efface qu'après. */
+.heroAsus .heroBg { opacity: 0.72; }
 .heroAsus .heroOverlay {
   background: linear-gradient(
     100deg,
     #F2F2F0 0%,
-    #F2F2F0 42%,
-    rgba(242,242,240,0.85) 50%,
-    rgba(242,242,240,0) 62%
+    #F2F2F0 66%,
+    rgba(242,242,240,0.72) 78%,
+    rgba(242,242,240,0.28) 90%,
+    rgba(242,242,240,0.10) 100%
   );
 }
+
+/* Le bloc titre n'avait aucune largeur maximale : sur un hero de 1265 px, les
+   lignes du sous-titre couraient jusqu'à 943 px, soit 75 % de la largeur —
+   bien au-delà du voile clair, donc sur la photo. D'où « la lecture des
+   textes est difficile » (retour de Clémence, 14/08).
+   620 px règle les deux problèmes à la fois : le texte reste dans la zone
+   opaque quelle que soit la largeur d'écran, et retrouve une longueur de
+   ligne lisible — une ligne de 943 px se lit mal, photo ou pas. */
+.heroAsus .heroTitleBlock { max-width: 620px; }
+
+/* Titre et sous-titre en encre neutre plutôt qu'en bleu ASUS intégral : tout
+   l'en-tête en bleu faisait un aplat de couleur, sans hiérarchie. Le bleu ne
+   subsiste plus que là où il sert de repère — la période mise en valeur et
+   les boutons —, c'est-à-dire avec parcimonie. */
 .heroAsus .title,
-.heroAsus .subtitle,
-.heroAsus .subtitlePeriod,
 .heroAsus .titleEm,
+.heroAsus .subtitle,
 .heroAsus .tabBadge {
-  color: var(--asus-blue);
+  color: var(--encre);
 }
-.heroAsus .subtitle { opacity: 0.7; }
+.heroAsus .subtitlePeriod {
+  color: var(--asus-blue);
+  font-weight: 600;
+}
+.heroAsus .subtitle { opacity: 0.78; }
 .heroAsus .tabBadge { opacity: 0.6; }
 
 /* Boutons du hero (Comparer/Extraire/période) en bleu ASUS plutôt qu'en

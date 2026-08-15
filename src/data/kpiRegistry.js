@@ -49,13 +49,13 @@ const REGISTRY = [
     pageId: 'focus-client', page: 'Pôle relation client',
     cards: [
       'Nouveaux clients',
-      'Clients perdus',
+      'Missions perdues',
       'Portefeuille de clients actifs',
       'Marge brute nouveaux',
       'CA par client',
       'Marge brute par client',
       'Niveau de santé client',
-      'Détail des clients perdus',
+      'Détail des missions perdues',
       'Détails du niveau de Santé par Client',
       'Évolution mensuelle des revenus perdus',
     ],
@@ -65,7 +65,8 @@ const REGISTRY = [
     pageId: 'sales', page: 'Activité Sales',
     cards: [
       'Appels émis',
-      'Taux décrochés >30s',
+      'Taux de décroché',
+      "Taux d'échanges > 30s",
       'Appels argumentés',
       'Taux fiches exploitables',
       'RDV pris',
@@ -81,7 +82,6 @@ const REGISTRY = [
     pageId: 'tlm', page: 'Activité TLM',
     cards: [
       'Appels émis',
-      'Contacts joints',
       'Appels exploitables',
       'Fiches complétées',
       'RDV pris',
@@ -98,9 +98,8 @@ const REGISTRY = [
     cards: [
       'Appels sortants',
       'Appels entrants',
-      'Durée moyenne (TMC)',
+      'Temps moyen de communication',
       'Bons appels (≥ 5 min)',
-      'Détail des appels par collaborateur',
     ],
   },
 ];

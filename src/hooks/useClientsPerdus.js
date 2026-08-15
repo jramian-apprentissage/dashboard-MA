@@ -3,18 +3,25 @@ import { usePeriod } from '../contexts/PeriodContext';
 import { getPeriodRange } from '../components/ui/PeriodPicker';
 import { fetchAPI } from '../services/api';
 
-/* Détail des clients perdus (colonne "date de fin de contrat", board Comptes
-   Monday live — voir COMPTES_PERDUS_SQL côté API) et leur évolution mensuelle.
+/* Missions arrêtées sur la période et leur évolution mensuelle.
+
+   L'unité est le profil, pas le client : une mission s'arrête, elle vaut un
+   montant, à une date, chez un client (arbitrage de Jimmy, 14/08). Le modèle
+   précédent partait de la date de fin de contrat du compte — colonne qui
+   n'existe que sur les comptes Monday, jamais alimentée par l'import Excel,
+   ce qui rendait l'indicateur aveugle à tout l'historique d'avant Monday.
+
+   `profils`   — liste à plat, ordonnée par date de fin décroissante.
+   `parClient` — même donnée regroupée, pour un affichage par client.
+
    Le détail suit la période sélectionnée ; l'évolution reste sur les 6
    derniers mois, comme le graphique CA/marge de Synthèse. */
 export function useClientsPerdus() {
-  const [detail,  setDetail]  = useState(null);
-  // Profils dont la mission s'arrête alors que le contrat client se poursuit :
-  // ce n'est pas une perte de client, et la carte les confondait.
-  const [collaborateurs, setCollaborateurs] = useState(null);
-  const [monthly, setMonthly] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [profils,   setProfils]   = useState(null);
+  const [parClient, setParClient] = useState(null);
+  const [monthly,   setMonthly]   = useState(null);
+  const [loading,   setLoading]   = useState(true);
+  const [error,     setError]     = useState(null);
   const { periodKey, customFrom, customTo } = usePeriod();
   const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
 
@@ -35,8 +42,8 @@ export function useClientsPerdus() {
     fetchAPI(`/comptes/perdus?${qs}`)
       .then(data => {
         if (cancelled) return;
-        setDetail(data.contrats || []);
-        setCollaborateurs(data.collaborateurs || []);
+        setProfils(data.profils || []);
+        setParClient(data.parClient || []);
         setError(null);
       })
       .catch(e => { if (!cancelled) setError(e.message); })
@@ -44,5 +51,5 @@ export function useClientsPerdus() {
     return () => { cancelled = true; };
   }, [from, to]);
 
-  return { detail, collaborateurs, monthly, loading, error };
+  return { profils, parClient, monthly, loading, error };
 }
