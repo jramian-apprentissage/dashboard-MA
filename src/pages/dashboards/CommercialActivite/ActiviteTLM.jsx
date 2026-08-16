@@ -342,9 +342,9 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
     // Masqué tant que n8n n'a pas produit le comptage : un zéro se lirait
     // « aucun décroché » au lieu de « pas encore mesuré ».
     ...(decroches1s != null
-      ? [{ label: 'Échanges > 1s', value: decroches1s, unit: '', compare: cmp(decroches1s, 'appels_decroches_1s', 'appels_decroches_1s'), trend: trend('Conversation de plus d’une seconde'), exactValue: part(decroches1s, appelsEmis, 'des appels émis') }]
+      ? [{ label: 'Échanges > 1s', value: decroches1s, unit: '', compare: cmp(decroches1s, 'appels_decroches_1s', 'appels_decroches_1s'), trend: trend('Conversation de plus d’une seconde, hors sonnerie'), exactValue: part(decroches1s, appelsEmis, 'des appels émis') }]
       : []),
-    { label: 'Échanges > 30s',             value: decroches30s,        unit: '', compare: cmp(decroches30s, 'appels_decroches_30s', 'appels_decroches_30s'), trend: trend('Conversation de plus de 30 secondes'), exactValue: part(decroches30s, decroches1s ?? appelsEmis, decroches1s != null ? 'des échanges > 1s' : 'des appels émis') },
+    { label: 'Échanges > 30s',             value: decroches30s,        unit: '', compare: cmp(decroches30s, 'appels_decroches_30s', 'appels_decroches_30s'), trend: trend('Conversation de plus de 30 secondes, hors sonnerie'), exactValue: part(decroches30s, decroches1s ?? appelsEmis, decroches1s != null ? 'des échanges > 1s' : 'des appels émis') },
     { label: 'Échanges exploitables',      value: appelsExploitables,  unit: '', compare: cmp(appelsExploitables, 'appels_exploitables', 'appels_exploitables'), trend: trend('Enquête complétée/partielle, RDV pris, Rappel'), exactValue: part(appelsExploitables, decroches30s, 'des échanges > 30s') },
     { label: 'Fiches complétées',          value: fichesCompletees,    unit: '', compare: cmpFichesCompletees, trend: trend('Enquête complétée + RDV pris'), exactValue: part(fichesCompletees, appelsExploitables, 'des échanges exploitables') },
     { label: 'Rendez-vous pris',           value: rdvPris,             unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm', 'rdvs_pris'), trend: trend('Transformation TLM → RDV'), color: 'green', exactValue: part(rdvPris, fichesCompletees, 'des fiches complétées') },
@@ -438,7 +438,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
       </div>
 
       <SectionLabel>Performance des agents MA</SectionLabel>
-      <Card title="Comparatif individuel — principaux leviers TLM">
+      <Card title="Principaux leviers TLM">
         {agents.length > 0 ? (
           <table className={styles.perfTable}>
             <thead><tr>
