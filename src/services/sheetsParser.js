@@ -607,9 +607,21 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
     monthlyMap[key] = (monthlyMap[key] || 0) + 1;
   });
 
-  // ── Par tranche horaire (heure de création du RDV, arrondie à l'heure pleine)
-  // Utilise r.time (col B après restructuration), arrondie à "HH:00" pour matcher Ringover
+  /* ── Par tranche horaire — quand le rendez-vous a été PRIS ────────────────
+     r.time est l'heure de la colonne « Date de Création » de la feuille,
+     tronquée à l'heure pleine pour se joindre aux tranches Ringover, qui sont
+     elles aussi des clés « HH:00 » d'Europe/Paris.
+
+     Ce byHour a longtemps ventilé les RDV sur l'heure du CRÉNEAU et non sur
+     celle de la prise : le parseur serveur lisait la mauvaise colonne (voir
+     server/src/rdvParser.js). Superposé aux tranches d'appels, ça revenait à
+     coller « quand le client sera reçu » sur « quand le commercial a appelé »
+     — sans que rien ne se voie, les créneaux s'étalant eux aussi de 9h à 18h.
+
+     Une heure absente vaut null côté serveur et n'est comptée nulle part :
+     mieux vaut une tranche manquante qu'une tranche fantôme à minuit. */
   const byHourMap = {};
+  const byHourCollabMap = {};
   filtered.forEach(r => {
     const timePart = r.time?.trim();
     if (!timePart) return;
@@ -617,9 +629,19 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
     if (!hh) return;
     const key = `${hh.padStart(2, '0')}:00`;
     byHourMap[key] = (byHourMap[key] || 0) + 1;
+    // Ventilation par agent de chaque tranche : alimente l'infobulle du graphe
+    // horaire, qui répond à « ce creux vient-il de toute l'équipe ? ».
+    if (!byHourCollabMap[key]) byHourCollabMap[key] = {};
+    byHourCollabMap[key][r.collab] = (byHourCollabMap[key][r.collab] || 0) + 1;
   });
 
-  return { rdvPris, rdvHonores, tauxHonores, perCollab: collabMap, monthly: monthlyMap, byHour: byHourMap };
+  return {
+    rdvPris, rdvHonores, tauxHonores,
+    perCollab: collabMap,
+    monthly: monthlyMap,
+    byHour: byHourMap,
+    byHourCollab: byHourCollabMap,
+  };
 }
 
 // ── Évolution mensuelle des RDV, sur une fenêtre glissante des 6 derniers

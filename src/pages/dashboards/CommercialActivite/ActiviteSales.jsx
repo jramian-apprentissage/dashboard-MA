@@ -60,7 +60,7 @@ function makeRdvPlugin(rowsRef) {
   };
 }
 
-// Tri du tableau "Comparatif individuel" — même principe que la table "À
+// Tri du tableau "Principaux leviers" — même principe que la table "À
 // relancer" de Commercial & Relation Client (clic sur l'en-tête, tri alpha
 // par défaut sur le nom).
 function compareCollabRows(a, b, sort) {
@@ -156,9 +156,9 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
      coupaient l'entonnoir en deux sans rien apprendre. */
   return [
     { label: 'Appels émis',              value: total,              unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null, trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` }, color: 'blue' },
-    { label: 'Échanges > 1s',            value: echanges1s,         unit: '', compare: cmp ? compareValueText(echanges1s, cmp.echanges1s, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Un interlocuteur a répondu et la conversation a dépassé une seconde' }, exactValue: part(echanges1s, total, 'des appels émis') },
+    { label: 'Échanges > 1s',            value: echanges1s,         unit: '', compare: cmp ? compareValueText(echanges1s, cmp.echanges1s, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation de plus d’une seconde, hors sonnerie' }, exactValue: part(echanges1s, total, 'des appels émis') },
     { label: 'Échanges > 30s',           value: echanges30s,        unit: '', compare: cmp ? compareValueText(echanges30s, cmp.echanges30s, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation de plus de 30 secondes, hors sonnerie' }, exactValue: part(echanges30s, echanges1s, 'des échanges > 1s') },
-    { label: 'Échanges exploitables',    value: fichesExploitables, unit: '', compare: cmp ? compareValueText(fichesExploitables, cmp.fichesExploitables, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Prospect ayant écouté le pitch (OK + PI + CNA - Mail)' }, color: 'amber', exactValue: part(fichesExploitables, echanges30s, 'des échanges > 30s') },
+    { label: 'Échanges exploitables',    value: fichesExploitables, unit: '', compare: cmp ? compareValueText(fichesExploitables, cmp.fichesExploitables, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation ayant apporté des informations sur l’entreprise' }, color: 'amber', exactValue: part(fichesExploitables, echanges30s, 'des échanges > 30s') },
     { label: 'RDV pris',                 value: rdvPris,            unit: '', compare: cmpRdv,     trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
     { label: 'RDV honorés',              value: rdvHonores,         unit: '', compare: cmpRdvHonores, trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
     { label: 'Taux RDV honorés',         value: tauxHon,            unit: '', compare: cmpTauxHon, trend: { dir: 'neutral', text: rdvSrc }, color: 'purple' },
@@ -188,11 +188,30 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
   // de connexion : un seul message clair plutôt qu'une mosaïque de cartes
   // "Non connecté" en dessous.
   const isEmptyPeriod = hasData && salesData.result.total === 0;
-  // RDV par tranche horaire : uniquement le tag Ringover "OK" (row.rdv, déjà
-  // calculé par computeSalesData) — pas le fichier RDV externe. Décision
-  // explicite : la fiabilité de ce chiffre dépend du bon tagging Ringover
-  // par les collaborateurs, pas d'une source externe à maintenir.
-  const trancheRows = hasData ? salesData.result.tranches : [];
+  /* RDV par tranche horaire : le fichier « Meetings Bookés », pas le tag
+     Ringover « OK ».
+
+     C'était l'inverse jusqu'ici, et c'était un choix défendable tant que les
+     commerciaux taguaient. Ils ne taguent plus : sur juillet 2026, 40 appels
+     tagués sur 3 810 (1 %), et aucun de catégorie OK. L'annotation dessinait
+     donc « RDV : 0 » dans ses onze barres pendant que la carte en haut de la
+     même page affichait « RDV pris : 10 ». Une page qui se contredit vaut
+     moins qu'une page qui dépend d'une source externe.
+
+     Le fichier RDV est de toute façon déjà la source des cartes « RDV pris »
+     et « RDV honorés » : le graphe en devient une décomposition exacte, au
+     lieu d'une seconde mesure du même mot. */
+  const trancheRows = useMemo(() => {
+    const base = hasData ? salesData.result.tranches : [];
+    const parHeure = rdvResult?.byHour;
+    if (!parHeure) return base;
+    const parHeureCollab = rdvResult.byHourCollab || {};
+    return base.map(r => ({
+      ...r,
+      rdv: parHeure[r.t] || 0,
+      agents: r.agents.map(a => ({ ...a, rdv: parHeureCollab[r.t]?.[a.nom] || 0 })),
+    }));
+  }, [hasData, salesData?.result, rdvResult]);
 
   const trancheRowsRef = useRef(trancheRows);
   trancheRowsRef.current = trancheRows;
@@ -252,7 +271,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       )}
 
       <SectionLabel>Performance commerciale des agents</SectionLabel>
-      <Card title="Comparatif individuel — principaux leviers">
+      <Card title="Principaux leviers">
         {hasData && salesData.result.collabs ? (() => {
           const rows = salesData.result.collabs
             .filter(c => c !== 'Tous')
@@ -328,7 +347,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       </Card>
 
       <SectionLabel>Détails des appels</SectionLabel>
-      <Card title={`Taux d’échanges > 1s par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
+      <Card title={`Taux d’échanges > 1s par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ''}`}>
         {hasData && trancheRows.length > 0 ? (
           <>
             <div className={styles.chartWrap} style={{ height: 240 }}>
@@ -410,7 +429,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
             </div>
             <div className={styles.legend}>
               <span className={styles.legDot} style={{ background: 'rgba(123,170,191,0.7)' }} />Appels émis
-              <span style={{ color: 'rgba(142,207,170,0.9)', fontWeight: 600, marginLeft: 14, fontSize: 10 }}>RDV : n</span> affiché sur chaque barre
+              <span style={{ color: 'rgba(142,207,170,0.9)', fontWeight: 600, marginLeft: 14, fontSize: 10 }}>RDV : n</span> affiché sur chaque barre, depuis le fichier RDV
               <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Taux d’échanges &gt; 1s %
             </div>
           </>
