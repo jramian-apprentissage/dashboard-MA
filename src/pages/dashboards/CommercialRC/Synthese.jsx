@@ -14,7 +14,7 @@ import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
-import { fmtEurosExact } from '../../../utils/formatNumber';
+import {fmtEurosExact, fmtPourcentage } from '../../../utils/formatNumber';
 import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 
 const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
@@ -144,7 +144,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               value={fmt(d.margeBruteGlobale)}
               exactValue={fmtEurosExact(d.margeBruteGlobale)}
               compare={cmp(d.margeBruteGlobale, c?.margeBruteGlobale)}
-              trend={{ dir: 'neutral', text: `Taux de marge brute : ${d.tauxMarge}%` }}
+              trend={{ dir: 'neutral', text: `Taux de marge brute : ${fmtPourcentage(d.tauxMarge)}` }}
               color="green"
             />
           </>
@@ -242,7 +242,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
                     tooltip: {
                       callbacks: {
                         label: ctx => ctx.dataset.label === 'Taux de marge %'
-                          ? `${ctx.dataset.label}: ${ctx.parsed.y}%`
+                          ? `${ctx.dataset.label}: ${fmtPourcentage(ctx.parsed.y)}`
                           : `${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`,
                       },
                     },

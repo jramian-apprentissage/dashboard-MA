@@ -1,4 +1,5 @@
 // ─── CSV Parser ─────────────────────────────────────────────────────────────
+import { partPct, fmtPourcentage } from '../utils/formatNumber';
 
 function parseCSVLine(line) {
   const result = [];
@@ -220,16 +221,16 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
     .map(([t, v]) => ({
       t,
       appels: v.appels,
-      join:   v.appels > 0 ? Math.round((v.decroche / v.appels) * 100) : 0,
+      join:   partPct(v.decroche, v.appels),
       // Part des appels décrochés qui ont donné plus de 30 secondes d'échange.
-      echange30s: v.appels > 0 ? Math.round((v.echange30s / v.appels) * 100) : 0,
+      echange30s: partPct(v.echange30s, v.appels),
       rdv:    v.rdv,
       // Trié par volume : au survol, on veut voir d'abord qui porte la tranche.
       agents: Object.entries(v.agents)
         .map(([nom, a]) => ({
           nom,
           appels: a.appels,
-          join:   a.appels > 0 ? Math.round((a.decroche / a.appels) * 100) : 0,
+          join:   partPct(a.decroche, a.appels),
           rdv:    a.rdv,
         }))
         .sort((a, b) => b.appels - a.appels),
@@ -245,7 +246,7 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
     const count = cat.key
       ? filtered.filter(r => hasTagCat(r.tags, cat.key)).length
       : filtered.filter(r => !r.tags || r.tags.trim() === '').length;
-    return { ...cat, count, pct: total > 0 ? Math.round(count / total * 100) : 0 };
+    return { ...cat, count, pct: partPct(count, total) };
   }).filter(c => c.count > 0);
 
   // ── Statistiques par tag individuel (liste complète) ─────────────────────
@@ -262,7 +263,7 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   });
   const tagStats = Object.entries(tagMap)
     .sort(([, a], [, b]) => b - a)
-    .map(([tag, count]) => ({ tag, count, pct: total > 0 ? Math.round(count / total * 100) : 0 }));
+    .map(([tag, count]) => ({ tag, count, pct: partPct(count, total) }));
 
   // ── Statistiques par collaborateur ──────────────────────────────────────────
   const collabStats = {};
@@ -290,12 +291,12 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
       echanges30s: v.echange30s,
       argues: v.argues,
       fichesExploitables: v.fichesExploitables,
-      tauxFichesExploit: v.appels > 0 ? Math.round((v.fichesExploitables / v.appels) * 100) : 0,
+      tauxFichesExploit: partPct(v.fichesExploitables, v.appels),
       // `taux` = taux de décroché. Conservé sous ce nom pour ne pas casser le
       // tri du tableau par collaborateur, mais il mesure désormais le statut
       // et non plus une durée.
-      taux:   v.appels > 0 ? `${Math.round((v.decroche / v.appels) * 100)}%` : '—',
-      tauxEchange30s: v.appels > 0 ? Math.round((v.echange30s / v.appels) * 100) : 0,
+      taux:   v.appels > 0 ? fmtPourcentage(partPct(v.decroche, v.appels)) : '—',
+      tauxEchange30s: partPct(v.echange30s, v.appels),
     }])
   );
 
@@ -408,7 +409,7 @@ export function computeAsusData(rows, dateFrom, dateTo, collab = 'Tous') {
   const dureeComm      = r => (r.conversation ?? r.duration ?? 0);
   const dureeMoyenneS  = totalAppels ? Math.round(filtered.reduce((s, r) => s + dureeComm(r), 0) / totalAppels) : 0;
   const bonsAppels     = filtered.filter(r => dureeComm(r) >= BON_APPEL_SECONDES).length;
-  const tauxBons       = totalAppels ? Math.round((bonsAppels / totalAppels) * 100) : 0;
+  const tauxBons       = partPct(bonsAppels, totalAppels);
 
   // TMC par sens — même donnée que sortant.total/entrant.total, calculée à
   // part pour ne pas faire dépendre computeAsusData() du contenu de parTag.
@@ -587,7 +588,7 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
 
   const rdvPris    = filtered.length;
   const rdvHonores = filtered.filter(r => r.honore).length;
-  const tauxHonores = rdvPris > 0 ? Math.round((rdvHonores / rdvPris) * 100) : 0;
+  const tauxHonores = partPct(rdvHonores, rdvPris);
 
   // ── Par collaborateur ──────────────────────────────────────────────────────
   const collabMap = {};
@@ -704,6 +705,6 @@ export function computeRDVStatsForRange(rdvRows, validCollabs, collab, dateFrom,
 
   const rdvPris = filtered.length;
   const rdvHonores = filtered.filter(r => r.honore).length;
-  const tauxHonores = rdvPris > 0 ? Math.round((rdvHonores / rdvPris) * 100) : 0;
+  const tauxHonores = partPct(rdvHonores, rdvPris);
   return { rdvPris, rdvHonores, tauxHonores };
 }

@@ -1,7 +1,7 @@
 import { Doughnut } from 'react-chartjs-2';
 import { Chart, ArcElement, Tooltip } from 'chart.js';
 import { useInView } from '../../hooks/useInView';
-import { fmtNumber } from '../../utils/formatNumber';
+import { fmtNumber, fmtPourcentage, partPct } from '../../utils/formatNumber';
 import styles from './DonutChart.module.css';
 
 Chart.register(ArcElement, Tooltip);
@@ -70,7 +70,7 @@ const labelsPlugin = {
     let calloutSeq = 0;
 
     meta.data.forEach((arc, i) => {
-      const pct = Math.round((ds.data[i] / total) * 100);
+      const pct = partPct(ds.data[i], total);
       const mid = (arc.startAngle + arc.endAngle) / 2;
 
       /* Le % ne tient dans la tranche que si elle est assez épaisse
@@ -117,7 +117,7 @@ const labelsPlugin = {
         // Pourcentage seul — le nom complet, en plus sur un petit rappel
         // filaire, se chevauchait sur mobile pour les tranches serrées. La
         // légende (couleur + libellé) et le survol restent la source de détail.
-        ctx.fillText(`${pct}%`, x3 + (goRight ? 3 : -3), y2);
+        ctx.fillText(fmtPourcentage(pct), x3 + (goRight ? 3 : -3), y2);
         ctx.restore();
       }
     });
@@ -200,7 +200,7 @@ export default function DonutChart({
                 tooltip: {
                   callbacks: {
                     label: ctx => tooltip
-                      ? tooltip(ctx.label, ctx.parsed, total ? Math.round(ctx.parsed / total * 100) : 0)
+                      ? tooltip(ctx.label, ctx.parsed, partPct(ctx.parsed, total))
                       : `${ctx.label} : ${ctx.parsed}`,
                   },
                 },

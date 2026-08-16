@@ -17,7 +17,7 @@ import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnect
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import MontantExact from '../../../components/ui/MontantExact';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
-import { fmtEurosExact, fmtEurosDetail } from '../../../utils/formatNumber';
+import { fmtEurosExact, fmtEurosDetail, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import { SHOW_COMPTES_KPIS, SHOW_MONDAY_KPIS } from '../../../config/featureFlags';
 import styles from './FocusClient.module.css';
 import RechercheListe from '../../../components/ui/RechercheListe';
@@ -219,7 +219,7 @@ export default function FocusClient() {
                 trend={{
                   dir: 'neutral',
                   text: result.caNouveauxClients > 0
-                    ? `Taux : ${Math.round(result.margeBruteNouveaux / result.caNouveauxClients * 100)}%`
+                    ? `Taux : ${fmtPourcentage(partPct(result.margeBruteNouveaux, result.caNouveauxClients))}`
                     : '—',
                 }}
                 color={result.margeBruteNouveaux >= 0 ? 'green' : 'red'}
@@ -255,7 +255,7 @@ export default function FocusClient() {
                             }}
                           />
                         </div>
-                        <span>{c.pct}%</span>
+                        <span>{fmtPourcentage(c.pct)}</span>
                       </div>
                     </td>
                   </tr>
@@ -291,7 +291,7 @@ export default function FocusClient() {
                             }}
                           />
                         </div>
-                        <span>{c.pct}%</span>
+                        <span>{fmtPourcentage(c.pct)}</span>
                       </div>
                     </td>
                   </tr>
@@ -365,7 +365,7 @@ export default function FocusClient() {
                 height={185}
                 centerValue={satisfaction.data.buckets.sain + satisfaction.data.buckets.warning + satisfaction.data.buckets.risque}
                 centerLabel="clients"
-                tooltip={(label, value, pct) => `${label} : ${value} clients (${pct}%)`}
+                tooltip={(label, value, pct) => `${label} : ${value} clients (${fmtPourcentage(pct)})`}
               />
               {satisfaction.data.buckets.sansNote > 0 && (
                 <div className={styles.subnote}>{satisfaction.data.buckets.sansNote} compte(s) sans note pour l'instant</div>

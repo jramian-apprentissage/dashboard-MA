@@ -7,7 +7,7 @@ import { useLeadsAnalytics } from '../../../hooks/useLeadsAnalytics';
 import { useComptesSecteurs } from '../../../hooks/useComptesSecteurs';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
-import { fmtNumber, fmtEurosExact, fmtEurosDetail } from '../../../utils/formatNumber';
+import {fmtNumber, fmtEurosExact, fmtEurosDetail, fmtPourcentage } from '../../../utils/formatNumber';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -183,7 +183,7 @@ export default function FocusCommercial() {
                 />
                 <KPICard
                   label="Win rate"
-                  value={`${winRate}%`}
+                  value={fmtPourcentage(winRate)}
                   compare={cmpPts(winRate, c?.winRate)}
                   trend={{ dir: 'neutral', text: 'Gagnés ÷ (gagnés + perdus + en cours)' }}
                   color={winRate >= 50 ? 'green' : 'amber'}
@@ -251,7 +251,7 @@ export default function FocusCommercial() {
                         <div className={styles.barTrack}>
                           <div className={styles.barFill} style={{ width: `${Math.max(s.pct, 4)}%` }} />
                         </div>
-                        <div className={styles.barVal}>{s.pct}%<span>→ {fmtNumber(s.count)}</span></div>
+                        <div className={styles.barVal}>{fmtPourcentage(s.pct)}<span>→ {fmtNumber(s.count)}</span></div>
                         <div className={styles.barAge} title="Âge moyen depuis la Date RDV">
                           {s.ageMoyenJours != null ? `${s.ageMoyenJours} j` : '—'}
                         </div>
@@ -300,7 +300,7 @@ export default function FocusCommercial() {
                           }}
                         >
                           <span>{fmt(p.amount)}</span>
-                          <span style={{ opacity: 0.7 }}>{p.pct}%</span>
+                          <span style={{ opacity: 0.7 }}>{fmtPourcentage(p.pct)}</span>
                         </div>
                       </div>
                     </div>
@@ -349,7 +349,7 @@ export default function FocusCommercial() {
                     />
                   </svg>
                   <div className={styles.donutCenter}>
-                    <div className={styles.donutVal}>{winRate}%</div>
+                    <div className={styles.donutVal}>{fmtPourcentage(winRate)}</div>
                     <div className={styles.donutLbl}>Win rate</div>
                   </div>
                 </div>
@@ -557,7 +557,7 @@ export default function FocusCommercial() {
                 labels={secteurs.data.map(s => s.label)}
                 colors={sourceColors}
                 height={210}
-                tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${pct}%)`}
+                tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${fmtPourcentage(pct)})`}
               />
               {/* Tableau plutôt que légende : avec 37 secteurs, les pastilles
                   débordaient sur six lignes et devenaient illisibles. Même
@@ -574,7 +574,7 @@ export default function FocusCommercial() {
                       {s.label}
                     </div>
                     <span className={styles.tagCount}>{fmt(s.ca)}</span>
-                    <span className={styles.tagPct}>{s.pct}%</span>
+                    <span className={styles.tagPct}>{fmtPourcentage(s.pct)}</span>
                   </div>
                 ))}
               </div>
@@ -621,7 +621,7 @@ export default function FocusCommercial() {
                     labels={shown.map(s => s.label)}
                     colors={colors}
                     height={210}
-                    tooltip={(label, value) => `${label} : ${value}% (${countByLabel[label] ?? '—'})`}
+                    tooltip={(label, value) => `${label} : ${fmtPourcentage(value)} (${countByLabel[label] ?? '—'})`}
                   />
                   <div className={styles.donutLegend}>
                     {shown.map((s, i) => (
@@ -655,7 +655,7 @@ export default function FocusCommercial() {
                 labels={leads.data.missions.map(m => missionLabels[m.label] || m.label)}
                 colors={missionColors}
                 height={145}
-                tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${pct}%)`}
+                tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${fmtPourcentage(pct)})`}
               />
             </div>
             <div className={styles.missionList}>
@@ -666,7 +666,7 @@ export default function FocusCommercial() {
                     {missionLabels[m.label] || m.label}
                   </div>
                   <div>
-                    <div className={styles.missionRev}><MontantExact exact={fmtEurosExact(m.revenue)}>{fmtEurosDetail(m.revenue)}</MontantExact> <span className={styles.missionPct}>· {m.pct}%</span></div>
+                    <div className={styles.missionRev}><MontantExact exact={fmtEurosExact(m.revenue)}>{fmtEurosDetail(m.revenue)}</MontantExact> <span className={styles.missionPct}>· {fmtPourcentage(m.pct)}</span></div>
                     <div className={styles.missionAvg}>Revenu moyen par profil <MontantExact exact={fmtEurosExact(m.moyenne)}>{fmtMoyenne(m.moyenne)}</MontantExact> · {m.count} profils</div>
                   </div>
                 </div>

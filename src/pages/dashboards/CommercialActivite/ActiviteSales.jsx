@@ -4,7 +4,7 @@ import { useRef, useMemo, useState } from 'react';
 import { useChartMount } from '../../../hooks/useChartMount';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText, comparePtsText, compareZeroRefText } from '../../../utils/compareText';
-import { fmtNumber } from '../../../utils/formatNumber';
+import { fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -89,11 +89,11 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
      des agents entre eux — c'est là qu'un pourcentage a du sens. */
   /* Part relative de chaque palier, affichée au survol de la carte via le
      mécanisme d'infobulle de KPICard — la carte ne porte que le volume. */
-  const part = (n, base, nomBase) => (base > 0 ? `${Math.round((n / base) * 100)} % ${nomBase}` : undefined);
+  const part = (n, base, nomBase) => (base > 0 ? `${fmtPourcentage(partPct(n, base))} ${nomBase}` : undefined);
 
   const rdvPris    = rdvResult?.rdvPris ?? '—';
   const rdvHonores = rdvResult?.rdvHonores ?? '—';
-  const tauxHon = rdvResult ? `${rdvResult.tauxHonores}%` : '—';
+  const tauxHon = rdvResult ? fmtPourcentage(rdvResult.tauxHonores) : '—';
   // Source des RDV : la feuille Google "Meetings Bookés". L'URL vit dans
   // VITE_RDV_SHEET_URL et non en dur — le backend, lui, ne connaît que
   // l'Apps Script qui l'expose en CSV, pas l'adresse de la feuille. Sans
@@ -276,7 +276,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                 tauxFichesExploit: ring?.tauxFichesExploit ?? null,
                 rdvPris,
                 rdvHonores,
-                tauxRdvHonores: rdvPris > 0 ? Math.round((rdvHonores / rdvPris) * 100) : null,
+                tauxRdvHonores: rdvPris > 0 ? partPct(rdvHonores, rdvPris) : null,
               };
             })
             .sort((a, b) => compareCollabRows(a, b, collabSort));
@@ -315,7 +315,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '—'}</td>
                       <td className={styles.tdNum} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</td>
                       <td className={styles.tdNum} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? `${row.tauxRdvHonores}%` : '—'}</td>
+                      <td className={styles.tdNum} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '—'}</td>
                     </tr>
                   );
                 })}
@@ -373,7 +373,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                     tooltip: {
                       callbacks: {
                         label: ctx => ctx.dataset.label === 'Taux d’échanges > 1s %'
-                          ? `${ctx.dataset.label}: ${ctx.parsed.y}%`
+                          ? `${ctx.dataset.label}: ${fmtPourcentage(ctx.parsed.y)}`
                           : `${ctx.dataset.label}: ${ctx.parsed.y} appels`,
                         /* Détail par agent de la tranche survolée (demande de
                            Christophe, 14/08). Un creux de joignabilité à 14h
@@ -435,12 +435,12 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                 height={200}
                 centerValue={salesData.result.categStats.reduce((s2, c) => s2 + c.count, 0)}
                 centerLabel="appels"
-                tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
+                tooltip={(label, value, pct) => `${label} : ${value} appels (${fmtPourcentage(pct)})`}
               />
               <div className={styles.legend} style={{ justifyContent: 'center' }}>
                 {salesData.result.categStats.map(c => (
                   <span key={c.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <span className={styles.legDot} style={{ background: c.color }} />{c.label} {c.pct}%
+                    <span className={styles.legDot} style={{ background: c.color }} />{c.label} {fmtPourcentage(c.pct)}
                   </span>
                 ))}
               </div>
@@ -459,7 +459,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                           {t.tag}
                         </div>
                         <span className={styles.tagCount}>{t.count}</span>
-                        <span className={styles.tagPct}>{t.pct}%</span>
+                        <span className={styles.tagPct}>{fmtPourcentage(t.pct)}</span>
                       </div>
                     );
                   })}

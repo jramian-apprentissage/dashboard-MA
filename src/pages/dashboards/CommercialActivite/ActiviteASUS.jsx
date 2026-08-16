@@ -11,7 +11,7 @@ import DonutChart from '../../../components/ui/DonutChart';
 import MotifBar from '../../../components/ui/MotifBar';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText } from '../../../utils/compareText';
-import { fmtNumber } from '../../../utils/formatNumber';
+import {fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import { computeAsusEvolution, dernierJourArchive } from '../../../services/sheetsParser';
 import styles from './Activite.module.css';
 
@@ -54,11 +54,7 @@ function QualifBreakdown({ stats, compareStats, comparePeriodKey, titre, entete 
      — 0 % — 2 » se contredit à la lecture (retour de Jimmy, 15/08). Sous 1 %,
      on garde une décimale ; au-dessus, l'entier suffit — écrire « 24,2 % » là
      où « 24 % » dit la même chose n'ajoute que du bruit. */
-  const pct = n => {
-    if (total <= 0 || n === 0) return 0;
-    const p = (n / total) * 100;
-    return p < 1 ? Math.max(0.1, Math.round(p * 10) / 10) : Math.round(p);
-  };
+  const pct = n => partPct(n, total);
 
   // La comparaison passe au survol plutôt qu'en colonne : elle intéresse qui
   // la cherche, sans alourdir la lecture d'ensemble.
@@ -211,7 +207,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
                 height={150}
                 centerValue={r.totalAppels}
                 centerLabel="appels"
-                tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
+                tooltip={(label, value, pct) => `${label} : ${value} appels (${fmtPourcentage(pct)})`}
                 showDataLabels={false}
               />
             </div>
@@ -222,13 +218,13 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
                   <span className={styles.legDot} style={{ background: 'var(--asus-blue)' }} />
                   Aboutis
                   <span className={styles.asusTotalRowVal}>{fmtNumber(r.aboutis)}</span>
-                  <span className={styles.asusTotalRowPct}>{r.sortant.total > 0 ? Math.round(r.aboutis / r.sortant.total * 100) : 0}%</span>
+                  <span className={styles.asusTotalRowPct}>{fmtPourcentage(partPct(r.aboutis, r.sortant.total))}</span>
                 </div>
                 <div className={styles.asusTotalRow}>
                   <span className={styles.legDot} style={{ background: 'rgba(167,173,170,0.5)' }} />
                   Non aboutis
                   <span className={styles.asusTotalRowVal}>{fmtNumber(r.nonAboutis)}</span>
-                  <span className={styles.asusTotalRowPct}>{r.sortant.total > 0 ? Math.round(r.nonAboutis / r.sortant.total * 100) : 0}%</span>
+                  <span className={styles.asusTotalRowPct}>{fmtPourcentage(partPct(r.nonAboutis, r.sortant.total))}</span>
                 </div>
               </div>
               <div className={styles.asusTotalGroup}>
@@ -237,13 +233,13 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
                   <span className={styles.legDot} style={{ background: 'rgba(126,184,154,0.75)' }} />
                   Décrochés
                   <span className={styles.asusTotalRowVal}>{fmtNumber(r.decroches)}</span>
-                  <span className={styles.asusTotalRowPct}>{r.entrant.total > 0 ? Math.round(r.decroches / r.entrant.total * 100) : 0}%</span>
+                  <span className={styles.asusTotalRowPct}>{fmtPourcentage(partPct(r.decroches, r.entrant.total))}</span>
                 </div>
                 <div className={styles.asusTotalRow}>
                   <span className={styles.legDot} style={{ background: 'rgba(196,135,106,0.75)' }} />
                   Manqués
                   <span className={styles.asusTotalRowVal}>{fmtNumber(r.manques)}</span>
-                  <span className={styles.asusTotalRowPct}>{r.entrant.total > 0 ? Math.round(r.manques / r.entrant.total * 100) : 0}%</span>
+                  <span className={styles.asusTotalRowPct}>{fmtPourcentage(partPct(r.manques, r.entrant.total))}</span>
                 </div>
               </div>
             </div>
@@ -350,7 +346,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               trend={{ dir: 'neutral', text: `${fmtDuree(r.dureeMoyenneSortantS)} — appels sortants · ${fmtDuree(r.dureeMoyenneEntrantS)} — appels entrants` }}
               color="default"
             />
-            <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null} trend={{ dir: 'neutral', text: `${r.tauxBons}% du total` }} color="default" />
+            <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null} trend={{ dir: 'neutral', text: `${fmtPourcentage(r.tauxBons)} du total` }} color="default" />
           </div>
         ) : (
           <NotConnected>en attente de l'archive Ringover</NotConnected>

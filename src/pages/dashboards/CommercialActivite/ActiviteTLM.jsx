@@ -13,7 +13,7 @@ import { usePeriod } from '../../../contexts/PeriodContext';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { fetchAPI } from '../../../services/api';
 import { compareValueText, comparePtsText, compareZeroRefText } from '../../../utils/compareText';
-import { fmtNumber } from '../../../utils/formatNumber';
+import { fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import styles from './Activite.module.css';
 
 Chart.register(LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
@@ -235,9 +235,9 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
   const motifHorsCriteres      = isFilteredToAgent ? 0 : (summary?.motif_hors_criteres ?? 0);
   const motifsTotal = motifRefusCategorique + motifBarrageSecretaire + motifHorsCriteres;
   const motifs = [
-    { label: 'Refus catégorique',  count: motifRefusCategorique,  pct: motifsTotal > 0 ? Math.round(motifRefusCategorique / motifsTotal * 100) : 0 },
-    { label: 'Hors critères',      count: motifHorsCriteres,      pct: motifsTotal > 0 ? Math.round(motifHorsCriteres / motifsTotal * 100) : 0 },
-    { label: 'Barrage secrétaire', count: motifBarrageSecretaire, pct: motifsTotal > 0 ? Math.round(motifBarrageSecretaire / motifsTotal * 100) : 0 },
+    { label: 'Refus catégorique',  count: motifRefusCategorique,  pct: partPct(motifRefusCategorique, motifsTotal) },
+    { label: 'Hors critères',      count: motifHorsCriteres,      pct: partPct(motifHorsCriteres, motifsTotal) },
+    { label: 'Barrage secrétaire', count: motifBarrageSecretaire, pct: partPct(motifBarrageSecretaire, motifsTotal) },
   ];
 
   // Statut des appels — 5 catégories réelles, mutuellement exclusives (voir
@@ -334,7 +334,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
      elle-même ne porte que le volume. Chaque part se rapporte au palier
      précédent, comme dans l'entonnoir. */
   const part = (n, base, nomBase) => (base > 0
-    ? `${Math.round((n / base) * 100)} % ${nomBase}`
+    ? `${fmtPourcentage(partPct(n, base))} ${nomBase}`
     : undefined);
 
   const kpis = [
@@ -351,7 +351,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
     // Hors parcours, comme dans l'entonnoir : elle explique le taux de
     // transformation sans être une étape.
     { label: 'Data non exploitable',       value: nonExploitables,     unit: '', compare: cmp(nonExploitables, 'data_non_exploitable', 'appels_non_exploitables'), trend: trend('Tags Faux numéro, Doublon, Hors service'), exactValue: part(nonExploitables, appelsEmis, 'des appels émis') },
-    { label: 'Transformation nette',       value: `${transfoNette}%`,  unit: '', compare: cmpTransfoNette, trend: trend('RDV pris / appels émis hors data non exploitable') },
+    { label: 'Transformation nette',       value: fmtPourcentage(transfoNette),  unit: '', compare: cmpTransfoNette, trend: trend('RDV pris / appels émis hors data non exploitable') },
     { label: 'Taux RDV honorés',           value: '-',                 unit: '', compare: false, trend: trend('Pas de suivi de présence côté CloudTalk') },
   ];
 
@@ -462,8 +462,8 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
               {agents
                 .map(a => {
                   const fichesAgent = a.fiches_completees + a.rdvs_pris;
-                  const tauxCompletion = a.appels_exploitables > 0 ? Math.round((fichesAgent / a.appels_exploitables) * 100) : 0;
-                  const tauxDecroche30s = a.appels_emis > 0 ? Math.round((a.appels_decroches_30s / a.appels_emis) * 100) : 0;
+                  const tauxCompletion = partPct(fichesAgent, a.appels_exploitables);
+                  const tauxDecroche30s = partPct(a.appels_decroches_30s, a.appels_emis);
                   // Même base nette que le KPI : appels émis moins la data non
                   // exploitable, sinon la colonne contredirait la carte.
                   const baseNette = Math.max(a.appels_emis - (a.appels_non_exploitables ?? 0), 0);
@@ -477,14 +477,14 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                     <td className={styles.tdNum}>{fmtNumber(a.appels_emis)}</td>
                     {/* Le volume, le taux au survol — même arbitrage que
                         l'entonnoir : « la valeur numéraire est plus utile ». */}
-                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${Math.round((a.appels_decroches_1s / Math.max(a.appels_emis, 1)) * 100)}% des appels émis` : undefined}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '—'}</td>
-                    <td className={styles.tdNum} title={`${a.tauxDecroche30s}% des appels émis`}>{fmtNumber(a.appels_decroches_30s)}</td>
+                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${fmtPourcentage(partPct(a.appels_decroches_1s, a.appels_emis))} des appels émis` : undefined}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '—'}</td>
+                    <td className={styles.tdNum} title={`${fmtPourcentage(a.tauxDecroche30s)} des appels émis`}>{fmtNumber(a.appels_decroches_30s)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_exploitables)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.fichesAgent)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.rdvs_pris)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_non_exploitables)}</td>
                     <td className={styles.tdNum}>-</td>
-                    <td className={styles.tdNum}>{a.transfoNette}%</td>
+                    <td className={styles.tdNum}>{fmtPourcentage(a.transfoNette)}</td>
                   </tr>
                 ))}
             </tbody>
@@ -498,7 +498,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
       <Card>
         <div className={styles.funnelWrap}>
           {funnelSteps.map((s, i) => {
-            const pctOfMax = funnelSteps[0].value > 0 ? Math.round((s.value / funnelSteps[0].value) * 100) : 0;
+            const pctOfMax = partPct(s.value, funnelSteps[0].value);
             /* Le nombre porte la lecture, le pourcentage passe au survol.
                Le titre nomme le palier de référence et rappelle son volume :
                « 27% de "Échanges > 30s" (4 221) » se lit sans remonter d'une
@@ -509,7 +509,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                pourcentage des RDV pris n'aurait aucun sens. */
             const precedent = s.aPart ? funnelSteps[0] : funnelSteps[i - 1];
             const pctRef = !precedent ? 0
-              : (precedent.value > 0 ? Math.round((s.value / precedent.value) * 100) : 0);
+              : partPct(s.value, precedent.value);
             return (
               <div
                 key={s.label}
@@ -521,7 +521,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                     mais restait invisible. */}
                 {precedent && (
                   <div className={styles.funnelBulle}>
-                    <strong>{pctRef}%</strong> de « {precedent.label} » ({fmtNumber(precedent.value)})
+                    <strong>{fmtPourcentage(pctRef)}</strong> de « {precedent.label} » ({fmtNumber(precedent.value)})
                   </div>
                 )}
                 <div className={styles.funnelLabel}>{s.label}</div>
@@ -530,7 +530,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                 </div>
                 <div className={styles.funnelValue}>
                   {fmtNumber(s.value)}
-                  {precedent && <span className={styles.funnelPctInline}> · {pctRef}%</span>}
+                  {precedent && <span className={styles.funnelPctInline}> · {fmtPourcentage(pctRef)}</span>}
                 </div>
               </div>
             );
@@ -556,13 +556,13 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                 height={200}
                 centerValue={statutsTotal}
                 centerLabel="appels"
-                tooltip={(label, value, pct) => `${label} : ${value} appels (${pct}%)`}
+                tooltip={(label, value, pct) => `${label} : ${value} appels (${fmtPourcentage(pct)})`}
                 showDataLabels={false}
               />
               <div className={styles.legend} style={{ justifyContent: 'center' }}>
                 {statuts.map(s => (
                   <span key={s.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <span className={styles.legDot} style={{ background: s.color }} />{s.label} {Math.round(s.count / statutsTotal * 100)}%
+                    <span className={styles.legDot} style={{ background: s.color }} />{s.label} {fmtPourcentage(partPct(s.count, statutsTotal))}
                   </span>
                 ))}
               </div>

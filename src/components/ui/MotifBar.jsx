@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { fmtNumber } from '../../utils/formatNumber';
+import {fmtNumber, fmtPourcentage } from '../../utils/formatNumber';
 import styles from './MotifBar.module.css';
 
 export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)', title }) {
@@ -33,7 +33,7 @@ export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)', 
       <div className={styles.val}>
         {/* Virgule décimale française : une part sous 1 % s'écrit « 0,2 % ».
             Les valeurs entières passent inchangées. */}
-        {typeof pct === 'number' ? pct.toLocaleString('fr-FR') : pct}%
+        {typeof pct === 'number' ? fmtPourcentage(pct) : `${pct}%`}
         {count !== undefined && <span> → {fmtNumber(count)}</span>}
       </div>
     </div>

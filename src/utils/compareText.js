@@ -34,9 +34,17 @@ export function compareValueText(current, ref, comparePeriodKey, invert = false)
 }
 
 // Delta en points (taux/pourcentages déjà exprimés en %, ex. win rate).
+//
+// L'écart est arrondi à l'entier, sans exception. Soustraire deux taux à une
+// décimale (la transformation nette, par exemple) fait ressortir l'erreur de
+// représentation binaire : 36,7 - 3,4 donnait « +33.30000000000001 pts », et
+// on a vu passer un « 33,333333333333333333333333 vs période précédente »
+// (retour de Jimmy, 16/08). Un écart en points ne se lit pas à la décimale
+// près — l'entier est la seule forme utile, et la seule qui ne peut pas
+// dégénérer.
 export function comparePtsText(current, ref, comparePeriodKey) {
   if (ref == null || !Number.isFinite(ref) || !Number.isFinite(current)) return null;
-  const diff = current - ref;
+  const diff = Math.round(current - ref);
   const sign = diff > 0 ? '+' : '';
   const unit = Math.abs(diff) === 1 ? 'pt' : 'pts';
   return {
