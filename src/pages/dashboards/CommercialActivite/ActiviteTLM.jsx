@@ -570,9 +570,16 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
           )}
         </Card>
 
-        <Card title="Motif de refus pour les appels non exploitables">
+        {/* Ni « refus », ni « non exploitables ». Les trois motifs comptés
+            ici sont Refus catégorique, Hors critères et Barrage secrétaire :
+            un barrage n'est pas un refus, un hors-critères non plus, et les
+            appels non exploitables sont d'autres tags encore — Faux numéro,
+            Doublon, Hors service, comptés dans leur propre carte. Le point
+            commun des trois est qu'on a joint quelqu'un et que l'échange n'a
+            pas avancé (renommé le 16/08). */}
+        <Card title="Freins rencontrés">
           {isFilteredToAgent ? (
-            <NotConnected>indisponible pour un collaborateur précis — CloudTalk ne remonte les motifs de refus qu'au niveau global</NotConnected>
+            <NotConnected>indisponible pour un collaborateur précis — CloudTalk ne remonte ces motifs qu'au niveau global</NotConnected>
           ) : (
             motifs.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)
           )}

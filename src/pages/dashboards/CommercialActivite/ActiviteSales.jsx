@@ -328,7 +328,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       </Card>
 
       <SectionLabel>Détails des appels</SectionLabel>
-      <Card title={`Taux de décroché par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
+      <Card title={`Taux d’échanges > 1s par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ' — Équipe'}`}>
         {hasData && trancheRows.length > 0 ? (
           <>
             <div className={styles.chartWrap} style={{ height: 240 }}>
@@ -349,7 +349,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                     },
                     {
                       type: 'line',
-                      label: 'Taux de décroché %',
+                      label: 'Taux d’échanges > 1s %',
                       data: trancheRows.map(r => r.appels > 0 ? r.join : null),
                       borderColor: 'rgba(169,141,196,0.9)',
                       backgroundColor: 'rgba(169,141,196,0.04)',
@@ -372,7 +372,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                     legend: { display: false },
                     tooltip: {
                       callbacks: {
-                        label: ctx => ctx.dataset.label === 'Taux de décroché %'
+                        label: ctx => ctx.dataset.label === 'Taux d’échanges > 1s %'
                           ? `${ctx.dataset.label}: ${ctx.parsed.y}%`
                           : `${ctx.dataset.label}: ${ctx.parsed.y} appels`,
                         /* Détail par agent de la tranche survolée (demande de
@@ -403,7 +403,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                   scales: {
                     x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol },
                     y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', title: { display: true, text: 'Nb appels', color: 'rgba(167,173,170,0.4)', font: { size: 9 } } },
-                    y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Taux de décroché %', color: 'rgba(169,141,196,0.6)', font: { size: 9 } } },
+                    y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Taux d’échanges > 1s %', color: 'rgba(169,141,196,0.6)', font: { size: 9 } } },
                   },
                 }}
               />
@@ -411,7 +411,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
             <div className={styles.legend}>
               <span className={styles.legDot} style={{ background: 'rgba(123,170,191,0.7)' }} />Appels émis
               <span style={{ color: 'rgba(142,207,170,0.9)', fontWeight: 600, marginLeft: 14, fontSize: 10 }}>RDV : n</span> affiché sur chaque barre
-              <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Taux de décroché %
+              <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Taux d’échanges &gt; 1s %
             </div>
           </>
         ) : (

@@ -193,7 +193,10 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
     const t = r.heure || '?';
     if (!trancheMap[t]) trancheMap[t] = { appels: 0, decroche: 0, echange30s: 0, rdv: 0, agents: {} };
     trancheMap[t].appels++;
-    if (estDecroche(r)) trancheMap[t].decroche++;
+    /* Même définition que la carte « Échanges > 1s » : décroché ET plus
+       d'une seconde de conversation. Le graphe portait auparavant le statut
+       seul, ce qui donnait deux mesures différentes sous un même nom. */
+    if (estDecroche(r) && dureeEchange(r) > 1) trancheMap[t].decroche++;
     if (estDecroche(r) && dureeEchange(r) > 30) trancheMap[t].echange30s++;
     if (hasTagCat(r.tags, 'OK')) trancheMap[t].rdv++;
 
@@ -204,7 +207,7 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
     const nom = r.collab || '(sans agent)';
     if (!trancheMap[t].agents[nom]) trancheMap[t].agents[nom] = { appels: 0, decroche: 0, rdv: 0 };
     trancheMap[t].agents[nom].appels++;
-    if (estDecroche(r)) trancheMap[t].agents[nom].decroche++;
+    if (estDecroche(r) && dureeEchange(r) > 1) trancheMap[t].agents[nom].decroche++;
     if (hasTagCat(r.tags, 'OK')) trancheMap[t].agents[nom].rdv++;
   });
 
