@@ -73,6 +73,10 @@ export default function FocusClient() {
   const santeSectionRef = useRef(null);
   const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
   const [missionsOuvertes, setMissionsOuvertes] = useState(false);
+  // Index du mois dont on a cliqué la barre dans « Évolution mensuelle des
+  // revenus perdus », ou null. L'infobulle ne montre que les six premières
+  // missions et tait celles sans revenu ; la modale, elle, les donne toutes.
+  const [moisPerdu, setMoisPerdu] = useState(null);
   const c = compareResult;
 
   /* Regroupe les missions par client ET par poste, en sommant les montants
@@ -566,6 +570,21 @@ export default function FocusClient() {
                     responsive: true,
                     maintainAspectRatio: false,
                     animation: mounted ? { duration: 900, easing: 'easeOutQuart' } : false,
+                    /* Clic sur une barre → la liste complète du mois, sur le
+                       même principe que « Voir les N missions » de la carte du
+                       dessus (demande de Jimmy, 17/08). L'infobulle reste le
+                       coup d'œil, la modale le détail.
+
+                       Le curseur passe en main au survol d'une barre : c'est la
+                       seule affordance possible sur un canvas, où il n'y a pas
+                       d'élément à styler. */
+                    onClick: (evt, elements) => {
+                      if (elements.length) setMoisPerdu(elements[0].index);
+                    },
+                    onHover: (evt, elements) => {
+                      const c = evt.native?.target;
+                      if (c) c.style.cursor = elements.length ? 'pointer' : 'default';
+                    },
                     plugins: {
                       legend: { display: false },
                       /* L'infobulle porte le montant exact au centime — l'axe
@@ -607,6 +626,12 @@ export default function FocusClient() {
                               ...(sansRevenu > 0
                                 ? [`${sansRevenu} mission${sansRevenu > 1 ? 's' : ''} sans revenu récurrent`]
                                 : []),
+                              /* L'invitation au clic n'apparaît que si la
+                                 modale montre effectivement plus que
+                                 l'infobulle. Sur un mois à trois missions
+                                 toutes visibles, elle promettrait un détail
+                                 qui n'existe pas. */
+                              ...(reste > 0 || sansRevenu > 0 ? ['', 'Cliquer pour la liste complète'] : []),
                             ];
                           },
                         },
@@ -634,6 +659,45 @@ export default function FocusClient() {
           ) : (
             <NotConnected>chargement…</NotConnected>
           )}
+
+          {/* Liste du mois cliqué. Contrairement à l'infobulle, elle nomme
+              TOUTES les missions, y compris celles sans revenu récurrent : ce
+              sont de vraies pertes, elles n'ont simplement pas d'effet sur la
+              hauteur de la barre, et les taire ici ferait mentir le compte. */}
+          {moisPerdu != null && perdus.monthly?.[moisPerdu] && (() => {
+            const mois = perdus.monthly[moisPerdu];
+            const missions = mois.clients || [];
+            return (
+              <ListeModale
+                titre={`Missions perdues — ${mois.label}`}
+                sousTitre={`${missions.length} mission${missions.length > 1 ? 's' : ''} arrêtée${missions.length > 1 ? 's' : ''} · ${fmtEurosDetail(mois.caPerdu)}`}
+                onClose={() => setMoisPerdu(null)}
+              >
+                {missions.length > 0 ? (
+                  <table className={styles.tbl}>
+                    <thead><tr><th>Client</th><th>Mission</th><th>CA</th></tr></thead>
+                    <tbody>
+                      {missions.map((m, i) => (
+                        <tr key={`${m.nom}|${m.poste}|${i}`}>
+                          <td className={styles.tdName}>{m.nom}</td>
+                          <td className={styles.tdPostes}>
+                            <span className={styles.postePill}>{m.poste || 'Poste non renseigné'}</span>
+                          </td>
+                          <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>
+                            {m.ca > 0
+                              ? <MontantExact exact={fmtEurosExact(m.ca)}>{fmtEurosDetail(m.ca)}</MontantExact>
+                              : <span style={{ color: 'var(--text3)', fontWeight: 400 }}>sans revenu récurrent</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <NotConnected>aucune mission détaillée pour ce mois</NotConnected>
+                )}
+              </ListeModale>
+            );
+          })()}
         </Card>
       </div>
 
