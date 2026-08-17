@@ -83,7 +83,7 @@ function QualifBreakdown({ stats, compareStats, comparePeriodKey, titre, entete 
   ];
   /* Les qualifications commerciales restent affichées même à zéro : « Ventes
      gagnées — 0 » est un résultat, pas un vide. Les issues techniques à zéro
-     sont en revanche masquées — qu'un agent n'ait eu aucun répondeur n'apprend
+     sont en revanche masquées — qu'un collaborateur n'ait eu aucun répondeur n'apprend
      rien et remplissait la moitié de la modale de barres vides. */
   const groupes = [
     { nom: 'Qualifications commerciales',    items: lignes.filter(l => !l.technique),                couleur: 'var(--asus-blue)' },
@@ -92,7 +92,7 @@ function QualifBreakdown({ stats, compareStats, comparePeriodKey, titre, entete 
 
   return (
     <>
-      {/* `entete={false}` dans la modale par agent : le total y est déjà porté
+      {/* `entete={false}` dans la modale par collaborateur : le total y est déjà porté
           par l'en-tête du panneau, le répéter ici ferait doublon. */}
       {entete && (
         <div className={styles.cardHeadRow}>
@@ -189,10 +189,10 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               <button type="button" className={styles.infoBtn} onClick={() => setInfoOpen(o => !o)} aria-label="Définitions Ringover">i</button>
               {infoOpen && (
                 <div className={styles.infoTooltip}>
-                  <p><strong>Aboutis</strong> : Pris par un agent ou tombés sur la messagerie vocale.</p>
+                  <p><strong>Aboutis</strong> : Pris par un collaborateur ou tombés sur la messagerie vocale.</p>
                   <p><strong>Non aboutis</strong> : Impossible de joindre le contact (raccroché avant de faire sonner chez le contact ou échec de la connexion).</p>
-                  <p><strong>Décrochés</strong> : Pris par un agent ou par un standard. Lorsque l'option « Considérer comme appel manqué » est désactivée dans votre standard, les appels sont comptabilisés comme décrochés. Les appels décrochés en interne ne sont pas comptabilisés.</p>
-                  <p><strong>Manqués</strong> : Non pris par un agent ou par un standard avec l'option « Considérer comme manqué » activée.</p>
+                  <p><strong>Décrochés</strong> : Pris par un collaborateur ou par un standard. Lorsque l'option « Considérer comme appel manqué » est désactivée dans votre standard, les appels sont comptabilisés comme décrochés. Les appels décrochés en interne ne sont pas comptabilisés.</p>
+                  <p><strong>Manqués</strong> : Non pris par un collaborateur ou par un standard avec l'option « Considérer comme manqué » activée.</p>
                 </div>
               )}
             </div>
@@ -420,7 +420,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
           </div>
           {/* Même répartition visuelle que les sections principales, plutôt
               qu'une grille de cartes chiffrées. Aucun comparatif ici : la
-              période comparée n'est pas calculée par agent. */}
+              période comparée n'est pas calculée par collaborateur. */}
           <QualifBreakdown stats={qualifStats} entete={false} />
         </div>
       </div>
