@@ -293,21 +293,31 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
           {satisfaction.error ? (
             <div style={{ padding: '8px 0', color: 'var(--neg)', fontSize: 12 }}>Erreur de chargement : {satisfaction.error}</div>
           ) : satisfaction.data ? (
-            <>
-              {/* Scopé aux clients actifs sur la période (mêmes clients que
-                  "Clients actifs" ci-dessus) — rapprochés par nom avec leur
-                  éventuel score live, un client actif sans score retombe
-                  dans "sans note" plutôt que d'être silencieusement exclu. */}
-              <div className={styles.subnote} style={{ marginBottom: 8 }}>Sur les clients actifs de la période</div>
-              <div className={styles.healthRow}>
-                <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</span><span className={styles.hLbl}>Clients sains</span></div>
-                <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Clients sous vigilance</span></div>
-                <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</span><span className={styles.hLbl}>Clients à risque</span></div>
+            (satisfaction.data.buckets.sain + satisfaction.data.buckets.warning + satisfaction.data.buckets.risque) === 0 ? (
+              /* Aucune note sur la période — cas des mois Excel (≤ juillet 2026) :
+                 la note de satisfaction est une donnée Monday, l'historique Excel
+                 n'en comporte pas. On l'affiche explicitement plutôt qu'une
+                 rangée de zéros, qui laisserait croire à un portefeuille sans
+                 aucun client sain. */
+              <div className={styles.subnote} style={{ padding: '10px 0' }}>
+                Note de satisfaction disponible à partir d'août 2026
               </div>
-              {satisfaction.data.buckets.sansNote > 0 && (
-                <div className={styles.subnote} style={{ marginTop: 4 }}>+ {satisfaction.data.buckets.sansNote} client(s) actif(s) sans note pour l'instant</div>
-              )}
-            </>
+            ) : (
+              <>
+                {/* Note lue en point-in-time sur le mois de référence (voir
+                    /comptes/satisfaction) : figée sur le mois, jamais l'état
+                    courant. Clients actifs sur la période. */}
+                <div className={styles.subnote} style={{ marginBottom: 8 }}>Sur les clients actifs de la période</div>
+                <div className={styles.healthRow}>
+                  <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--pos)' }}>{satisfaction.data.buckets.sain}</span><span className={styles.hLbl}>Clients sains</span></div>
+                  <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--warn)' }}>{satisfaction.data.buckets.warning}</span><span className={styles.hLbl}>Clients sous vigilance</span></div>
+                  <div className={styles.hCell}><span className={styles.hNum} style={{ color: 'var(--neg)' }}>{satisfaction.data.buckets.risque}</span><span className={styles.hLbl}>Clients à risque</span></div>
+                </div>
+                {satisfaction.data.buckets.sansNote > 0 && (
+                  <div className={styles.subnote} style={{ marginTop: 4 }}>+ {satisfaction.data.buckets.sansNote} client(s) actif(s) sans note pour l'instant</div>
+                )}
+              </>
+            )
           ) : (
             <NotConnected>chargement…</NotConnected>
           )}
