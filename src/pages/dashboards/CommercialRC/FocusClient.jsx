@@ -323,6 +323,11 @@ export default function FocusClient() {
           ) : satisfaction.error ? (
             <NotConnected>{satisfaction.error}</NotConnected>
           ) : satisfaction.data ? (
+            /* Aucune note = mois Excel (≤ juillet) : message plutôt qu'une
+               rangée de zéros (cohérent avec la Synthèse et le détail). */
+            (satisfaction.data.buckets.sain + satisfaction.data.buckets.warning + satisfaction.data.buckets.risque) === 0 ? (
+              <div className={styles.subnote} style={{ padding: '10px 0' }}>Note de satisfaction disponible à partir d'août 2026</div>
+            ) : (
             <>
               {/* Chiffres en tête, camembert en dessous — même représentation
                   que la synthèse (les nombres se lisent avant le %). Cliquer
@@ -376,6 +381,7 @@ export default function FocusClient() {
               )}
               <div className={styles.subnote}>Score IA Monday — {satisfaction.data.note_limite}</div>
             </>
+            )
           ) : (
             <NotConnected>chargement…</NotConnected>
           )}
@@ -458,6 +464,12 @@ export default function FocusClient() {
                client au-delà des 8 premières lignes ne donnait rien tant que
                la liste n'était pas dépliée. */
             const notes = satisfaction.data.clients.filter(c => c.note != null);
+            /* Aucune note = mois Excel (≤ juillet 2026), donnée Monday-only
+               absente : message explicite plutôt qu'une liste vide, comme la
+               carte santé de la Synthèse. */
+            if (notes.length === 0) {
+              return <div className={styles.subnote} style={{ padding: '10px 0' }}>Note de satisfaction disponible à partir d'août 2026</div>;
+            }
             const filtrees = notes.filter(c => correspond(rechercheSante, c.nom, c.sentiment));
             const sorted = [...filtrees].sort((a, b) =>
               santeDir === 'desc' ? b.note - a.note : a.note - b.note);
@@ -490,6 +502,13 @@ export default function FocusClient() {
                     <div key={c.compteId} className={styles.hsRow}>
                       <div className={styles.hsInfo}>
                         <div className={styles.hsName}>{c.nom}</div>
+                        {c.motifs?.length > 0 && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                            {c.motifs.map(m => (
+                              <span key={m} style={{ fontSize: 10, lineHeight: 1.5, padding: '1px 7px', borderRadius: 999, background: 'rgba(223,47,74,0.10)', color: 'var(--neg)', whiteSpace: 'nowrap' }}>{m}</span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       <div className={styles.hsScore} style={{ color: s.color }}>{c.note}</div>
                       <div className={styles.hsBarCol}>
@@ -528,7 +547,7 @@ export default function FocusClient() {
                   </button>
                 )}
                 <div className={styles.subnote} style={{ marginTop: 8 }}>
-                  Classé du score {santeDir === 'desc' ? 'le plus élevé au plus bas' : 'le plus bas au plus élevé'} · note générée par l'IA Monday, le raisonnement détaillé dispo au survol dans Monday · clients actifs sur la période
+                  Classé du score {santeDir === 'desc' ? 'le plus élevé au plus bas' : 'le plus bas au plus élevé'} · note et motifs d'insatisfaction générés par l'IA Monday · clients actifs sur la période
                 </div>
               </>
             );

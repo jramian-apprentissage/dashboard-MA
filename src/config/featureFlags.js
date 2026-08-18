@@ -26,4 +26,4 @@ export const SHOW_COMPTES_KPIS = true;
  *
  * Ce drapeau ne touche PAS le CA, la marge ni les missions perdues : ceux-là
  * se calculent déjà exclusivement sur l'historique Excel. */
-export const SHOW_MONDAY_KPIS = false;
+export const SHOW_MONDAY_KPIS = true;
