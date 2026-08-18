@@ -9,6 +9,7 @@ import NoPeriodData from '../../../components/ui/NoPeriodData';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
 import MotifBar from '../../../components/ui/MotifBar';
+import FreshnessNote from '../../../components/FreshnessNote';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { compareValueText } from '../../../utils/compareText';
 import {fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
@@ -173,17 +174,9 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
       {() => (
     <>
     <div className={styles.page}>
-      {/* Fraîcheur de l'archive — tout en haut, avant la première section. */}
       {asusData?.error && (
         <div className={styles.dataAlert} style={{ borderColor: 'rgba(196,135,106,0.4)', background: 'rgba(196,135,106,0.08)' }}>
           <span style={{ color: 'var(--neg)' }}>⚠ Erreur :</span> {asusData.error}
-        </div>
-      )}
-      {hasData && asusData.lastFetched && (
-        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — Mise à jour arrêtée au {dernierJourArchive(asusData.rows) || '—'}
-          {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
-          {asusData.loading && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
         </div>
       )}
 
@@ -414,6 +407,8 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
 
       </>
       )}
+
+      <FreshnessNote source="Données Ringover" date={dernierJourArchive(asusData.rows)} loading={asusData.loading} />
     </div>
 
     {qualifOpen && qualifStats && (

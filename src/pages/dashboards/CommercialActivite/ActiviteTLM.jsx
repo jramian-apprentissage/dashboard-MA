@@ -9,6 +9,7 @@ import DonutChart from '../../../components/ui/DonutChart';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import NotConnected from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
+import FreshnessNote from '../../../components/FreshnessNote';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { fetchAPI } from '../../../services/api';
@@ -432,12 +433,6 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
           <span style={{ color: 'var(--neg)' }}>⚠ Erreur :</span> {error}
         </div>
       )}
-      {hasData && (
-        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-          <span style={{ color: 'var(--pos)' }}>● Données CloudTalk</span> — Mise à jour arrêtée au {formatJourMois(summary.dernier_jour)}
-          {loading && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
-        </div>
-      )}
 
       {isEmptyPeriod ? (
         <Card><NoPeriodData suggestion="Essayez le mois précédent, ou élargissez la période sélectionnée." /></Card>
@@ -679,6 +674,8 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
       </div>
       </>
       )}
+
+      <FreshnessNote source="Données CloudTalk" date={formatJourMois(summary?.dernier_jour)} loading={loading} />
     </div>
       )}
     </Loader>

@@ -14,6 +14,7 @@ import NoPeriodData from '../../../components/ui/NoPeriodData';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import { TAG_CATEGORIES, dernierJourArchive } from '../../../services/sheetsParser';
 import DonutChart from '../../../components/ui/DonutChart';
+import FreshnessNote from '../../../components/FreshnessNote';
 import styles from './Activite.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip, Filler);
@@ -274,22 +275,6 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
     <Loader loading={firstLoad} label="Récupération de l'archive Ringover…" minHeight={480}>
       {() => (
     <div className={styles.page}>
-      {/* Fraîcheur de l'archive — tout en haut, alignée à gauche, avant même
-          le titre de section (retour direct : doit être la première chose
-          visible). Le spinner n'apparaît ici que lors d'un rechargement
-          après un changement de filtre (période/collaborateur) — le tout
-          premier chargement reste couvert par le grand Loader central
-          (firstLoad, ce bloc n'est même pas encore monté à ce moment-là) :
-          les utilisateurs regardent le corps du dashboard après avoir
-          cliqué un filtre, pas l'en-tête où vivait l'ancien petit spinner. */}
-      {hasData && salesData.lastFetched && (
-        <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-          <span style={{ color: 'var(--pos)' }}>● Données Ringover</span> — Mise à jour arrêtée au {dernierJourArchive(salesData.rows) || '—'}
-          {selectedCollab !== 'Tous' && <span style={{ color: 'var(--text3)' }}> · filtre : {selectedCollab}</span>}
-          {salesData.loading && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
-        </div>
-      )}
-
       <SectionLabel badge="RINGOVER">Indicateurs principaux</SectionLabel>
 
       {/* Bandeau statut connexion données */}
@@ -611,6 +596,8 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       </Card>
       </>
       )}
+
+      <FreshnessNote source="Données Ringover" date={dernierJourArchive(salesData.rows)} loading={salesData.loading} />
     </div>
       )}
     </Loader>

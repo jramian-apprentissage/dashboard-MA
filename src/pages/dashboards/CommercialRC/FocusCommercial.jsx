@@ -17,6 +17,7 @@ import MotifBar from '../../../components/ui/MotifBar';
 import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
+import FreshnessNote from '../../../components/FreshnessNote';
 import MontantExact from '../../../components/ui/MontantExact';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS, SHOW_MONDAY_KPIS } from '../../../config/featureFlags';
@@ -133,16 +134,6 @@ export default function FocusCommercial() {
 
   return (
     <div className={styles.page}>
-
-      {/* Source des données — Monday CRM, extrait une fois par soir à 21h
-          (voir server/src/mondayIngestion.js) et non plus en continu par
-          webhook : avant 21h, ce qui est affiché date de la veille au soir.
-          Spinner uniquement lors d'un rechargement (changement de filtre),
-          pas au tout premier affichage. */}
-      <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-        <span style={{ color: 'var(--pos)' }}>● Données Monday CRM</span> — Mise à jour arrêtée au {derniereExtractionDDMM()}
-        {loading && result && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
-      </div>
 
       {/* ══ Ligne 1 — L'entonnoir en chiffres : entrée → conversion → sortie ══ */}
       <SectionLabel badge="Monday">Tunnel de vente</SectionLabel>
@@ -678,6 +669,7 @@ export default function FocusCommercial() {
         )}
       </Card>
 
+      <FreshnessNote source="Données Monday CRM" date={derniereExtractionDDMM()} loading={loading} />
     </div>
   );
 }

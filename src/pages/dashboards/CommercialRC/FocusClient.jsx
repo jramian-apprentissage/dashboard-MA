@@ -15,6 +15,7 @@ import Pill from '../../../components/ui/Pill';
 import DonutChart from '../../../components/ui/DonutChart';
 import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
+import FreshnessNote from '../../../components/FreshnessNote';
 import MontantExact from '../../../components/ui/MontantExact';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import { fmtEurosExact, fmtEurosDetail, partPct, fmtPourcentage } from '../../../utils/formatNumber';
@@ -153,16 +154,6 @@ export default function FocusClient() {
 
   return (
     <div className={styles.page}>
-
-      {/* Source des données — Monday CRM, extrait une fois par soir à 21h
-          (voir server/src/mondayIngestion.js) et non plus en continu par
-          webhook : avant 21h, ce qui est affiché date de la veille au soir.
-          Spinner uniquement lors d'un rechargement (changement de filtre),
-          pas au tout premier affichage. */}
-      <div className={styles.dataAlert} style={{ borderColor: 'rgba(142,207,170,0.3)', background: 'rgba(142,207,170,0.06)' }}>
-        <span style={{ color: 'var(--pos)' }}>● Données Monday CRM</span> — Mise à jour arrêtée au {derniereExtractionDDMM()}
-        {loading && result && <span className={styles.dataAlertSpin}><LoaderMark size={14} /></span>}
-      </div>
 
       {/* ══ Ligne 1 — Le solde net du portefeuille : entrées vs sorties ══ */}
       <SectionLabel badge="Monday">Vision client</SectionLabel>
@@ -729,6 +720,7 @@ export default function FocusClient() {
           n'apporte rien (demande de Jimmy, 2026-08-04). À réafficher le jour
           où le calcul existe côté API. */}
 
+      <FreshnessNote source="Données Monday CRM" date={derniereExtractionDDMM()} loading={loading} />
     </div>
   );
 }
