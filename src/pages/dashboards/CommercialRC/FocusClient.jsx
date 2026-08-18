@@ -42,8 +42,11 @@ const sentimentInfo = s => {
 
 const fmtEuros = v => {
   if (!v) return '0 €';
-  if (v >= 1000) return `${(v / 1000).toFixed(0)} K€`;
-  return `${v} €`;
+  // Arrondi des deux côtés : sans lui, un montant < 1000 ressortait en flottant
+  // brut (ex. « 769.8412698412698 € » pour la marge nouveaux de juin). abs() sur
+  // le seuil pour que les marges négatives passent aussi en K€.
+  if (Math.abs(v) >= 1000) return `${(v / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 0 })} K€`;
+  return `${v.toLocaleString('fr-FR', { maximumFractionDigits: 0 })} €`;
 };
 
 const HEALTH_LIST_STEP = 8;
