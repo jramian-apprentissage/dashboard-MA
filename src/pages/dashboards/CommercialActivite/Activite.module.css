@@ -128,6 +128,13 @@
 /* Variante bleu Asus — réservée au dashboard client Asus (co-branding) */
 .evoToggleBtnActiveAsus { background: var(--asus-blue); color: #fff; }
 .cardHeadRow { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+/* Variante des en-têtes qui portent une bascule de granularité
+   (Journalier / Semaine / Mensuel). En petite largeur, la bascule occupe ~220
+   des 301 px disponibles : le titre était comprimé à 77 px et s'enveloppait
+   sur quatre lignes (« Nombre total / d'appels — / entrants et / sortants »).
+   On les empile plutôt que de les faire cohabiter — le titre retrouve la
+   pleine largeur, la bascule passe dessous. */
+.cardHeadRowStack { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
 
 /* Funnel (Taux de transformation nette) */
 .funnelWrap { display: flex; flex-direction: column; gap: 10px; }
@@ -292,6 +299,11 @@
 .infoTooltip p:last-child { margin-bottom: 0; }
 .infoTooltip strong { color: var(--myrtille); }
 @media (max-width: 640px) {
+  .cardHeadRowStack {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
   .infoWrap { display: none; }
 }
 

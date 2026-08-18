@@ -271,7 +271,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
 
       <SectionLabel>Évolution du nombre d'appels</SectionLabel>
       <Card>
-        <div className={styles.cardHeadRow}>
+        <div className={styles.cardHeadRowStack}>
           {/* « Nombre d'appels » seul laissait la question ouverte : entrants,
               sortants, ou les deux ? (retour de Clémence, 14/08).
               computeAsusEvolution ne filtre que par collaborateur et par date,

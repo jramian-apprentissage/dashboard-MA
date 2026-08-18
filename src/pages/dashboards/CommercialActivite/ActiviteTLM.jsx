@@ -598,7 +598,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
 
       <SectionLabel>Évolution des appels et fiches complétées</SectionLabel>
       <Card>
-        <div className={styles.cardHeadRow}>
+        <div className={styles.cardHeadRowStack}>
           <div className={styles.legend}>
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
               <span className={styles.legDot} style={{ background: 'rgba(38,0,31,0.8)' }} />Appels
