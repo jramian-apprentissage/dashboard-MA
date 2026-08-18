@@ -5,7 +5,6 @@ import { useAuth, DASHBOARDS, HOME_PAGE, ROLES, roleLabel } from '../contexts/Au
 // Accueil + dashboards : même mécanisme de toggle, une seule liste pour
 // piloter à la fois les colonnes du tableau et la checklist de création.
 const TOGGLEABLE_PAGES = [HOME_PAGE, ...DASHBOARDS];
-import { getHistory, clearHistory } from '../services/tracking';
 import heroBg from '../assets/hero-admin.svg';
 import AccesDashboards from '../components/ui/AccesDashboards';
 import styles from './Admin.module.css';
@@ -15,8 +14,17 @@ function formatTs(iso) {
   return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+/* Le journal stocke l'IDENTIFIANT du tableau de bord, pas son libellé :
+   renommer une page côté produit ne doit pas réécrire l'historique. Le
+   libellé se retrouve ici, à l'affichage. */
+function libelleDashboard(id) {
+  if (!id) return '—';
+  return DASHBOARDS.find(d => d.id === id)?.label || id;
+}
+
 export default function Admin() {
-  const { user, getAllUsers, createUser, updateUserDashboards, deleteUser } = useAuth();
+  const { user, getAllUsers, createUser, updateUserDashboards, deleteUser,
+          chargerActivite, effacerActivite } = useAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loadError, setLoadError] = useState('');
@@ -27,15 +35,26 @@ export default function Admin() {
   const [accesUser, setAccesUser] = useState(null);
   const [historyUser, setHistoryUser] = useState(null);
   const [historyEvents, setHistoryEvents] = useState([]);
+  const [historyError, setHistoryError] = useState('');
 
-  function openHistory(u) {
+  async function openHistory(u) {
     setHistoryUser(u);
-    setHistoryEvents(getHistory(u.id));
+    setHistoryEvents([]);
+    setHistoryError('');
+    try {
+      setHistoryEvents(await chargerActivite(u.id));
+    } catch (e) {
+      setHistoryError(e.message);
+    }
   }
 
-  function handleClearHistory(uid) {
-    clearHistory(uid);
-    setHistoryEvents([]);
+  async function handleClearHistory(uid) {
+    try {
+      await effacerActivite(uid);
+      setHistoryEvents([]);
+    } catch (e) {
+      setHistoryError(e.message);
+    }
   }
 
   useEffect(() => {
@@ -219,17 +238,18 @@ export default function Admin() {
               </div>
             </div>
             <div className={styles.historyList}>
-              {historyEvents.length === 0 && (
-                <div className={styles.historyEmpty}>Aucun historique disponible</div>
+              {historyError && <div className={styles.historyEmpty}>{historyError}</div>}
+              {!historyError && historyEvents.length === 0 && (
+                <div className={styles.historyEmpty}>Aucune activité enregistrée</div>
               )}
               {historyEvents.map((ev, i) => (
                 <div key={i} className={styles.historyItem}>
-                  <span className={`${styles.historyBadge} ${ev.type === 'login' ? styles.badgeLogin : styles.badgeVisit}`}>
-                    {ev.type === 'login' ? 'Connexion' : 'Visite'}
+                  <span className={`${styles.historyBadge} ${ev.type === 'connexion' ? styles.badgeLogin : styles.badgeVisit}`}>
+                    {ev.type === 'connexion' ? 'Connexion' : 'Consultation'}
                   </span>
                   <div className={styles.historyInfo}>
-                    <span className={styles.historyPage}>{ev.page || '—'}</span>
-                    <span className={styles.historyTs}>{formatTs(ev.timestamp)}</span>
+                    <span className={styles.historyPage}>{libelleDashboard(ev.dashboard)}</span>
+                    <span className={styles.historyTs}>{formatTs(ev.survenu_le)}</span>
                   </div>
                 </div>
               ))}

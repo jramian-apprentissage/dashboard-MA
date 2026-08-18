@@ -1,38 +1,32 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { trackEvent } from '../services/tracking';
 
-const BASE_LABELS = {
-  '/':                    'Accueil',
-  '/commercial-rc':       'Commercial & Relation Client',
-  '/commercial-activite': 'Activités commerciales',
-  '/glossaire':           'Glossaire KPI',
-  '/admin':               'Administration',
+/* Identifiant du tableau de bord ouvert, ou rien pour les pages qui n'en sont
+   pas un. Seuls les trois tableaux de bord sont journalisés : ce qu'on veut
+   savoir, c'est si les équipes les consultent — y mêler l'accueil, le
+   glossaire et l'administration diluerait les 40 entrées conservées.
+
+   L'onglet (?tab=…) est délibérément ignoré. « Activités commerciales »
+   répond à la question posée ; « Activités commerciales — Activité TLM »
+   relèverait du suivi des gestes individuels, pas de la mesure d'adoption
+   (arbitrage de Jimmy, 17/08/2026). C'est aussi ce qui évite qu'un
+   aller-retour entre onglets remplisse le journal à lui seul. */
+const DASHBOARD_PAR_CHEMIN = {
+  '/commercial-rc':       'commercial-rc',
+  '/commercial-activite': 'commercial-activite',
+  '/asus':                'asus',
 };
-
-const TAB_LABELS = {
-  synthese:          'KPIs principaux',
-  commercial:        'Pôle commercial',
-  client:            'Pôle relation client',
-  sales:             'Activité Sales',
-  tlm:               'Activité TLM',
-};
-
-function pageLabel(pathname, search) {
-  const base = BASE_LABELS[pathname] || pathname;
-  const tab  = new URLSearchParams(search).get('tab');
-  return tab && TAB_LABELS[tab] ? `${base} — ${TAB_LABELS[tab]}` : base;
-}
 
 export default function PageTracker() {
-  const { user } = useAuth();
+  const { user, enregistrerConsultation } = useAuth();
   const location = useLocation();
+  const dashboard = DASHBOARD_PAR_CHEMIN[location.pathname];
 
   useEffect(() => {
-    if (!user) return;
-    trackEvent(user.id, user.name, 'visit', pageLabel(location.pathname, location.search));
-  }, [location.pathname, location.search, user?.id]); // eslint-disable-line
+    if (!user || !dashboard) return;
+    enregistrerConsultation(dashboard);
+  }, [dashboard, user?.id]); // eslint-disable-line
 
   return null;
 }

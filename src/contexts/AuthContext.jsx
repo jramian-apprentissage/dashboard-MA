@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { trackEvent } from '../services/tracking';
 
 /* Comptes et droits gérés par le backend (table `users`, routes /api/auth
    et /api/users) — plus aucun mock en mémoire/localStorage côté frontend.
@@ -112,7 +111,6 @@ export function AuthProvider({ children }) {
     localStorage.setItem(USER_KEY, JSON.stringify(u));
     setToken(t);
     setUser(u);
-    trackEvent(u.id, u.name, 'login');
     return true;
   }
 
@@ -121,6 +119,38 @@ export function AuthProvider({ children }) {
     setToken(null);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+  }
+
+  /* ── Journal d'usage ─────────────────────────────────────────────────────
+     Le suivi vivait dans le localStorage : chaque navigateur tenait le sien,
+     et un administrateur ouvrant l'historique d'un collaborateur lisait en
+     réalité le sien, filtré sur l'identifiant de l'autre — donc toujours
+     vide. Le panneau annonçait « Aucun historique disponible », ce qui se lit
+     « cette personne ne vient jamais ». Tout est désormais en base.
+
+     On n'enregistre que l'identifiant du tableau de bord, jamais l'onglet
+     ouvert à l'intérieur : on mesure l'adoption, pas le détail des gestes. */
+  async function enregistrerConsultation(dashboardId) {
+    // Silencieux par construction : un journal qui échoue ne doit jamais
+    // interrompre la navigation de qui que ce soit.
+    try {
+      await authFetch('/activite', token, {
+        method: 'POST',
+        body: JSON.stringify({ dashboard: dashboardId }),
+      });
+    } catch { /* sans effet */ }
+  }
+
+  async function chargerActivite(userId) {
+    const res = await authFetch(`/activite/${userId}`, token);
+    if (!res.ok) throw new Error("Impossible de charger le journal d'usage");
+    return res.json();
+  }
+
+  async function effacerActivite(userId) {
+    const res = await authFetch(`/activite/${userId}`, token, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Suppression impossible');
+    return res.json();
   }
 
   async function getAllUsers() {
@@ -192,6 +222,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider value={{
       user, ready, login, logout, changePassword,
       getAllUsers, createUser, updateUserDashboards, deleteUser,
+      enregistrerConsultation, chargerActivite, effacerActivite,
       hasAccessToDashboard,
     }}>
       {children}
