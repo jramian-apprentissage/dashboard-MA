@@ -198,6 +198,27 @@
   color: var(--text2);
   margin-bottom: 2px;
 }
+/* Intitulé de groupe des répartitions par qualification.
+
+   Il portait `.subNote`, exactement le style des lignes de valeurs qu'il
+   chapeaute : « Qualifications commerciales » se lisait comme une entrée de
+   plus, pas comme un titre (retour de Jimmy, 18/08). On reprend l'idiome
+   d'en-tête déjà en place sur cette page (.asusTotalGroupTitle) et on y ajoute
+   un filet.
+
+   Un filet plutôt qu'un `text-decoration: underline` : le souligné est réservé
+   au cliquable dans ce produit, et le filet court sur toute la largeur du
+   bloc — ce qui chapeaute mieux le groupe qu'un trait sous les seuls mots. */
+.qualifGroupTitle {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text2);
+  padding-bottom: 5px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
 .asusTotalRow {
   display: flex;
   align-items: center;

@@ -13,7 +13,7 @@
   position: absolute;
   inset: 0;
   background-size: cover;
-  background-position: center 55%;
+  background-position: var(--hero-bg-pos, center 55%);
   background-repeat: no-repeat;
   opacity: 0.18;
   pointer-events: none;
@@ -584,7 +584,35 @@
 
 /* Mobile (≤ 640px) */
 @media (max-width: 640px) {
-  .hero       { height: auto; min-height: 130px; }
+  /* ── La photo du bandeau, en petite largeur ────────────────────────────
+     Rien ne la touchait ici : tout le responsive du hero portait sur le texte
+     et les boutons, et les valeurs desktop fuyaient telles quelles.
+
+     Sous ~400 px, le rapport du bandeau se rapproche de celui de l'image :
+     `cover` bascule alors d'axe, le cadrage vertical devient inerte et la
+     photo est écrasée dans la bande. On tombe sur le filigrane incrusté,
+     illisible, dans le coin justement le moins voilé (retour de Jimmy,
+     18/08). À 130 px de haut le débordement horizontal n'est que d'une
+     quarantaine de pixels : aucun réglage de position ne suffit à l'évacuer.
+
+     On redonne donc de la hauteur — ce qui recrée un vrai débordement — puis
+     on recadre vers la droite pour sortir le filigrane du champ. */
+  .hero       { height: auto; min-height: 190px; }
+  .heroBg     { --hero-bg-pos: 55% center; }
+
+  /* Le voile ASUS est un dégradé HORIZONTAL, calé sur une mise en page où le
+     texte occupe la moitié gauche. En mobile le texte prend toute la largeur :
+     ce voile-là ne protège plus rien. On le bascule à la verticale, opaque
+     sous le texte et s'effaçant vers le bas, où la photo peut respirer. */
+  .heroAsus .heroBg { opacity: 0.55; }
+  .heroAsus .heroOverlay {
+    background: linear-gradient(
+      180deg,
+      rgba(242,242,240,0.94) 0%,
+      rgba(242,242,240,0.88) 62%,
+      rgba(242,242,240,0.55) 100%
+    );
+  }
   .heroInner  { padding: 14px 16px 14px; gap: 10px; }
 
   .heroTitleBlock { width: 100%; }

@@ -164,7 +164,13 @@ export default function DashboardLayout({
       {/* Teinte par dashboard (charte ASUS, ou simple repère de couleur pour
           les autres) au lieu du myrtille uni par défaut. */}
       <div className={`${styles.hero} ${heroThemeCls}`}>
-        <div className={styles.heroBg} style={{ backgroundImage: `url(${heroBgSrc || defaultHeroBg})`, backgroundPosition: heroBgPosition }} />
+        {/* Le cadrage passe par une custom property et non par la propriété
+            finale : un style inline l'emporte sur toute feuille, aucune media
+            query ne pouvait donc recadrer la photo en petite largeur. */}
+        <div
+          className={styles.heroBg}
+          style={{ backgroundImage: `url(${heroBgSrc || defaultHeroBg})`, '--hero-bg-pos': heroBgPosition }}
+        />
         <div className={styles.heroOverlay} />
 
         <div className={styles.heroInner}>

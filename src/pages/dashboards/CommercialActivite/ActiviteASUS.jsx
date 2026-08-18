@@ -101,8 +101,8 @@ function QualifBreakdown({ stats, compareStats, comparePeriodKey, titre, entete 
         </div>
       )}
       {groupes.map((g, i) => (
-        <div key={g.nom} style={{ marginTop: !entete && i === 0 ? 0 : 14 }}>
-          <div className={styles.subNote} style={{ marginBottom: 7 }}>{g.nom}</div>
+        <div key={g.nom} style={{ marginTop: !entete && i === 0 ? 0 : 20 }}>
+          <div className={styles.qualifGroupTitle}>{g.nom}</div>
           {[...g.items].sort((a, b) => b.count - a.count).map(i => (
             <MotifBar
               key={i.label}
@@ -126,6 +126,25 @@ function ClickIcon() {
     </svg>
   );
 }
+
+/* Palette de la carte « Nombre total d'appels » — source unique du donut ET
+   des pastilles de sa légende.
+
+   Les deux divergeaient sur « Aboutis », et la cause n'était pas un décalage
+   d'index : la couleur était écrite `var(--asus-blue)` des deux côtés. Le CSS
+   de la légende la résout en #006CE1 ; le canvas du donut, lui, ne connaît pas
+   les variables CSS. `ctx.fillStyle` ignore SILENCIEUSEMENT une valeur qu'il
+   ne sait pas parser et conserve la précédente — le segment prenait donc la
+   couleur de son voisin, sans le moindre avertissement.
+
+   Règle qui en découle : tout ce qui part vers un graphique doit être un
+   littéral, jamais un jeton CSS. */
+const ASUS_SEGMENTS = {
+  aboutis:    '#006CE1',                 // identique à var(--asus-blue)
+  nonAboutis: 'rgba(167,173,170,0.5)',
+  decroches:  'rgba(126,184,154,0.75)',
+  manques:    'rgba(196,135,106,0.75)',
+};
 
 export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compareResult }) {
   const hasData = asusData?.hasData && asusData?.result;
@@ -203,7 +222,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
                 variant="donut"
                 data={[r.aboutis, r.nonAboutis, r.decroches, r.manques]}
                 labels={['Aboutis (sortant)', 'Non aboutis (sortant)', 'Décrochés (entrant)', 'Manqués (entrant)']}
-                colors={['var(--asus-blue)', 'rgba(167,173,170,0.5)', 'rgba(126,184,154,0.75)', 'rgba(196,135,106,0.75)']}
+                colors={[ASUS_SEGMENTS.aboutis, ASUS_SEGMENTS.nonAboutis, ASUS_SEGMENTS.decroches, ASUS_SEGMENTS.manques]}
                 height={150}
                 centerValue={r.totalAppels}
                 centerLabel="appels"
@@ -215,13 +234,13 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               <div className={styles.asusTotalGroup}>
                 <div className={styles.asusTotalGroupTitle}>Appels sortants</div>
                 <div className={styles.asusTotalRow}>
-                  <span className={styles.legDot} style={{ background: 'var(--asus-blue)' }} />
+                  <span className={styles.legDot} style={{ background: ASUS_SEGMENTS.aboutis }} />
                   Aboutis
                   <span className={styles.asusTotalRowVal}>{fmtNumber(r.aboutis)}</span>
                   <span className={styles.asusTotalRowPct}>{fmtPourcentage(partPct(r.aboutis, r.sortant.total))}</span>
                 </div>
                 <div className={styles.asusTotalRow}>
-                  <span className={styles.legDot} style={{ background: 'rgba(167,173,170,0.5)' }} />
+                  <span className={styles.legDot} style={{ background: ASUS_SEGMENTS.nonAboutis }} />
                   Non aboutis
                   <span className={styles.asusTotalRowVal}>{fmtNumber(r.nonAboutis)}</span>
                   <span className={styles.asusTotalRowPct}>{fmtPourcentage(partPct(r.nonAboutis, r.sortant.total))}</span>
@@ -230,13 +249,13 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               <div className={styles.asusTotalGroup}>
                 <div className={styles.asusTotalGroupTitle}>Appels entrants</div>
                 <div className={styles.asusTotalRow}>
-                  <span className={styles.legDot} style={{ background: 'rgba(126,184,154,0.75)' }} />
+                  <span className={styles.legDot} style={{ background: ASUS_SEGMENTS.decroches }} />
                   Décrochés
                   <span className={styles.asusTotalRowVal}>{fmtNumber(r.decroches)}</span>
                   <span className={styles.asusTotalRowPct}>{fmtPourcentage(partPct(r.decroches, r.entrant.total))}</span>
                 </div>
                 <div className={styles.asusTotalRow}>
-                  <span className={styles.legDot} style={{ background: 'rgba(196,135,106,0.75)' }} />
+                  <span className={styles.legDot} style={{ background: ASUS_SEGMENTS.manques }} />
                   Manqués
                   <span className={styles.asusTotalRowVal}>{fmtNumber(r.manques)}</span>
                   <span className={styles.asusTotalRowPct}>{fmtPourcentage(partPct(r.manques, r.entrant.total))}</span>
@@ -311,7 +330,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
             stats={r.sortant}
             compareStats={compareResult?.sortant}
             comparePeriodKey={comparePeriodKey}
-            titre="Appels sortants"
+            titre="Total"
           />
         ) : (
           <NotConnected>en attente de l'archive Ringover</NotConnected>
@@ -325,7 +344,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
             stats={r.entrant}
             compareStats={compareResult?.entrant}
             comparePeriodKey={comparePeriodKey}
-            titre="Appels entrants"
+            titre="Total"
           />
         ) : (
           <NotConnected>en attente de l'archive Ringover</NotConnected>
