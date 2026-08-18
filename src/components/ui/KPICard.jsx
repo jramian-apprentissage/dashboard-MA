@@ -138,7 +138,11 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
           comparaison vient s'ajouter au-dessus, elle ne la remplace jamais. */}
       {resolvedCompare && (
         <div className={`${styles.compare} ${styles[resolvedCompare.dir] || ''}`}>
-          <TrendIcon dir={resolvedCompare.dir} />
+          {/* La flèche suit le chiffre (`sens`), la couleur porte le jugement
+              (`dir`) — les deux divergent sur les KPI de perte. Repli sur
+              `dir` pour les comparatifs qui n'ont pas de sens propre (écarts
+              en points, référence à zéro). */}
+          <TrendIcon dir={resolvedCompare.sens || resolvedCompare.dir} />
           <span className={styles.lineText}>{resolvedCompare.text}</span>
         </div>
       )}

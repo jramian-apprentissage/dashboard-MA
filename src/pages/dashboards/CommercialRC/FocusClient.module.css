@@ -110,17 +110,30 @@
 @media (max-width: 900px) {
   .col6040, .col4060, .twoCol { grid-template-columns: 1fr; }
   .kpiGrid { grid-template-columns: 1fr 1fr; }
-  /* Tables larges → défilement horizontal dans la carte, rang + nom figés
-     (les 2 premières colonnes forment l'identité de la ligne) pour ne pas
-     perdre le repère du client pendant le scroll. */
+  /* Tables larges → défilement horizontal dans la carte, l'identité de la
+     ligne restant figée à gauche pour ne pas perdre le repère du client. */
   .tbl { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .tbl th:first-child, .tbl td:first-child,
-  .tbl th:nth-child(2), .tbl td:nth-child(2) {
-    position: sticky; z-index: 1; background: var(--blanc);
+  .tbl th:first-child, .tbl td:first-child {
+    position: sticky; left: 0; z-index: 1; background: var(--blanc);
+    box-shadow: 1px 0 0 var(--border);
   }
-  .tbl th:first-child, .tbl td:first-child { left: 0; }
-  .tbl th:nth-child(2), .tbl td:nth-child(2) { left: 20px; box-shadow: 1px 0 0 var(--border); }
-  .tbl tr:hover td:first-child, .tbl tr:hover td:nth-child(2) { background: rgb(240,238,233); }
+  .tbl tr:hover td:first-child { background: rgb(240,238,233); }
+
+  /* Seuls les tableaux qui ouvrent sur un RANG figent aussi la deuxième
+     colonne : un numéro de 20 px n'identifie pas une ligne, il lui faut le
+     nom à côté. L'offset de 20 px est calé sur la largeur de .rank.
+
+     Cette règle s'appliquait à TOUS les tableaux. Sur « Détail des missions
+     perdues », qui n'a pas de rang et ouvre directement sur « Client », la
+     deuxième colonne se figeait donc à 20 px du bord — par-dessus la
+     première, bien plus large. D'où l'affichage cassé sur mobile signalé par
+     Jimmy le 18/08. */
+  .tblRang th:first-child, .tblRang td:first-child { box-shadow: none; }
+  .tblRang th:nth-child(2), .tblRang td:nth-child(2) {
+    position: sticky; left: 20px; z-index: 1; background: var(--blanc);
+    box-shadow: 1px 0 0 var(--border);
+  }
+  .tblRang tr:hover td:nth-child(2) { background: rgb(240,238,233); }
 }
 @media (max-width: 760px) {
   /* Scorecard santé : la barre+pill passe en pleine largeur sous le nom */

@@ -51,7 +51,7 @@ const REGISTRY = [
       'Nouveaux clients',
       'Missions perdues',
       'Portefeuille de clients actifs',
-      'Marge brute nouveaux',
+      'Marge brute nouveaux clients',
       'CA par client',
       'Marge brute par client',
       'Niveau de santé client',

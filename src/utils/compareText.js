@@ -25,10 +25,21 @@ export function compareValueText(current, ref, comparePeriodKey, invert = false)
   if (ref === 0) return compareZeroRefText(comparePeriodKey);
   const pct = Math.round(((current - ref) / ref) * 100);
   const sign = pct > 0 ? '+' : '';
-  let dir = pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral';
+  /* Deux directions, et il faut les distinguer :
+       `sens` suit le CHIFFRE — +11 % monte, -20 % descend. C'est la flèche.
+       `dir`  porte le JUGEMENT — vert si c'est une bonne nouvelle. C'est la couleur.
+
+     Sur un KPI de perte, les deux divergent : +11 % de missions perdues, ça
+     monte (flèche ↗) et c'est mauvais (rouge). Tant que `dir` pilotait aussi
+     la flèche, la carte affichait « ↘ +11 % » — une flèche qui descend collée
+     à un nombre qui monte, ce qui se lit comme une erreur de calcul et non
+     comme un jugement. */
+  const sens = pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral';
+  let dir = sens;
   if (invert && dir !== 'neutral') dir = dir === 'up' ? 'down' : 'up';
   return {
     dir,
+    sens,
     text: `${pct === 0 ? '=' : sign + pct + '%'} vs ${compareLabel(comparePeriodKey)}`,
   };
 }

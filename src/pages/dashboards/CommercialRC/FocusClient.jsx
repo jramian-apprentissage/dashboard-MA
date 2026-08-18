@@ -179,7 +179,7 @@ export default function FocusClient() {
               <KPICard {...notConnectedKPI('Nouveaux clients', COMPTES_HIDDEN_REASON, 'green')} />
               <KPICard {...notConnectedKPI('Clients perdus', COMPTES_HIDDEN_REASON, 'red')} />
               <KPICard {...notConnectedKPI('Portefeuille de clients actifs', COMPTES_HIDDEN_REASON, 'blue')} />
-              <KPICard {...notConnectedKPI('Marge brute nouveaux', COMPTES_HIDDEN_REASON, 'green')} />
+              <KPICard {...notConnectedKPI('Marge brute nouveaux clients', COMPTES_HIDDEN_REASON, 'green')} />
             </>
           ) : (
             <>
@@ -212,11 +212,11 @@ export default function FocusClient() {
                 value={result.nbClientsActifs}
                 unit=" actifs"
                 compare={cmp(result.nbClientsActifs, c?.nbClientsActifs)}
-                trend={{ dir: 'neutral', text: 'Clients ayant généré du CA sur la période' }}
+                trend={{ dir: 'neutral', text: 'Clients ayant générés du CA sur la période' }}
                 color="blue"
               />
               <KPICard
-                label="Marge brute nouveaux"
+                label="Marge brute nouveaux clients"
                 value={fmtEuros(result.margeBruteNouveaux)}
                 exactValue={fmtEurosExact(result.margeBruteNouveaux)}
                 compare={cmp(result.margeBruteNouveaux, c?.margeBruteNouveaux)}
@@ -240,7 +240,7 @@ export default function FocusClient() {
           {!SHOW_COMPTES_KPIS ? (
             <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
           ) : result?.topClients?.length > 0 ? (
-            <table className={styles.tbl}>
+            <table className={`${styles.tbl} ${styles.tblRang}`}>
               <thead><tr><th></th><th></th><th>CA</th><th>Part du CA</th></tr></thead>
               <tbody>
                 {result.topClients.map((c, i) => (
@@ -276,7 +276,7 @@ export default function FocusClient() {
           {!SHOW_COMPTES_KPIS ? (
             <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
           ) : result?.topClientsMarge?.length > 0 ? (
-            <table className={styles.tbl}>
+            <table className={`${styles.tbl} ${styles.tblRang}`}>
               <thead><tr><th></th><th></th><th>Marge</th><th>Part de la marge</th></tr></thead>
               <tbody>
                 {result.topClientsMarge.map((c, i) => (
