@@ -163,13 +163,19 @@ export default function DashboardLayout({
       {/* ── Hero header ── */}
       {/* Teinte par dashboard (charte ASUS, ou simple repère de couleur pour
           les autres) au lieu du myrtille uni par défaut. */}
-      <div className={`${styles.hero} ${heroThemeCls}`}>
-        {/* Le cadrage passe par une custom property et non par la propriété
-            finale : un style inline l'emporte sur toute feuille, aucune media
-            query ne pouvait donc recadrer la photo en petite largeur. */}
+      {/* Le cadrage par défaut est posé sur le CONTENEUR, pas sur .heroBg qui
+          l'utilise. Un style inline l'emporte sur toute feuille : porté par
+          .heroBg lui-même, il aurait de nouveau bloqué toute media query — on
+          n'aurait fait que déplacer le problème de `background-position` vers
+          la variable. Posé ici, il se transmet par héritage, et une règle
+          visant .heroBg reprend la main en petite largeur. */}
+      <div
+        className={`${styles.hero} ${heroThemeCls}`}
+        style={{ '--hero-bg-pos': heroBgPosition }}
+      >
         <div
           className={styles.heroBg}
-          style={{ backgroundImage: `url(${heroBgSrc || defaultHeroBg})`, '--hero-bg-pos': heroBgPosition }}
+          style={{ backgroundImage: `url(${heroBgSrc || defaultHeroBg})` }}
         />
         <div className={styles.heroOverlay} />
 
