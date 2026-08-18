@@ -31,6 +31,8 @@ const lineAnim = { duration: 900, easing: 'easeOutQuart' };
    dans cette bande — sous les libellés horaires, pas dessus. */
 const BANDE_RDV = 26;
 const BANDE_RDV_Y = 11;
+// Nommé une seule fois, dans la bande elle-même.
+const LEGENDE_RDV = 'RDV pris';
 
 /* Les RDV, en bande sous l'axe des heures.
 
@@ -73,11 +75,27 @@ function makeRdvPlugin(rowsRef) {
       const meta = chart.getDatasetMeta(0);
       ctx.save();
       ctx.font = 'bold 10px OverusedGrotesk, sans-serif';
-      ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       // Vert nettement plus soutenu que l'ancien : sur le fond blanc de la
       // carte, le vert pâle d'origine était à la limite du lisible.
       ctx.fillStyle = 'rgba(46,107,79,0.95)';
+
+      /* Le libellé vit DANS la bande, à gauche et sur la même ligne de base
+         que les chiffres — pas dans la légende sous le graphe. Posé là, il
+         nomme la ligne qu'on est en train de lire au lieu d'obliger l'œil à
+         descendre chercher à quoi ces nombres se rapportent (demande de
+         Jimmy, 18/08). Même vert que les chiffres : c'est ce qui fait le lien.
+
+         Il se loge dans la gouttière de l'axe des ordonnées, à gauche de la
+         zone de tracé. On ne l'écrit que s'il y tient : sur une carte étroite,
+         mieux vaut pas de libellé qu'un libellé chevauchant les graduations. */
+      const gouttiere = chart.chartArea.left;
+      if (ctx.measureText(LEGENDE_RDV).width + 4 <= gouttiere) {
+        ctx.textAlign = 'left';
+        ctx.fillText(LEGENDE_RDV, 2, y);
+      }
+
+      ctx.textAlign = 'center';
       meta.data.forEach((bar, i) => {
         const rdv = rows[i]?.rdv;
         if (!rdv) return;
@@ -460,7 +478,6 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
             </div>
             <div className={styles.legend}>
               <span className={styles.legDot} style={{ background: 'rgba(123,170,191,0.7)' }} />Appels émis
-              <span style={{ color: 'rgba(46,107,79,0.95)', fontWeight: 700, marginLeft: 14, fontSize: 10 }}>3</span> RDV pris, en bande sous l’axe — source fichier RDV
               <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Taux d’échanges &gt; 1s %
             </div>
           </>

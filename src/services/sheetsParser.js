@@ -706,7 +706,7 @@ export function computeRDVMonthlyEvolution(rdvRows, validCollabs, collab, finPer
 // glissante de 6 mois que computeRDVMonthlyEvolution — permet de tracer
 // "Appels émis" sur le même graphe que "RDV pris" (widget "Évolution
 // mensuelle" de l'onglet Sales).
-export function computeCallsMonthlyEvolution(rows, collab) {
+export function computeCallsMonthlyEvolution(rows, collab, finPeriode) {
   const filtered = (rows || []).filter(row => {
     if (!parseDate(row.date)) return false;
     if (collab && collab !== 'Tous') return row.collab === collab;
