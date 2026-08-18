@@ -620,17 +620,25 @@
      enveloppe sur quelques lignes de plus, et la photo récupère une colonne
      pleine hauteur à droite — là où les autres bandeaux mettent un visage. */
   .heroAsus .heroTitleBlock { max-width: 58%; }
-  .heroAsus .heroBg { opacity: 0.78; }
-  .heroAsus .heroOverlay {
-    background: linear-gradient(
-      100deg,
-      #F2F2F0 0%,
-      #F2F2F0 52%,
-      rgba(242,242,240,0.72) 68%,
-      rgba(242,242,240,0.24) 84%,
-      rgba(242,242,240,0.06) 100%
-    );
-  }  .heroInner  { padding: 14px 16px 14px; gap: 10px; }
+  .heroAsus .heroBg { opacity: 0.88; }
+  /* Le voile s'efface JUSTE APRÈS la colonne de texte, et vite.
+
+     La photo est un panoramique très large (≈3,1:1) : ramenée à la hauteur du
+     bandeau, la seule personne nette — la téléconseillère au casque — tombe
+     aux alentours de 78 % de la largeur. Avec un voile encore à 0,40 à cet
+     endroit, on la devinait sans la voir, ce qui est plus gênant qu'une photo
+     franchement absente : l'œil cherche un visage qu'il ne trouve pas
+     (retour de Jimmy, 18/08).
+
+     Le dégradé reste donc opaque sur toute la colonne de texte (58 %), puis
+     chute pour être quasi nul dès 80 % — là où se trouve le visage. Le
+     filigrane incrusté en bas à droite de l'image reste hors champ : le
+     cadrage à 55 % ne montre que 20 % à 84 % de la largeur d'origine. */
+  /* Plus de bloc clair : la photo court sur toute la largeur, sans arête ni
+     cadre. Un voile UNIFORME et léger remplace le dégradé — il éclaircit
+     l'ensemble sans découper le bandeau en deux zones, ce qui préserve la
+     lisibilité de l'encre sombre là où l'image est chargée. */
+  .heroAsus .heroOverlay { background: rgba(242,242,240,0.42); }  .heroInner  { padding: 14px 16px 14px; gap: 10px; }
 
   .heroTitleBlock { width: 100%; }
   .title      { font-size: 17px; }
