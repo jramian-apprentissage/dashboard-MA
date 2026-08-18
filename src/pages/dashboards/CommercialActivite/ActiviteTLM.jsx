@@ -249,10 +249,13 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
   const statutInjoignable    = isFilteredToAgent ? 0 : (summary?.statut_injoignable ?? 0);
   const statutSansTags       = isFilteredToAgent ? 0 : (summary?.statut_sans_tags ?? 0);
   const statuts = [
-    { label: 'Argumenté',        count: statutArgumente,      color: STATUT_COLORS.argumente },
-    { label: 'Non argumenté',    count: statutNonArgumente,   color: STATUT_COLORS.nonArgumente },
-    { label: 'Non exploitable',  count: statutNonExploitable, color: STATUT_COLORS.nonExploitable },
-    { label: 'Injoignable',      count: statutInjoignable,    color: STATUT_COLORS.injoignable },
+    /* Accordés avec « appels » : chaque entrée compte un volume d'appels, pas
+       un appel. « Sans tags » ne bouge pas — c'est un complément invariable,
+       pas un adjectif accordé. */
+    { label: 'Argumentés',       count: statutArgumente,      color: STATUT_COLORS.argumente },
+    { label: 'Non argumentés',   count: statutNonArgumente,   color: STATUT_COLORS.nonArgumente },
+    { label: 'Non exploitables', count: statutNonExploitable, color: STATUT_COLORS.nonExploitable },
+    { label: 'Injoignables',     count: statutInjoignable,    color: STATUT_COLORS.injoignable },
     { label: 'Sans tags',        count: statutSansTags,       color: STATUT_COLORS.sansTags },
   ];
   // Ancré sur appelsEmis (pas la somme des 5 catégories) : c'est le même
@@ -642,7 +645,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
               // série "Fiches complétées", bien plus petite que "Appels" —
               // mais aucune ne doit s'afficher, la légende suffit).
               scales: {
-                x: { ticks: { display: false }, grid: { display: false }, border: { display: false } },
+                x: { ticks: { ...tickStyle, font: { size: 9 }, maxRotation: 0 }, grid: { display: false }, border: { display: false } },
                 y:  { display: false, beginAtZero: true, position: 'left' },
                 y1: { display: false, beginAtZero: true, position: 'right' },
               },

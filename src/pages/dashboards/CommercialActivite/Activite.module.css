@@ -117,7 +117,13 @@
   font-size: 11px; font-weight: 600; color: var(--text2); cursor: pointer; font-family: var(--font);
   transition: background 0.15s, color 0.15s;
 }
-.evoToggleBtn:hover { color: var(--text); }
+/* Le survol ne doit PAS s'appliquer au bouton déjà sélectionné : sa
+   spécificité (0,2,0) écrasait celle de l'état actif (0,1,0), si bien qu'après
+   un clic — le curseur restant sur le bouton — le libellé passait en encre
+   sombre sur le fond myrtille de l'état actif. Contraste 1,00:1 : le nom du
+   filtre disparaissait à l'instant même où on le choisissait (retour de
+   Jimmy, 18/08). Même dégât sur la variante Asus, texte sombre sur bleu. */
+.evoToggleBtn:not(.evoToggleBtnActive):not(.evoToggleBtnActiveAsus):hover { color: var(--text); }
 .evoToggleBtnActive { background: var(--myrtille); color: var(--soleil); }
 /* Variante bleu Asus — réservée au dashboard client Asus (co-branding) */
 .evoToggleBtnActiveAsus { background: var(--asus-blue); color: #fff; }

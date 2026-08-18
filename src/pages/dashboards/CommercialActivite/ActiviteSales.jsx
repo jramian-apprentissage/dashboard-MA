@@ -27,33 +27,61 @@ const borderCol = { color: 'rgba(227,225,216,0.08)' };
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
 const lineAnim = { duration: 900, easing: 'easeOutQuart' };
 
+/* Hauteur réservée sous l'axe pour la bande des RDV, et position du chiffre
+   dans cette bande — sous les libellés horaires, pas dessus. */
+const BANDE_RDV = 26;
+const BANDE_RDV_Y = 11;
+
+/* Les RDV, en bande sous l'axe des heures.
+
+   Ils étaient écrits DANS le plot, à même les barres : « RDV : 3 » en vert
+   pâle sur des barres bleu pâle, à une hauteur qui changeait d'une tranche à
+   l'autre — dedans si la barre était assez haute, au-dessus sinon. Trois
+   défauts d'un coup : un contraste clair-sur-clair, une ligne de base
+   mouvante que l'œil doit rattraper à chaque colonne, et un préfixe de 40 px
+   qui entrait en collision avec la tranche voisine dès que l'écran
+   rétrécissait. D'où « moyennement visible » (retour de Jimmy, 18/08).
+
+   La bande règle les trois : ligne de base constante — l'œil sait où
+   regarder et balaye la journée d'un passage —, plus aucune superposition
+   avec les barres ni avec la courbe, et le mot « RDV » ne s'écrit plus qu'une
+   fois, dans la légende. Reste le chiffre seul, 7 px au lieu de 40.
+
+   On reste dans le canvas plutôt que de construire la bande en DOM : les
+   positions X sont alors gratuites et exactes, puisqu'on réutilise celles que
+   Chart.js a calculées pour les barres. Une bande en DOM demanderait de
+   recalculer l'alignement depuis chartArea à chaque redimensionnement, et un
+   décalage d'une demi-colonne mentirait sur l'heure au lieu d'être seulement
+   pénible à lire.
+
+   Une tranche sans RDV reste vide : afficher « 0 » sur les huit tranches
+   improductives remplirait la bande de bruit. */
 function makeRdvPlugin(rowsRef) {
   return {
-    id: 'rdvInside',
-    afterDatasetsDraw(chart) {
+    id: 'rdvSousAxe',
+    afterDraw(chart) {
       const rows = rowsRef.current;
       const { ctx } = chart;
+      /* On part du bas de l'ÉCHELLE X, pas de chartArea.bottom : les libellés
+         horaires occupent précisément l'espace entre les deux, et un chiffre
+         posé à un offset fixe depuis chartArea viendrait s'écrire dessus.
+         `scales.x.bottom` tombe sous les libellés, quelle que soit leur
+         hauteur — donc quelle que soit la police ou la densité de tranches. */
+      const axeX = chart.scales?.x;
+      if (!axeX) return;
+      const y = axeX.bottom + BANDE_RDV_Y;
       const meta = chart.getDatasetMeta(0);
       ctx.save();
-      ctx.font = 'bold 9px OverusedGrotesk, sans-serif';
+      ctx.font = 'bold 10px OverusedGrotesk, sans-serif';
       ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
+      ctx.textBaseline = 'middle';
+      // Vert nettement plus soutenu que l'ancien : sur le fond blanc de la
+      // carte, le vert pâle d'origine était à la limite du lisible.
+      ctx.fillStyle = 'rgba(46,107,79,0.95)';
       meta.data.forEach((bar, i) => {
         const rdv = rows[i]?.rdv;
         if (!rdv) return;
-        const barHeight = bar.base - bar.y;
-        // Barre trop courte pour écrire dedans (cas fréquent, tranches à
-        // faible volume) → l'info passait silencieusement à la trappe.
-        // On l'affiche au-dessus de la barre à la place, jamais masquée.
-        if (barHeight >= 18) {
-          ctx.fillStyle = 'rgba(142,207,170,0.95)';
-          ctx.textBaseline = 'top';
-          ctx.fillText(`RDV : ${rdv}`, bar.x, bar.y + 4);
-        } else {
-          ctx.fillStyle = 'rgba(38,0,31,0.75)';
-          ctx.textBaseline = 'bottom';
-          ctx.fillText(`RDV : ${rdv}`, bar.x, bar.y - 3);
-        }
+        ctx.fillText(String(rdv), bar.x, y);
       });
       ctx.restore();
     },
@@ -350,7 +378,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       <Card title={`Taux d’échanges > 1s par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ''}`}>
         {hasData && trancheRows.length > 0 ? (
           <>
-            <div className={styles.chartWrap} style={{ height: 240 }}>
+            <div className={styles.chartWrap} style={{ height: 240 + BANDE_RDV }}>
               <Bar
                 plugins={[rdvPlugin]}
                 data={{
@@ -419,8 +447,11 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       },
                     },
                   },
+                  // Espace réservé sous l'axe pour la bande des RDV : sans
+                  // lui, le plugin dessinerait hors du canvas visible.
+                  layout: { padding: { bottom: BANDE_RDV } },
                   scales: {
-                    x: { ticks: { ...tickStyle, font: { size: 9 } }, grid: gridStyle, border: borderCol },
+                    x: { ticks: { ...tickStyle, font: { size: 9 }, maxRotation: 0 }, grid: gridStyle, border: borderCol },
                     y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', title: { display: true, text: 'Nb appels', color: 'rgba(167,173,170,0.4)', font: { size: 9 } } },
                     y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Taux d’échanges > 1s %', color: 'rgba(169,141,196,0.6)', font: { size: 9 } } },
                   },
@@ -429,7 +460,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
             </div>
             <div className={styles.legend}>
               <span className={styles.legDot} style={{ background: 'rgba(123,170,191,0.7)' }} />Appels émis
-              <span style={{ color: 'rgba(142,207,170,0.9)', fontWeight: 600, marginLeft: 14, fontSize: 10 }}>RDV : n</span> affiché sur chaque barre, depuis le fichier RDV
+              <span style={{ color: 'rgba(46,107,79,0.95)', fontWeight: 700, marginLeft: 14, fontSize: 10 }}>3</span> RDV pris, en bande sous l’axe — source fichier RDV
               <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Taux d’échanges &gt; 1s %
             </div>
           </>
@@ -540,7 +571,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                   // bien plus grand que "RDV pris", même principe que le
                   // graphe équivalent de l'onglet TLM).
                   scales: {
-                    x:  { ticks: { display: false }, grid: { display: false }, border: { display: false } },
+                    x:  { ticks: { ...tickStyle, font: { size: 9 }, maxRotation: 0 }, grid: { display: false }, border: { display: false } },
                     y:  { display: false, beginAtZero: true, position: 'left' },
                     y1: { display: false, beginAtZero: true, position: 'right' },
                   },
