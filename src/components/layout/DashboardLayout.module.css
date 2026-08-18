@@ -743,11 +743,21 @@
   /* Couleur par dashboard — même repère que le hero (heroAsus/heroCiment/
      heroCommercialRC), repris ici puisque ce bandeau n'est pas un
      descendant du hero et ne peut pas hériter de sa couleur en CSS. */
+  /* Encre neutre, comme le hero — c'est la même règle posée après le retour
+     de Clémence : titre et sous-titre en encre, le bleu réservé aux accents.
+     Ce bandeau ne l'avait pas suivie, et les contrastes sur le fond #F2F2F0
+     étaient tous sous le seuil AA (4,5:1) pour un texte de 10,5 à 12 px :
+     titre en bleu plein 4,43:1, onglet 3,91:1, période 3,40:1, et « vs période
+     précédente » à 2,05:1 — quasi invisible.
+
+     Valeurs mesurées après correction : 14,6:1 / 5,8:1 / 7,4:1 / 5,1:1.
+     Les alphas portent sur var(--encre) = #2C1A27, écrit en rgba faute de
+     pouvoir composer une transparence sur une variable. */
   .compactHeaderAsus { background: #F2F2F0; border-bottom-color: rgba(0,108,225,0.15); }
-  .compactHeaderAsus .compactHeaderTitle { color: var(--asus-blue); }
-  .compactHeaderAsus .compactHeaderTab { color: rgba(0,44,92,0.6); }
-  .compactHeaderAsus .compactHeaderPeriod { color: rgba(0,44,92,0.55); }
-  .compactHeaderAsus .compactHeaderCompare { color: rgba(0,108,225,0.5); }
+  .compactHeaderAsus .compactHeaderTitle { color: var(--encre); }
+  .compactHeaderAsus .compactHeaderTab { color: rgba(44,26,39,0.70); }
+  .compactHeaderAsus .compactHeaderPeriod { color: rgba(44,26,39,0.78); }
+  .compactHeaderAsus .compactHeaderCompare { color: rgba(44,26,39,0.66); }
 
   .compactHeaderCiment { background: var(--ciment); border-bottom-color: rgba(38,0,31,0.15); }
   .compactHeaderCiment .compactHeaderTitle { color: var(--myrtille); }
