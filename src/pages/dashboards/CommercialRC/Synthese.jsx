@@ -184,7 +184,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
       </div>
 
       {/* ── Ligne 2 — La trajectoire : évolution CA + marge ────────────────── */}
-      <SectionLabel>La trajectoire — 6 derniers mois</SectionLabel>
+      <SectionLabel>La trajectoire — sur 6 mois</SectionLabel>
       <Card title="Évolution mensuelle du CA et de la marge">
         {!SHOW_COMPTES_KPIS ? (
           <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>

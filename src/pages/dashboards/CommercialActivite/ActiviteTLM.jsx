@@ -12,6 +12,7 @@ import NoPeriodData from '../../../components/ui/NoPeriodData';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
 import { fetchAPI } from '../../../services/api';
+import { fenetreMois } from '../../../services/sheetsParser';
 import { compareValueText, comparePtsText, compareZeroRefText } from '../../../utils/compareText';
 import { fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import styles from './Activite.module.css';
@@ -76,9 +77,15 @@ function mondayOf(d) {
    déjà quotidiens, donc on somme ces totaux par fenêtre plutôt que de
    compter des lignes). `field` sélectionne la colonne à agréger ('appels' ou
    'fiches') — même fenêtrage réutilisé par les deux graphes à bascule. */
-function computeEvolution(dailyRows, granularity, field) {
+function computeEvolution(dailyRows, granularity, field, finPeriode) {
   const byDate = new Map(dailyRows.map(r => [r.date, r[field]]));
-  const today = new Date();
+  /* Ancre = fin de la période de référence, à minuit LOCAL. On reste sur le
+     patron `${s}T00:00:00` et on ne repasse jamais par toISOString() : sumRange
+     et la branche « jour » comparent des dates construites ainsi, et une
+     conversion UTC reculerait d'un jour en Europe/Paris.
+     Les trois granularités lisent ce même `today` : la bascule
+     Journalier / Semaine / Mensuel ne change pas de référentiel. */
+  const today = finPeriode ? new Date(`${finPeriode}T00:00:00`) : new Date();
   today.setHours(0, 0, 0, 0);
 
   function sumRange(start, end) {
@@ -105,10 +112,9 @@ function computeEvolution(dailyRows, granularity, field) {
   }
 
   if (granularity === 'mois') {
-    const months = [];
-    for (let i = 5; i >= 0; i--) months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
+    const { months, labels } = fenetreMois(6, finPeriode);
     return {
-      labels: months.map(m => m.toLocaleString('fr-FR', { month: 'short' })),
+      labels,
       counts: months.map(m => sumRange(m, new Date(m.getFullYear(), m.getMonth() + 1, 0, 23, 59, 59))),
     };
   }
@@ -123,7 +129,7 @@ function computeEvolution(dailyRows, granularity, field) {
 }
 
 export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange } = {}) {
-  const { periodKey, customFrom, customTo, compareActive, compareRange, comparePeriodKey } = usePeriod();
+  const { periodKey, customFrom, customTo, compareActive, compareRange, comparePeriodKey, referenceRange } = usePeriod();
   const [summary, setSummary] = useState(null);
   const [compareSummary, setCompareSummary] = useState(null);
   const [agents, setAgents] = useState([]);
@@ -172,8 +178,9 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
 
   useEffect(() => {
     const agentParam = selectedCollab && selectedCollab !== 'Tous' ? `&agent=${encodeURIComponent(selectedCollab)}` : '';
-    fetchAPI(`/cloudtalk/appels-quotidiens?jours=200${agentParam}`).then(setAppelsQuotidiens).catch(() => {});
-  }, [selectedCollab]);
+    fetchAPI(`/cloudtalk/appels-quotidiens?jours=200&to=${referenceRange.to}${agentParam}`)
+      .then(setAppelsQuotidiens).catch(() => {});
+  }, [selectedCollab, referenceRange.to]);
 
   // Remonte la liste des agents réels au parent (index.jsx), qui alimente le
   // sélecteur "Filtrer par collaborateur" partagé avec l'onglet Sales.
@@ -181,8 +188,8 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
     if (agents.length) onCollabsChange?.(['Tous', ...agents.map(a => a.agent_label)]);
   }, [agents]); // eslint-disable-line
 
-  const appelsEvolution = computeEvolution(appelsQuotidiens, evoGranularity, 'appels');
-  const fichesEvolution = computeEvolution(appelsQuotidiens, evoGranularity, 'fiches');
+  const appelsEvolution = computeEvolution(appelsQuotidiens, evoGranularity, 'appels', referenceRange.to);
+  const fichesEvolution = computeEvolution(appelsQuotidiens, evoGranularity, 'fiches', referenceRange.to);
 
   const hasData = !!summary;
   const firstLoad = loading && !summary && !error;

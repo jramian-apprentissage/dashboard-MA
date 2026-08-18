@@ -149,7 +149,7 @@ const ASUS_SEGMENTS = {
 export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compareResult }) {
   const hasData = asusData?.hasData && asusData?.result;
   const r = asusData?.result;
-  const { comparePeriodKey } = usePeriod();
+  const { comparePeriodKey, referenceRange } = usePeriod();
   const [qualifOpen, setQualifOpen] = useState(null); // { collab, direction }
   const [evoGranularity, setEvoGranularity] = useState('jour');
   const [infoOpen, setInfoOpen] = useState(false);
@@ -163,7 +163,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
   const isEmptyPeriod = hasData && r.totalAppels === 0;
 
   const perCollabEntries = hasData ? Object.entries(r.perCollab || {}) : [];
-  const evolution = hasData ? computeAsusEvolution(asusData.rows || [], evoGranularity, selectedCollab) : null;
+  const evolution = hasData ? computeAsusEvolution(asusData.rows || [], evoGranularity, selectedCollab, referenceRange.to) : null;
   const qualifStats = qualifOpen && r.perCollab?.[qualifOpen.collab]
     ? r.perCollab[qualifOpen.collab][qualifOpen.direction]
     : null;

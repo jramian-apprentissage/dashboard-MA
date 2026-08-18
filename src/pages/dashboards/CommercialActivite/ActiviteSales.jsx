@@ -585,7 +585,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <span className={styles.legDot} style={{ background: '#7EB89A' }} />RDV pris (fichier RDV)
               </span>
-              <span className={styles.subNote}> — 6 derniers mois</span>
+              <span className={styles.subNote}> — sur 6 mois</span>
             </div>
           </>
         ) : (

@@ -14,8 +14,9 @@ import { fetchAPI } from '../services/api';
    `profils`   — liste à plat, ordonnée par date de fin décroissante.
    `parClient` — même donnée regroupée, pour un affichage par client.
 
-   Le détail suit la période sélectionnée ; l'évolution reste sur les 6
-   derniers mois, comme le graphique CA/marge de Synthèse. */
+   Le détail ET l'évolution suivent la période sélectionnée : l'évolution
+   couvre les 6 mois qui s'achèvent avec elle, comme le graphique CA/marge de
+   Synthèse. */
 export function useClientsPerdus() {
   const [profils,   setProfils]   = useState(null);
   const [parClient, setParClient] = useState(null);
@@ -27,11 +28,11 @@ export function useClientsPerdus() {
 
   useEffect(() => {
     let cancelled = false;
-    fetchAPI('/comptes/perdus-mensuel?months=6')
+    fetchAPI(`/comptes/perdus-mensuel?months=6&to=${to}`)
       .then(data => { if (!cancelled) setMonthly(data); })
       .catch(e => { if (!cancelled) setError(e.message); });
     return () => { cancelled = true; };
-  }, []);
+  }, [to]);
 
   useEffect(() => {
     let cancelled = false;

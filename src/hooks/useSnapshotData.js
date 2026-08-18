@@ -23,14 +23,18 @@ export function useSnapshotData() {
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
 
-  // Série mensuelle : une seule fois au montage (fenêtre fixe 6 mois)
+  /* Série mensuelle : les 6 mois qui s'achèvent avec la période de référence,
+     rechargée à chaque changement de période. C'est la dépendance [to] qui
+     fait bouger le graphe — l'URL seule donnerait une fenêtre juste au premier
+     rendu, puis figée. On ne propage QUE `to` : la largeur reste de 6 mois,
+     elle ne suit pas la durée de la période. */
   useEffect(() => {
     let cancelled = false;
-    fetchAPI('/monthly?months=6')
+    fetchAPI(`/monthly?months=6&to=${to}`)
       .then(monthlyData => { if (!cancelled) setMonthly(monthlyData); })
       .catch(e => { if (!cancelled) setError(e.message); });
     return () => { cancelled = true; };
-  }, []);
+  }, [to]);
 
   // KPIs acquisition (deals, win rate, pipeline) — recalculés par le backend
   // à chaque changement de période, même source que le funnel.

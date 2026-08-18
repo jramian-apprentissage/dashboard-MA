@@ -654,7 +654,7 @@ export default function FocusClient() {
                 />
               </div>
             ) : (
-              <NotConnected>aucun revenu perdu sur les 6 derniers mois</NotConnected>
+              <NotConnected>aucun revenu perdu sur ces 6 mois</NotConnected>
             )
           ) : (
             <NotConnected>chargement…</NotConnected>

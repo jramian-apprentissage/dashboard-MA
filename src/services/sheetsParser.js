@@ -485,9 +485,39 @@ export function dernierJourArchive(rows) {
   return `${d}/${mo}`;
 }
 
-export function computeAsusEvolution(rows, granularity, collab = 'Tous') {
+/* Fenêtre glissante de N mois se terminant au mois de `fin`.
+ *
+ * `fin` est la FIN DE LA PÉRIODE de référence ('YYYY-MM-DD'), pas la date du
+ * jour : sur « mois précédent » en août, on veut février→juillet et non
+ * mars→août (demande de Jimmy, 18/08). Repli sur aujourd'hui pour tout
+ * appelant non migré.
+ *
+ * Factorisé parce que trois graphes construisaient ce bloc à l'identique, et
+ * que deux d'entre eux alimentent la MÊME carte en partageant un seul jeu de
+ * libellés : un écart d'ancre entre les deux aurait décalé une série d'un cran
+ * sans rien casser de visible.
+ *
+ * L'année n'apparaît que si la fenêtre chevauche un 1er janvier — même règle
+ * que côté serveur, pour que les deux ne divergent pas. */
+export function cleMois(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
+export function fenetreMois(n, fin) {
+  const ancre = fin ? new Date(`${fin}T00:00:00`) : new Date();
+  const months = [];
+  for (let i = n - 1; i >= 0; i--) months.push(new Date(ancre.getFullYear(), ancre.getMonth() - i, 1));
+  const surDeuxAnnees = new Set(months.map(m => m.getFullYear())).size > 1;
+  const format = surDeuxAnnees ? { month: 'short', year: '2-digit' } : { month: 'short' };
+  return { months, labels: months.map(m => m.toLocaleString('fr-FR', format)) };
+}
+
+export function computeAsusEvolution(rows, granularity, collab = 'Tous', finPeriode) {
   const base = collab && collab !== 'Tous' ? rows.filter(r => r.collab === collab) : rows;
-  const today = toMidnight(new Date());
+  /* Les TROIS granularités lisent cette même ancre : la bascule
+     Journalier / Semaine / Mensuel ne doit pas changer de référentiel selon
+     l'onglet cliqué. */
+  const today = toMidnight(finPeriode ? new Date(`${finPeriode}T00:00:00`) : new Date());
 
   if (granularity === 'semaine') {
     const monday = mondayOf(today);
@@ -507,10 +537,9 @@ export function computeAsusEvolution(rows, granularity, collab = 'Tous') {
   }
 
   if (granularity === 'mois') {
-    const months = [];
-    for (let i = 5; i >= 0; i--) months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
+    const { months, labels } = fenetreMois(6, finPeriode);
     return {
-      labels: months.map(m => m.toLocaleString('fr-FR', { month: 'short' })),
+      labels,
       counts: months.map(m => base.filter(r => {
         const d = parseDate(r.date);
         return d && d.getFullYear() === m.getFullYear() && d.getMonth() === m.getMonth();
@@ -650,7 +679,7 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
 // souvent un seul mois : un "graphe d'évolution" à un seul point n'a aucun
 // sens). Mêmes filtres collab/validCollabs que computeRDVData, mais jamais
 // de borne de date.
-export function computeRDVMonthlyEvolution(rdvRows, validCollabs, collab) {
+export function computeRDVMonthlyEvolution(rdvRows, validCollabs, collab, finPeriode) {
   const validSet = new Set(validCollabs || []);
   const filtered = (rdvRows || []).filter(row => {
     if (validSet.size > 0 && !validSet.has(row.collab)) return false;
@@ -665,14 +694,11 @@ export function computeRDVMonthlyEvolution(rdvRows, validCollabs, collab) {
     monthlyMap[key] = (monthlyMap[key] || 0) + 1;
   });
 
-  const today = new Date();
-  const months = [];
-  for (let i = 5; i >= 0; i--) {
-    months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
-  }
+  const { months, labels } = fenetreMois(6, finPeriode);
   return {
-    labels: months.map(d => d.toLocaleString('fr-FR', { month: 'short' })),
-    counts: months.map(d => monthlyMap[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] || 0),
+    labels,
+    // `|| 0` : un mois sans donnée vaut zéro, il n'est jamais sauté.
+    counts: months.map(d => monthlyMap[cleMois(d)] || 0),
   };
 }
 
@@ -694,14 +720,11 @@ export function computeCallsMonthlyEvolution(rows, collab) {
     monthlyMap[key] = (monthlyMap[key] || 0) + 1;
   });
 
-  const today = new Date();
-  const months = [];
-  for (let i = 5; i >= 0; i--) {
-    months.push(new Date(today.getFullYear(), today.getMonth() - i, 1));
-  }
+  const { months, labels } = fenetreMois(6, finPeriode);
   return {
-    labels: months.map(d => d.toLocaleString('fr-FR', { month: 'short' })),
-    counts: months.map(d => monthlyMap[`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`] || 0),
+    labels,
+    // `|| 0` : un mois sans donnée vaut zéro, il n'est jamais sauté.
+    counts: months.map(d => monthlyMap[cleMois(d)] || 0),
   };
 }
 

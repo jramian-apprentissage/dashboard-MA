@@ -16,22 +16,27 @@ function fmtDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Fenêtre de récupération élargie : au moins les 6 derniers mois glissants
-// (nécessaires au graphe "Évolution mensuelle", toujours ancré sur
-// aujourd'hui, indépendamment de la période de référence choisie) ET la
-// période de référence elle-même si elle remonte plus loin (ex. période
-// personnalisée). Sert à borner /ringover/calls sans casser ni les KPI de
-// la période sélectionnée, ni le graphe d'évolution — au lieu de retélécharger
-// tout l'historique de l'archive à chaque chargement.
+/* Fenêtre de récupération élargie : au moins les 6 mois qui s'achèvent avec la
+   PÉRIODE DE RÉFÉRENCE (nécessaires au graphe « Évolution mensuelle ») ET la
+   période elle-même si elle remonte plus loin. Sert à borner /ringover/calls
+   sans casser ni les KPI de la période, ni le graphe — au lieu de
+   retélécharger tout l'historique à chaque chargement.
+
+   Les six mois se comptaient à rebours depuis AUJOURD'HUI. Sur une période
+   ancienne, on récupérait donc une tranche entièrement postérieure à ce que le
+   graphe allait afficher, et les six barres tombaient à zéro : l'ancrage du
+   calcul ne suffisait pas, il fallait aussi déplacer celui de la récupération.
+
+   setDate(1) AVANT setMonth : sans ça, reculer de 5 mois depuis un 31 déborde
+   sur le mois suivant. */
 function widenedFetchWindow(from, to) {
-  const sixMoAgo = new Date();
+  const sixMoAgo = new Date(`${to}T00:00:00`);
   sixMoAgo.setDate(1);
   sixMoAgo.setMonth(sixMoAgo.getMonth() - 5);
   const sixMoAgoStr = fmtDate(sixMoAgo);
-  const todayStr = fmtDate(new Date());
   return {
     from: from && from < sixMoAgoStr ? from : sixMoAgoStr,
-    to:   to && to > todayStr ? to : todayStr,
+    to,
   };
 }
 
@@ -110,7 +115,7 @@ export function useSalesData() {
         collab,
       );
       setResult(computed);
-      setCallsEvolution(computeCallsMonthlyEvolution(rows, collab));
+      setCallsEvolution(computeCallsMonthlyEvolution(rows, collab, to));
 
       // Table RDV — échec non bloquant, signalé à part
       if (!rdvRows) {
@@ -129,7 +134,7 @@ export function useSalesData() {
           validCollabs,
         );
         setRdvResult(rdv);
-        setRdvEvolution(computeRDVMonthlyEvolution(rdvRows, validCollabs, collab));
+        setRdvEvolution(computeRDVMonthlyEvolution(rdvRows, validCollabs, collab, to));
       }
 
       setLastFetched(new Date());
@@ -150,7 +155,7 @@ export function useSalesData() {
       collab,
     );
     setResult(computed);
-    setCallsEvolution(computeCallsMonthlyEvolution(rowsCache.current, collab));
+    setCallsEvolution(computeCallsMonthlyEvolution(rowsCache.current, collab, appliedTo.current));
 
     if (rdvRowsCache.current) {
       const validCollabs = computed.collabs.filter(c => c !== 'Tous');
@@ -162,7 +167,7 @@ export function useSalesData() {
         validCollabs,
       );
       setRdvResult(rdv);
-      setRdvEvolution(computeRDVMonthlyEvolution(rdvRowsCache.current, validCollabs, collab));
+      setRdvEvolution(computeRDVMonthlyEvolution(rdvRowsCache.current, validCollabs, collab, appliedTo.current));
     }
   }, []);
 

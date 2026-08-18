@@ -13,19 +13,26 @@ export function useLeadsAnalytics() {
   const { periodKey, customFrom, customTo } = usePeriod();
   const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
 
-  // Évolution mensuelle (fenêtre fixe des 6 derniers mois, indépendante du
-  // sélecteur de période) et opportunités sans action (liste "à traiter
-  // maintenant", pas une notion de période) — chargées une seule fois.
+  /* Évolution mensuelle : les 6 mois qui s'achèvent avec la période de
+     référence, rechargée quand la période change. */
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      fetchAPI('/leads/evolution-mensuelle?mois=6'),
-      fetchAPI('/leads/opportunites-sans-action'),
-    ])
-      .then(([evolutionMensuelle, opportunitesSansAction]) => {
-        if (cancelled) return;
-        setData(d => ({ ...d, evolutionMensuelle, opportunitesSansAction }));
-      })
+    fetchAPI(`/leads/evolution-mensuelle?mois=6&to=${to}`)
+      .then(evolutionMensuelle => { if (!cancelled) setData(d => ({ ...d, evolutionMensuelle })); })
+      .catch(e => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, [to]);
+
+  /* Opportunités sans action : liste « à traiter maintenant », filtrée sur la
+     date du jour côté serveur — ce n'est pas une notion de période. Effet
+     séparé, chargé une seule fois : la laisser dans l'effet ci-dessus la
+     ferait refetcher à chaque changement de période sans qu'un seul résultat
+     ne bouge. C'est aussi elle qui éteint le loader, pour qu'un retour ne
+     l'éteigne pas alors que l'autre série n'est pas arrivée. */
+  useEffect(() => {
+    let cancelled = false;
+    fetchAPI('/leads/opportunites-sans-action')
+      .then(opportunitesSansAction => { if (!cancelled) setData(d => ({ ...d, opportunitesSansAction })); })
       .catch(e => { if (!cancelled) setError(e.message); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };

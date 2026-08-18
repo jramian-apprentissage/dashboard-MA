@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import {createContext, useContext, useState, useMemo} from 'react';
 import { getPeriodRange } from '../components/ui/PeriodPicker';
 
 const PeriodContext = createContext(null);
@@ -67,13 +67,24 @@ export function PeriodProvider({ children }) {
     setComparePeriodKey(key);
   }
 
-  const referenceRange = getPeriodRange(periodKey, customFrom, customTo);
+  /* Mémoïsé parce que ces objets sont désormais CONSOMMÉS hors d'ici : les
+     fenêtres d'historique s'ancrent sur referenceRange.to (voir
+     services/sheetsParser.js). Sans mémo, getPeriodRange rend un objet neuf à
+     chaque rendu, et le premier `useEffect(..., [referenceRange])` écrit par
+     réflexe partirait en boucle.
 
-  const compareRange = compareActive
+     Règle qui va avec : on propage TOUJOURS la chaîne 'YYYY-MM-DD'
+     (referenceRange.to), jamais l'objet ni un Date. */
+  const referenceRange = useMemo(
+    () => getPeriodRange(periodKey, customFrom, customTo),
+    [periodKey, customFrom, customTo],
+  );
+
+  const compareRange = useMemo(() => (compareActive
     ? (comparePeriodKey === 'previous-year'
         ? { from: shiftYears(referenceRange.from, -1), to: shiftYears(referenceRange.to, -1) }
         : previousPeriodRange(referenceRange.from, referenceRange.to))
-    : null;
+    : null), [compareActive, comparePeriodKey, referenceRange]);
 
   return (
     <PeriodContext.Provider value={{

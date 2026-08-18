@@ -317,7 +317,7 @@ export default function FocusCommercial() {
 
       {/* ══ Ligne 3 — Détail des deals + évolution : regroupés dans la même
           sous-partie (le résultat consolidé et sa tendance se lisent ensemble) ══ */}
-      <SectionLabel badge="Monday">Évolution mensuelle des deals — 6 derniers mois</SectionLabel>
+      <SectionLabel badge="Monday">Évolution mensuelle des deals — sur 6 mois</SectionLabel>
       <div className={styles.twoCol}>
         {/* Win rate — jauge + détail des issues */}
         {result && (
