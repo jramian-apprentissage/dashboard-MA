@@ -600,34 +600,37 @@
   .hero       { height: auto; min-height: 190px; }
   .heroBg     { --hero-bg-pos: 55% center; }
 
-  /* Le voile ASUS est un dégradé HORIZONTAL, calé sur une mise en page où le
-     texte occupe la moitié gauche. En mobile le texte prend toute la largeur :
-     ce voile-là ne protège plus rien. On le bascule à la verticale.
+  /* Bandeau ASUS en petite largeur — aligné sur le motif des autres
+     dashboards plutôt que réinventé.
 
-     Les arrêts sont calés sur une mesure, pas au jugé : titre, sous-titre et
-     bouton s'arrêtent à 122 px des 190 px du bandeau. Le voile reste donc
-     franchement opaque jusqu'à ~65 % de la hauteur — la zone du texte — puis
-     s'efface vite pour libérer les 68 px du bas.
+     Ce qu'ils font tous : une colonne de TEXTE et une colonne de PHOTO, côte
+     à côte, séparées par un dégradé horizontal. Et leur voile est un TEINTAGE,
+     pas un masque — il plafonne à 0,55 et devient transparent du côté de
+     l'image, qui reste donc une image.
 
-     Première version : voile opaque de haut en bas et photo à 0,55. Le texte
-     était lisible, mais la photo tombait à 3 % de visibilité sous le titre et
-     7 % au milieu — on téléchargeait une image pour n'afficher qu'un aplat
-     beige. Le bandeau n'était plus moche, il n'était plus là.
+     J'avais fait l'inverse ici : voile vertical à 0,94, photo réduite à une
+     bande de 68 px en bas. Le texte était lisible et la photo n'existait plus
+     — un aplat beige avec un liseré photographique. Retour de Jimmy : c'est
+     moche, et il a raison ; c'était une solution de contournement, pas le
+     motif de la maison.
 
-     Ici la photo est à 0,75 et redevient franchement visible dans la bande
-     basse (~0,7 de visibilité réelle), tout en restant à 0,06 sous le titre —
-     donc sans jamais gêner la lecture. */
-  .heroAsus .heroBg { opacity: 0.75; }
+     Le sous-titre client étant nettement plus long que les autres (Clémence a
+     demandé de le garder tel quel), c'est lui qui prenait toute la largeur et
+     ne laissait aucune place à la photo. On le contient donc à 58 % : il
+     enveloppe sur quelques lignes de plus, et la photo récupère une colonne
+     pleine hauteur à droite — là où les autres bandeaux mettent un visage. */
+  .heroAsus .heroTitleBlock { max-width: 58%; }
+  .heroAsus .heroBg { opacity: 0.78; }
   .heroAsus .heroOverlay {
     background: linear-gradient(
-      180deg,
-      rgba(242,242,240,0.94) 0%,
-      rgba(242,242,240,0.90) 55%,
-      rgba(242,242,240,0.45) 72%,
-      rgba(242,242,240,0.04) 100%
+      100deg,
+      #F2F2F0 0%,
+      #F2F2F0 52%,
+      rgba(242,242,240,0.72) 68%,
+      rgba(242,242,240,0.24) 84%,
+      rgba(242,242,240,0.06) 100%
     );
-  }
-  .heroInner  { padding: 14px 16px 14px; gap: 10px; }
+  }  .heroInner  { padding: 14px 16px 14px; gap: 10px; }
 
   .heroTitleBlock { width: 100%; }
   .title      { font-size: 17px; }
