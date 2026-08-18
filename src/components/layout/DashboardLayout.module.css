@@ -38,6 +38,16 @@
    plutôt que le blanc/soleil pensé pour un fond myrtille). */
 .heroAsus { background: #F2F2F0; }
 
+/* Sur desktop, le hero ASUS est plus haut. L'image (1920×640, ratio 3:1) était
+   rognée à une fine bande de 156 px dans un hero de ratio ~8:1, perdant le
+   cadrage du sujet (agents au casque) que le mobile conserve — d'où « desktop
+   pas top, mobile bon ». Plus de hauteur rapproche le hero du ratio de l'image
+   et rend la scène lisible. Réservé au desktop : en petite largeur le cadrage
+   d'origine convient déjà. */
+@media (min-width: 900px) {
+  .heroAsus { height: 240px; }
+}
+
 /* Photo atténuée et voile clair prolongé (retour de Clémence, 14/08 : la
    photo gêne la lecture). Le voile était opaque jusqu'à 42 % de la largeur
    puis nul dès 62 %, alors que le bloc titre + sous-titre s'étend bien
