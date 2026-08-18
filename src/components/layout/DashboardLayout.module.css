@@ -602,15 +602,29 @@
 
   /* Le voile ASUS est un dégradé HORIZONTAL, calé sur une mise en page où le
      texte occupe la moitié gauche. En mobile le texte prend toute la largeur :
-     ce voile-là ne protège plus rien. On le bascule à la verticale, opaque
-     sous le texte et s'effaçant vers le bas, où la photo peut respirer. */
-  .heroAsus .heroBg { opacity: 0.55; }
+     ce voile-là ne protège plus rien. On le bascule à la verticale.
+
+     Les arrêts sont calés sur une mesure, pas au jugé : titre, sous-titre et
+     bouton s'arrêtent à 122 px des 190 px du bandeau. Le voile reste donc
+     franchement opaque jusqu'à ~65 % de la hauteur — la zone du texte — puis
+     s'efface vite pour libérer les 68 px du bas.
+
+     Première version : voile opaque de haut en bas et photo à 0,55. Le texte
+     était lisible, mais la photo tombait à 3 % de visibilité sous le titre et
+     7 % au milieu — on téléchargeait une image pour n'afficher qu'un aplat
+     beige. Le bandeau n'était plus moche, il n'était plus là.
+
+     Ici la photo est à 0,75 et redevient franchement visible dans la bande
+     basse (~0,7 de visibilité réelle), tout en restant à 0,06 sous le titre —
+     donc sans jamais gêner la lecture. */
+  .heroAsus .heroBg { opacity: 0.75; }
   .heroAsus .heroOverlay {
     background: linear-gradient(
       180deg,
       rgba(242,242,240,0.94) 0%,
-      rgba(242,242,240,0.88) 62%,
-      rgba(242,242,240,0.55) 100%
+      rgba(242,242,240,0.90) 55%,
+      rgba(242,242,240,0.45) 72%,
+      rgba(242,242,240,0.04) 100%
     );
   }
   .heroInner  { padding: 14px 16px 14px; gap: 10px; }
