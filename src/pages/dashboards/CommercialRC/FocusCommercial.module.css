@@ -171,6 +171,20 @@
 /* Donut */
 .donutWrap { position: relative; height: 190px; margin-bottom: 8px; }
 .donutLegend { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+
+/* Légende du CA par secteur, en tableau aligné (Secteur | CA | %). Ces classes
+   existaient dans Activite.module.css mais PAS ici, où la carte les utilise :
+   styles.tagTable était donc undefined et la légende s'affichait sans colonnes,
+   nom/CA/% collés (retour de Jimmy, 19/08). */
+.tagTable { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 10px; display: flex; flex-direction: column; gap: 3px; }
+.tagTableHead { display: grid; grid-template-columns: 1fr 48px 44px; font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 0 4px 0; border-bottom: 1px solid var(--sable); }
+.tagTableHead span:nth-child(2), .tagTableHead span:nth-child(3) { text-align: right; }
+.tagRow { display: grid; grid-template-columns: 1fr 48px 44px; align-items: center; padding: 4px 0; border-bottom: 1px solid rgba(227,225,216,0.5); }
+.tagName { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--text2); min-width: 0; }
+.tagName > :last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tagDot { width: 7px; height: 7px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
+.tagCount { font-size: 10.5px; color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+.tagPct { font-size: 10px; color: var(--text2); font-variant-numeric: tabular-nums; text-align: right; }
 .legItem { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text2); }
 .legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
 
