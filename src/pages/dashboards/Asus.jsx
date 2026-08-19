@@ -95,7 +95,11 @@ export default function Asus() {
       extraFilters={extraFilters}
       activeFilters={activeFilters}
       heroBgSrc={heroAsus}
-      heroBgPosition="center 30%"
+      /* Image en 8:1 (2560x320), soit le ratio du bandeau desktop (1265x156) :
+         elle s'affiche quasi intégralement, sans rognage. Le « 30 % » vertical
+         d'avant rattrapait le rognage de l'ancienne image 3:1, qui perdait 62 %
+         de sa hauteur — il n'a plus lieu d'être (Jimmy, 19/08). */
+      heroBgPosition="center"
       onExtraire={handleExport}
       extraireLoading={exportLoading}
       contentRef={contentRef}

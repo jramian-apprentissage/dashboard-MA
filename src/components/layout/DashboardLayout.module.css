@@ -38,30 +38,32 @@
    plutôt que le blanc/soleil pensé pour un fond myrtille). */
 .heroAsus { background: #F2F2F0; }
 
-/* Sur desktop, le hero ASUS est plus haut. L'image (1920×640, ratio 3:1) était
-   rognée à une fine bande de 156 px dans un hero de ratio ~8:1, perdant le
-   cadrage du sujet (agents au casque) que le mobile conserve — d'où « desktop
-   pas top, mobile bon ». Plus de hauteur rapproche le hero du ratio de l'image
-   et rend la scène lisible. Réservé au desktop : en petite largeur le cadrage
-   d'origine convient déjà. */
-@media (min-width: 900px) {
-  .heroAsus { height: 240px; }
-}
+/* Test 1 (Jimmy, 19/08) : le hero ASUS desktop repasse à la MÊME hauteur que
+   les autres bandeaux (156 px, héritée de .hero) au lieu des 240 px qui
+   l'agrandissaient pour loger l'image. Le texte tient largement à cette hauteur
+   — titre sur 1 ligne + sous-titre sur 2 lignes dans les 620 px de la colonne —
+   donc, à la différence du mobile (colonne à 58 %, 6 lignes), aucune réduction
+   de police n'est nécessaire sur desktop. Une nouvelle image cadrée pour ce
+   ratio est en préparation. */
 
-/* Photo atténuée et voile clair prolongé (retour de Clémence, 14/08 : la
-   photo gêne la lecture). Le voile était opaque jusqu'à 42 % de la largeur
-   puis nul dès 62 %, alors que le bloc titre + sous-titre s'étend bien
-   au-delà : la fin des phrases tombait sur la photo à pleine opacité. Il
-   couvre maintenant toute la colonne de texte et ne s'efface qu'après. */
-.heroAsus .heroBg { opacity: 0.72; }
+/* Voile clair sur la colonne de texte, transparent sur le sujet.
+   Deux contraintes à tenir ensemble :
+   — le texte doit rester lisible (retour de Clémence, 14/08 : « la photo gêne
+     la lecture »). Le bloc titre fait 620 px sur un hero de 1265, soit 49 % :
+     le voile reste donc plein jusqu'à 52 %, avec une marge ;
+   — la téléconseillère doit être VUE. Dans la nouvelle image en 8:1 elle occupe
+     68 % à 81 % de la largeur ; l'ancien voile, plein jusqu'à 66 % puis encore
+     à 0,79 sur son visage, l'effaçait presque entièrement. La chute est donc
+     avancée et raccourcie : ~0,25 sur le visage, contre 0,79 avant. */
+.heroAsus .heroBg { opacity: 0.9; }
 .heroAsus .heroOverlay {
   background: linear-gradient(
     100deg,
     #F2F2F0 0%,
-    #F2F2F0 66%,
-    rgba(242,242,240,0.72) 78%,
-    rgba(242,242,240,0.28) 90%,
-    rgba(242,242,240,0.10) 100%
+    #F2F2F0 52%,
+    rgba(242,242,240,0.55) 62%,
+    rgba(242,242,240,0.18) 72%,
+    rgba(242,242,240,0.06) 100%
   );
 }
 
@@ -625,13 +627,31 @@
      ne laissait aucune place à la photo. On le contient donc à 58 % : il
      enveloppe sur quelques lignes de plus, et la photo récupère une colonne
      pleine hauteur à droite — là où les autres bandeaux mettent un visage. */
-  /* ASUS seul : hero plus haut (recrée un débordement horizontal) et image
-     recadrée vers la droite pour sortir le filigrane incrusté du champ (retour
-     de Jimmy, 18/08). Ces deux réglages étaient sur le .hero/.heroBg partagés ;
-     ramenés ici pour ne plus toucher les autres bandeaux. */
-  .heroAsus { min-height: 190px; }
+  /* Test 1 (Jimmy, 19/08) : ramener le header ASUS à la MÊME hauteur que les
+     autres bandeaux (130 px) en réduisant la taille du texte, plutôt qu'en
+     gonflant le bandeau à 190 px. Le sous-titre client reste un paragraphe
+     (Clémence l'a voulu tel quel) mais en plus petit, pour tenir dans la
+     hauteur standard. Plus de min-height dédié : ASUS hérite des 130 px du
+     .hero partagé. Le recadrage image (55 % center) et l'opacité restent le
+     temps de valider ce premier essai. */
+  /* Police réduite (option A, retenue par Jimmy le 19/08 après comparaison avec
+     la police standard des autres dashboards).
+
+     L'arbitrage : le sous-titre client est un paragraphe, bien plus long que
+     celui des autres dashboards. En 17/11 px il pousse le bandeau à 174 px, et
+     comme `cover` met l'image à l'échelle de la HAUTEUR, plus le bandeau est
+     haut plus il zoome — on ne voyait plus que 27 % de la largeur de l'image,
+     soit un gros plan qui perd l'esprit « frise » de la photo. En 14/9 px le
+     bandeau retombe à 137 px, à hauteur des autres, et laisse voir 34 %. */
+  .heroAsus .title { font-size: 14px; }
+  .heroAsus .subtitle { font-size: 9px; }
   .heroAsus .heroTitleBlock { max-width: 58%; }
-  .heroAsus .heroBg { opacity: 0.88; --hero-bg-pos: 55% center; }
+  /* Le bandeau mobile (375x137, ~2,7:1) ne peut montrer qu'environ 34 % d'une
+     image en 8:1 : il faut choisir CE qu'on montre. À 75 %, la tranche visible
+     couvre 49 % à 84 % de l'image — la téléconseillère y tient entière, visage
+     vers 60-75 % du bandeau, c'est-à-dire juste à droite du bloc texte qui
+     s'arrête à 58 %. Un cadrage centré ne montrerait que le flou du milieu. */
+  .heroAsus .heroBg { opacity: 0.88; --hero-bg-pos: 72% center; }
   /* Le voile s'efface JUSTE APRÈS la colonne de texte, et vite.
 
      La photo est un panoramique très large (≈3,1:1) : ramenée à la hauteur du
