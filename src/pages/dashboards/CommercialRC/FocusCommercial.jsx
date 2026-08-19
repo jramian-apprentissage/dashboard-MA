@@ -308,7 +308,7 @@ export default function FocusCommercial() {
 
       {/* ══ Ligne 3 — Détail des deals + évolution : regroupés dans la même
           sous-partie (le résultat consolidé et sa tendance se lisent ensemble) ══ */}
-      <SectionLabel badge="Monday">Évolution mensuelle des deals — sur 6 mois</SectionLabel>
+      <SectionLabel badge="Monday">Deals gagnés / perdus / stand-by</SectionLabel>
       <div className={styles.twoCol}>
         {/* Win rate — jauge + détail des issues */}
         {result && (
@@ -369,7 +369,7 @@ export default function FocusCommercial() {
             )}
           </Card>
         )}
-        <Card title="Deals gagnés / perdus / stand-by — par mois">
+        <Card title="Évolution mensuelle des deals">
           {!SHOW_LEADS_KPIS ? (
             <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
           ) : leads.error ? (
@@ -469,7 +469,7 @@ export default function FocusCommercial() {
               <>
                 <div className={styles.alertCount}>
                   <span className={styles.alertNum}>{fmtNumber(toutes.length)}</span>
-                  <span className={styles.alertSub}>Affaires sans date de référence planifiée ou passée, dont les deals en cours</span>
+                  <span className={styles.alertSub}>Affaires sans date de relance planifiée ou passée, dont les deals en cours</span>
                 </div>
 
                 <RechercheListe valeur={rechercheRelances} onChange={setRechercheRelances} />
@@ -550,15 +550,15 @@ export default function FocusCommercial() {
                 height={210}
                 tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${fmtPourcentage(pct)})`}
               />
-              {/* Tableau plutôt que légende : avec 37 secteurs, les pastilles
-                  débordaient sur six lignes et devenaient illisibles. Même
-                  motif que « Répartition par qualification » côté Sales
-                  (retour de Jimmy, 15/08). */}
+              {/* Légende limitée aux 4 plus gros secteurs (secteurs.data est
+                  trié par CA décroissant, fourre-tout en dernier) : au-delà, les
+                  pastilles débordaient, et les autres secteurs restent lisibles
+                  au survol du camembert (demande de Jimmy, 19/08). */}
               <div className={styles.tagTable}>
                 <div className={styles.tagTableHead}>
                   <span>Secteur</span><span>CA</span><span>%</span>
                 </div>
-                {secteurs.data.map((s, i) => (
+                {secteurs.data.slice(0, 4).map((s, i) => (
                   <div key={s.label} className={styles.tagRow}>
                     <div className={styles.tagName}>
                       <span className={styles.tagDot} style={{ background: sourceColors[i % sourceColors.length] }} />
@@ -568,6 +568,11 @@ export default function FocusCommercial() {
                     <span className={styles.tagPct}>{fmtPourcentage(s.pct)}</span>
                   </div>
                 ))}
+                {secteurs.data.length > 4 && (
+                  <div className={styles.subnote} style={{ marginTop: 6 }}>
+                    + {secteurs.data.length - 4} autre{secteurs.data.length - 4 > 1 ? 's' : ''} secteur{secteurs.data.length - 4 > 1 ? 's' : ''} — au survol du graphique
+                  </div>
+                )}
               </div>
               <div className={styles.subnote} style={{ marginTop: 8 }}>
                 {secteurs.data.reduce((s, x) => s + x.nb, 0)} compte(s) avec secteur renseigné sur Monday
