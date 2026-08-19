@@ -611,11 +611,22 @@ export default function FocusCommercial() {
                     height={210}
                     tooltip={(label, value) => `${label} : ${fmtPourcentage(value)} (${countByLabel[label] ?? '—'})`}
                   />
-                  <div className={styles.donutLegend}>
+                  {/* Même légende alignée que « CA par secteur » (grille
+                      Source | Leads | %) plutôt que des pastilles enroulées, pour
+                      un rendu cohérent sur desktop (demande de Jimmy, 19/08). */}
+                  <div className={styles.tagTable}>
+                    <div className={styles.tagTableHead}>
+                      <span>Source</span><span>Leads</span><span>%</span>
+                    </div>
                     {shown.map((s, i) => (
-                      <span key={s.label} className={styles.legItem}>
-                        <span className={styles.legDot} style={{ background: colors[i] }} />{s.label}
-                      </span>
+                      <div key={s.label} className={styles.tagRow}>
+                        <div className={styles.tagName}>
+                          <span className={styles.tagDot} style={{ background: colors[i] }} />
+                          {s.label}
+                        </div>
+                        <span className={styles.tagCount}>{s.count}</span>
+                        <span className={styles.tagPct}>{fmtPourcentage(s.pct)}</span>
+                      </div>
                     ))}
                   </div>
                 </>
