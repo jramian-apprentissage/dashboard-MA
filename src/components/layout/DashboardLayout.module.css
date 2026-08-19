@@ -595,20 +595,16 @@
 /* Mobile (≤ 640px) */
 @media (max-width: 640px) {
   /* ── La photo du bandeau, en petite largeur ────────────────────────────
-     Rien ne la touchait ici : tout le responsive du hero portait sur le texte
-     et les boutons, et les valeurs desktop fuyaient telles quelles.
+     Le hero mobile d'origine : 130 px, cadrage `center 55%` par défaut. C'est
+     l'ambiance validée pour Commercial & RC, Sales et TLM — leur photo nette à
+     droite sur un fond de marque.
 
-     Sous ~400 px, le rapport du bandeau se rapproche de celui de l'image :
-     `cover` bascule alors d'axe, le cadrage vertical devient inerte et la
-     photo est écrasée dans la bande. On tombe sur le filigrane incrusté,
-     illisible, dans le coin justement le moins voilé (retour de Jimmy,
-     18/08). À 130 px de haut le débordement horizontal n'est que d'une
-     quarantaine de pixels : aucun réglage de position ne suffit à l'évacuer.
-
-     On redonne donc de la hauteur — ce qui recrée un vrai débordement — puis
-     on recadre vers la droite pour sortir le filigrane du champ. */
-  .hero       { height: auto; min-height: 190px; }
-  .heroBg     { --hero-bg-pos: 55% center; }
+     Le relèvement de hauteur (190 px) et le recadrage vers la droite sont
+     RÉSERVÉS à ASUS (voir .heroAsus plus bas) : c'est son panoramique 3:1 et
+     son filigrane incrusté qui les imposaient. Posés ici sur le .hero partagé,
+     ils changeaient AUSSI le cadrage des autres bandeaux et « cassaient leur
+     ambiance » sur mobile (retour de Jimmy, 19/08). */
+  .hero       { height: auto; min-height: 130px; }
 
   /* Bandeau ASUS en petite largeur — aligné sur le motif des autres
      dashboards plutôt que réinventé.
@@ -629,8 +625,13 @@
      ne laissait aucune place à la photo. On le contient donc à 58 % : il
      enveloppe sur quelques lignes de plus, et la photo récupère une colonne
      pleine hauteur à droite — là où les autres bandeaux mettent un visage. */
+  /* ASUS seul : hero plus haut (recrée un débordement horizontal) et image
+     recadrée vers la droite pour sortir le filigrane incrusté du champ (retour
+     de Jimmy, 18/08). Ces deux réglages étaient sur le .hero/.heroBg partagés ;
+     ramenés ici pour ne plus toucher les autres bandeaux. */
+  .heroAsus { min-height: 190px; }
   .heroAsus .heroTitleBlock { max-width: 58%; }
-  .heroAsus .heroBg { opacity: 0.88; }
+  .heroAsus .heroBg { opacity: 0.88; --hero-bg-pos: 55% center; }
   /* Le voile s'efface JUSTE APRÈS la colonne de texte, et vite.
 
      La photo est un panoramique très large (≈3,1:1) : ramenée à la hauteur du
@@ -648,7 +649,8 @@
      cadre. Un voile UNIFORME et léger remplace le dégradé — il éclaircit
      l'ensemble sans découper le bandeau en deux zones, ce qui préserve la
      lisibilité de l'encre sombre là où l'image est chargée. */
-  .heroAsus .heroOverlay { background: rgba(242,242,240,0.42); }  .heroInner  { padding: 14px 16px 14px; gap: 10px; }
+  .heroAsus .heroOverlay { background: rgba(242,242,240,0.42); }
+  .heroInner  { padding: 14px 16px 14px; gap: 10px; }
 
   .heroTitleBlock { width: 100%; }
   .title      { font-size: 17px; }

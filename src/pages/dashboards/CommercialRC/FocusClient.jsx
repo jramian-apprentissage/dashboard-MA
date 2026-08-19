@@ -263,7 +263,7 @@ export default function FocusClient() {
           ) : (
             <NotConnected>aucun client actif sur la période</NotConnected>
           )}
-          <div className={styles.subnote}>Top 5 clients par CA — secteur et évolution non disponibles (à connecter)</div>
+          <div className={styles.subnote}>Top 5 clients par CA</div>
         </Card>
 
         <Card title="Marge brute par client">

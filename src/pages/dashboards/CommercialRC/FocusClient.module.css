@@ -146,6 +146,16 @@
   .collabRow { flex-wrap: wrap; gap: 8px; }
   .churnHead { flex-wrap: wrap; gap: 14px; }
 }
+@media (max-width: 560px) {
+  /* Tableaux (Détail des missions perdues, Top clients) : à l'étroit sur
+     mobile, la ligne cassait entre Client et Mission (nom qui repasse à la
+     ligne, poste parfois très long). Police et marges resserrées pour que la
+     ligne tienne (retour de Jimmy, 19/08). Les overrides .tdPostes/.postePill
+     sont en fin de fichier : à spécificité égale, seule la règle la plus tardive
+     l'emporte, et leurs définitions de base y sont posées tout en bas. */
+  .tbl th { font-size: 9px; padding: 6px 6px; }
+  .tbl td { font-size: 11px; padding: 6px 6px; }
+}
 
 /* Bascule du sens de tri de la liste santé. Cette liste n'a pas d'en-tête de
    tableau où loger une colonne cliquable — d'où ce bouton, aligné à droite
@@ -184,4 +194,18 @@
   border: 1px solid var(--border);
   color: var(--text2);
   white-space: nowrap;
+}
+
+/* Resserrage mobile de la colonne Mission. Placé APRÈS les définitions de base
+   ci-dessus, sinon (spécificité égale) c'est la base qui l'emporte.
+
+   Surtout : on repasse .tdPostes de `flex` à `table-cell`. En `flex`, la cellule
+   sort du flux tabulaire et ne s'étire PAS à la hauteur de la ligne — la pastille
+   Mission (31px) flottait à mi-hauteur d'une ligne de 47px, désalignée du nom
+   Client, d'où l'affichage « cassé entre Client et Mission » signalé par Jimmy
+   le 19/08. Une seule pastille par ligne ici (regroupée par client+poste), donc
+   le flex-wrap ne manque pas. */
+@media (max-width: 560px) {
+  .tdPostes { display: table-cell; vertical-align: middle; padding: 6px 6px; }
+  .postePill { font-size: 9.5px; padding: 2px 6px; }
 }
