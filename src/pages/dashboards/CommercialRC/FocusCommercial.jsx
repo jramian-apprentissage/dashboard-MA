@@ -568,14 +568,6 @@ export default function FocusCommercial() {
                     <span className={styles.tagPct}>{fmtPourcentage(s.pct)}</span>
                   </div>
                 ))}
-                {secteurs.data.length > 4 && (
-                  <div className={styles.subnote} style={{ marginTop: 6 }}>
-                    + {secteurs.data.length - 4} autre{secteurs.data.length - 4 > 1 ? 's' : ''} secteur{secteurs.data.length - 4 > 1 ? 's' : ''} — au survol du graphique
-                  </div>
-                )}
-              </div>
-              <div className={styles.subnote} style={{ marginTop: 8 }}>
-                {secteurs.data.reduce((s, x) => s + x.nb, 0)} compte(s) avec secteur renseigné sur Monday
               </div>
             </>
           ) : secteurs.data ? (
