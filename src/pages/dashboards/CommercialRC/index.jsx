@@ -1,5 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
+import heroCommercialRC from '../../../assets/hero-commercial-rc.webp';
 import { DASHBOARD_TABS } from '../../../data/dashboardTabs';
 import Synthese from './Synthese';
 import FocusCommercial from './FocusCommercial';
@@ -19,6 +20,8 @@ export default function CommercialRC() {
       subTabs={DASHBOARD_TABS['commercial-rc']}
       activeSubTab={tab}
       onSubTabChange={id => navigate(`/commercial-rc?tab=${id}`)}
+      heroBgSrc={heroCommercialRC}
+      heroBgPosition="center"
     >
       {tab === 'synthese'           && <Synthese />}
       {tab === 'focus-commercial'   && <FocusCommercial />}

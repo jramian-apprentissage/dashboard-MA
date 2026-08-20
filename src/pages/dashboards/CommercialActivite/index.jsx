@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
-import heroActivite from '../../../assets/hero-activite.svg';
+import heroActivite from '../../../assets/hero-commercial-activite.webp';
 import ActiviteSales from './ActiviteSales';
 import ActiviteTLM from './ActiviteTLM';
 import CloudTalkExtract from './CloudTalkExtract';
@@ -100,7 +100,7 @@ export default function CommercialActivite() {
         extraFilters={extraFilters}
         activeFilters={activeFilters}
         heroBgSrc={heroActivite}
-        heroBgPosition="center 65%"
+        heroBgPosition="center"
         onExtraire={tab === 'tlm' ? () => setExtractOpen(true) : undefined}
       >
         {isSales && <ActiviteSales selectedCollab={collab} salesData={salesData} compareResult={compareResult} compareRdvResult={compareRdvResult} />}

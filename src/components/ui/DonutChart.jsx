@@ -19,13 +19,37 @@ Chart.register(ArcElement, Tooltip);
 /* Luminance effective d'une couleur rgba sur fond blanc → texte sombre ou clair */
 function textColorFor(color) {
   const m = String(color).match(/rgba?\((\d+)\s*,\s*(\d+)\s*,\s*(\d+)(?:\s*,\s*([\d.]+))?\)/);
-  if (!m) return '#FFFFFF';
+  /* Couleur non analysable (hex, nom CSS, undefined) : on retombe sur du
+     SOMBRE, pas du blanc. Ces graphiques vivent sur une carte blanche et les
+     palettes du projet sont pastel — un texte blanc sur une couleur inconnue
+     est le pire cas possible, il disparaît. Le sombre reste lisible partout
+     sauf sur un aplat très foncé, que le projet n'utilise pas. */
+  if (!m) return '#26001F';
   const a = m[4] !== undefined ? parseFloat(m[4]) : 1;
   const r = parseInt(m[1]) * a + 255 * (1 - a);
   const g = parseInt(m[2]) * a + 255 * (1 - a);
   const b = parseInt(m[3]) * a + 255 * (1 - a);
   const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return lum > 0.62 ? '#26001F' : '#FFFFFF';
+}
+
+/* Couleur RÉELLEMENT peinte pour la tranche i.
+
+   `ds.backgroundColor` peut être plus court que `ds.data` : la palette du CA
+   par secteur compte 5 couleurs pour une dizaine de secteurs. Chart.js fait
+   alors boucler la couleur de remplissage, mais `ds.backgroundColor[i]` reste
+   `undefined` au-delà du 5e — d'où des étiquettes calculées sur du vide, qui
+   sortaient en blanc sur un jaune pâle, illisibles (retour de Jimmy, 19/08).
+
+   On lit donc en priorité l'option résolue par Chart.js sur l'arc, qui est par
+   construction celle qui est peinte, et on retombe sur un modulo — le même
+   bouclage que Chart.js — si elle n'est pas disponible. */
+function arcColor(ds, arc, i) {
+  const resolue = arc?.options?.backgroundColor;
+  if (typeof resolue === 'string') return resolue;
+  const bg = ds.backgroundColor;
+  if (Array.isArray(bg)) return bg.length ? bg[i % bg.length] : undefined;
+  return bg;
 }
 
 function opaque(color) {
@@ -84,7 +108,7 @@ const labelsPlugin = {
         const pos = arc.tooltipPosition(true);
         ctx.save();
         ctx.font = `700 ${opts.insideSize ?? 12}px "DM Sans", "OverusedGrotesk", sans-serif`;
-        ctx.fillStyle = textColorFor(ds.backgroundColor[i]);
+        ctx.fillStyle = textColorFor(arcColor(ds, arc, i));
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(pct + '%', pos.x, pos.y);
@@ -102,7 +126,7 @@ const labelsPlugin = {
         const x3 = x2 + (goRight ? 10 : -10);
 
         ctx.save();
-        ctx.strokeStyle = opaque(ds.backgroundColor[i]);
+        ctx.strokeStyle = opaque(arcColor(ds, arc, i));
         ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(x1, y1);

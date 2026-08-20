@@ -42,7 +42,12 @@
 
 /* Missions — donut + liste côte à côte */
 .missionSplit { display: flex; gap: 24px; align-items: center; }
-.missionDonutBox { flex: 0 0 240px; }
+/* Part proportionnelle plutôt quune largeur fixe : à 240 px le graphe restait
+   figé pendant que la liste absorbait toute la largeur gagnée, dou un camembert
+   minuscule face à des cartes très étirées, au centre vide (retour Clémence,
+   20/08). Le plafond évite quil devienne démesuré sur très grand écran.
+   En dessous de 900 px la colonne prend le relais, cette règle ne sy applique plus. */
+.missionDonutBox { flex: 0 0 40%; max-width: 540px; }
 .missionList { flex: 1; display: flex; flex-direction: column; gap: 0; }
 
 /* Missions — méta inline */
@@ -136,6 +141,13 @@
 .tbl tr:last-child td { border-bottom: none; }
 .tbl td strong { color: var(--text); font-weight: 500; }
 .tbl tr:hover td { background: rgba(240,238,233,0.6); }
+.tdRight { text-align: right; }
+/* Plus specifique que ".tbl th", qui aligne tous les en-tetes a gauche. */
+.tbl th.tdRight { text-align: right; }
+.missionTableName { white-space: nowrap; }
+/* Deux ecritures de la meme liste : tableau au-dessus de 900 px, cartes en
+   dessous. La bascule se fait dans le @media plus bas. */
+.missionCards { display: none; }
 
 /* Âge en jours ("266 j") : le nombre et son unité se lisent comme un seul mot.
    La colonne Âge étant la plus étroite du tableau, le texte se coupait à
@@ -229,7 +241,10 @@
      colonne — sans ce reset, ça réservait ~95px de vide sous le donut avant
      que la légende commence ("grand espace entre le graphe et sa légende"). */
   .missionSplit { flex-direction: column; gap: 4px; }
-  .missionDonutBox { flex: none; width: 100%; }
+  /* max-width neutralisee : le plafond ne vaut que pour le partage desktop. */
+  .missionDonutBox { flex: none; width: 100%; max-width: none; }
+  .missionTable { display: none; }
+  .missionCards { display: block; }
 }
 @media (max-width: 480px) {
   .kpiRow4 { grid-template-columns: 1fr; }

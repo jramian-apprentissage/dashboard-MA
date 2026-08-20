@@ -653,23 +653,60 @@ export default function FocusCommercial() {
                 data={leads.data.missions.map(m => m.revenue)}
                 labels={leads.data.missions.map(m => missionLabels[m.label] || m.label)}
                 colors={missionColors}
-                height={145}
+                height={260}
                 tooltip={(label, value, pct) => `${label} : ${fmt(value)} (${fmtPourcentage(pct)})`}
               />
             </div>
             <div className={styles.missionList}>
-              {leads.data.missions.map((m, i) => (
-                <div key={m.label} className={styles.missionCard}>
-                  <div className={styles.missionName}>
-                    <span className={styles.legDot} style={{ background: missionColors[i % missionColors.length], marginRight: 7 }} />
-                    {missionLabels[m.label] || m.label}
+              {/* Desktop : tableau à 5 colonnes. Empilées, les cartes laissaient un
+                  large vide entre le libellé et les montants sur écran large, et
+                  repoussaient le graphe dans un coin (retour Clémence, 20/08). Le
+                  tableau range les mêmes cinq données en colonnes et rend de la
+                  largeur au graphe.
+
+                  En dessous de 900 px, .missionSplit passe en colonne et les cartes
+                  reprennent la main : cinq colonnes y seraient illisibles. Les deux
+                  écritures coexistent donc, une seule est affichée à la fois. */}
+              <table className={`${styles.tbl} ${styles.missionTable}`}>
+                <thead>
+                  <tr>
+                    <th>Type de mission</th>
+                    <th className={styles.tdRight}>Revenu</th>
+                    <th className={styles.tdRight}>Part</th>
+                    <th className={styles.tdRight}>Revenu moyen</th>
+                    <th className={styles.tdRight}>Profils</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leads.data.missions.map((m, i) => (
+                    <tr key={m.label}>
+                      <td className={styles.missionTableName}>
+                        <span className={styles.legDot} style={{ background: missionColors[i % missionColors.length], marginRight: 7 }} />
+                        {missionLabels[m.label] || m.label}
+                      </td>
+                      <td className={styles.tdRight}><strong><MontantExact exact={fmtEurosExact(m.revenue)}>{fmtEurosDetail(m.revenue)}</MontantExact></strong></td>
+                      <td className={styles.tdRight}>{fmtPourcentage(m.pct)}</td>
+                      <td className={styles.tdRight}><MontantExact exact={fmtEurosExact(m.moyenne)}>{fmtMoyenne(m.moyenne)}</MontantExact></td>
+                      <td className={styles.tdRight}>{m.count}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className={styles.missionCards}>
+                {leads.data.missions.map((m, i) => (
+                  <div key={m.label} className={styles.missionCard}>
+                    <div className={styles.missionName}>
+                      <span className={styles.legDot} style={{ background: missionColors[i % missionColors.length], marginRight: 7 }} />
+                      {missionLabels[m.label] || m.label}
+                    </div>
+                    <div>
+                      <div className={styles.missionRev}><MontantExact exact={fmtEurosExact(m.revenue)}>{fmtEurosDetail(m.revenue)}</MontantExact> <span className={styles.missionPct}>· {fmtPourcentage(m.pct)}</span></div>
+                      <div className={styles.missionAvg}>Revenu moyen par profil <MontantExact exact={fmtEurosExact(m.moyenne)}>{fmtMoyenne(m.moyenne)}</MontantExact> · {m.count} profils</div>
+                    </div>
                   </div>
-                  <div>
-                    <div className={styles.missionRev}><MontantExact exact={fmtEurosExact(m.revenue)}>{fmtEurosDetail(m.revenue)}</MontantExact> <span className={styles.missionPct}>· {fmtPourcentage(m.pct)}</span></div>
-                    <div className={styles.missionAvg}>Revenu moyen par profil <MontantExact exact={fmtEurosExact(m.moyenne)}>{fmtMoyenne(m.moyenne)}</MontantExact> · {m.count} profils</div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         ) : (

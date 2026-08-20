@@ -18,13 +18,20 @@
    fraîcheur, en myrtille pour rester visible même si l'utilisateur ne
    regarde plus l'en-tête après avoir cliqué un filtre. */
 .dataAlertSpin { display: inline-flex; color: var(--myrtille); }
-.kpiGrid6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px; }
+/* 7 colonnes fixes — Activité Sales : l'entonnoir (appels émis → … → taux
+   RDV honorés) se lit sur une seule ligne. La grille était à 6 colonnes alors
+   que la page rend 7 cartes : la 7e tombait seule sur une 2e ligne, isolée au
+   milieu de 5 cellules vides, et se lisait comme absente. */
+.kpiGrid7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin-bottom: 20px; }
 .kpiGrid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
 .kpiGridAuto { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 20px; }
 /* 5 colonnes fixes (2 lignes pour 10 cartes) — Activité TLM uniquement,
    pour alléger la vue desktop par rapport à kpiGridAuto (jusqu'à 8 colonnes) */
 .kpiGrid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 20px; }
-.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+/* Seul bloc de la page qui ne soit pas précédé d'un SectionLabel (dont la
+   marge haute de 28px sépare tous les autres) : sans marge propre, il venait
+   coller la carte du dessus, écart nul. */
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; margin-bottom: 20px; }
 .chartWrap { position: relative; }
 
 .statutTable { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
@@ -331,8 +338,13 @@
 .compareBtnX:hover { color: var(--neg); background: var(--neg-dim); }
 
 /* ─── Responsive ─── */
+/* Entre 1100 et 1400 px, 7 colonnes deviennent trop étroites : 4 + 3, sans
+   carte orpheline (7 étant premier, tout autre découpage en laisse une). */
+@media (max-width: 1400px) {
+  .kpiGrid7 { grid-template-columns: repeat(4, 1fr); }
+}
 @media (max-width: 1100px) {
-  .kpiGrid6 { grid-template-columns: repeat(3, 1fr); }
+  .kpiGrid7 { grid-template-columns: repeat(3, 1fr); }
   .kpiGrid5 { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 900px) {
@@ -350,7 +362,7 @@
   .perfTable tr:hover td:first-child { background: rgb(240,238,233); }
 }
 @media (max-width: 480px) {
-  .kpiGrid6 { grid-template-columns: 1fr 1fr; }
+  .kpiGrid7 { grid-template-columns: 1fr 1fr; }
   .kpiGrid4 { grid-template-columns: 1fr; }
   .kpiGrid5 { grid-template-columns: repeat(2, 1fr); }
 }

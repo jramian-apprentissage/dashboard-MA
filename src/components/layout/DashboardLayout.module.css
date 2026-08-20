@@ -652,6 +652,13 @@
      vers 60-75 % du bandeau, c'est-à-dire juste à droite du bloc texte qui
      s'arrête à 58 %. Un cadrage centré ne montrerait que le flou du milieu. */
   .heroAsus .heroBg { opacity: 0.88; --hero-bg-pos: 72% center; }
+
+  /* Même correction que ci-dessus, pour les deux bandeaux internes. Une image
+     8:1 posée sur un bandeau mobile (~2,9:1) se recadre par les CÔTÉS et n'en
+     garde que le tiers central — soit, ici, la zone volontairement vide. On
+     décale donc le cadrage vers le sujet, qui vit dans la moitié droite. */
+  .heroCommercialRC .heroBg { --hero-bg-pos: 84% center; }
+  .heroCiment .heroBg { --hero-bg-pos: 84% center; }
   /* Le voile s'efface JUSTE APRÈS la colonne de texte, et vite.
 
      La photo est un panoramique très large (≈3,1:1) : ramenée à la hauteur du
@@ -722,6 +729,39 @@
     touch-action: manipulation;
   }
   .subTabPillActive {
+    background: var(--soleil);
+    color: var(--myrtille);
+    border-color: var(--soleil);
+  }
+
+  /* Les pastilles d'onglet étaient restées sur le soleil à 55 % d'opacité,
+     hérité du hero myrtille d'origine : ni .heroCiment ni .heroCommercialRC
+     ne les avaient surchargées, alors qu'ils l'ont fait pour le titre, les
+     filtres et le comparateur. Invisible tant que l'image de fond était
+     sombre à cet endroit ; illisible depuis que les deux bandeaux portent une
+     photo claire (retour Clémence, 20/08).
+
+     Chaque thème reprend donc son encre — myrtille sur ciment, argent sur
+     myrtille — et la pastille reçoit un fond semi-opaque. C'est lui qui fait
+     le travail : la bande d'onglets court sur toute la largeur en mobile,
+     donc elle passe forcément sur la photo, dont la clarté varie. Une simple
+     couleur de texte ne peut pas être lisible sur les deux à la fois. */
+  .heroCiment .subTabPill {
+    color: rgba(38,0,31,0.75);
+    border-color: rgba(38,0,31,0.28);
+    background: rgba(255,255,255,0.55);
+  }
+  .heroCommercialRC .subTabPill {
+    color: var(--ciment);
+    border-color: rgba(167,173,170,0.35);
+    background: rgba(38,0,31,0.55);
+  }
+
+  /* Les deux règles ci-dessus sont plus spécifiques que .subTabPillActive :
+     sans ce rappel, elles écrasent aussi la pastille active et les onglets
+     deviennent indiscernables. */
+  .heroCiment .subTabPillActive,
+  .heroCommercialRC .subTabPillActive {
     background: var(--soleil);
     color: var(--myrtille);
     border-color: var(--soleil);

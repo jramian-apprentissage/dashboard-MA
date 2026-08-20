@@ -28,78 +28,57 @@ const borderCol = { color: 'rgba(227,225,216,0.08)' };
 const barAnim = { duration: 900, easing: 'easeOutQuart', delay: ctx => ctx.type === 'data' && ctx.mode === 'default' ? ctx.dataIndex * 55 : 0 };
 const lineAnim = { duration: 900, easing: 'easeOutQuart' };
 
-/* Hauteur réservée sous l'axe pour la bande des RDV, et position du chiffre
-   dans cette bande — sous les libellés horaires, pas dessus. */
-const BANDE_RDV = 26;
-const BANDE_RDV_Y = 11;
-// Nommé une seule fois, dans la bande elle-même.
-const LEGENDE_RDV = 'RDV pris';
+/* Hauteur du graphe, libellés horaires compris. */
+const HAUTEUR_GRAPHE = 266;
 
-/* Les RDV, en bande sous l'axe des heures.
+/* Les RDV, posés au-dessus de leur barre.
 
-   Ils étaient écrits DANS le plot, à même les barres : « RDV : 3 » en vert
-   pâle sur des barres bleu pâle, à une hauteur qui changeait d'une tranche à
-   l'autre — dedans si la barre était assez haute, au-dessus sinon. Trois
-   défauts d'un coup : un contraste clair-sur-clair, une ligne de base
-   mouvante que l'œil doit rattraper à chaque colonne, et un préfixe de 40 px
-   qui entrait en collision avec la tranche voisine dès que l'écran
-   rétrécissait. D'où « moyennement visible » (retour de Jimmy, 18/08).
+   Historique — ils ont d'abord été écrits à même les barres (« RDV : 3 », vert
+   pâle sur bleu pâle), puis déplacés en bande sous l'axe pour régler trois
+   défauts d'un coup : contraste clair-sur-clair, ligne de base mouvante, et un
+   préfixe de 40 px qui percutait la tranche voisine sur écran étroit (retours
+   de Jimmy, 18/08).
 
-   La bande règle les trois : ligne de base constante — l'œil sait où
-   regarder et balaye la journée d'un passage —, plus aucune superposition
-   avec les barres ni avec la courbe, et le mot « RDV » ne s'écrit plus qu'une
-   fois, dans la légende. Reste le chiffre seul, 7 px au lieu de 40.
+   Retour à la colonne (Clémence, 20/08) : sur écran large, la bande devenait
+   une ligne très longue dont le libellé, écrit une seule fois tout à gauche,
+   obligeait l'œil à revenir au début pour savoir ce qu'il lisait.
+   Posé sur sa barre, le chiffre n'a plus besoin d'être nommé — sa position le
+   rattache.
 
-   On reste dans le canvas plutôt que de construire la bande en DOM : les
-   positions X sont alors gratuites et exactes, puisqu'on réutilise celles que
-   Chart.js a calculées pour les barres. Une bande en DOM demanderait de
-   recalculer l'alignement depuis chartArea à chaque redimensionnement, et un
-   décalage d'une demi-colonne mentirait sur l'heure au lieu d'être seulement
-   pénible à lire.
+   Les défauts d'origine ne se reproduisent pas : le préfixe a disparu (le mot
+   ne vit plus que dans la légende) et le chiffre s'écrit sur le fond blanc
+   AU-DESSUS de la barre, non dessus. Reste la courbe des taux, qui traverse
+   cette zone : un liseré blanc détoure le chiffre pour qu'il reste lisible
+   quand elle passe derrière.
 
-   Une tranche sans RDV reste vide : afficher « 0 » sur les huit tranches
-   improductives remplirait la bande de bruit. */
+   Une tranche sans RDV reste vide : afficher « 0 » sur les tranches
+   improductives remplirait le graphe de bruit. */
 function makeRdvPlugin(rowsRef) {
   return {
-    id: 'rdvSousAxe',
-    afterDraw(chart) {
+    id: 'rdvSurBarre',
+    /* Après les datasets : le chiffre doit passer PAR-DESSUS la courbe des
+       taux, pas disparaître dessous. */
+    afterDatasetsDraw(chart) {
       const rows = rowsRef.current;
-      const { ctx } = chart;
-      /* On part du bas de l'ÉCHELLE X, pas de chartArea.bottom : les libellés
-         horaires occupent précisément l'espace entre les deux, et un chiffre
-         posé à un offset fixe depuis chartArea viendrait s'écrire dessus.
-         `scales.x.bottom` tombe sous les libellés, quelle que soit leur
-         hauteur — donc quelle que soit la police ou la densité de tranches. */
-      const axeX = chart.scales?.x;
-      if (!axeX) return;
-      const y = axeX.bottom + BANDE_RDV_Y;
+      const { ctx, chartArea } = chart;
       const meta = chart.getDatasetMeta(0);
       ctx.save();
       ctx.font = 'bold 10px OverusedGrotesk, sans-serif';
-      ctx.textBaseline = 'middle';
-      // Vert nettement plus soutenu que l'ancien : sur le fond blanc de la
-      // carte, le vert pâle d'origine était à la limite du lisible.
-      ctx.fillStyle = 'rgba(46,107,79,0.95)';
-
-      /* Le libellé vit DANS la bande, à gauche et sur la même ligne de base
-         que les chiffres — pas dans la légende sous le graphe. Posé là, il
-         nomme la ligne qu'on est en train de lire au lieu d'obliger l'œil à
-         descendre chercher à quoi ces nombres se rapportent (demande de
-         Jimmy, 18/08). Même vert que les chiffres : c'est ce qui fait le lien.
-
-         Il se loge dans la gouttière de l'axe des ordonnées, à gauche de la
-         zone de tracé. On ne l'écrit que s'il y tient : sur une carte étroite,
-         mieux vaut pas de libellé qu'un libellé chevauchant les graduations. */
-      const gouttiere = chart.chartArea.left;
-      if (ctx.measureText(LEGENDE_RDV).width + 4 <= gouttiere) {
-        ctx.textAlign = 'left';
-        ctx.fillText(LEGENDE_RDV, 2, y);
-      }
-
       ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.lineWidth = 3;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+      ctx.fillStyle = 'rgba(46,107,79,0.95)';
       meta.data.forEach((bar, i) => {
         const rdv = rows[i]?.rdv;
         if (!rdv) return;
+        /* Au-dessus du sommet de la barre. Si elle monte trop haut pour qu'il
+           y tienne, on bascule juste sous le sommet plutôt que d'écrire hors
+           du cadre. */
+        const dessus = bar.y - 5;
+        const y = dessus >= chartArea.top + 10 ? dessus : bar.y + 14;
+        ctx.strokeText(String(rdv), bar.x, y);
         ctx.fillText(String(rdv), bar.x, y);
       });
       ctx.restore();
@@ -294,7 +273,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       ) : (
       <>
       {kpis ? (
-        <div className={styles.kpiGrid6}>
+        <div className={styles.kpiGrid7}>
           {kpis.map(k => <KPICard key={k.label} {...k} />)}
         </div>
       ) : (
@@ -363,9 +342,9 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       <td className={styles.tdNum} title={row.tauxLabel !== '—' ? `${row.tauxLabel} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: tauxColor }}>{fmtNumber(row.echanges1s) ?? '—'}</span></td>
                       <td className={styles.tdNum}>{fmtNumber(row.echanges30s) ?? '—'}</td>
                       <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</td>
-                      <td className={styles.tdNum} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '—'}</td>
+                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</span></td>
+                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</span></td>
+                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '—'}</span></td>
                     </tr>
                   );
                 })}
@@ -381,7 +360,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       <Card title={`Taux d’échanges > 1s par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ''}`}>
         {hasData && trancheRows.length > 0 ? (
           <>
-            <div className={styles.chartWrap} style={{ height: 240 + BANDE_RDV }}>
+            <div className={styles.chartWrap} style={{ height: HAUTEUR_GRAPHE }}>
               <Bar
                 plugins={[rdvPlugin]}
                 data={{
@@ -452,7 +431,6 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                   },
                   // Espace réservé sous l'axe pour la bande des RDV : sans
                   // lui, le plugin dessinerait hors du canvas visible.
-                  layout: { padding: { bottom: BANDE_RDV } },
                   scales: {
                     x: { ticks: { ...tickStyle, font: { size: 9 }, maxRotation: 0 }, grid: gridStyle, border: borderCol },
                     y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', title: { display: true, text: 'Nb appels', color: 'rgba(167,173,170,0.4)', font: { size: 9 } } },
@@ -464,6 +442,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
             <div className={styles.legend}>
               <span className={styles.legDot} style={{ background: 'rgba(123,170,191,0.7)' }} />Appels émis
               <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Taux d’échanges &gt; 1s %
+              <span className={styles.legDot} style={{ background: 'rgba(46,107,79,0.95)', marginLeft: 14 }} />RDV pris
             </div>
           </>
         ) : (

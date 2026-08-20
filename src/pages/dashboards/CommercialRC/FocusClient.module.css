@@ -33,6 +33,12 @@
 .rank { font-weight: 700; width: 20px; text-align: center; }
 .tdName { color: var(--text); font-weight: 500; }
 .tdRight { text-align: right; }
+/* En-tete aligne sur SA colonne. ".tbl th" impose text-align:left a tous les
+   en-tetes ; sur une colonne de montants, cales a droite, le titre se
+   retrouvait a l autre bout de la cellule, sans lien visuel avec les chiffres
+   qu il nomme (retour Clemence, 20/08). Selecteur volontairement plus
+   specifique que ".tbl th", sinon la regle generique gagne. */
+.tbl th.tdRight { text-align: right; }
 .miniBarWrap { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--text2); }
 .miniBar { width: 50px; height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
 .miniFill { height: 100%; background: var(--accent); border-radius: 2px; opacity: 0.6; }

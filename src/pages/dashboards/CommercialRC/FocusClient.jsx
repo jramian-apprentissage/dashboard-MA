@@ -235,7 +235,7 @@ export default function FocusClient() {
             <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
           ) : result?.topClients?.length > 0 ? (
             <table className={`${styles.tbl} ${styles.tblRang}`}>
-              <thead><tr><th></th><th></th><th>CA</th><th>Part du CA</th></tr></thead>
+              <thead><tr><th></th><th></th><th className={styles.tdRight}>CA</th><th>Part du CA</th></tr></thead>
               <tbody>
                 {result.topClients.map((c, i) => (
                   <tr key={c.name}>
@@ -271,7 +271,7 @@ export default function FocusClient() {
             <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
           ) : result?.topClientsMarge?.length > 0 ? (
             <table className={`${styles.tbl} ${styles.tblRang}`}>
-              <thead><tr><th></th><th></th><th>Marge</th><th>Part de la marge</th></tr></thead>
+              <thead><tr><th></th><th></th><th className={styles.tdRight}>Marge</th><th>Part de la marge</th></tr></thead>
               <tbody>
                 {result.topClientsMarge.map((c, i) => (
                   <tr key={c.name}>
