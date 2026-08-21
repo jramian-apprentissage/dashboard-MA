@@ -316,33 +316,44 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
         )}
       </Card>
 
-      <SectionLabel>Appels sortants</SectionLabel>
-      <Card>
-        {hasData ? (
-          <QualifBreakdown
-            stats={r.sortant}
-            compareStats={compareResult?.sortant}
-            comparePeriodKey={comparePeriodKey}
-            titre="Total"
-          />
-        ) : (
-          <NotConnected>en attente de l'archive Ringover</NotConnected>
-        )}
-      </Card>
+      {/* Sortants et entrants côte à côte. Pleine largeur, chaque ligne
+          obligeait l'œil à parcourir tout l'écran pour relier un libellé à son
+          chiffre, calé à droite (retour Clémence, 20/08) : en deux colonnes la
+          distance est divisée par deux. Même parti que la section « Qualité
+          des appels » juste en dessous.
 
-      <SectionLabel>Appels entrants</SectionLabel>
-      <Card>
-        {hasData ? (
-          <QualifBreakdown
-            stats={r.entrant}
-            compareStats={compareResult?.entrant}
-            comparePeriodKey={comparePeriodKey}
-            titre="Total"
-          />
-        ) : (
-          <NotConnected>en attente de l'archive Ringover</NotConnected>
-        )}
-      </Card>
+          Le nom de chaque direction descend du SectionLabel vers le titre de
+          sa carte : deux intitulés ne peuvent pas coiffer une même ligne. Sous
+          900 px, .twoCol repasse en une colonne et l'empilement d'aujourd'hui
+          revient tel quel. */}
+      <SectionLabel>Détail des appels</SectionLabel>
+      <div className={styles.twoCol}>
+        <Card title="Appels sortants">
+          {hasData ? (
+            <QualifBreakdown
+              stats={r.sortant}
+              compareStats={compareResult?.sortant}
+              comparePeriodKey={comparePeriodKey}
+              titre="Total"
+            />
+          ) : (
+            <NotConnected>en attente de l'archive Ringover</NotConnected>
+          )}
+        </Card>
+
+        <Card title="Appels entrants">
+          {hasData ? (
+            <QualifBreakdown
+              stats={r.entrant}
+              compareStats={compareResult?.entrant}
+              comparePeriodKey={comparePeriodKey}
+              titre="Total"
+            />
+          ) : (
+            <NotConnected>en attente de l'archive Ringover</NotConnected>
+          )}
+        </Card>
+      </div>
 
       {/* Sigle développé partout : « TMC » n'était clair pour personne hors de
           l'équipe, et c'est un dashboard client (retour de Clémence, 14/08). */}
