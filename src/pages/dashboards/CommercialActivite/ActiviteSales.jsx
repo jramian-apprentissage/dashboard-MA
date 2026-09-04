@@ -295,6 +295,8 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               return {
                 nom: name,
                 appels: ring?.appels ?? null,
+                joursActifs: ring?.joursActifs ?? null,
+                appelsParJour: ring?.appelsParJour ?? null,
                 echanges1s: ring?.echanges1s ?? null,
                 echanges30s: ring?.echanges30s ?? null,
                 tauxDecroche: isNaN(tauxN) ? null : tauxN,
@@ -320,6 +322,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                     reprend pour tous les tableaux par collaborateur (Jimmy,
                     15/08). Le taux de décroché reste porté par la pastille de
                     couleur, qui situe l'agent d'un coup d'œil. */}
+                <th onClick={() => toggleCollabSort('appelsParJour')} style={{ cursor: 'pointer' }}>Appels / jour{collabSortArrow('appelsParJour')}</th>
                 <th onClick={() => toggleCollabSort('echanges1s')} style={{ cursor: 'pointer' }}>Échanges &gt; 1s{collabSortArrow('echanges1s')}</th>
                 <th onClick={() => toggleCollabSort('echanges30s')} style={{ cursor: 'pointer' }}>Échanges &gt; 30s{collabSortArrow('echanges30s')}</th>
                 <th onClick={() => toggleCollabSort('fichesExploitables')} style={{ cursor: 'pointer' }}>Échanges exploitables{collabSortArrow('fichesExploitables')}</th>
@@ -339,6 +342,10 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                     <tr key={row.nom} className={row.nom === selectedCollab ? styles.highlightRow : ''}>
                       <td className={styles.tdName}>{row.nom}</td>
                       <td className={styles.tdNum}>{fmtNumber(row.appels) ?? '—'}</td>
+                      {/* Moyenne sur les seules journées travaillées. Le dénominateur
+                          est rappelé au survol : sans lui, on ne peut pas savoir si
+                          un écart vient de la cadence ou du nombre de jours. */}
+                      <td className={styles.tdNum} title={row.joursActifs ? `${row.appels} appels sur ${row.joursActifs} jour${row.joursActifs > 1 ? 's' : ''} travaillé${row.joursActifs > 1 ? 's' : ''}` : undefined}>{row.appelsParJour != null ? row.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '—'}</td>
                       <td className={styles.tdNum} title={row.tauxLabel !== '—' ? `${row.tauxLabel} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: tauxColor }}>{fmtNumber(row.echanges1s) ?? '—'}</span></td>
                       <td className={styles.tdNum}>{fmtNumber(row.echanges30s) ?? '—'}</td>
                       <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '—'}</td>

@@ -268,8 +268,12 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   // ── Statistiques par collaborateur ──────────────────────────────────────────
   const collabStats = {};
   filtered.forEach(r => {
-    if (!collabStats[r.collab]) collabStats[r.collab] = { appels: 0, decroche: 0, echange1s: 0, echange30s: 0, argues: 0, fichesExploitables: 0 };
+    if (!collabStats[r.collab]) collabStats[r.collab] = { appels: 0, decroche: 0, echange1s: 0, echange30s: 0, argues: 0, fichesExploitables: 0, jours: new Set() };
     collabStats[r.collab].appels++;
+    /* Un jour ne compte que si l'agent y a passé au moins un appel : la ligne
+       existe, donc la journée est travaillée. Compter les jours calendaires de
+       la période diluerait la moyenne des absents et des temps partiels. */
+    if (r.date) collabStats[r.collab].jours.add(r.date);
     if (estDecroche(r)) collabStats[r.collab].decroche++;
     if (estDecroche(r) && dureeEchange(r) > 1) collabStats[r.collab].echange1s++;
     if (estDecroche(r) && dureeEchange(r) > 30) collabStats[r.collab].echange30s++;
@@ -286,6 +290,10 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
   const perCollab = Object.fromEntries(
     Object.entries(collabStats).map(([name, v]) => [name, {
       appels: v.appels,
+      joursActifs: v.jours.size,
+      // Moyenne d'appels par journée travaillée — cadence réelle, indépendante
+      // du nombre de jours de présence sur la période.
+      appelsParJour: v.jours.size > 0 ? v.appels / v.jours.size : null,
       decroches: v.decroche,
       echanges1s: v.echange1s,
       echanges30s: v.echange30s,
