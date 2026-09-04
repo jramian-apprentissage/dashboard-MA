@@ -364,7 +364,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       </Card>
 
       <SectionLabel>Détails des appels</SectionLabel>
-      <Card title={`Taux d’échanges > 1s par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ''}`}>
+      <Card title={`Taux d’échanges par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ''}`}>
         {hasData && trancheRows.length > 0 ? (
           <>
             <div className={styles.chartWrap} style={{ height: HAUTEUR_GRAPHE }}>
@@ -394,6 +394,26 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       fill: false,
                       pointRadius: 4,
                       borderWidth: 2,
+                      yAxisID: 'y2',
+                      spanGaps: false,
+                      order: 0,
+                    },
+                    /* Second palier de l'entonnoir, même base que le premier
+                       (part des appels émis) : les deux courbes se lisent donc
+                       l'une sous l'autre sur le même axe. Trait plus fin et
+                       points plus petits — c'est le > 1s qui reste la lecture
+                       principale de la carte. */
+                    {
+                      type: 'line',
+                      label: 'Taux d’échanges > 30s %',
+                      data: trancheRows.map(r => r.appels > 0 ? r.echange30s : null),
+                      borderColor: 'rgba(196,151,58,0.9)',
+                      backgroundColor: 'rgba(196,151,58,0.04)',
+                      pointBackgroundColor: 'rgba(196,151,58,0.9)',
+                      tension: 0.35,
+                      fill: false,
+                      pointRadius: 3,
+                      borderWidth: 1.5,
                       yAxisID: 'y2',
                       spanGaps: false,
                       order: 0,
@@ -441,7 +461,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                   scales: {
                     x: { ticks: { ...tickStyle, font: { size: 9 }, maxRotation: 0 }, grid: gridStyle, border: borderCol },
                     y: { ticks: tickStyle, grid: gridStyle, border: borderCol, position: 'left', title: { display: true, text: 'Nb appels', color: 'rgba(167,173,170,0.4)', font: { size: 9 } } },
-                    y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Taux d’échanges > 1s %', color: 'rgba(169,141,196,0.6)', font: { size: 9 } } },
+                    y2: { ticks: { ...tickStyle, callback: v => v + '%' }, grid: { display: false }, border: borderCol, position: 'right', min: 0, max: 100, title: { display: true, text: 'Taux d’échanges %', color: 'rgba(169,141,196,0.6)', font: { size: 9 } } },
                   },
                 }}
               />
@@ -449,6 +469,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
             <div className={styles.legend}>
               <span className={styles.legDot} style={{ background: 'rgba(123,170,191,0.7)' }} />Appels émis
               <span className={styles.legDot} style={{ background: 'rgba(169,141,196,0.9)', marginLeft: 14 }} />Taux d’échanges &gt; 1s %
+              <span className={styles.legDot} style={{ background: 'rgba(196,151,58,0.9)', marginLeft: 14 }} />Taux d’échanges &gt; 30s %
               <span className={styles.legDot} style={{ background: 'rgba(46,107,79,0.95)', marginLeft: 14 }} />RDV pris
             </div>
           </>
