@@ -449,6 +449,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
             <thead><tr>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('agent_label')}>Collaborateur{agentSortArrow('agent_label')}</th>
               <th className={styles.thSortable} onClick={() => toggleAgentSort('appels_emis')}>Appels émis{agentSortArrow('appels_emis')}</th>
+              <th className={styles.thSortable} onClick={() => toggleAgentSort('appelsParJour')}>Appels / jour{agentSortArrow('appelsParJour')}</th>
               {/* Colonnes dans l'ordre de l'entonnoir, pour qu'on lise ici le
                   parcours d'un agent et l'endroit où il bloque (Christophe,
                   14/08). « Contact joint » est retiré comme ailleurs : mesure
@@ -473,13 +474,19 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                   // exploitable, sinon la colonne contredirait la carte.
                   const baseNette = Math.max(a.appels_emis - (a.appels_non_exploitables ?? 0), 0);
                   const transfoNette = baseNette > 0 ? Math.round((a.rdvs_pris / baseNette) * 1000) / 10 : 0;
-                  return { ...a, fichesAgent, tauxCompletion, tauxDecroche30s, transfoNette };
+                  // Cadence réelle : appels émis rapportés aux seules journées
+                  // travaillées, pas aux jours calendaires de la période.
+                  const appelsParJour = a.jours_actifs > 0 ? a.appels_emis / a.jours_actifs : null;
+                  return { ...a, fichesAgent, tauxCompletion, tauxDecroche30s, transfoNette, appelsParJour };
                 })
                 .sort((a, b) => compareAgentRows(a, b, agentSort))
                 .map(a => (
                   <tr key={a.agent_label} className={a.agent_label === selectedCollab ? styles.highlightRow : ''}>
                     <td className={styles.tdName}>{a.agent_label}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_emis)}</td>
+                    {/* Le dénominateur est rappelé au survol : sans lui, on ne peut
+                        pas distinguer un écart de cadence d'un écart de présence. */}
+                    <td className={styles.tdNum} title={a.jours_actifs ? `${fmtNumber(a.appels_emis)} appels sur ${a.jours_actifs} jour${a.jours_actifs > 1 ? 's' : ''} travaillé${a.jours_actifs > 1 ? 's' : ''}` : undefined}>{a.appelsParJour != null ? a.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '—'}</td>
                     {/* Le volume, le taux au survol — même arbitrage que
                         l'entonnoir : « la valeur numéraire est plus utile ». */}
                     <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${fmtPourcentage(partPct(a.appels_decroches_1s, a.appels_emis))} des appels émis` : undefined}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '—'}</td>
