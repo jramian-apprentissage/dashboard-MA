@@ -19,6 +19,7 @@ import NotConnected, { notConnectedKPI } from '../../../components/ui/NotConnect
 import NoPeriodData from '../../../components/ui/NoPeriodData';
 import FreshnessNote from '../../../components/FreshnessNote';
 import MontantExact from '../../../components/ui/MontantExact';
+import ListeModale from '../../../components/ui/ListeModale';
 import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS, SHOW_MONDAY_KPIS } from '../../../config/featureFlags';
 import styles from './FocusCommercial.module.css';
@@ -51,6 +52,12 @@ const evoBarOpts = {
     y: { ticks: { ...tickStyle, stepSize: 1 }, grid: gridStyle, border: borderStyle, min: 0 },
   },
 };
+
+/* Les deux états d'un deal simplement signé. Les autres membres d'ETAT_GAGNE
+   — résiliation, fin de contrat, suspension — désignent un contrat signé PUIS
+   terminé : toujours un deal gagné au sens du comptage, mais qui mérite d'être
+   nommé quand on déplie la liste. */
+const ETATS_SIGNATURE = new Set(['Contrat signé', 'Date de démarrage planifié/Contrat signé']);
 
 const missionLabels = { SO: 'Commercial', AV: 'Administratif', CS: 'Customer Success', IT: 'Informatique', DS: 'Digital Services' };
 const missionColors = ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)', 'rgba(123,170,191,0.75)', 'rgba(142,207,170,0.75)'];
@@ -109,6 +116,10 @@ export default function FocusCommercial() {
   const leads = useLeadsAnalytics();
   const secteurs = useComptesSecteurs();
   const { comparePeriodKey } = usePeriod();
+  /* Index du mois dont on a cliqué la barre « Gagnés » dans « Évolution
+     mensuelle des deals », ou null. L'infobulle reste le coup d'œil — six
+     lignes au plus — la modale donne la liste entière. */
+  const [moisGagnes, setMoisGagnes] = useState(null);
   const [relanceSort, setRelanceSort] = useState({ col: 'etat', dir: 'asc' });
   const [showAllRelances, setShowAllRelances] = useState(false);
   const [rechercheRelances, setRechercheRelances] = useState('');
@@ -388,6 +399,23 @@ export default function FocusCommercial() {
                   }}
                   options={{
                     ...evoBarOpts,
+                    /* Clic sur une barre « Gagnés » → la liste complète du
+                       mois, même principe que le graphe des revenus perdus.
+                       Limité à cette série : les deals perdus et en stand-by
+                       ont déjà leurs listes dans l'autre onglet, et leurs
+                       cartes de motifs juste au-dessus.
+
+                       Le curseur ne passe en main que sur cette série — sur un
+                       canvas c'est la seule affordance possible, et la laisser
+                       sur les trois promettrait un clic sans effet. */
+                    onClick: (evt, elements) => {
+                      const barre = elements.find(e => e.datasetIndex === 0);
+                      if (barre) setMoisGagnes(barre.index);
+                    },
+                    onHover: (evt, elements) => {
+                      const c = evt.native?.target;
+                      if (c) c.style.cursor = elements.some(e => e.datasetIndex === 0) ? 'pointer' : 'default';
+                    },
                     plugins: {
                       ...evoBarOpts.plugins,
                       /* Survol des barres « Gagnés » : la barre donne le
@@ -432,6 +460,60 @@ export default function FocusCommercial() {
                 <span className={styles.legDot} style={{ background: '#C4876A', marginLeft: 12 }} />Perdus
                 <span className={styles.legDot} style={{ background: '#D4A84B', marginLeft: 12 }} />Stand-by
               </div>
+
+              {/* Liste entière du mois cliqué. L'infobulle s'arrête à six
+                  lignes pour ne pas déborder de la carte ; ici la hauteur est
+                  celle de la modale, tout tient.
+
+                  Le montant est celui du flux mensuel vendu. Un deal signé
+                  sans revenu récurrent existe — sept sur dix-huit au 08/09/2026,
+                  des contrats au forfait ou encore à chiffrer — et il compte
+                  dans la hauteur de la barre : l'écrire « sans revenu
+                  récurrent » plutôt que « 0 € » évite de le lire comme une
+                  vente ratée. */}
+              {moisGagnes != null && leads.data.evolutionMensuelle.mois[moisGagnes] && (() => {
+                const m = leads.data.evolutionMensuelle.mois[moisGagnes];
+                const deals = m.gagnesDetail || [];
+                const total = deals.reduce((s, d) => s + d.vente, 0);
+                return (
+                  <ListeModale
+                    titre={`Deals gagnés — ${moisLabel(m.mois)}`}
+                    sousTitre={`${deals.length} deal${deals.length > 1 ? 's' : ''} signé${deals.length > 1 ? 's' : ''} · ${fmtEurosDetail(total)} de flux mensuel`}
+                    onClose={() => setMoisGagnes(null)}
+                  >
+                    {deals.length > 0 ? (
+                      <table className={styles.tbl}>
+                        <thead><tr><th>Client</th><th>Profil</th><th className={styles.tdRight}>Vente</th></tr></thead>
+                        <tbody>
+                          {deals.map((d, i) => (
+                            <tr key={`${d.nom}|${d.poste}|${i}`}>
+                              <td>
+                                <strong>{d.nom}</strong>
+                                {/* Un contrat signé puis terminé reste un deal
+                                    gagné — c'est la règle métier, et il compte
+                                    dans la hauteur de la barre. Le taire ferait
+                                    douter du chiffre : juillet 2026 aligne deux
+                                    signatures et une résiliation sous « 3 ». */}
+                                {ETATS_SIGNATURE.has(d.etat) ? null : (
+                                  <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{d.etat}</div>
+                                )}
+                              </td>
+                              <td>{d.poste || <span style={{ color: 'var(--text3)' }}>non renseigné</span>}</td>
+                              <td className={styles.tdRight} style={{ color: 'var(--text)', fontWeight: 600 }}>
+                                {d.vente > 0
+                                  ? <MontantExact exact={fmtEurosExact(d.vente)}>{fmtEurosDetail(d.vente)}</MontantExact>
+                                  : <span style={{ color: 'var(--text3)', fontWeight: 400 }}>sans revenu récurrent</span>}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <NotConnected>aucun deal détaillé pour ce mois</NotConnected>
+                    )}
+                  </ListeModale>
+                );
+              })()}
             </>
           ) : (
             <NotConnected>chargement…</NotConnected>
