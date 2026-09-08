@@ -604,6 +604,49 @@ function parseRDVDate(str) {
   return isNaN(d) ? null : d;
 }
 
+/* Un rendez-vous est ÉCHU quand son créneau est antérieur à aujourd'hui, À
+   VENIR sinon. Un créneau situé aujourd'hui compte comme à venir : à 9 h du
+   matin, un rendez-vous de 17 h n'est pas un rendez-vous manqué.
+
+   Le créneau (`dateMeeting`) n'est pas la date de prise (`date`) : les cartes
+   et le filtre de période continuent de porter sur la PRISE, seule cette
+   partition porte sur le créneau. Voir migration 030 côté serveur.
+
+   Créneau absent — 1 ligne sur 270 au 08/09/2026, la feuille n'en porte pas
+   toujours — : ni échu ni à venir. La ligne reste un rendez-vous pris, mais
+   sort du calcul du taux plutôt que d'être rangée à tort d'un côté. */
+function estEchu(row) {
+  const d = parseRDVDate(row.dateMeeting);
+  return d ? toMidnight(d) < toMidnight(new Date()) : false;
+}
+function estAVenir(row) {
+  const d = parseRDVDate(row.dateMeeting);
+  return d ? toMidnight(d) >= toMidnight(new Date()) : false;
+}
+
+/* Taux d'honoration.
+
+   Dénominateur : les rendez-vous ÉCHUS, pas tous les rendez-vous pris. Un
+   rendez-vous fixé au mois prochain n'est pas un échec, or l'ancien calcul le
+   comptait comme tel — le taux baissait mécaniquement à chaque prise de
+   créneau lointain, punissant ce qu'on cherche à encourager.
+
+   Numérateur : les honorés PARMI les échus, et non le total des honorés. La
+   feuille contient des rendez-vous marqués présents dont le créneau est encore
+   à venir (un au 08/09/2026) ; comptés au numérateur sans l'être au
+   dénominateur, ils produisaient un taux supérieur à 100 % — 5 honorés pour
+   4 échus chez Christophe. */
+function statsHonoration(lignes) {
+  const echus = lignes.filter(estEchu);
+  const honoresEchus = echus.filter(r => r.honore).length;
+  return {
+    rdvEchus: echus.length,
+    rdvAVenir: lignes.filter(estAVenir).length,
+    rdvHonoresEchus: honoresEchus,
+    tauxHonores: partPct(honoresEchus, echus.length),
+  };
+}
+
 export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) {
   const from = dateFrom ? toMidnight(dateFrom) : null;
   const to   = dateTo   ? toMidnight(dateTo)   : null;
@@ -624,16 +667,28 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
   });
 
   const rdvPris    = filtered.length;
+  /* Le total des honorés, inchangé : c'est ce que la carte « RDV honorés »
+     a toujours affiché. Il peut dépasser d'une unité les honorés échus du
+     taux — écart qui signale une donnée incohérente dans la feuille, pas une
+     erreur de calcul. */
   const rdvHonores = filtered.filter(r => r.honore).length;
-  const tauxHonores = partPct(rdvHonores, rdvPris);
+  const { rdvEchus, rdvAVenir, tauxHonores } = statsHonoration(filtered);
 
   // ── Par collaborateur ──────────────────────────────────────────────────────
   const collabMap = {};
   filtered.forEach(r => {
-    if (!collabMap[r.collab]) collabMap[r.collab] = { rdvPris: 0, rdvHonores: 0 };
+    if (!collabMap[r.collab]) collabMap[r.collab] = { rdvPris: 0, rdvHonores: 0, lignes: [] };
     collabMap[r.collab].rdvPris++;
     if (r.honore) collabMap[r.collab].rdvHonores++;
+    collabMap[r.collab].lignes.push(r);
   });
+  /* Chaque collaborateur porte les mêmes paliers que l'en-tête, calculés par
+     la même fonction : un taux de ligne qui ne se calculerait pas comme le
+     taux global serait invisible et faux. */
+  for (const v of Object.values(collabMap)) {
+    Object.assign(v, statsHonoration(v.lignes));
+    delete v.lignes;
+  }
 
   // ── Évolution mensuelle ────────────────────────────────────────────────────
   const monthlyMap = {};
@@ -673,7 +728,7 @@ export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) 
   });
 
   return {
-    rdvPris, rdvHonores, tauxHonores,
+    rdvPris, rdvHonores, rdvEchus, rdvAVenir, tauxHonores,
     perCollab: collabMap,
     monthly: monthlyMap,
     byHour: byHourMap,
@@ -758,6 +813,7 @@ export function computeRDVStatsForRange(rdvRows, validCollabs, collab, dateFrom,
 
   const rdvPris = filtered.length;
   const rdvHonores = filtered.filter(r => r.honore).length;
-  const tauxHonores = partPct(rdvHonores, rdvPris);
-  return { rdvPris, rdvHonores, tauxHonores };
+  // Mêmes règles que computeRDVData, par la même fonction.
+  const { rdvEchus, rdvAVenir, tauxHonores } = statsHonoration(filtered);
+  return { rdvPris, rdvHonores, rdvEchus, rdvAVenir, tauxHonores };
 }

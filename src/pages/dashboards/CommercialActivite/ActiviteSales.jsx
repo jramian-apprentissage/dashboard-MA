@@ -120,6 +120,8 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
   const rdvPris    = rdvResult?.rdvPris ?? '—';
   const rdvHonores = rdvResult?.rdvHonores ?? '—';
   const tauxHon = rdvResult ? fmtPourcentage(rdvResult.tauxHonores) : '—';
+  const rdvEchus  = rdvResult?.rdvEchus ?? null;
+  const rdvAVenir = rdvResult?.rdvAVenir ?? '—';
   // Source des RDV : la feuille Google "Meetings Bookés". L'URL vit dans
   // VITE_RDV_SHEET_URL et non en dur — le backend, lui, ne connaît que
   // l'Apps Script qui l'expose en CSV, pas l'adresse de la feuille. Sans
@@ -187,7 +189,12 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
     { label: 'Échanges exploitables',    value: fichesExploitables, unit: '', compare: cmp ? compareValueText(fichesExploitables, cmp.fichesExploitables, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation ayant apporté des informations sur l’entreprise' }, color: 'amber', exactValue: part(fichesExploitables, echanges30s, 'des échanges > 30s') },
     { label: 'RDV pris',                 value: rdvPris,            unit: '', compare: cmpRdv,     trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
     { label: 'RDV honorés',              value: rdvHonores,         unit: '', compare: cmpRdvHonores, trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
-    { label: 'Taux RDV honorés',         value: tauxHon,            unit: '', compare: cmpTauxHon, trend: { dir: 'neutral', text: rdvSrc }, color: 'purple' },
+    { label: 'Taux RDV honorés',         value: tauxHon,            unit: '', compare: cmpTauxHon, trend: { dir: 'neutral', text: rdvSrc }, color: 'purple', exactValue: rdvEchus != null ? `sur ${rdvEchus} rendez-vous déjà passés` : undefined },
+    /* Placée APRÈS le taux, et non avant : elle explique l'écart entre les
+       rendez-vous pris et le dénominateur du taux. Sans comparaison de
+       période — un stock de rendez-vous à venir se lit à l'instant présent,
+       le comparer au stock d'il y a un mois n'apprend rien. */
+    { label: 'RDV à venir',              value: rdvAVenir,          unit: '', compare: null, trend: { dir: 'neutral', text: 'Créneau non encore arrivé, hors calcul du taux' }, color: 'green' },
   ];
 
 }
@@ -307,7 +314,14 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                 tauxFichesExploit: ring?.tauxFichesExploit ?? null,
                 rdvPris,
                 rdvHonores,
-                tauxRdvHonores: rdvPris > 0 ? partPct(rdvHonores, rdvPris) : null,
+                /* Repris de computeRDVData, jamais recalculé ici : le taux de
+                   ligne doit être celui de l'en-tête, honorés échus rapportés
+                   aux échus. L'ancien `partPct(rdvHonores, rdvPris)` divisait
+                   par tous les rendez-vous pris et donnait donc un chiffre
+                   différent de la carte, sans que rien ne le signale. */
+                rdvEchus: rdvC?.rdvEchus ?? null,
+                rdvAVenir: rdvC?.rdvAVenir ?? null,
+                tauxRdvHonores: rdvC?.tauxHonores ?? null,
               };
             })
             .sort((a, b) => compareCollabRows(a, b, collabSort));
@@ -329,6 +343,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                 <th onClick={() => toggleCollabSort('rdvPris')} style={{ cursor: 'pointer' }}>RDV pris{collabSortArrow('rdvPris')}</th>
                 <th onClick={() => toggleCollabSort('rdvHonores')} style={{ cursor: 'pointer' }}>RDV honorés{collabSortArrow('rdvHonores')}</th>
                 <th onClick={() => toggleCollabSort('tauxRdvHonores')} style={{ cursor: 'pointer' }}>Taux RDV honorés{collabSortArrow('tauxRdvHonores')}</th>
+                <th onClick={() => toggleCollabSort('rdvAVenir')} style={{ cursor: 'pointer' }}>RDV à venir{collabSortArrow('rdvAVenir')}</th>
               </tr></thead>
               <tbody>
                 {rows.map(row => {
@@ -351,7 +366,8 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '—'}</td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</span></td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</span></td>
-                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '—'}</span></td>
+                      <td className={styles.tdNum} title={row.rdvEchus != null ? `${row.rdvHonores} honoré${row.rdvHonores > 1 ? 's' : ''} sur ${row.rdvEchus} rendez-vous déjà passé${row.rdvEchus > 1 ? 's' : ''}` : undefined}><span className={styles.tauxPill} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '—'}</span></td>
+                      <td className={styles.tdNum}>{fmtNumber(row.rdvAVenir) ?? '—'}</td>
                     </tr>
                   );
                 })}

@@ -209,8 +209,20 @@ export const glossaireData = [
     dashboards: ['commercial-activite'],
   },
   {
+    terme: 'RDV honorés',
+    definition: "Rendez-vous auxquels le prospect s'est présenté, d'après la colonne « Présent » du fichier RDV. Tout autre statut — absent, à replanifier, non renseigné — compte comme non honoré.",
+    source: 'Fichier RDV (Google Sheet)',
+    dashboards: ['commercial-activite'],
+  },
+  {
     terme: 'Taux de RDV honorés',
-    definition: "Rendez-vous effectivement tenus rapportés aux rendez-vous pris. Mesure la qualité des rendez-vous générés, au-delà de leur volume.",
+    definition: "Rendez-vous tenus rapportés aux seuls rendez-vous DONT LE CRÉNEAU EST DÉJÀ PASSÉ, et non à l'ensemble des rendez-vous pris. Un rendez-vous fixé au mois prochain n'est pas un échec : le compter au dénominateur faisait baisser le taux à chaque prise de créneau lointain, punissant précisément ce qu'on cherche à encourager. Sur trois rendez-vous pris — un honoré, un passé sans confirmation, un le mois prochain — le taux est de 50 % et non de 33 %. Les rendez-vous dont le créneau est aujourd'hui restent comptés comme à venir jusqu'au lendemain.",
+    source: 'Fichier RDV (Google Sheet)',
+    dashboards: ['commercial-activite'],
+  },
+  {
+    terme: 'RDV à venir',
+    definition: "Rendez-vous pris dont le créneau n'est pas encore arrivé. Ils comptent dans les « RDV pris » mais sont exclus du taux d'honoration, faute d'avoir eu lieu. C'est l'écart entre les deux qui explique pourquoi le taux ne se calcule pas sur le total.",
     source: 'Fichier RDV (Google Sheet)',
     dashboards: ['commercial-activite'],
   },
