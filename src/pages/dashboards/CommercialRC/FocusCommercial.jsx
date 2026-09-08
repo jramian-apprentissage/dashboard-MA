@@ -386,7 +386,45 @@ export default function FocusCommercial() {
                       { label: 'Stand-by', data: leads.data.evolutionMensuelle.mois.map(m => m.standby), backgroundColor: 'rgba(212,168,75,0.7)',   borderRadius: 3, borderSkipped: false },
                     ],
                   }}
-                  options={evoBarOpts}
+                  options={{
+                    ...evoBarOpts,
+                    plugins: {
+                      ...evoBarOpts.plugins,
+                      /* Survol des barres « Gagnés » : la barre donne le
+                         compte, l'infobulle dit lesquels — même principe que
+                         le graphe des revenus perdus, où lire une barre
+                         obligeait sinon à redescendre dans la page.
+
+                         Volontairement limité à cette série. Les deals perdus
+                         et en stand-by ont déjà leurs cartes de motifs juste
+                         au-dessus ; répéter la liste ici n'apprendrait rien.
+
+                         Contrairement au graphe des revenus perdus, on ne met
+                         pas les montants nuls à part : là-bas la barre MESURE
+                         le revenu, donc un montant nul n'y contribue pas ;
+                         ici elle compte les deals, et un deal sans revenu
+                         récurrent pèse autant que les autres dans sa hauteur.
+                         Les écarter de la liste la rendrait incohérente avec
+                         le chiffre affiché. */
+                      tooltip: {
+                        callbacks: {
+                          afterBody: (ctx) => {
+                            if (ctx[0]?.dataset?.label !== 'Gagnés') return [];
+                            const deals = leads.data.evolutionMensuelle.mois[ctx[0].dataIndex]?.gagnesDetail || [];
+                            if (!deals.length) return [];
+                            // Au-delà de 6 lignes, l'infobulle déborde de la carte.
+                            const visibles = deals.slice(0, 6);
+                            const reste = deals.length - visibles.length;
+                            return [
+                              '',
+                              ...visibles.map(d => `${d.nom}${d.poste ? ` · ${d.poste}` : ''} — ${fmtEurosDetail(d.vente)}`),
+                              ...(reste > 0 ? [`+ ${reste} autre${reste > 1 ? 's' : ''}`] : []),
+                            ];
+                          },
+                        },
+                      },
+                    },
+                  }}
                 />
               </div>
               <div className={styles.legend}>
