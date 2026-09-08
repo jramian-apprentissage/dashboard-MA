@@ -41,7 +41,7 @@ const REGISTRY = [
       'Opportunités sans prochaine action',
       "CA par secteur d'activité",
       'Performance par source de lead',
-      'Répartition du revenue par type de mission',
+      'Répartition du revenu par type de mission',
     ],
   },
   {

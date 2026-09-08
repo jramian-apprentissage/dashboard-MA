@@ -640,7 +640,7 @@ export default function FocusCommercial() {
 
       {/* ══ Ligne 6 — Missions MA : part du tout en donut + chiffres exacts à côté ══ */}
       <SectionLabel badge="Monday">Type de mission MA</SectionLabel>
-      <Card title="Répartition du revenue par type de mission">
+      <Card title="Répartition du revenu par type de mission">
         {!SHOW_COMPTES_KPIS ? (
           <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>
         ) : leads.error ? (
