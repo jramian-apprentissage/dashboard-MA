@@ -353,6 +353,14 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                      selon les collaborateurs, médiane 85 %. Tout le monde
                      serait vert avec l'ancien barème. */
                   const tauxColor = row.tauxDecroche == null ? undefined : row.tauxDecroche >= 85 ? 'var(--pos)' : row.tauxDecroche >= 70 ? 'var(--warn)' : 'var(--neg)';
+                  /* Les échanges > 30 s portent la même pastille que le palier
+                     précédent : sans elle, la colonne la plus révélatrice du
+                     tableau était la seule à ne rien situer. Le barème est
+                     celui d'origine — 35 % bon, 25 % moyen — qui visait
+                     précisément cette métrique avant d'être recalibré sur le
+                     décroché. Même base que le « > 1s » d'à côté, les appels
+                     émis, pour que les deux colonnes se comparent. */
+                  const taux30Color = row.tauxEchange30s == null ? undefined : row.tauxEchange30s >= 35 ? 'var(--pos)' : row.tauxEchange30s >= 25 ? 'var(--warn)' : 'var(--neg)';
                   return (
                     <tr key={row.nom} className={row.nom === selectedCollab ? styles.highlightRow : ''}>
                       <td className={styles.tdName}>{row.nom}</td>
@@ -362,7 +370,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                           un écart vient de la cadence ou du nombre de jours. */}
                       <td className={styles.tdNum} title={row.joursActifs ? `${row.appels} appels sur ${row.joursActifs} jour${row.joursActifs > 1 ? 's' : ''} travaillé${row.joursActifs > 1 ? 's' : ''}` : undefined}>{row.appelsParJour != null ? row.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '—'}</td>
                       <td className={styles.tdNum} title={row.tauxLabel !== '—' ? `${row.tauxLabel} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: tauxColor }}>{fmtNumber(row.echanges1s) ?? '—'}</span></td>
-                      <td className={styles.tdNum}>{fmtNumber(row.echanges30s) ?? '—'}</td>
+                      <td className={styles.tdNum} title={row.tauxEchange30s != null ? `${fmtPourcentage(row.tauxEchange30s)} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: taux30Color }}>{fmtNumber(row.echanges30s) ?? '—'}</span></td>
                       <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '—'}</td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</span></td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</span></td>
