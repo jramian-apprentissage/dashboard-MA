@@ -166,8 +166,9 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
         ? compareValueText(rdvResult.rdvHonores, compareRdvResult.rdvHonores, comparePeriodKey)
         : compareZeroRefText(comparePeriodKey))
     : null);
+  // Le taux se lit sur les créneaux déjà passés de la période comparée, pas sur ses RDV pris.
   const cmpTauxHon = !rdvResult ? null : (compareRdvResult
-    ? (compareRdvResult.rdvPris > 0
+    ? (compareRdvResult.rdvEchus > 0
         ? comparePtsText(rdvResult.tauxHonores, compareRdvResult.tauxHonores, comparePeriodKey)
         : compareZeroRefText(comparePeriodKey))
     : null);
@@ -188,13 +189,15 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
     { label: 'Échanges > 30s',           value: echanges30s,        unit: '', compare: cmp ? compareValueText(echanges30s, cmp.echanges30s, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation de plus de 30 secondes, hors sonnerie' }, exactValue: part(echanges30s, echanges1s, 'des échanges > 1s') },
     { label: 'Échanges exploitables',    value: fichesExploitables, unit: '', compare: cmp ? compareValueText(fichesExploitables, cmp.fichesExploitables, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation ayant apporté des informations sur l’entreprise' }, color: 'amber', exactValue: part(fichesExploitables, echanges30s, 'des échanges > 30s') },
     { label: 'RDV pris',                 value: rdvPris,            unit: '', compare: cmpRdv,     trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
-    { label: 'RDV honorés',              value: rdvHonores,         unit: '', compare: cmpRdvHonores, trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
-    { label: 'Taux RDV honorés',         value: tauxHon,            unit: '', compare: cmpTauxHon, trend: { dir: 'neutral', text: rdvSrc }, color: 'purple', exactValue: rdvEchus != null ? `sur ${rdvEchus} rendez-vous déjà passés` : undefined },
-    /* Placée APRÈS le taux, et non avant : elle explique l'écart entre les
-       rendez-vous pris et le dénominateur du taux. Sans comparaison de
-       période — un stock de rendez-vous à venir se lit à l'instant présent,
-       le comparer au stock d'il y a un mois n'apprend rien. */
-    { label: 'RDV à venir',              value: rdvAVenir,          unit: '', compare: null, trend: { dir: 'neutral', text: 'Créneau non encore arrivé, hors calcul du taux' }, color: 'green' },
+    /* « RDV pris » se lit à la date de prise, « RDV honorés » et le taux à la
+       date du créneau (méthode du 15/09/2026, voir computeRDVData). */
+    { label: 'RDV honorés',              value: rdvHonores,         unit: '', compare: cmpRdvHonores, trend: { dir: 'neutral', text: rdvSrc }, color: 'green', exactValue: 'Créneau dans la période, quelle que soit la date de prise' },
+    { label: 'Taux RDV honorés',         value: tauxHon,            unit: '', compare: cmpTauxHon, trend: { dir: 'neutral', text: rdvSrc }, color: 'purple', exactValue: rdvEchus != null ? `sur ${rdvEchus} rendez-vous dont le créneau, dans la période, est passé` : undefined },
+    /* Stock des RDV pris sur la période dont le créneau n'est pas encore
+       arrivé. Sans comparaison de période — un stock de rendez-vous à venir se
+       lit à l'instant présent, le comparer au stock d'il y a un mois n'apprend
+       rien. */
+    { label: 'RDV à venir',              value: rdvAVenir,          unit: '', compare: null, trend: { dir: 'neutral', text: 'RDV pris sur la période, créneau pas encore arrivé' }, color: 'green' },
   ];
 
 }
@@ -320,6 +323,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                    par tous les rendez-vous pris et donnait donc un chiffre
                    différent de la carte, sans que rien ne le signale. */
                 rdvEchus: rdvC?.rdvEchus ?? null,
+                rdvHonoresEchus: rdvC?.rdvHonoresEchus ?? null,
                 rdvAVenir: rdvC?.rdvAVenir ?? null,
                 tauxRdvHonores: rdvC?.tauxHonores ?? null,
               };
@@ -374,7 +378,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                       <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '—'}</td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</span></td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</span></td>
-                      <td className={styles.tdNum} title={row.rdvEchus != null ? `${row.rdvHonores} honoré${row.rdvHonores > 1 ? 's' : ''} sur ${row.rdvEchus} rendez-vous déjà passé${row.rdvEchus > 1 ? 's' : ''}` : undefined}><span className={styles.tauxPill} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '—'}</span></td>
+                      <td className={styles.tdNum} title={row.rdvEchus != null ? `${row.rdvHonoresEchus} honoré${row.rdvHonoresEchus > 1 ? 's' : ''} sur ${row.rdvEchus} rendez-vous dont le créneau, dans la période, est passé` : undefined}><span className={styles.tauxPill} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '—'}</span></td>
                       <td className={styles.tdNum}>{fmtNumber(row.rdvAVenir) ?? '—'}</td>
                     </tr>
                   );

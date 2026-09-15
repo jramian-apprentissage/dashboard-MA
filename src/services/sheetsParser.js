@@ -608,13 +608,9 @@ function parseRDVDate(str) {
    VENIR sinon. Un créneau situé aujourd'hui compte comme à venir : à 9 h du
    matin, un rendez-vous de 17 h n'est pas un rendez-vous manqué.
 
-   Le créneau (`dateMeeting`) n'est pas la date de prise (`date`) : les cartes
-   et le filtre de période continuent de porter sur la PRISE, seule cette
-   partition porte sur le créneau. Voir migration 030 côté serveur.
-
-   Créneau absent — 1 ligne sur 270 au 08/09/2026, la feuille n'en porte pas
-   toujours — : ni échu ni à venir. La ligne reste un rendez-vous pris, mais
-   sort du calcul du taux plutôt que d'être rangée à tort d'un côté. */
+   Créneau absent — 2 lignes sur 330 au 15/09/2026, la feuille n'en porte pas
+   toujours — : ni échu ni à venir, et hors de toute période lue au créneau.
+   La ligne reste un rendez-vous pris. */
 function estEchu(row) {
   const d = parseRDVDate(row.dateMeeting);
   return d ? toMidnight(d) < toMidnight(new Date()) : false;
@@ -624,24 +620,46 @@ function estAVenir(row) {
   return d ? toMidnight(d) >= toMidnight(new Date()) : false;
 }
 
-/* Taux d'honoration.
+/* Deux lectures de la même feuille, selon ce qu'on mesure (méthode convenue en
+   réunion d'équipe et confirmée par Christophe Gasior le 15/09/2026) :
 
-   Dénominateur : les rendez-vous ÉCHUS, pas tous les rendez-vous pris. Un
-   rendez-vous fixé au mois prochain n'est pas un échec, or l'ancien calcul le
-   comptait comme tel — le taux baissait mécaniquement à chaque prise de
-   créneau lointain, punissant ce qu'on cherche à encourager.
+   - à la PRISE (`date`) : les « RDV pris », le volume créé sur la période ;
+   - au CRÉNEAU (`dateMeeting`) : les « RDV honorés » et leur taux, ce qui
+     s'est réellement tenu sur la période, quelle que soit la date de prise.
 
-   Numérateur : les honorés PARMI les échus, et non le total des honorés. La
-   feuille contient des rendez-vous marqués présents dont le créneau est encore
-   à venir (un au 08/09/2026) ; comptés au numérateur sans l'être au
-   dénominateur, ils produisaient un taux supérieur à 100 % — 5 honorés pour
-   4 échus chez Christophe. */
-function statsHonoration(lignes) {
-  const echus = lignes.filter(estEchu);
+   Un rendez-vous pris en juillet pour un créneau en septembre compte donc dans
+   les RDV pris de juillet et dans les honorés de septembre. C'est la règle des
+   variables des télémarketeurs, et un créneau lointain ne pèse plus sur le taux
+   du mois où il a été pris. Jusqu'au 15/09, honorés et taux se lisaient eux
+   aussi à la prise. */
+function filtrerRDV(rows, { from, to, collab, validSet, champ }) {
+  return (rows || []).filter(row => {
+    // validSet = collaborateurs présents dans Ringover (mandataires externes exclus)
+    if (validSet.size > 0 && !validSet.has(row.collab)) return false;
+    if (collab && collab !== 'Tous' && row.collab !== collab) return false;
+    const d = parseRDVDate(row[champ]);
+    if (!d) return false;
+    const day = toMidnight(d);
+    if (from && day < from) return false;
+    if (to   && day > to)   return false;
+    return true;
+  });
+}
+
+/* Taux d'honoration, sur les rendez-vous dont le CRÉNEAU tombe dans la période.
+
+   Dénominateur : ceux dont le créneau est déjà passé. Sur la semaine en cours,
+   un rendez-vous prévu jeudi n'est pas un échec le lundi.
+
+   Numérateur : les honorés PARMI ces créneaux passés, et non le total des
+   honorés. La feuille contient des rendez-vous marqués présents dont le
+   créneau est encore à venir (un au 08/09/2026) ; comptés au numérateur sans
+   l'être au dénominateur, ils produisaient un taux supérieur à 100 %. */
+function statsHonoration(creneaux) {
+  const echus = creneaux.filter(estEchu);
   const honoresEchus = echus.filter(r => r.honore).length;
   return {
     rdvEchus: echus.length,
-    rdvAVenir: lignes.filter(estAVenir).length,
     rdvHonoresEchus: honoresEchus,
     tauxHonores: partPct(honoresEchus, echus.length),
   };
@@ -650,44 +668,47 @@ function statsHonoration(lignes) {
 export function computeRDVData(rdvRows, dateFrom, dateTo, collab, validCollabs) {
   const from = dateFrom ? toMidnight(dateFrom) : null;
   const to   = dateTo   ? toMidnight(dateTo)   : null;
-  // validCollabs = Set ou Array des noms présents dans Ringover
   const validSet = new Set(validCollabs || []);
 
-  const filtered = rdvRows.filter(row => {
-    if (validSet.size > 0 && !validSet.has(row.collab)) return false;
-    const d = parseRDVDate(row.date);
-    if (!d) return false;
-    const day = toMidnight(d);
-    if (from && day < from) return false;
-    if (to   && day > to)   return false;
-    if (collab && collab !== 'Tous') {
-      if (row.collab !== collab) return false;
-    }
-    return true;
-  });
+  // Pris sur la période : RDV pris, RDV à venir, évolution et tranches horaires.
+  const filtered = filtrerRDV(rdvRows, { from, to, collab, validSet, champ: 'date' });
+  // Tenus sur la période : RDV honorés et taux d'honoration.
+  const creneaux = filtrerRDV(rdvRows, { from, to, collab, validSet, champ: 'dateMeeting' });
 
   const rdvPris    = filtered.length;
-  /* Le total des honorés, inchangé : c'est ce que la carte « RDV honorés »
-     a toujours affiché. Il peut dépasser d'une unité les honorés échus du
-     taux — écart qui signale une donnée incohérente dans la feuille, pas une
-     erreur de calcul. */
-  const rdvHonores = filtered.filter(r => r.honore).length;
-  const { rdvEchus, rdvAVenir, tauxHonores } = statsHonoration(filtered);
+  /* Total des honorés au créneau. Il peut dépasser d'une unité les honorés du
+     taux : un rendez-vous marqué présent le jour même reste « à venir »
+     jusqu'au lendemain. */
+  const rdvHonores = creneaux.filter(r => r.honore).length;
+  const { rdvEchus, tauxHonores } = statsHonoration(creneaux);
+  /* Stock des rendez-vous PRIS sur la période dont le créneau n'est pas encore
+     arrivé : il se lit à la prise, comme les RDV pris, et entrera dans le taux
+     de la période où tombe son créneau. */
+  const rdvAVenir = filtered.filter(estAVenir).length;
 
   // ── Par collaborateur ──────────────────────────────────────────────────────
+  /* Mêmes deux lectures que l'en-tête, par les mêmes fonctions : un taux de
+     ligne qui ne se calculerait pas comme le taux global serait invisible et
+     faux. Un collaborateur peut avoir des créneaux sur la période sans y avoir
+     pris de rendez-vous. */
   const collabMap = {};
+  const ligneCollab = nom => {
+    if (!collabMap[nom]) collabMap[nom] = { rdvPris: 0, rdvHonores: 0, rdvAVenir: 0, creneaux: [] };
+    return collabMap[nom];
+  };
   filtered.forEach(r => {
-    if (!collabMap[r.collab]) collabMap[r.collab] = { rdvPris: 0, rdvHonores: 0, lignes: [] };
-    collabMap[r.collab].rdvPris++;
-    if (r.honore) collabMap[r.collab].rdvHonores++;
-    collabMap[r.collab].lignes.push(r);
+    const c = ligneCollab(r.collab);
+    c.rdvPris++;
+    if (estAVenir(r)) c.rdvAVenir++;
   });
-  /* Chaque collaborateur porte les mêmes paliers que l'en-tête, calculés par
-     la même fonction : un taux de ligne qui ne se calculerait pas comme le
-     taux global serait invisible et faux. */
+  creneaux.forEach(r => {
+    const c = ligneCollab(r.collab);
+    c.creneaux.push(r);
+    if (r.honore) c.rdvHonores++;
+  });
   for (const v of Object.values(collabMap)) {
-    Object.assign(v, statsHonoration(v.lignes));
-    delete v.lignes;
+    Object.assign(v, statsHonoration(v.creneaux));
+    delete v.creneaux;
   }
 
   // ── Évolution mensuelle ────────────────────────────────────────────────────
@@ -800,20 +821,13 @@ export function computeRDVStatsForRange(rdvRows, validCollabs, collab, dateFrom,
   const from = dateFrom ? toMidnight(dateFrom) : null;
   const to   = dateTo   ? toMidnight(dateTo)   : null;
 
-  const filtered = (rdvRows || []).filter(row => {
-    if (validSet.size > 0 && !validSet.has(row.collab)) return false;
-    if (collab && collab !== 'Tous' && row.collab !== collab) return false;
-    const d = parseRDVDate(row.date);
-    if (!d) return false;
-    const day = toMidnight(d);
-    if (from && day < from) return false;
-    if (to   && day > to)   return false;
-    return true;
-  });
+  // Mêmes deux lectures que computeRDVData (prise / créneau), par les mêmes fonctions.
+  const filtered = filtrerRDV(rdvRows, { from, to, collab, validSet, champ: 'date' });
+  const creneaux = filtrerRDV(rdvRows, { from, to, collab, validSet, champ: 'dateMeeting' });
 
   const rdvPris = filtered.length;
-  const rdvHonores = filtered.filter(r => r.honore).length;
-  // Mêmes règles que computeRDVData, par la même fonction.
-  const { rdvEchus, rdvAVenir, tauxHonores } = statsHonoration(filtered);
+  const rdvHonores = creneaux.filter(r => r.honore).length;
+  const { rdvEchus, tauxHonores } = statsHonoration(creneaux);
+  const rdvAVenir = filtered.filter(estAVenir).length;
   return { rdvPris, rdvHonores, rdvEchus, rdvAVenir, tauxHonores };
 }
