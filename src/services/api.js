@@ -3,9 +3,27 @@
 const API_URL   = import.meta.env.VITE_API_URL || 'https://dashboard-ma-backend-production.up.railway.app';
 const API_TOKEN = import.meta.env.VITE_API_READ_TOKEN || '';
 
+/* Après une mise à jour de Monday à la demande (voir MajMonday.jsx), les
+   réponses déjà dans le cache du navigateur — max-age 60 s puis
+   stale-while-revalidate 300 s, voir routes/api.js — montreraient encore
+   l'état d'avant. Pendant les six minutes qui suivent, les lectures
+   contournent donc ce cache. */
+export const CLE_SYNCHRO_MONDAY = 'ma_synchro_monday';
+const CONTOURNEMENT_CACHE_MS = 6 * 60 * 1000;
+
+function modeCache() {
+  try {
+    const depuis = Date.now() - Number(sessionStorage.getItem(CLE_SYNCHRO_MONDAY) || 0);
+    return depuis < CONTOURNEMENT_CACHE_MS ? 'reload' : 'default';
+  } catch {
+    return 'default';
+  }
+}
+
 export async function fetchAPI(path) {
   const res = await fetch(`${API_URL}/api${path}`, {
     headers: { Authorization: `Bearer ${API_TOKEN}` },
+    cache: modeCache(),
   });
   if (res.status === 401) {
     throw new Error('API backend : jeton de lecture absent ou invalide (VITE_API_READ_TOKEN)');

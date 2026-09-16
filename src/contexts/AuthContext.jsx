@@ -209,6 +209,21 @@ export function AuthProvider({ children }) {
     }
   }
 
+  /* Mise à jour de Monday à la demande (bouton du menu profil). Le backend
+     vérifie le droit sur le compte porté par le jeton ; renvoie le bilan de
+     l'extraction, ou lève le message du backend (déjà en cours, trop tôt…). */
+  async function synchroniserMonday() {
+    let res;
+    try {
+      res = await authFetch('/monday/synchronisation', token, { method: 'POST', body: '{}' });
+    } catch {
+      throw new Error('Connexion au serveur impossible.');
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Mise à jour impossible.');
+    return data;
+  }
+
   // admin et directeur ont accès à tous les dashboards implicitement. `u`
   // est toujours l'utilisateur tel que retourné par /me (jamais une copie
   // figée), donc pas besoin de relire une autre source ici.
@@ -220,7 +235,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{
-      user, ready, login, logout, changePassword,
+      user, ready, login, logout, changePassword, synchroniserMonday,
       getAllUsers, createUser, updateUserDashboards, deleteUser,
       enregistrerConsultation, chargerActivite, effacerActivite,
       hasAccessToDashboard,

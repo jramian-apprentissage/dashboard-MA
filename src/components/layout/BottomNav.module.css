@@ -82,6 +82,15 @@
 .sheetItem:active { background: rgba(255,249,147,0.06); }
 .sheetItemActive { color: var(--soleil); font-weight: 600; }
 .sheetItemLogout { color: #E39A8C; margin-top: 4px; border-top: 1px solid rgba(255,249,147,0.08); padding-top: 14px; }
+.sheetItem:disabled { cursor: default; opacity: 0.75; }
+
+/* Bilan de la mise à jour Monday, sous le bouton (MajMonday.jsx). */
+.sheetStatut {
+  padding: 0 10px 10px 33px;
+  font-size: 12px; line-height: 1.4;
+  color: #9FD8B4; font-family: var(--font);
+}
+.sheetStatut[data-etat="erreur"] { color: #E39A8C; }
 .sheetDot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,249,147,0.25); flex-shrink: 0; }
 
 .compareToggle {

@@ -7,6 +7,7 @@ import { DASHBOARD_ROUTES, DASHBOARD_DEFAULT_TAB, DASHBOARD_EXCLUDED_PERIODS } f
 import PeriodPicker, { getPeriodLabel } from '../ui/PeriodPicker';
 import styles from './BottomNav.module.css';
 import ChangerMotDePasse from '../ui/ChangerMotDePasse';
+import MajMonday from '../ui/MajMonday';
 
 /* Barre de navigation mobile — remplace le dropdown du haut, illisible et non
    scalable à 4-5 dashboards (voir Topbar.jsx). 4 boutons fixes en bas, dans
@@ -209,6 +210,7 @@ export default function BottomNav() {
                     Gestion utilisateurs
                   </button>
                 )}
+                <MajMonday className={styles.sheetItem} classeStatut={styles.sheetStatut} />
                 <button type="button" className={styles.sheetItem} onClick={() => { setMdpOuvert(true); setSheet(null); }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                   Changer mon mot de passe
