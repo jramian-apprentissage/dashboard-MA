@@ -35,7 +35,7 @@ const REGISTRY = [
       'Funnel par étape commerciale',
       'Pipeline pondéré par probabilité',
       'Détail des deals',
-      'Deals gagnés / perdus / stand-by — par mois',
+      'Deals gagnés / perdus / stand-by par mois',
       'Motifs des deals perdus',
       'Motifs des deals stand-by',
       'Opportunités sans prochaine action',

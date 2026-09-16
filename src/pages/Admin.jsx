@@ -18,7 +18,7 @@ function formatTs(iso) {
    renommer une page côté produit ne doit pas réécrire l'historique. Le
    libellé se retrouve ici, à l'affichage. */
 function libelleDashboard(id) {
-  if (!id) return '—';
+  if (!id) return '-';
   return DASHBOARDS.find(d => d.id === id)?.label || id;
 }
 
@@ -229,7 +229,7 @@ export default function Admin() {
           <div className={styles.historyPanel} onClick={e => e.stopPropagation()}>
             <div className={styles.historyHeader}>
               <div>
-                <div className={styles.historyTitle}>Historique — {historyUser.name}</div>
+                <div className={styles.historyTitle}>Historique : {historyUser.name}</div>
                 <div className={styles.historySub}>{historyEvents.length} événement{historyEvents.length !== 1 ? 's' : ''} enregistré{historyEvents.length !== 1 ? 's' : ''}</div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>

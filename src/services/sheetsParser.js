@@ -303,7 +303,7 @@ export function computeSalesData(rows, dateFrom, dateTo, collab) {
       // `taux` = taux de décroché. Conservé sous ce nom pour ne pas casser le
       // tri du tableau par collaborateur, mais il mesure désormais le statut
       // et non plus une durée.
-      taux:   v.appels > 0 ? fmtPourcentage(partPct(v.decroche, v.appels)) : '—',
+      taux:   v.appels > 0 ? fmtPourcentage(partPct(v.decroche, v.appels)) : '-',
       tauxEchange30s: partPct(v.echange30s, v.appels),
     }])
   );

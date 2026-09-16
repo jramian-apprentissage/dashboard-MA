@@ -52,7 +52,7 @@ function compareAgentRows(a, b, sort) {
 }
 
 function formatJourMois(isoDate) {
-  if (!isoDate) return '—';
+  if (!isoDate) return '-';
   const [, m, d] = isoDate.split('-');
   return `${d}/${m}`;
 }
@@ -486,10 +486,10 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                     <td className={styles.tdNum}>{fmtNumber(a.appels_emis)}</td>
                     {/* Le dénominateur est rappelé au survol : sans lui, on ne peut
                         pas distinguer un écart de cadence d'un écart de présence. */}
-                    <td className={styles.tdNum} title={a.jours_actifs ? `${fmtNumber(a.appels_emis)} appels sur ${a.jours_actifs} jour${a.jours_actifs > 1 ? 's' : ''} travaillé${a.jours_actifs > 1 ? 's' : ''}` : undefined}>{a.appelsParJour != null ? a.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '—'}</td>
+                    <td className={styles.tdNum} title={a.jours_actifs ? `${fmtNumber(a.appels_emis)} appels sur ${a.jours_actifs} jour${a.jours_actifs > 1 ? 's' : ''} travaillé${a.jours_actifs > 1 ? 's' : ''}` : undefined}>{a.appelsParJour != null ? a.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '-'}</td>
                     {/* Le volume, le taux au survol — même arbitrage que
                         l'entonnoir : « la valeur numéraire est plus utile ». */}
-                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${fmtPourcentage(partPct(a.appels_decroches_1s, a.appels_emis))} des appels émis` : undefined}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '—'}</td>
+                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${fmtPourcentage(partPct(a.appels_decroches_1s, a.appels_emis))} des appels émis` : undefined}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '-'}</td>
                     <td className={styles.tdNum} title={`${fmtPourcentage(a.tauxDecroche30s)} des appels émis`}>{fmtNumber(a.appels_decroches_30s)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_exploitables)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.fichesAgent)}</td>
@@ -557,7 +557,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
       <div className={styles.twoCol}>
         <Card title="Statut des appels">
           {isFilteredToAgent ? (
-            <NotConnected>indisponible pour un collaborateur précis — CloudTalk ne remonte le statut des appels qu'au niveau global</NotConnected>
+            <NotConnected>indisponible pour un collaborateur précis, car CloudTalk ne remonte le statut des appels qu'au niveau global</NotConnected>
           ) : (
             <>
               <DonutChart
@@ -591,7 +591,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
             pas avancé (renommé le 16/08). */}
         <Card title="Freins rencontrés">
           {isFilteredToAgent ? (
-            <NotConnected>indisponible pour un collaborateur précis — CloudTalk ne remonte ces motifs qu'au niveau global</NotConnected>
+            <NotConnected>indisponible pour un collaborateur précis, car CloudTalk ne remonte ces motifs qu'au niveau global</NotConnected>
           ) : (
             motifs.map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)
           )}

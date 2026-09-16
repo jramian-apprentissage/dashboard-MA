@@ -67,15 +67,15 @@ function QualifBreakdown({ stats, compareStats, comparePeriodKey, titre, entete 
        n'existe pas est faux, et transforme un démarrage de mission en écart
        spectaculaire (retour de Clémence, 14/08 : les zéros affichés en
        période précédente ne mettent pas en valeur le travail des équipes). */
-    if (!compareStats.total) return `${fmtNumber(count)} — aucune donnée sur ${periode}, pas de comparaison possible`;
+    if (!compareStats.total) return `${fmtNumber(count)} : aucune donnée sur ${periode}, pas de comparaison possible`;
 
     const ref = label === 'Sans tag'
       ? compareStats.sansTag
       : compareStats.parTag.find(x => x.label === label)?.count;
     if (ref === undefined || ref === null) return undefined;
     const ecart = count - ref;
-    if (ecart === 0) return `${fmtNumber(count)} — inchangé vs ${periode}`;
-    return `${fmtNumber(count)} — ${ecart > 0 ? '+' : ''}${fmtNumber(ecart)} vs ${periode} (${fmtNumber(ref)})`;
+    if (ecart === 0) return `${fmtNumber(count)} : inchangé vs ${periode}`;
+    return `${fmtNumber(count)} : ${ecart > 0 ? '+' : ''}${fmtNumber(ecart)} vs ${periode} (${fmtNumber(ref)})`;
   };
 
   const lignes = [
@@ -269,7 +269,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               sortants, ou les deux ? (retour de Clémence, 14/08).
               computeAsusEvolution ne filtre que par collaborateur et par date,
               c'est donc bien le total. */}
-          <span className={styles.subNote} style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12 }}>Nombre total d&apos;appels — entrants et sortants</span>
+          <span className={styles.subNote} style={{ fontWeight: 700, color: 'var(--text)', fontSize: 12 }}>Nombre total d&apos;appels entrants et sortants</span>
           <div className={styles.evoToggle}>
             {EVO_OPTIONS.map(o => (
               <button
@@ -366,7 +366,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               value={fmtDuree(r.dureeMoyenneS)}
               unit="min"
               compare={compareResult ? compareValueText(r.dureeMoyenneS, compareResult.dureeMoyenneS, comparePeriodKey) : null}
-              trend={{ dir: 'neutral', text: `${fmtDuree(r.dureeMoyenneSortantS)} — appels sortants · ${fmtDuree(r.dureeMoyenneEntrantS)} — appels entrants` }}
+              trend={{ dir: 'neutral', text: `${fmtDuree(r.dureeMoyenneSortantS)} (appels sortants) · ${fmtDuree(r.dureeMoyenneEntrantS)} (appels entrants)` }}
               color="default"
             />
             <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null} trend={{ dir: 'neutral', text: `${fmtPourcentage(r.tauxBons)} du total` }} color="default" />
@@ -428,7 +428,7 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
           <div className={styles.qualifHeader}>
             <div>
               <div className={styles.qualifTitle}>
-                {qualifOpen.collab} — {qualifOpen.direction === 'sortant' ? 'Appels sortants' : 'Appels entrants'}
+                {qualifOpen.collab} · {qualifOpen.direction === 'sortant' ? 'Appels sortants' : 'Appels entrants'}
               </div>
               <div className={styles.qualifSub}>Répartition par qualification</div>
             </div>

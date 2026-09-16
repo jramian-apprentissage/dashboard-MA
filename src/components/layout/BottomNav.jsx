@@ -178,7 +178,7 @@ export default function BottomNav() {
               <>
                 <div className={styles.sheetTitle}>Comparaison de périodes</div>
                 <button type="button" className={`${styles.compareToggle} ${compareActive ? styles.compareToggleActive : ''}`} onClick={toggleCompare}>
-                  {compareActive ? 'Comparaison activée — désactiver' : 'Activer la comparaison'}
+                  {compareActive ? 'Comparaison activée (désactiver)' : 'Activer la comparaison'}
                 </button>
                 {compareActive && (
                   <div className={styles.compareModeGroup} style={{ marginTop: 10 }}>

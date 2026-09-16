@@ -10,7 +10,7 @@ export function fmtNumber(value) {
 // normalement abrégés en K€ (ex. "137 K€" affiché, "137 136,00 €" au survol
 // ou au clic sur mobile, voir KPICard `exactValue`).
 export function fmtEurosExact(v) {
-  if (v == null || !Number.isFinite(v)) return '—';
+  if (v == null || !Number.isFinite(v)) return '-';
   return `${v.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €`;
 }
 
@@ -23,7 +23,7 @@ export function fmtEurosExact(v) {
    cartes KPI, elles, gardent l'entier : c'est un ordre de grandeur qu'on y
    lit, pas un classement ligne à ligne. */
 export function fmtEurosDetail(v) {
-  if (v == null || !Number.isFinite(v)) return '—';
+  if (v == null || !Number.isFinite(v)) return '-';
   if (!v) return '0 €';
   if (Math.abs(v) >= 1000) {
     return `${(v / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} K€`;
@@ -65,7 +65,7 @@ export function partPct(n, total) {
 /* Mise en forme française du résultat de partPct : virgule décimale, et rien
    d'inutile sur les valeurs entières. « 0,2 % » et non « 0.2% ». */
 export function fmtPourcentage(p) {
-  if (p == null || !Number.isFinite(p)) return '—';
+  if (p == null || !Number.isFinite(p)) return '-';
   // Une décimale au maximum, quoi qu'on lui passe. `partPct` respecte déjà
   // cette forme, mais le formateur ne doit pas dépendre de la discipline de
   // son appelant : un flottant brut concaténé tel quel est précisément ce qui

@@ -27,7 +27,7 @@ import RechercheListe from '../../../components/ui/RechercheListe';
 import { correspond } from '../../../utils/recherche';
 import rechStyles from '../../../components/ui/RechercheListe.module.css';
 
-const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
+const COMPTES_HIDDEN_REASON = 'masqué temporairement (travail en cours sur le board Leads/Prospects)';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
 
@@ -108,7 +108,7 @@ function compareRelances(a, b, sort) {
 }
 
 const RELANCES_VISIBLE = 8;
-const LEADS_HIDDEN_REASON = 'masqué temporairement — reconstruction Comptes en cours';
+const LEADS_HIDDEN_REASON = 'masqué temporairement (reconstruction Comptes en cours)';
 
 export default function FocusCommercial() {
   const mounted = useChartMount();
@@ -155,7 +155,7 @@ export default function FocusCommercial() {
       {result && (
         <>
           {SHOW_LEADS_KPIS && isEmptyPeriod ? (
-            <Card><NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." /></Card>
+            <Card><NoPeriodData suggestion="Essayez une autre période : le mois précédent, par exemple." /></Card>
           ) : (
           <div className={styles.kpiRow4}>
             {!SHOW_LEADS_KPIS ? (
@@ -229,13 +229,13 @@ export default function FocusCommercial() {
                     <div>
                       <div className={styles.metaSub}>Âge moyen</div>
                       <div className={styles.metaVal}>
-                        {leads.data.funnel.ageMoyenJours != null ? `${leads.data.funnel.ageMoyenJours} j` : '—'}
+                        {leads.data.funnel.ageMoyenJours != null ? `${leads.data.funnel.ageMoyenJours} j` : '-'}
                       </div>
                     </div>
                     <div>
                       <div className={styles.metaSub}>Durée de cycle</div>
                       <div className={styles.metaVal} style={{ color: 'var(--myrtille)' }}>
-                        {leads.data.funnel.dureeCycleJours != null ? `${leads.data.funnel.dureeCycleJours} j` : '—'}
+                        {leads.data.funnel.dureeCycleJours != null ? `${leads.data.funnel.dureeCycleJours} j` : '-'}
                       </div>
                     </div>
                   </div>
@@ -255,7 +255,7 @@ export default function FocusCommercial() {
                         </div>
                         <div className={styles.barVal}>{fmtPourcentage(s.pct)}<span>→ {fmtNumber(s.count)}</span></div>
                         <div className={styles.barAge} title="Âge moyen depuis la Date RDV">
-                          {s.ageMoyenJours != null ? `${s.ageMoyenJours} j` : '—'}
+                          {s.ageMoyenJours != null ? `${s.ageMoyenJours} j` : '-'}
                         </div>
                       </div>
                     ));
@@ -275,7 +275,7 @@ export default function FocusCommercial() {
               {!SHOW_LEADS_KPIS ? (
                 <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
               ) : isEmptyPeriod ? (
-                <NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." />
+                <NoPeriodData suggestion="Essayez une autre période : le mois précédent, par exemple." />
               ) : (
                 <>
                   <div className={styles.pipelineHeader}>
@@ -327,7 +327,7 @@ export default function FocusCommercial() {
             {!SHOW_LEADS_KPIS ? (
               <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
             ) : isEmptyPeriod ? (
-              <NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." />
+              <NoPeriodData suggestion="Essayez une autre période : le mois précédent, par exemple." />
             ) : (
               <>
                 <div className={styles.donutWrap} style={{ height: 'auto' }}>
@@ -445,7 +445,7 @@ export default function FocusCommercial() {
                             const reste = deals.length - visibles.length;
                             return [
                               '',
-                              ...visibles.map(d => `${d.nom}${d.poste ? ` · ${d.poste}` : ''} — ${fmtEurosDetail(d.vente)}`),
+                              ...visibles.map(d => `${d.nom}${d.poste ? ` · ${d.poste}` : ''} : ${fmtEurosDetail(d.vente)}`),
                               ...(reste > 0 ? [`+ ${reste} autre${reste > 1 ? 's' : ''}`] : []),
                             ];
                           },
@@ -477,7 +477,7 @@ export default function FocusCommercial() {
                 const total = deals.reduce((s, d) => s + d.vente, 0);
                 return (
                   <ListeModale
-                    titre={`Deals gagnés — ${moisLabel(m.mois)}`}
+                    titre={`Deals gagnés en ${moisLabel(m.mois)}`}
                     sousTitre={`${deals.length} deal${deals.length > 1 ? 's' : ''} signé${deals.length > 1 ? 's' : ''} · ${fmtEurosDetail(total)} de flux mensuel`}
                     onClose={() => setMoisGagnes(null)}
                   >
@@ -531,7 +531,7 @@ export default function FocusCommercial() {
               <>
                 {leads.data.motifsPerdu.motifs.slice(0, 8).map(m => <MotifBar key={m.label} {...m} fillColor="var(--neg)" />)}
                 <div className={styles.subnote}>
-                  {leads.data.motifsPerdu.total} deals perdus au total — {leads.data.motifsPerdu.sansMotif} sans motif renseigné
+                  {leads.data.motifsPerdu.total} deals perdus au total, dont {leads.data.motifsPerdu.sansMotif} sans motif renseigné
                 </div>
               </>
             ) : (
@@ -551,7 +551,7 @@ export default function FocusCommercial() {
               <>
                 {leads.data.motifsStandby.motifs.slice(0, 8).map(m => <MotifBar key={m.label} {...m} fillColor="var(--warn)" />)}
                 <div className={styles.subnote}>
-                  {leads.data.motifsStandby.total} deals en stand-by au total — {leads.data.motifsStandby.sansMotif} sans motif renseigné
+                  {leads.data.motifsStandby.total} deals en stand-by au total, dont {leads.data.motifsStandby.sansMotif} sans motif renseigné
                 </div>
               </>
             ) : (
@@ -614,8 +614,8 @@ export default function FocusCommercial() {
                         <tr key={o.itemId}>
                           <td><strong>{o.nom}</strong></td>
                           <td><Pill variant={ETAPE_PILL_VARIANT[o.etat] || 'gray'}>{o.etat}</Pill></td>
-                          <td>{fmtDateRelance(o.dateRelance) || '—'}</td>
-                          <td className={styles.tdAge}>{o.ageJours != null ? `${o.ageJours} j` : '—'}</td>
+                          <td>{fmtDateRelance(o.dateRelance) || '-'}</td>
+                          <td className={styles.tdAge}>{o.ageJours != null ? `${o.ageJours} j` : '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -729,7 +729,7 @@ export default function FocusCommercial() {
                     labels={shown.map(s => s.label)}
                     colors={colors}
                     height={210}
-                    tooltip={(label, value) => `${label} : ${fmtPourcentage(value)} (${countByLabel[label] ?? '—'})`}
+                    tooltip={(label, value) => `${label} : ${fmtPourcentage(value)} (${countByLabel[label] ?? '-'})`}
                   />
                   {/* Même légende alignée que « CA par secteur » (grille
                       Source | Leads | %) plutôt que des pastilles enroulées, pour

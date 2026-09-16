@@ -122,7 +122,7 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
         {source && (
           <span
             className={`${styles.sourceDot} ${source === 'real' ? styles.sourceReal : styles.sourceMock}`}
-            title={source === 'real' ? 'Donnée réelle (CloudTalk)' : 'Donnée fictive (mock) — pas de source CloudTalk pour cet indicateur'}
+            title={source === 'real' ? 'Donnée réelle (CloudTalk)' : 'Donnée fictive (mock) : pas de source CloudTalk pour cet indicateur'}
           />
         )}
       </div>

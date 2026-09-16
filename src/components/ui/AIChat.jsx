@@ -224,7 +224,7 @@ export default function AIChat() {
                  Code : filtre à la frappe, flèches, Entrée/Tab pour valider ── */}
           {menuOpen && (
             <div className={styles.slashMenu} role="listbox">
-              <div className={styles.slashHint}>Indicateur à cibler — dashboard · page · carte</div>
+              <div className={styles.slashHint}>Indicateur à cibler : dashboard · page · carte</div>
               {resultats.length === 0 ? (
                 <div className={styles.slashEmpty}>Aucun indicateur ne correspond</div>
               ) : resultats.map((m, i) => (

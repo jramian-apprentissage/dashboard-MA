@@ -117,11 +117,11 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
      mécanisme d'infobulle de KPICard — la carte ne porte que le volume. */
   const part = (n, base, nomBase) => (base > 0 ? `${fmtPourcentage(partPct(n, base))} ${nomBase}` : undefined);
 
-  const rdvPris    = rdvResult?.rdvPris ?? '—';
-  const rdvHonores = rdvResult?.rdvHonores ?? '—';
-  const tauxHon = rdvResult ? fmtPourcentage(rdvResult.tauxHonores) : '—';
+  const rdvPris    = rdvResult?.rdvPris ?? '-';
+  const rdvHonores = rdvResult?.rdvHonores ?? '-';
+  const tauxHon = rdvResult ? fmtPourcentage(rdvResult.tauxHonores) : '-';
   const rdvEchus  = rdvResult?.rdvEchus ?? null;
-  const rdvAVenir = rdvResult?.rdvAVenir ?? '—';
+  const rdvAVenir = rdvResult?.rdvAVenir ?? '-';
   // Source des RDV : la feuille Google "Meetings Bookés". L'URL vit dans
   // VITE_RDV_SHEET_URL et non en dur — le backend, lui, ne connaît que
   // l'Apps Script qui l'expose en CSV, pas l'adresse de la feuille. Sans
@@ -310,7 +310,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                 echanges1s: ring?.echanges1s ?? null,
                 echanges30s: ring?.echanges30s ?? null,
                 tauxDecroche: isNaN(tauxN) ? null : tauxN,
-                tauxLabel: ring?.taux ?? '—',
+                tauxLabel: ring?.taux ?? '-',
                 tauxEchange30s: ring?.tauxEchange30s ?? null,
                 argues: ring?.argues ?? null,
                 fichesExploitables: ring?.fichesExploitables ?? null,
@@ -368,18 +368,18 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                   return (
                     <tr key={row.nom} className={row.nom === selectedCollab ? styles.highlightRow : ''}>
                       <td className={styles.tdName}>{row.nom}</td>
-                      <td className={styles.tdNum}>{fmtNumber(row.appels) ?? '—'}</td>
+                      <td className={styles.tdNum}>{fmtNumber(row.appels) ?? '-'}</td>
                       {/* Moyenne sur les seules journées travaillées. Le dénominateur
                           est rappelé au survol : sans lui, on ne peut pas savoir si
                           un écart vient de la cadence ou du nombre de jours. */}
-                      <td className={styles.tdNum} title={row.joursActifs ? `${row.appels} appels sur ${row.joursActifs} jour${row.joursActifs > 1 ? 's' : ''} travaillé${row.joursActifs > 1 ? 's' : ''}` : undefined}>{row.appelsParJour != null ? row.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '—'}</td>
-                      <td className={styles.tdNum} title={row.tauxLabel !== '—' ? `${row.tauxLabel} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: tauxColor }}>{fmtNumber(row.echanges1s) ?? '—'}</span></td>
-                      <td className={styles.tdNum} title={row.tauxEchange30s != null ? `${fmtPourcentage(row.tauxEchange30s)} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: taux30Color }}>{fmtNumber(row.echanges30s) ?? '—'}</span></td>
-                      <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '—'}</td>
-                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '—'}</span></td>
-                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '—'}</span></td>
-                      <td className={styles.tdNum} title={row.rdvEchus != null ? `${row.rdvHonoresEchus} honoré${row.rdvHonoresEchus > 1 ? 's' : ''} sur ${row.rdvEchus} rendez-vous dont le créneau, dans la période, est passé` : undefined}><span className={styles.tauxPill} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '—'}</span></td>
-                      <td className={styles.tdNum}>{fmtNumber(row.rdvAVenir) ?? '—'}</td>
+                      <td className={styles.tdNum} title={row.joursActifs ? `${row.appels} appels sur ${row.joursActifs} jour${row.joursActifs > 1 ? 's' : ''} travaillé${row.joursActifs > 1 ? 's' : ''}` : undefined}>{row.appelsParJour != null ? row.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '-'}</td>
+                      <td className={styles.tdNum} title={row.tauxLabel !== '-' ? `${row.tauxLabel} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: tauxColor }}>{fmtNumber(row.echanges1s) ?? '-'}</span></td>
+                      <td className={styles.tdNum} title={row.tauxEchange30s != null ? `${fmtPourcentage(row.tauxEchange30s)} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: taux30Color }}>{fmtNumber(row.echanges30s) ?? '-'}</span></td>
+                      <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '-'}</td>
+                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '-'}</span></td>
+                      <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '-'}</span></td>
+                      <td className={styles.tdNum} title={row.rdvEchus != null ? `${row.rdvHonoresEchus} honoré${row.rdvHonoresEchus > 1 ? 's' : ''} sur ${row.rdvEchus} rendez-vous dont le créneau, dans la période, est passé` : undefined}><span className={styles.tauxPill} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '-'}</span></td>
+                      <td className={styles.tdNum}>{fmtNumber(row.rdvAVenir) ?? '-'}</td>
                     </tr>
                   );
                 })}
@@ -392,7 +392,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
       </Card>
 
       <SectionLabel>Détails des appels</SectionLabel>
-      <Card title={`Taux d’échanges par tranche horaire${selectedCollab !== 'Tous' ? ` — ${selectedCollab}` : ''}`}>
+      <Card title={`Taux d’échanges par tranche horaire${selectedCollab !== 'Tous' ? ` (${selectedCollab})` : ''}`}>
         {hasData && trancheRows.length > 0 ? (
           <>
             <div className={styles.chartWrap} style={{ height: HAUTEUR_GRAPHE }}>
@@ -477,7 +477,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                           return [
                             '',
                             ...visibles.map(a =>
-                              `${a.nom} — ${a.appels} appel${a.appels > 1 ? 's' : ''}, ${a.join}%${a.rdv ? `, ${a.rdv} RDV` : ''}`),
+                              `${a.nom} : ${a.appels} appel${a.appels > 1 ? 's' : ''}, ${a.join}%${a.rdv ? `, ${a.rdv} RDV` : ''}`),
                             ...(reste > 0 ? [`+ ${reste} autre${reste > 1 ? 's' : ''}`] : []),
                           ];
                         },
@@ -622,7 +622,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                 <span className={styles.legDot} style={{ background: '#7EB89A' }} />RDV pris (fichier RDV)
               </span>
-              <span className={styles.subNote}> — sur 6 mois</span>
+              <span className={styles.subNote}> · sur 6 mois</span>
             </div>
           </>
         ) : (

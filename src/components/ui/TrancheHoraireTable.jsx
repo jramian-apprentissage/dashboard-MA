@@ -45,17 +45,17 @@ export default function TrancheHoraireTable({ tranchesHoraires }) {
           {rows.map(r => (
             <tr key={r.t} className={r.appels === 0 ? styles.empty : ''}>
               <td className={styles.tranche}>{r.t}</td>
-              <td className={styles.num}>{r.appels > 0 ? r.appels : '—'}</td>
+              <td className={styles.num}>{r.appels > 0 ? r.appels : '-'}</td>
               <td className={styles.num}>
                 {r.appels > 0 ? (
                   <span className={styles.joinBadge} style={{ color: joinColor(r.join) }}>
                     {r.join}%
                     {r.join === bestJoin && <span className={styles.star}>★</span>}
                   </span>
-                ) : '—'}
+                ) : '-'}
               </td>
               <td className={styles.num}>
-                {r.rdv > 0 ? <span className={styles.rdvBadge}>{r.rdv}</span> : <span style={{ color: 'var(--text3)' }}>—</span>}
+                {r.rdv > 0 ? <span className={styles.rdvBadge}>{r.rdv}</span> : <span style={{ color: 'var(--text3)' }}>-</span>}
               </td>
               <td className={styles.barCell}>
                 <div className={styles.barTrack}>
@@ -72,7 +72,7 @@ export default function TrancheHoraireTable({ tranchesHoraires }) {
           <tr>
             <td className={styles.totalLbl}>Total</td>
             <td className={styles.num} style={{ color: 'var(--text)', fontWeight: 600 }}>{totalAppels}</td>
-            <td className={styles.num} style={{ color: 'var(--text3)', fontSize: 10 }}>—</td>
+            <td className={styles.num} style={{ color: 'var(--text3)', fontSize: 10 }}>-</td>
             <td className={styles.num} style={{ color: 'var(--pos)', fontWeight: 600 }}>{totalRdv}</td>
             <td />
           </tr>

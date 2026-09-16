@@ -112,7 +112,7 @@ export default function GlossaireKPI() {
                 tous les termes qui décrivent un chiffre. Le tiret marque les
                 entrées qui expliquent une mécanique de lecture et non une
                 donnée (période, comparaison, fraîcheur). */}
-            {t.source && t.source !== '—' && (
+            {t.source && t.source !== '-' && (
               <div className={styles.source}>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <ellipse cx="12" cy="5" rx="9" ry="3"/>

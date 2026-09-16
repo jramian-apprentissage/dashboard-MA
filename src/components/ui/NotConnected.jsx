@@ -9,9 +9,9 @@
 export function notConnectedKPI(label, raison, color = 'default') {
   return {
     label,
-    value: '—',
+    value: '-',
     unit: '',
-    trend: { dir: 'neutral', text: `Non connecté — ${raison}` },
+    trend: { dir: 'neutral', text: `Non connecté : ${raison}` },
     compare: false,
     color,
   };
@@ -29,7 +29,7 @@ export default function NotConnected({ children, compact = false }) {
       }}
     >
       <span style={{ fontWeight: 600, color: 'var(--warn)' }}>Non connecté</span>
-      {children ? <> — {children}</> : null}
+      {children ? <> : {children}</> : null}
     </div>
   );
 }

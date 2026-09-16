@@ -121,7 +121,7 @@ function RdvTable({ rdvList }) {
                     <td className={styles.td}>
                       {r.recording ? (
                         <a href={r.recording} target="_blank" rel="noreferrer" className={styles.recordingLink}>▶ Écouter</a>
-                      ) : '—'}
+                      ) : '-'}
                     </td>
                   </tr>
                 ))}
@@ -239,7 +239,7 @@ function FormCard({ dateFrom, setDateFrom, dateTo, setDateTo, pasteText, setPast
       </div>
 
       <label className={styles.fieldLabel}>
-        Coller ici le tableau « Campaigns » de CloudTalk (Name, Contacts remaining…) — colle chaque page à la suite
+        Coller ici le tableau « Campaigns » de CloudTalk (Name, Contacts remaining…), en collant chaque page à la suite
       </label>
       <textarea
         value={pasteText}
@@ -250,7 +250,7 @@ function FormCard({ dateFrom, setDateFrom, dateTo, setDateTo, pasteText, setPast
       />
       <div className={styles.parseCount}>
         {parsedEntries.length} campagne(s) détectée(s)
-        {parsedEntries.length > 0 ? ' — ' + parsedEntries.slice(0, 3).map((e) => e.name).join(', ') + (parsedEntries.length > 3 ? '…' : '') : ''}
+        {parsedEntries.length > 0 ? ' : ' + parsedEntries.slice(0, 3).map((e) => e.name).join(', ') + (parsedEntries.length > 3 ? '…' : '') : ''}
       </div>
 
       {error && <div className={styles.formError}>{error}</div>}
@@ -324,7 +324,7 @@ export default function CloudTalkExtract({ onClose }) {
           )}
 
           {step === 'loading' && (
-            <Loader loading label="Récupération des appels CloudTalk, des campagnes et des formulaires clients — ça peut prendre une minute." minHeight={220} />
+            <Loader loading label="Récupération des appels CloudTalk, des campagnes et des formulaires clients… Ça peut prendre une minute." minHeight={220} />
           )}
 
           {step === 'results' && result && (

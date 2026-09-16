@@ -54,7 +54,7 @@ export const glossaireData = [
   },
   {
     terme: 'Répartition du revenu par type de mission',
-    definition: "CA ventilé par poste occupé par les collaborateurs placés. Le total correspond au CA de la période — chaque mois d'un intervalle est compté une fois.",
+    definition: "CA ventilé par poste occupé par les collaborateurs placés. Le total correspond au CA de la période : chaque mois d'un intervalle est compté une fois.",
     source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
@@ -80,7 +80,7 @@ export const glossaireData = [
   },
   {
     terme: 'Missions perdues',
-    definition: "Profils dont la date de fin tombe dans la période. C'est la mission qui est comptée, pas le client : un contrat qui porte cinq profils dont un s'arrête ne perd pas un client, mais perd bien du revenu. Le critère est la date de fin et elle seule, jamais le statut — celui-ci est souvent laissé en « préavis » longtemps après l'arrêt réel. Sur les cartes de perte, les couleurs de comparaison sont inversées : une baisse s'affiche en vert, puisqu'une baisse des pertes est une bonne nouvelle.",
+    definition: "Profils dont la date de fin tombe dans la période. C'est la mission qui est comptée, pas le client : un contrat qui porte cinq profils dont un s'arrête ne perd pas un client, mais perd bien du revenu. Le critère est la date de fin et elle seule, jamais le statut, car celui-ci est souvent laissé en « préavis » longtemps après l'arrêt réel. Sur les cartes de perte, les couleurs de comparaison sont inversées : une baisse s'affiche en vert, puisqu'une baisse des pertes est une bonne nouvelle.",
     source: 'Historique Excel',
     dashboards: ['commercial-rc'],
   },
@@ -92,7 +92,7 @@ export const glossaireData = [
   },
   {
     terme: 'Niveau de santé client',
-    definition: "Traduction de la note de satisfaction (0–100) produite par l'IA de Monday, qui lit les échanges avec le client. Trois niveaux : sain à partir de 65, sous vigilance entre 35 et 64, risque de départ en dessous de 35. Le niveau est déduit de la note au moment de l'affichage — il ne peut donc plus la contredire, ce qui arrivait auparavant.",
+    definition: "Traduction de la note de satisfaction (0–100) produite par l'IA de Monday, qui lit les échanges avec le client. Trois niveaux : sain à partir de 65, sous vigilance entre 35 et 64, risque de départ en dessous de 35. Le niveau est déduit de la note au moment de l'affichage : il ne peut donc plus la contredire, ce qui arrivait auparavant.",
     source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
@@ -106,13 +106,13 @@ export const glossaireData = [
   },
   {
     terme: 'Deals gagnés',
-    definition: "Affaires signées, rattachées à leur DATE DE DÉMARRAGE — c'est le démarrage qui matérialise la signature. Un compte résilié, suspendu ou arrivé au terme de son contrat reste un deal gagné : il est forcément passé par une signature. La perte du client est suivie séparément, côté portefeuille.",
+    definition: "Affaires signées, rattachées à leur DATE DE DÉMARRAGE, puisque c'est le démarrage qui matérialise la signature. Un compte résilié, suspendu ou arrivé au terme de son contrat reste un deal gagné : il est forcément passé par une signature. La perte du client est suivie séparément, côté portefeuille.",
     source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
   {
     terme: 'Deals perdus',
-    definition: "Affaires perdues EN ACQUISITION uniquement, c'est-à-dire jamais signées : arrêt du suivi ou stop contact. Une résiliation ou une fin de contrat n'entre pas ici — elle concerne un client déjà signé, donc un deal gagné.",
+    definition: "Affaires perdues EN ACQUISITION uniquement, c'est-à-dire jamais signées : arrêt du suivi ou stop contact. Une résiliation ou une fin de contrat n'entre pas ici : elle concerne un client déjà signé, donc un deal gagné.",
     source: 'Monday CRM',
     dashboards: ['commercial-rc'],
   },
@@ -186,7 +186,7 @@ export const glossaireData = [
   },
   {
     terme: "Taux d'échanges > 30 s",
-    definition: "Part des appels décrochés dont la conversation a dépassé 30 secondes. Mesurée sur la durée de communication seule — hors sonnerie, attente et post-appel, qui surestimaient le compte de 27 %.",
+    definition: "Part des appels décrochés dont la conversation a dépassé 30 secondes. Mesurée sur la durée de communication seule (hors sonnerie, attente et post-appel, qui surestimaient le compte de 27 %).",
     source: 'Ringover',
     dashboards: ['commercial-activite'],
   },
@@ -210,7 +210,7 @@ export const glossaireData = [
   },
   {
     terme: 'RDV honorés',
-    definition: "Rendez-vous auxquels le prospect s'est présenté, d'après la colonne « Présent » du fichier RDV, comptés à la date du créneau et non à la date de prise : un rendez-vous pris en juillet et tenu en septembre compte dans les honorés de septembre. Tout autre statut — absent, à replanifier, non renseigné — compte comme non honoré.",
+    definition: "Rendez-vous auxquels le prospect s'est présenté, d'après la colonne « Présent » du fichier RDV, comptés à la date du créneau et non à la date de prise : un rendez-vous pris en juillet et tenu en septembre compte dans les honorés de septembre. Tout autre statut (absent, à replanifier, non renseigné) compte comme non honoré.",
     source: 'Fichier RDV (Google Sheet)',
     dashboards: ['commercial-activite'],
   },
@@ -281,19 +281,19 @@ export const glossaireData = [
   {
     terme: 'Période de référence',
     definition: "Tout ce qui est affiché dépend de la période choisie en haut de page : chiffres, graphiques et tableaux se recalculent ensemble. Par défaut, le mois précédent.",
-    source: '—',
+    source: '-',
     dashboards: ['commercial-rc', 'commercial-activite'],
   },
   {
     terme: 'Comparaison',
     definition: "Lorsque « Comparer » est actif, chaque indicateur affiche son évolution face à la période précédente ou à l'année précédente. Sur les indicateurs de perte, les couleurs sont inversées : le vert signale une baisse.",
-    source: '—',
+    source: '-',
     dashboards: ['commercial-rc', 'commercial-activite'],
   },
   {
     terme: 'Mise à jour arrêtée au…',
-    definition: "Les données sont extraites une fois par jour, à 21 h. La date affichée en haut de chaque page indique jusqu'à quand les données sont à jour — ce n'est jamais du temps réel.",
-    source: '—',
+    definition: "Les données sont extraites une fois par jour, à 21 h. La date affichée en haut de chaque page indique jusqu'à quand les données sont à jour : ce n'est jamais du temps réel.",
+    source: '-',
     dashboards: ['commercial-rc', 'commercial-activite'],
   },
 ];

@@ -18,8 +18,8 @@ import { derniereExtractionDDMM } from '../../../utils/formatDate';
 import {fmtEurosExact, fmtPourcentage } from '../../../utils/formatNumber';
 import { SHOW_LEADS_KPIS, SHOW_COMPTES_KPIS } from '../../../config/featureFlags';
 
-const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
-const LEADS_HIDDEN_REASON = 'masqué temporairement — reconstruction Comptes en cours';
+const COMPTES_HIDDEN_REASON = 'masqué temporairement (travail en cours sur le board Leads/Prospects)';
+const LEADS_HIDDEN_REASON = 'masqué temporairement (reconstruction Comptes en cours)';
 import styles from './Synthese.module.css';
 
 Chart.register(BarElement, LineElement, PointElement, ArcElement, CategoryScale, LinearScale, Tooltip);
@@ -113,7 +113,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
       {isEmptyPeriod ? (
         <>
           <SectionLabel badge="Monday">Vue consolidée</SectionLabel>
-          <Card><NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." /></Card>
+          <Card><NoPeriodData suggestion="Essayez une autre période : le mois précédent, par exemple." /></Card>
         </>
       ) : (
       <>
@@ -175,7 +175,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
       </div>
 
       {/* ── Ligne 2 — La trajectoire : évolution CA + marge ────────────────── */}
-      <SectionLabel>La trajectoire — sur 6 mois</SectionLabel>
+      <SectionLabel>La trajectoire sur 6 mois</SectionLabel>
       <Card title="Évolution mensuelle du CA et de la marge">
         {!SHOW_COMPTES_KPIS ? (
           <NotConnected>{COMPTES_HIDDEN_REASON}</NotConnected>

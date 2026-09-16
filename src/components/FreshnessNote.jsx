@@ -20,7 +20,7 @@ export default function FreshnessNote({ source, date, loading }) {
         textAlign: 'center',
       }}
     >
-      <span style={{ color: 'var(--pos)' }}>●</span> {source} — mise à jour arrêtée au {date || '—'}
+      <span style={{ color: 'var(--pos)' }}>●</span> {source}, mise à jour arrêtée au {date || '-'}
       {loading ? ' · rafraîchissement…' : ''}
     </div>
   );

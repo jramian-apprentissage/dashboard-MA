@@ -32,7 +32,7 @@ import ListeModale from '../../../components/ui/ListeModale';
 // qui enregistre ArcElement de son côté.
 Chart.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
-const COMPTES_HIDDEN_REASON = 'masqué temporairement — travail en cours sur le board Leads/Prospects';
+const COMPTES_HIDDEN_REASON = 'masqué temporairement (travail en cours sur le board Leads/Prospects)';
 
 const sentimentInfo = s => {
   if (s?.includes('Sain'))   return { color: 'var(--pos)',  variant: 'green', label: 'Sain' };
@@ -113,7 +113,7 @@ export default function FocusClient() {
       .sort((a, b) => (b.dateFin || '').localeCompare(a.dateFin || '') || b.ca - a.ca);
   };
 
-  const fmtJour = d => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('fr-FR') : '—');
+  const fmtJour = d => (d ? new Date(`${d}T00:00:00`).toLocaleDateString('fr-FR') : '-');
 
   /* Même tableau dans la carte (extrait) et dans la modale (liste entière) :
      une seule définition, sinon les deux divergent au premier ajustement. */
@@ -163,7 +163,7 @@ export default function FocusClient() {
       )}
 
       {isEmptyPeriod && (
-        <Card><NoPeriodData suggestion="Essayez une autre période — le mois précédent, par exemple." /></Card>
+        <Card><NoPeriodData suggestion="Essayez une autre période : le mois précédent, par exemple." /></Card>
       )}
 
       {result && !isEmptyPeriod && (
@@ -218,7 +218,7 @@ export default function FocusClient() {
                   dir: 'neutral',
                   text: result.caNouveauxClients > 0
                     ? `Taux : ${fmtPourcentage(partPct(result.margeBruteNouveaux, result.caNouveauxClients))}`
-                    : '—',
+                    : '-',
                 }}
                 color={result.margeBruteNouveaux >= 0 ? 'green' : 'red'}
               />
@@ -349,7 +349,7 @@ export default function FocusClient() {
                   .slice(0, 5);
                 return (
                   <div className={styles.bucketTop5}>
-                    <div className={styles.metaSub}>Top 5 — {BUCKET_LABEL[selectedBucket]}</div>
+                    <div className={styles.metaSub}>Top 5 · {BUCKET_LABEL[selectedBucket]}</div>
                     {top5.length > 0 ? top5.map(c => (
                       <div key={c.compteId} className={styles.bucketTop5Row}>
                         <span>{c.nom}</span><span>{c.note}</span>
@@ -373,7 +373,7 @@ export default function FocusClient() {
               {satisfaction.data.buckets.sansNote > 0 && (
                 <div className={styles.subnote}>{satisfaction.data.buckets.sansNote} compte(s) sans note pour l'instant</div>
               )}
-              <div className={styles.subnote}>Score IA Monday — {satisfaction.data.note_limite}</div>
+              <div className={styles.subnote}>Score IA Monday : {satisfaction.data.note_limite}</div>
             </>
             )
           ) : (
@@ -634,7 +634,7 @@ export default function FocusClient() {
                             const reste = avecRevenu.length - visibles.length;
                             return [
                               '',
-                              ...visibles.map(m => `${m.nom}${m.poste ? ` · ${m.poste}` : ''} — ${fmtEurosDetail(m.ca)}`),
+                              ...visibles.map(m => `${m.nom}${m.poste ? ` · ${m.poste}` : ''} : ${fmtEurosDetail(m.ca)}`),
                               ...(reste > 0 ? [`+ ${reste} autre${reste > 1 ? 's' : ''}`] : []),
                               ...(sansRevenu > 0
                                 ? [`${sansRevenu} mission${sansRevenu > 1 ? 's' : ''} sans revenu récurrent`]
@@ -682,7 +682,7 @@ export default function FocusClient() {
             const missions = mois.clients || [];
             return (
               <ListeModale
-                titre={`Missions perdues — ${mois.label}`}
+                titre={`Missions perdues en ${mois.label}`}
                 sousTitre={`${missions.length} mission${missions.length > 1 ? 's' : ''} arrêtée${missions.length > 1 ? 's' : ''} · ${fmtEurosDetail(mois.caPerdu)}`}
                 onClose={() => setMoisPerdu(null)}
               >

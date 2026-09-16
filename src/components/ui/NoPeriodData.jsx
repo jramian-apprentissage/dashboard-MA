@@ -4,7 +4,7 @@
    Monday"). Ici la source existe et fonctionne, la période choisie n'a
    simplement aucune ligne (ex. mois en cours tout juste commencé) — le
    dire clairement évite de laisser croire à une panne. */
-export default function NoPeriodData({ suggestion = 'Essayez une autre période — le mois précédent, par exemple.' }) {
+export default function NoPeriodData({ suggestion = 'Essayez une autre période : le mois précédent, par exemple.' }) {
   return (
     <div style={{ textAlign: 'center', padding: '44px 20px' }}>
       <div style={{ fontWeight: 700, color: 'var(--myrtille)', fontSize: 14, marginBottom: 6 }}>
