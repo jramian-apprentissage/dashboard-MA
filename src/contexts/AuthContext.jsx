@@ -224,6 +224,40 @@ export function AuthProvider({ children }) {
     return data;
   }
 
+  /* Instantané ASUS (bouton « Actualiser » du dashboard ASUS). Le backend
+     revérifie l'accès au dashboard sur le compte porté par le jeton, relance
+     la lecture Ringover de la journée en cours et renvoie les appels déjà
+     projetés comme /ringover/asus. `lire` ne déclenche rien : il sert à
+     retrouver le dernier instantané quand l'actualisation est encore en
+     pause. */
+  async function actualiserAsus() {
+    let res;
+    try {
+      res = await authFetch('/asus/instantane', token, { method: 'POST', body: '{}' });
+    } catch {
+      throw new Error('Connexion au serveur impossible.');
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.error || 'Actualisation impossible.');
+      err.donnees = data;
+      throw err;
+    }
+    return data;
+  }
+
+  async function lireInstantaneAsus() {
+    let res;
+    try {
+      res = await authFetch('/asus/instantane', token);
+    } catch {
+      throw new Error('Connexion au serveur impossible.');
+    }
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Lecture impossible.');
+    return data;
+  }
+
   // admin et directeur ont accès à tous les dashboards implicitement. `u`
   // est toujours l'utilisateur tel que retourné par /me (jamais une copie
   // figée), donc pas besoin de relire une autre source ici.
@@ -236,6 +270,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, ready, login, logout, changePassword, synchroniserMonday,
+      actualiserAsus, lireInstantaneAsus,
       getAllUsers, createUser, updateUserDashboards, deleteUser,
       enregistrerConsultation, chargerActivite, effacerActivite,
       hasAccessToDashboard,

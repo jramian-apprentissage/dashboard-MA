@@ -9,6 +9,7 @@ import { useAsusData } from '../../hooks/useAsusData';
 import { computeAsusData } from '../../services/sheetsParser';
 import { usePeriod } from '../../contexts/PeriodContext';
 import CollabPicker from '../../components/ui/CollabPicker';
+import InstantaneAsus from '../../components/asus/InstantaneAsus';
 import { exportDashboardPdf } from '../../utils/exportPdf';
 
 const PERIOD_LABELS = {
@@ -100,6 +101,10 @@ export default function Asus() {
          d'avant rattrapait le rognage de l'ancienne image 3:1, qui perdait 62 %
          de sa hauteur — il n'a plus lieu d'être (Jimmy, 19/08). */
       heroBgPosition="center"
+      /* « Actualiser » se tient à côté d'« Extraire » : deux actions, à droite
+         des filtres. Il ne touche ni à la période ni au collaborateur choisis,
+         il ouvre une fenêtre avec la journée en cours, lue à l'instant. */
+      actionEnTete={classe => <InstantaneAsus className={classe} />}
       onExtraire={handleExport}
       extraireLoading={exportLoading}
       contentRef={contentRef}

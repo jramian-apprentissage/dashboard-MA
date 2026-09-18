@@ -147,7 +147,11 @@ const ASUS_SEGMENTS = {
   manques:    'rgba(196,135,106,0.75)',
 };
 
-export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compareResult }) {
+/* `instantane` : rendu dans la fenêtre « Activité du jour » (bouton
+   Actualiser). Une seule journée, arrêtée à l'heure du clic : l'évolution du
+   nombre d'appels n'a rien à y montrer, et il n'y a pas de comparaison de
+   période. Tout le reste est identique à la page. */
+export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compareResult, instantane = false }) {
   const hasData = asusData?.hasData && asusData?.result;
   const r = asusData?.result;
   const { comparePeriodKey, referenceRange } = usePeriod();
@@ -162,6 +166,11 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
   // Connecté, données chargées, mais aucun appel sur la période choisie —
   // distinct d'un vrai problème de connexion (voir ActiviteSales.jsx).
   const isEmptyPeriod = hasData && r.totalAppels === 0;
+
+  /* Dans la fenêtre du jour, il n'y a pas de période à comparer : `false`
+     demande aux cartes de ne rien annoncer, là où `null` afficherait une
+     comparaison en attente (voir KPICard). */
+  const cmp = v => (instantane ? false : v);
 
   const perCollabEntries = hasData ? Object.entries(r.perCollab || {}) : [];
   const evolution = hasData ? computeAsusEvolution(asusData.rows || [], evoGranularity, selectedCollab, referenceRange.to) : null;
@@ -262,6 +271,8 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
         )}
       </Card>
 
+      {!instantane && (
+      <>
       <SectionLabel>Évolution du nombre d'appels</SectionLabel>
       <Card>
         <div className={styles.cardHeadRowStack}>
@@ -315,6 +326,8 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
           <NotConnected>en attente de l'archive Ringover</NotConnected>
         )}
       </Card>
+      </>
+      )}
 
       {/* Sortants et entrants côte à côte. Pleine largeur, chaque ligne
           obligeait l'œil à parcourir tout l'écran pour relier un libellé à son
@@ -365,11 +378,11 @@ export default function ActiviteASUS({ selectedCollab = 'Tous', asusData, compar
               label="Temps moyen de communication"
               value={fmtDuree(r.dureeMoyenneS)}
               unit="min"
-              compare={compareResult ? compareValueText(r.dureeMoyenneS, compareResult.dureeMoyenneS, comparePeriodKey) : null}
+              compare={cmp(compareResult ? compareValueText(r.dureeMoyenneS, compareResult.dureeMoyenneS, comparePeriodKey) : null)}
               trend={{ dir: 'neutral', text: `${fmtDuree(r.dureeMoyenneSortantS)} (appels sortants) · ${fmtDuree(r.dureeMoyenneEntrantS)} (appels entrants)` }}
               color="default"
             />
-            <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null} trend={{ dir: 'neutral', text: `${fmtPourcentage(r.tauxBons)} du total` }} color="default" />
+            <KPICard label="Bons appels (≥ 5 min)" value={r.bonsAppels} unit="" compare={cmp(compareResult ? compareValueText(r.bonsAppels, compareResult.bonsAppels, comparePeriodKey) : null)} trend={{ dir: 'neutral', text: `${fmtPourcentage(r.tauxBons)} du total` }} color="default" />
           </div>
         ) : (
           <NotConnected>en attente de l'archive Ringover</NotConnected>

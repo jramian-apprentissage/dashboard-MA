@@ -43,6 +43,10 @@ export default function DashboardLayout({
   heroBgPosition = 'center 55%',
   onExtraire,
   extraireLoading = false,
+  /* Bouton propre à un dashboard, posé juste avant « Extraire ». Reçoit la
+     classe du bouton de l'en-tête pour en reprendre l'allure, y compris les
+     reprises de couleur par dashboard (voir .heroAsus dans la feuille). */
+  actionEnTete,
   contentRef,
   // Dashboards clients (ex. ASUS) : phrase d'intro plus explicative que le
   // "Vous analysez les KPIs" interne, à destination d'un lecteur externe qui
@@ -287,6 +291,8 @@ export default function DashboardLayout({
                   </div>
                 )}
               </div>
+
+              {actionEnTete?.(styles.heroBtn)}
 
               {onExtraire && (
                 <button

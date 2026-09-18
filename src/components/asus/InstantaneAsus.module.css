@@ -1,0 +1,116 @@
+/* Bouton « Actualiser » du dashboard ASUS et sa fenêtre : voir InstantaneAsus.jsx.
+   Même vocabulaire visuel que les autres fenêtres du dashboard (blanc
+   translucide, flou, bordure Sable), en bleu ASUS pour le bouton, comme le
+   reste des contrôles de cette page. */
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(0,108,225,0.35);
+  background: rgba(255,255,255,0.75);
+  color: var(--asus-blue);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.bouton:hover:not(:disabled) {
+  background: rgba(0,108,225,0.08);
+  border-color: rgba(0,108,225,0.6);
+}
+.bouton:disabled { opacity: 0.7; cursor: default; }
+.bouton:focus-visible { outline: 2px solid var(--asus-blue); outline-offset: 2px; }
+
+.erreur {
+  font-size: 12px;
+  color: var(--neg);
+  margin-left: 8px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22,5,18,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Plus large que la fenêtre des listes : elle porte les mêmes cartes que la
+   page, qui se mettent côte à côte au-delà de 900 px. */
+.fenetre {
+  background: rgba(255,255,255,0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 18px 18px 14px;
+  width: 100%;
+  max-width: 1080px;
+  box-shadow: 0 24px 64px rgba(38,0,31,0.28), 0 4px 16px rgba(38,0,31,0.14);
+  display: flex;
+  flex-direction: column;
+  /* dvh : sur téléphone, la barre d'adresse mange une partie de vh et coupait
+     le bas du contenu. */
+  max-height: calc(100dvh - 40px);
+  animation: fenetreIn 0.22s cubic-bezier(0.22,1,0.36,1) both;
+}
+@keyframes fenetreIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fenetre { animation: none; }
+}
+
+.entete {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.titre {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--myrtille);
+  letter-spacing: -0.01em;
+}
+.sousTitre {
+  font-size: 12px;
+  color: var(--text-muted, #6b6b6b);
+  margin-top: 2px;
+}
+.fermer {
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  color: var(--myrtille);
+  flex-shrink: 0;
+}
+.fermer:hover { background: rgba(0,108,225,0.08); }
+
+.corps {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vide {
+  padding: 28px 8px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted, #6b6b6b);
+}
