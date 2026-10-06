@@ -310,7 +310,14 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                 echanges1s: ring?.echanges1s ?? null,
                 echanges30s: ring?.echanges30s ?? null,
                 tauxDecroche: isNaN(tauxN) ? null : tauxN,
-                tauxLabel: ring?.taux ?? '-',
+                /* PIÈGE : `taux` du parser est le taux de DÉCROCHÉ, pas celui
+                   des échanges > 1 s. Il garde ce nom pour ne pas casser le tri
+                   et il colore toujours la pastille, mais l'infobulle de la
+                   colonne annonçait « des appels émis » en affichant ce
+                   décroché : 84 % pour Lariol là où 250 échanges sur 321 appels
+                   font 78 %. Le taux de la colonne se calcule donc ici, sur la
+                   même base que « > 30s » et « exploitables ». */
+                tauxEchanges1s: ring?.appels > 0 ? partPct(ring.echanges1s, ring.appels) : null,
                 tauxEchange30s: ring?.tauxEchange30s ?? null,
                 argues: ring?.argues ?? null,
                 fichesExploitables: ring?.fichesExploitables ?? null,
@@ -373,9 +380,16 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                           est rappelé au survol : sans lui, on ne peut pas savoir si
                           un écart vient de la cadence ou du nombre de jours. */}
                       <td className={styles.tdNum} title={row.joursActifs ? `${row.appels} appels sur ${row.joursActifs} jour${row.joursActifs > 1 ? 's' : ''} travaillé${row.joursActifs > 1 ? 's' : ''}` : undefined}>{row.appelsParJour != null ? row.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '-'}</td>
-                      <td className={styles.tdNum} title={row.tauxLabel !== '-' ? `${row.tauxLabel} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: tauxColor }}>{fmtNumber(row.echanges1s) ?? '-'}</span></td>
+                      <td className={styles.tdNum} title={row.tauxEchanges1s != null ? `${fmtPourcentage(row.tauxEchanges1s)} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: tauxColor }}>{fmtNumber(row.echanges1s) ?? '-'}</span></td>
                       <td className={styles.tdNum} title={row.tauxEchange30s != null ? `${fmtPourcentage(row.tauxEchange30s)} des appels émis` : undefined}><span className={styles.tauxPill} style={{ color: taux30Color }}>{fmtNumber(row.echanges30s) ?? '-'}</span></td>
-                      <td className={styles.tdNum}>{fmtNumber(row.fichesExploitables) ?? '-'}</td>
+                      {/* Dernier palier de l'entonnoir, et le seul qui n'avait pas
+                          son taux au survol : on ne pouvait comparer deux agents
+                          qu'en volume, donc à la faveur de celui qui appelle le
+                          plus. Même base que les deux colonnes d'à côté, les
+                          appels émis (`partPct(fichesExploitables, appels)` dans
+                          sheetsParser), pour que les trois paliers se lisent sur
+                          la même règle. */}
+                      <td className={styles.tdNum} title={row.tauxFichesExploit != null ? `${fmtPourcentage(row.tauxFichesExploit)} des appels émis` : undefined}>{fmtNumber(row.fichesExploitables) ?? '-'}</td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvPris != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvPris) ?? '-'}</span></td>
                       <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: row.rdvHonores != null ? 'var(--pos)' : undefined }}>{fmtNumber(row.rdvHonores) ?? '-'}</span></td>
                       <td className={styles.tdNum} title={row.rdvEchus != null ? `${row.rdvHonoresEchus} honoré${row.rdvHonoresEchus > 1 ? 's' : ''} sur ${row.rdvEchus} rendez-vous dont le créneau, dans la période, est passé` : undefined}><span className={styles.tauxPill} style={{ color: row.tauxRdvHonores != null ? 'var(--pos)' : undefined }}>{row.tauxRdvHonores != null ? fmtPourcentage(row.tauxRdvHonores) : '-'}</span></td>
