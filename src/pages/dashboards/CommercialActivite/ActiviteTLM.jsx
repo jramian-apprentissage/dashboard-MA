@@ -9,6 +9,7 @@ import DonutChart from '../../../components/ui/DonutChart';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import NotConnected from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
+import { couleurTaux, SEUILS } from './echelles';
 import FreshnessNote from '../../../components/FreshnessNote';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
@@ -72,6 +73,14 @@ function mondayOf(d) {
   return m;
 }
 
+/* Clé « AAAA-MM-JJ » d'une date construite en heure LOCALE. toISOString()
+   convertit en UTC : minuit à Paris y devient 22h ou 23h la veille, et la
+   clé recule d'un jour. C'est exactement ce que la branche « jour » faisait,
+   contre l'intention écrite juste en dessous. */
+function cleJour(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /* Reconstruit les fenêtres jour/semaine/mois à partir d'une série
    journalière déjà agrégée côté serveur (contrairement à computeAsusEvolution,
    qui compte des lignes d'appels brutes — CloudTalk n'expose que des totaux
@@ -125,7 +134,7 @@ function computeEvolution(dailyRows, granularity, field, finPeriode) {
   for (let i = 6; i >= 0; i--) { const d = new Date(today); d.setDate(d.getDate() - i); days.push(d); }
   return {
     labels: days.map(d => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`),
-    counts: days.map(d => byDate.get(d.toISOString().slice(0, 10)) || 0),
+    counts: days.map(d => byDate.get(cleJour(d)) || 0),
   };
 }
 
@@ -477,7 +486,9 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                   // Cadence réelle : appels émis rapportés aux seules journées
                   // travaillées, pas aux jours calendaires de la période.
                   const appelsParJour = a.jours_actifs > 0 ? a.appels_emis / a.jours_actifs : null;
-                  return { ...a, fichesAgent, tauxCompletion, tauxDecroche30s, transfoNette, appelsParJour };
+                  const tauxDecroche1s = partPct(a.appels_decroches_1s ?? 0, a.appels_emis);
+                  return { ...a, fichesAgent, tauxCompletion, tauxDecroche1s, tauxDecroche30s,
+                           transfoNette, appelsParJour };
                 })
                 .sort((a, b) => compareAgentRows(a, b, agentSort))
                 .map(a => (
@@ -489,14 +500,22 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                     <td className={styles.tdNum} title={a.jours_actifs ? `${fmtNumber(a.appels_emis)} appels sur ${a.jours_actifs} jour${a.jours_actifs > 1 ? 's' : ''} travaillé${a.jours_actifs > 1 ? 's' : ''}` : undefined}>{a.appelsParJour != null ? a.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '-'}</td>
                     {/* Le volume, le taux au survol — même arbitrage que
                         l'entonnoir : « la valeur numéraire est plus utile ». */}
-                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${fmtPourcentage(partPct(a.appels_decroches_1s, a.appels_emis))} des appels émis` : undefined}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '-'}</td>
-                    <td className={styles.tdNum} title={`${fmtPourcentage(a.tauxDecroche30s)} des appels émis`}>{fmtNumber(a.appels_decroches_30s)}</td>
+                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${fmtPourcentage(a.tauxDecroche1s)} des appels émis` : undefined}>
+                      <span className={styles.valeurBrute}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '-'}</span>
+                      {a.appels_decroches_1s != null && (
+                        <span className={styles.tauxSuffixe} style={{ color: couleurTaux(a.tauxDecroche1s, SEUILS.decroche1s, a.appels_emis) }}>{fmtPourcentage(a.tauxDecroche1s)}</span>
+                      )}
+                    </td>
+                    <td className={styles.tdNum} title={`${fmtPourcentage(a.tauxDecroche30s)} des appels émis`}>
+                      <span className={styles.valeurBrute}>{fmtNumber(a.appels_decroches_30s)}</span>
+                      <span className={styles.tauxSuffixe} style={{ color: couleurTaux(a.tauxDecroche30s, SEUILS.echange30s, a.appels_emis) }}>{fmtPourcentage(a.tauxDecroche30s)}</span>
+                    </td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_exploitables)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.fichesAgent)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.rdvs_pris)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_non_exploitables)}</td>
                     <td className={styles.tdNum}>-</td>
-                    <td className={styles.tdNum}>{fmtPourcentage(a.transfoNette)}</td>
+                    <td className={styles.tdNum}><span className={styles.tauxPill} style={{ color: couleurTaux(a.transfoNette, SEUILS.transfoNette, a.appels_emis) }}>{fmtPourcentage(a.transfoNette)}</span></td>
                   </tr>
                 ))}
             </tbody>
