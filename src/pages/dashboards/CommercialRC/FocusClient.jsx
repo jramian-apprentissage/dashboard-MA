@@ -76,6 +76,11 @@ export default function FocusClient() {
   const [santeDir, setSanteDir] = useState('desc');
   const santeSectionRef = useRef(null);
   const [selectedBucket, setSelectedBucket] = useState(null); // 'sain' | 'warning' | 'risque' | null
+  /* Les deux classements clients tiennent dix lignes mais n'en montrent que
+     cinq : au premier coup d'oeil on voit les gros comptes, le clic donne la
+     suite sans changer de page. */
+  const [toutCA, setToutCA] = useState(false);
+  const [toutMarge, setToutMarge] = useState(false);
   const [missionsOuvertes, setMissionsOuvertes] = useState(false);
   // Index du mois dont on a cliqué la barre dans « Évolution mensuelle des
   // revenus perdus », ou null. L'infobulle ne montre que les six premières
@@ -237,7 +242,7 @@ export default function FocusClient() {
             <table className={`${styles.tbl} ${styles.tblRang}`}>
               <thead><tr><th></th><th></th><th className={styles.tdRight}>CA</th><th>Part du CA</th></tr></thead>
               <tbody>
-                {result.topClients.map((c, i) => (
+                {result.topClients.slice(0, toutCA ? 10 : 5).map((c, i) => (
                   <tr key={c.name}>
                     <td className={styles.rank} style={{ color: i === 0 ? 'var(--myrtille)' : 'var(--text2)' }}>{i + 1}</td>
                     <td className={styles.tdName}>{c.name}</td>
@@ -263,7 +268,22 @@ export default function FocusClient() {
           ) : (
             <NotConnected>aucun client actif sur la période</NotConnected>
           )}
-          <div className={styles.subnote}>Top 5 clients par CA</div>
+          <button
+            type="button"
+            className={styles.subnoteBtn}
+            onClick={() => setToutCA(v => !v)}
+            aria-expanded={toutCA}
+          >
+            {toutCA ? 'Top 10 clients par CA' : 'Top 5 clients par CA'}
+            {result?.topClients?.length > 5 && (
+              <>
+                {' · '}
+                <span className={styles.subnoteAction}>
+                  {toutCA ? 'n’en voir que 5' : 'voir les 10'}
+                </span>
+              </>
+            )}
+          </button>
         </Card>
 
         <Card title="Marge brute par client">
@@ -273,7 +293,7 @@ export default function FocusClient() {
             <table className={`${styles.tbl} ${styles.tblRang}`}>
               <thead><tr><th></th><th></th><th className={styles.tdRight}>Marge</th><th>Part de la marge</th></tr></thead>
               <tbody>
-                {result.topClientsMarge.map((c, i) => (
+                {result.topClientsMarge.slice(0, toutMarge ? 10 : 5).map((c, i) => (
                   <tr key={c.name}>
                     <td className={styles.rank} style={{ color: i === 0 ? 'var(--myrtille)' : 'var(--text2)' }}>{i + 1}</td>
                     <td className={styles.tdName}>{c.name}</td>
@@ -299,7 +319,22 @@ export default function FocusClient() {
           ) : (
             <NotConnected>aucun client actif sur la période</NotConnected>
           )}
-          <div className={styles.subnote}>Top 5 clients par marge brute (vente − achat)</div>
+          <button
+            type="button"
+            className={styles.subnoteBtn}
+            onClick={() => setToutMarge(v => !v)}
+            aria-expanded={toutMarge}
+          >
+            {toutMarge ? 'Top 10' : 'Top 5'} clients par marge brute (vente − achat)
+            {result?.topClientsMarge?.length > 5 && (
+              <>
+                {' · '}
+                <span className={styles.subnoteAction}>
+                  {toutMarge ? 'n’en voir que 5' : 'voir les 10'}
+                </span>
+              </>
+            )}
+          </button>
         </Card>
       </div>
 

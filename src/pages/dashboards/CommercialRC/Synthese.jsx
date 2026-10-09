@@ -93,11 +93,17 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
   // ASUS/TLM : un seul message clair plutôt qu'une mosaïque de "0 €".
   const isEmptyPeriod = SHOW_COMPTES_KPIS && d.nbClientsActifs === 0;
 
+  /* L'API rend dix clients depuis que les cartes du Focus client les
+     déplient au clic. Ici on retranche à cinq : le graphe s'intitule « Top 5
+     clients par CA » et le camembert juste en dessous oppose explicitement le
+     top 5 au reste du portefeuille. Sans cette coupe, les deux mentiraient. */
+  const cinqPremiers = d.topClients.slice(0, 5);
+
   const chartData = {
-    labels: d.topClients.map(c => c.name),
+    labels: cinqPremiers.map(c => c.name),
     datasets: [{
       label: 'CA',
-      data:  d.topClients.map(c => c.ca),
+      data:  cinqPremiers.map(c => c.ca),
       backgroundColor: 'rgba(213,208,123,0.85)',
       borderRadius: 4,
       borderSkipped: false,
@@ -105,7 +111,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
   };
 
   // Concentration : part du CA portée par le top 5
-  const top5CA = d.topClients.reduce((s, c) => s + c.ca, 0);
+  const top5CA = cinqPremiers.reduce((s, c) => s + c.ca, 0);
 
   return (
     <div className={styles.page}>
