@@ -5,7 +5,7 @@ import { useChartMount } from '../../../hooks/useChartMount';
 import { useSnapshotData } from '../../../hooks/useSnapshotData';
 import { useSatisfactionClient } from '../../../hooks/useSatisfactionClient';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { compareValueText } from '../../../utils/compareText';
+import { compareValueText, tauxAvecEcart } from '../../../utils/compareText';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -92,6 +92,10 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
      suivre le jugement : plus de missions perdues, c'est une mauvaise
      nouvelle. C'est ce que fait le quatrième argument. */
   const cmpPerte = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey, true) : null;
+  /* Un taux posé seul se lit comme une étiquette. Clémence, 09/10 : « le
+     message clé c'est peut-être 53 %, mais surtout moins 10 % ». */
+  const cmpTaux = (libelle, valeur, current, ref) =>
+    tauxAvecEcart(libelle, valeur, current, c ? ref : null, comparePeriodKey);
   // Connecté, données chargées, mais aucun compte facturé sur la période
   // choisie (ex. période hors historique) — même traitement que Sales/
   // ASUS/TLM : un seul message clair plutôt qu'une mosaïque de "0 €".
@@ -145,7 +149,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               value={fmt(d.margeBruteGlobale)}
               exactValue={fmtEurosExact(d.margeBruteGlobale)}
               compare={cmp(d.margeBruteGlobale, c?.margeBruteGlobale)}
-              trend={{ dir: 'neutral', text: `Taux de marge brute : ${fmtPourcentage(d.tauxMarge)}` }}
+              trend={cmpTaux('Taux de marge brute', fmtPourcentage(d.tauxMarge), d.tauxMarge, c?.tauxMarge)}
               color="green"
             />
           </>

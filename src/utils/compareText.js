@@ -6,6 +6,36 @@ export function compareLabel(comparePeriodKey) {
   return comparePeriodKey === 'previous-year' ? 'année précédente' : 'période précédente';
 }
 
+/* BANDE DE STABILITÉ — en deçà de cet écart, la variation s'affiche en gris.
+ *
+ * Demandé par Clémence le 09/10 : « quand tes variations sont stables, tu peux
+ * mettre des pourcentages qui sont en gris, quand tu estimes que les variations
+ * sont négatives, tu les mets un peu plus en rouge, et quand elles sont
+ * positives, en vert. » Sans bande neutre, un écart de 1 % s'affiche du même
+ * vert qu'un écart de 40 %, et la couleur ne dit plus rien.
+ *
+ * SON SEUIL EST À ELLE, PAS LE NÔTRE. Elle donne ±10 % et le justifie dans la
+ * phrase suivante : « nous on n'observe pas que ce soit une augmentation mais
+ * parce qu'on a beaucoup de volume ». Mon Ambassadeur compte une quarantaine de
+ * clients et 85 k€ de chiffre d'affaires : à ±10 %, 8 k€ de mois en mois
+ * passeraient pour du bruit. Le seuil retenu ici est donc plus serré, et reste
+ * à arbitrer — il vit à un seul endroit pour ça.
+ *
+ * La bande ne touche QUE la couleur. Le chiffre, le signe et la flèche restent
+ * ceux de la variation réelle : on dit « ce n'est pas un message », pas « il ne
+ * s'est rien passé ».
+ */
+export const SEUIL_STABILITE_PCT = 2;   // en pourcentage relatif
+
+/* Pour les écarts en POINTS, le seuil est volontairement laissé à 1, c'est à
+ * dire qu'il ne neutralise que l'écart nul, déjà neutre avant. Un point ne
+ * pèse pas la même chose selon le taux : sur un taux de marge à 53 %, un point
+ * est du bruit ; sur la transformation nette, qui vaut 2 %, un point est un
+ * doublement. Une bande uniforme en points mentirait sur l'un ou sur l'autre.
+ * Si on veut en poser une, elle doit être par indicateur, comme les échelles
+ * de couleur des tableaux par agent (echelles.js). */
+export const SEUIL_STABILITE_PTS = 1;
+
 // Texte "0 sur la période/année précédente" — jamais de comparaison masquée
 // silencieusement : un pourcentage n'a pas de sens avec une référence à 0,
 // mais l'utilisateur doit voir POURQUOI il n'y a pas de %, pas une carte
@@ -37,6 +67,9 @@ export function compareValueText(current, ref, comparePeriodKey, invert = false)
   const sens = pct > 0 ? 'up' : pct < 0 ? 'down' : 'neutral';
   let dir = sens;
   if (invert && dir !== 'neutral') dir = dir === 'up' ? 'down' : 'up';
+  // Sous la bande de stabilité, la couleur se tait. La flèche, elle, suit
+  // toujours le chiffre : `sens` n'est pas touché.
+  if (Math.abs(pct) < SEUIL_STABILITE_PCT) dir = 'neutral';
   return {
     dir,
     sens,
@@ -58,8 +91,33 @@ export function comparePtsText(current, ref, comparePeriodKey) {
   const diff = Math.round(current - ref);
   const sign = diff > 0 ? '+' : '';
   const unit = Math.abs(diff) === 1 ? 'pt' : 'pts';
+  const sens = diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral';
   return {
-    dir: diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral',
+    dir: Math.abs(diff) < SEUIL_STABILITE_PTS ? 'neutral' : sens,
+    sens,
     text: `${diff === 0 ? '=' : sign + diff + ' ' + unit} vs ${compareLabel(comparePeriodKey)}`,
+  };
+}
+
+/* Le taux et son écart dans la même ligne : « Taux de marge brute : 53 % (-4 pts) ».
+ *
+ * Clémence, 09/10 : « mettre le taux de marge ici à 53 %, on a l'impression
+ * qu'il n'y a pas de message clé, alors que le message clé c'est peut-être
+ * 53 % mais surtout moins 10 %. » La carte posait la valeur en `neutral`, sans
+ * comparaison : elle se lisait comme une étiquette, pas comme un résultat.
+ *
+ *   libelle   le nom du taux, répété pour ne pas le faire deviner
+ *   valeur    le taux courant, déjà formaté
+ *   current   le taux courant en nombre, ou null
+ *   ref       le taux de la période de comparaison, ou null
+ */
+export function tauxAvecEcart(libelle, valeur, current, ref, comparePeriodKey) {
+  const ecart = comparePtsText(current, ref, comparePeriodKey);
+  if (!ecart) return { dir: 'neutral', text: `${libelle} : ${valeur}` };
+  const pts = ecart.text.split(' vs ')[0];
+  return {
+    dir: ecart.dir,
+    sens: ecart.sens,
+    text: `${libelle} : ${valeur} (${pts})`,
   };
 }
