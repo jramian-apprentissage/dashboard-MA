@@ -17,7 +17,7 @@
   text-align: left;
 }
 .dataAlertSpin { display: inline-flex; color: var(--myrtille); }
-.kpiGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.kpiGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
 .donutRow { display: flex; justify-content: center; margin: 6px 0 10px; }
 .donutBox { position: relative; width: 100%; max-width: 300px; }
 .donutCenterS { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: flex; flex-direction: column; pointer-events: none; }

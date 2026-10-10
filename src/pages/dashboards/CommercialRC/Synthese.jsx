@@ -88,6 +88,10 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
   const d = result;
   const c = compareResult;
   const cmp = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey) : null;
+  /* Pour un KPI de perte, la flèche suit le chiffre mais la couleur doit
+     suivre le jugement : plus de missions perdues, c'est une mauvaise
+     nouvelle. C'est ce que fait le quatrième argument. */
+  const cmpPerte = (current, ref) => c ? compareValueText(current, ref, comparePeriodKey, true) : null;
   // Connecté, données chargées, mais aucun compte facturé sur la période
   // choisie (ex. période hors historique) — même traitement que Sales/
   // ASUS/TLM : un seul message clair plutôt qu'une mosaïque de "0 €".
@@ -133,7 +137,7 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               value={fmt(d.caGlobal)}
               exactValue={fmtEurosExact(d.caGlobal)}
               compare={cmp(d.caGlobal, c?.caGlobal)}
-              trend={{ dir: 'neutral', text: `Clients actifs : ${d.nbClientsActifs}` }}
+              trend={{ dir: 'neutral', text: `Nouveaux clients : ${d.nbNouveauxClients ?? 0}` }}
               color="blue"
             />
             <KPICard
@@ -149,6 +153,31 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
           <>
             <KPICard {...notConnectedKPI('CA', COMPTES_HIDDEN_REASON, 'blue')} />
             <KPICard {...notConnectedKPI('Marge brute', COMPTES_HIDDEN_REASON, 'green')} />
+          </>
+        )}
+        {SHOW_COMPTES_KPIS ? (
+          <>
+            <KPICard
+              label="Clients actifs"
+              value={d.nbClientsActifs}
+              unit=" clients"
+              compare={cmp(d.nbClientsActifs, c?.nbClientsActifs)}
+              trend={{ dir: 'neutral', text: `${d.nbClientsTotal ?? 0} clients au total` }}
+              color="blue"
+            />
+            <KPICard
+              label="Missions perdues"
+              value={d.nbProfilsPerdus ?? 0}
+              unit=" missions"
+              compare={cmpPerte(d.nbProfilsPerdus ?? 0, c?.nbProfilsPerdus)}
+              trend={{ dir: 'neutral', text: `${d.nbClientsPerdus ?? 0} client${(d.nbClientsPerdus ?? 0) > 1 ? 's' : ''} concerné${(d.nbClientsPerdus ?? 0) > 1 ? 's' : ''}` }}
+              color="purple"
+            />
+          </>
+        ) : (
+          <>
+            <KPICard {...notConnectedKPI('Clients actifs', COMPTES_HIDDEN_REASON, 'blue')} />
+            <KPICard {...notConnectedKPI('Missions perdues', COMPTES_HIDDEN_REASON, 'purple')} />
           </>
         )}
         {/* Deals gagnés et pipeline viennent tous deux du board
