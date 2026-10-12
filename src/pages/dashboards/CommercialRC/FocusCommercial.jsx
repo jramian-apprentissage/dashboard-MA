@@ -67,6 +67,8 @@ const ETATS_SIGNATURE = new Set(['Contrat signé', 'Date de démarrage planifié
    coller a ce qui se dit en interne et a la maquette du Dash RH.
    A ne pas confondre avec les secteurs d'activite des CLIENTS, qui vivent dans
    server/src/secteurs.js et gardent leur « Services informatiques ». */
+const nbAffaires = n => `${n} affaire${n > 1 ? 's' : ''}`;
+
 const missionLabels = { SO: 'Commercial', AV: 'Administratif', CS: 'Customer Success', IT: 'Tech', DS: 'Service digital' };
 const missionColors = ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)', 'rgba(123,170,191,0.75)', 'rgba(142,207,170,0.75)'];
 const sourceColors  = ['rgba(255,249,147,0.8)', 'rgba(123,170,191,0.7)', 'rgba(169,141,196,0.7)', 'rgba(196,135,106,0.55)', 'rgba(142,207,170,0.6)'];
@@ -188,7 +190,12 @@ export default function FocusCommercial() {
                   value={fmt(result.montantPipelinePondere)}
                   exactValue={fmtEurosExact(result.montantPipelinePondere)}
                   compare={cmp(result.montantPipelinePondere, c?.montantPipelinePondere)}
-                  trend={{ dir: 'neutral', text: 'Seuil ≥ 30% de probabilité' }}
+                  /* Le nombre plutot que le rappel du seuil, qui est deja dans le
+                     libelle de la tranche juste en dessous. Une affaire sans montant
+                     saisi pese zero euro : sans le compte, elle est invisible. */
+                  trend={{ dir: 'neutral', text: result.nbPipelinePondere != null
+                    ? `${nbAffaires(result.nbPipelinePondere)} à 30 % de probabilité ou plus`
+                    : 'Seuil ≥ 30% de probabilité' }}
                   color="green"
                 />
                 <KPICard
@@ -294,6 +301,9 @@ export default function FocusCommercial() {
                     <div>
                       <div className={styles.metaSub}>Pipeline pondéré</div>
                       <div className={styles.metaVal} style={{ color: 'var(--myrtille)' }}>{fmt(result.montantPipelinePondere)}</div>
+                      {result.nbPipelinePondere != null && (
+                        <div className={styles.metaSub}>{nbAffaires(result.nbPipelinePondere)}</div>
+                      )}
                     </div>
                   </div>
                   <div className={styles.sep} />
@@ -310,7 +320,7 @@ export default function FocusCommercial() {
                           }}
                         >
                           <span>{fmt(p.amount)}</span>
-                          <span style={{ opacity: 0.7 }}>{fmtPourcentage(p.pct)}</span>
+                          <span style={{ opacity: 0.7 }}>{p.count != null ? nbAffaires(p.count) : fmtPourcentage(p.pct)}</span>
                         </div>
                       </div>
                     </div>
