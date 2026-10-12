@@ -9,10 +9,17 @@ import { parseCloudTalkPaste } from '../../../lib/cloudtalk/parseCloudTalk';
 import { INDICATOR_ORDER, FORMULAIRE_ROWS, buildOrderedValues } from '../../../lib/cloudtalk/indicators';
 import styles from './CloudTalkExtract.module.css';
 
+/* toISOString() convertit en UTC : en Europe/Paris (UTC+1/+2), minuit local
+   sérialisé ainsi retombe sur la veille. La pop-up s'ouvrait donc sur la
+   mauvaise fenêtre entre minuit et 2h du matin. On reste en heure locale du
+   début à la fin, comme PeriodContext le fait déjà. */
 function todayISO(offsetDays) {
   const d = new Date();
   d.setDate(d.getDate() + (offsetDays || 0));
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const jour = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${jour}`;
 }
 
 function fmtDateFR(iso) {
@@ -273,16 +280,50 @@ export default function CloudTalkExtract({ onClose }) {
   async function onLancer() {
     setError('');
     setStep('loading');
-    const { ok, data } = await cloudtalk.calculer({
-      date_from: dateFrom,
-      date_to: dateTo,
-      leadsRestantsParCampagne: parsedEntries.map((e) => ({ name: e.name, remaining: e.remaining })),
-    });
+
+    /* Sans try/catch, une coupure réseau laissait l'écran bloqué sur
+       « Récupération des appels CloudTalk… » indéfiniment : postAPI ne rend
+       {ok, data} que si la requête aboutit, une exception remontait dans le
+       vide. */
+    let reponse;
+    try {
+      reponse = await cloudtalk.calculer({
+        date_from: dateFrom,
+        date_to: dateTo,
+        leadsRestantsParCampagne: parsedEntries.map((e) => ({ name: e.name, remaining: e.remaining })),
+      });
+    } catch (err) {
+      setError(`Le calcul n'a pas abouti : ${err?.message || 'erreur réseau'}. Réessayez, ou réduisez la période.`);
+      setStep('form');
+      return;
+    }
+
+    const { ok, data } = reponse;
     if (!ok) {
       setError(data.error || 'Erreur lors du calcul');
       setStep('form');
       return;
     }
+
+    /* UNE RÉPONSE VIDE N'EST PAS UN RÉSULTAT. L'écran passait en mode
+       résultats dès que le statut valait 200, sans regarder le contenu :
+       sans campagne, il affichait quatre compteurs à zéro et un tableau sans
+       colonnes, SANS message. Impossible de distinguer « aucune campagne
+       trouvée » de « le calcul a échoué » — c'est ce qu'on a pris pour
+       « septembre ne sort rien ».
+       Cause connue côté n8n : une campagne passée en « Terminée » dont la
+       date « Fin TLM » n'est pas au format JJ/MM/AAAA est écartée du calcul
+       pour TOUTES les périodes (voir DIAGNOSTIC-EXTRAIRE-2026-10-07.md). */
+    if (!data || !Array.isArray(data.prefixes) || data.prefixes.length === 0) {
+      setError(
+        `Aucune campagne n'est ressortie pour la période du ${fmtDateFR(dateFrom)} au ${fmtDateFR(dateTo)}. `
+        + "Vérifiez les colonnes « Statut » et « Fin TLM » de l'onglet Test du fichier pilotage : "
+        + 'une campagne « Terminée » dont la date de fin est vide ou mal formatée disparaît du calcul.',
+      );
+      setStep('form');
+      return;
+    }
+
     setResult(data);
     setStep('results');
   }

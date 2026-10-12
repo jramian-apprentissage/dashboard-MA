@@ -22,7 +22,29 @@ function shiftYears(dateStr, years) {
 
 // Intervalle immédiatement antérieur, de même durée que [fromStr, toStr].
 // Ex. 01→15 juillet (15 jours) → comparé aux 15 jours précédents (16→30 juin).
-function previousPeriodRange(fromStr, toStr) {
+/* Décalage en MOIS CALENDAIRES, pour les périodes qui en sont faites.
+   Le mois précédent d'un trimestre est un trimestre, pas « 92 jours plus tôt ».
+   `n` = nombre de mois de la période, `recul` = de combien on remonte. */
+function moisPrecedents(fromStr, n) {
+  const d = new Date(`${fromStr}T00:00:00`);
+  const debut = new Date(d.getFullYear(), d.getMonth() - n, 1);
+  const fin = new Date(debut.getFullYear(), debut.getMonth() + n, 0);
+  return { from: fmtLocal(debut), to: fmtLocal(fin) };
+}
+
+/* CALENDRIER CONTRE JOURS (corrigé le 07/10). Le décalage se faisait en jours
+   pour toutes les périodes, alors que le chiffre d'affaires et la marge
+   s'agrègent par mois entier. Sur « Trimestre précédent » (01/07 au 30/09,
+   92 jours), la référence tombait au 31/03 : mars entrait tout entier et la
+   comparaison portait sur QUATRE mois contre trois. Le signe s'inversait, le
+   dashboard annonçait -10 % de CA là où le vrai T2 donne +21 %.
+   Les périodes calendaires reculent donc d'un cran de leur propre unité ; le
+   jour, la semaine et le libre gardent le décalage en jours, qui leur convient. */
+const MOIS_PAR_PERIODE = { month: 1, 'last-month': 1, quarter: 3, 'last-quarter': 3 };
+
+function previousPeriodRange(fromStr, toStr, periodKey) {
+  const n = MOIS_PAR_PERIODE[periodKey];
+  if (n) return moisPrecedents(fromStr, n);
   const from = new Date(`${fromStr}T00:00:00`);
   const to   = new Date(`${toStr}T00:00:00`);
   const days = Math.round((to - from) / 86400000) + 1;
@@ -83,8 +105,8 @@ export function PeriodProvider({ children }) {
   const compareRange = useMemo(() => (compareActive
     ? (comparePeriodKey === 'previous-year'
         ? { from: shiftYears(referenceRange.from, -1), to: shiftYears(referenceRange.to, -1) }
-        : previousPeriodRange(referenceRange.from, referenceRange.to))
-    : null), [compareActive, comparePeriodKey, referenceRange]);
+        : previousPeriodRange(referenceRange.from, referenceRange.to, periodKey))
+    : null), [compareActive, comparePeriodKey, referenceRange, periodKey]);
 
   return (
     <PeriodContext.Provider value={{
