@@ -69,7 +69,9 @@ const ETATS_SIGNATURE = new Set(['Contrat signé', 'Date de démarrage planifié
    server/src/secteurs.js et gardent leur « Services informatiques ». */
 const nbAffaires = n => `${n} affaire${n > 1 ? 's' : ''}`;
 
-const missionLabels = { SO: 'Commercial', AV: 'Administratif', CS: 'Customer Success', IT: 'Tech', DS: 'Service digital' };
+// « Support client » et non « Customer Success » : c'est le mot que l'équipe
+// emploie (Jimmy, 12/10/2026). Le code de mission reste CS, il vient de Monday.
+const missionLabels = { SO: 'Commercial', AV: 'Administratif', CS: 'Support client', IT: 'Tech', DS: 'Service digital' };
 const missionColors = ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)', 'rgba(123,170,191,0.75)', 'rgba(142,207,170,0.75)'];
 const sourceColors  = ['rgba(255,249,147,0.8)', 'rgba(123,170,191,0.7)', 'rgba(169,141,196,0.7)', 'rgba(196,135,106,0.55)', 'rgba(142,207,170,0.6)'];
 const AUTRES_SOURCE_COLOR = 'rgba(167,173,170,0.5)';
