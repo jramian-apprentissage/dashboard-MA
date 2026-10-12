@@ -148,7 +148,12 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
       )}
       {trend && (
         <div className={`${styles.trend} ${styles[trend.dir] || ''}`}>
-          <TrendIcon dir={trend.dir} />
+          {/* Même grammaire que la ligne du dessus depuis que la tendance peut
+              porter un écart (tauxAvecEcart) : la flèche suit le chiffre, la
+              couleur porte le jugement. Sans le repli sur `sens`, une bande de
+              stabilité en points ferait disparaître la flèche du taux de marge
+              au lieu de la laisser suivre la variation réelle. */}
+          <TrendIcon dir={trend.sens || trend.dir} />
           <span className={styles.lineText}>{trend.text}</span>
         </div>
       )}

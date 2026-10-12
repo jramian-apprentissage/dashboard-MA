@@ -405,7 +405,12 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
                           appels émis (`partPct(fichesExploitables, appels)` dans
                           sheetsParser), pour que les trois paliers se lisent sur
                           la même règle. */}
-                      <td className={styles.tdNum} title={row.tauxFichesExploit != null ? `${fmtPourcentage(row.tauxFichesExploit)} des appels émis` : undefined}>{fmtNumber(row.fichesExploitables) ?? '-'}</td>
+                      <td className={styles.tdNum} title={row.tauxFichesExploit != null ? `${fmtPourcentage(row.tauxFichesExploit)} des appels émis` : undefined}>
+                        <span className={styles.valeurBrute}>{fmtNumber(row.fichesExploitables) ?? '-'}</span>
+                        {row.tauxFichesExploit != null && (
+                          <span className={styles.tauxSuffixe}>{fmtPourcentage(row.tauxFichesExploit)}</span>
+                        )}
+                      </td>
                       <td className={styles.tdNum}><span className={styles.valeurBrute}>{fmtNumber(row.rdvPris) ?? '-'}</span></td>
                       <td className={styles.tdNum}><span className={styles.valeurBrute}>{fmtNumber(row.rdvHonores) ?? '-'}</span></td>
                       <td

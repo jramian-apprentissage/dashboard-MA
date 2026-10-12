@@ -14,18 +14,17 @@ export function compareLabel(comparePeriodKey) {
  * positives, en vert. » Sans bande neutre, un écart de 1 % s'affiche du même
  * vert qu'un écart de 40 %, et la couleur ne dit plus rien.
  *
- * SON SEUIL EST À ELLE, PAS LE NÔTRE. Elle donne ±10 % et le justifie dans la
- * phrase suivante : « nous on n'observe pas que ce soit une augmentation mais
- * parce qu'on a beaucoup de volume ». Mon Ambassadeur compte une quarantaine de
- * clients et 85 k€ de chiffre d'affaires : à ±10 %, 8 k€ de mois en mois
- * passeraient pour du bruit. Le seuil retenu ici est donc plus serré, et reste
- * à arbitrer — il vit à un seul endroit pour ça.
+ * LE SEUIL EST LE SIEN : ±10 %, arbitré par Jimmy le 10/10. Elle le justifie
+ * par ses volumes à elle, « nous on n'observe pas que ce soit une augmentation
+ * mais parce qu'on a beaucoup de volume », et Mon Ambassadeur en a bien moins :
+ * sur 85 k€ de chiffre d'affaires, 8 k€ de mois en mois passent donc en gris.
+ * C'est assumé, et c'est pour pouvoir y revenir que la valeur vit ici seule.
  *
  * La bande ne touche QUE la couleur. Le chiffre, le signe et la flèche restent
  * ceux de la variation réelle : on dit « ce n'est pas un message », pas « il ne
  * s'est rien passé ».
  */
-export const SEUIL_STABILITE_PCT = 2;   // en pourcentage relatif
+export const SEUIL_STABILITE_PCT = 10;  // en pourcentage relatif
 
 /* Pour les écarts en POINTS, le seuil est volontairement laissé à 1, c'est à
  * dire qu'il ne neutralise que l'écart nul, déjà neutre avant. Un point ne

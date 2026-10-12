@@ -59,7 +59,15 @@ const evoBarOpts = {
    nommé quand on déplie la liste. */
 const ETATS_SIGNATURE = new Set(['Contrat signé', 'Date de démarrage planifié/Contrat signé']);
 
-const missionLabels = { SO: 'Commercial', AV: 'Administratif', CS: 'Customer Success', IT: 'Informatique', DS: 'Digital Services' };
+/* Le vocabulaire des types de mission, lu au prefixe du poste. Un seul jeu de
+   libelles pour toute la maison, c'est la regle posee par Clemence le 08/10 :
+   « reprends systematiquement le vocabulaire metier que vous avez dans Mon
+   Ambassadeur ». « Informatique » et « Digital Services » ont ete remplaces
+   par « Tech » et « Service digital » le 12/10, a la demande de Jimmy, pour
+   coller a ce qui se dit en interne et a la maquette du Dash RH.
+   A ne pas confondre avec les secteurs d'activite des CLIENTS, qui vivent dans
+   server/src/secteurs.js et gardent leur « Services informatiques ». */
+const missionLabels = { SO: 'Commercial', AV: 'Administratif', CS: 'Customer Success', IT: 'Tech', DS: 'Service digital' };
 const missionColors = ['rgba(255,249,147,0.95)', 'rgba(38,0,31,0.8)', 'rgba(196,135,106,0.85)', 'rgba(123,170,191,0.75)', 'rgba(142,207,170,0.75)'];
 const sourceColors  = ['rgba(255,249,147,0.8)', 'rgba(123,170,191,0.7)', 'rgba(169,141,196,0.7)', 'rgba(196,135,106,0.55)', 'rgba(142,207,170,0.6)'];
 const AUTRES_SOURCE_COLOR = 'rgba(167,173,170,0.5)';

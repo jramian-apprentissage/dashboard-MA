@@ -9,7 +9,7 @@ import DonutChart from '../../../components/ui/DonutChart';
 import Loader, { LoaderMark } from '../../../components/ui/Loader';
 import NotConnected from '../../../components/ui/NotConnected';
 import NoPeriodData from '../../../components/ui/NoPeriodData';
-import { couleurTaux, SEUILS } from './echelles';
+import { couleurTaux, titreTaux, SEUILS } from './echelles';
 import FreshnessNote from '../../../components/FreshnessNote';
 import { usePeriod } from '../../../contexts/PeriodContext';
 import { getPeriodRange } from '../../../components/ui/PeriodPicker';
@@ -487,8 +487,9 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                   // travaillées, pas aux jours calendaires de la période.
                   const appelsParJour = a.jours_actifs > 0 ? a.appels_emis / a.jours_actifs : null;
                   const tauxDecroche1s = partPct(a.appels_decroches_1s ?? 0, a.appels_emis);
+                  const tauxExploitables = partPct(a.appels_exploitables, a.appels_emis);
                   return { ...a, fichesAgent, tauxCompletion, tauxDecroche1s, tauxDecroche30s,
-                           transfoNette, appelsParJour };
+                           tauxExploitables, transfoNette, appelsParJour };
                 })
                 .sort((a, b) => compareAgentRows(a, b, agentSort))
                 .map(a => (
@@ -500,18 +501,28 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
                     <td className={styles.tdNum} title={a.jours_actifs ? `${fmtNumber(a.appels_emis)} appels sur ${a.jours_actifs} jour${a.jours_actifs > 1 ? 's' : ''} travaillé${a.jours_actifs > 1 ? 's' : ''}` : undefined}>{a.appelsParJour != null ? a.appelsParJour.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '-'}</td>
                     {/* Le volume, le taux au survol — même arbitrage que
                         l'entonnoir : « la valeur numéraire est plus utile ». */}
-                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? `${fmtPourcentage(a.tauxDecroche1s)} des appels émis` : undefined}>
+                    <td className={styles.tdNum} title={a.appels_decroches_1s != null ? (titreTaux(a.tauxDecroche1s, a.appels_emis, 'appels émis') ?? `${fmtPourcentage(a.tauxDecroche1s)} des appels émis`) : undefined}>
                       <span className={styles.valeurBrute}>{a.appels_decroches_1s != null ? fmtNumber(a.appels_decroches_1s) : '-'}</span>
                       {a.appels_decroches_1s != null && (
                         <span className={styles.tauxSuffixe} style={{ color: couleurTaux(a.tauxDecroche1s, SEUILS.decroche1s, a.appels_emis) }}>{fmtPourcentage(a.tauxDecroche1s)}</span>
                       )}
                     </td>
-                    <td className={styles.tdNum} title={`${fmtPourcentage(a.tauxDecroche30s)} des appels émis`}>
+                    <td className={styles.tdNum} title={titreTaux(a.tauxDecroche30s, a.appels_emis, 'appels émis') ?? `${fmtPourcentage(a.tauxDecroche30s)} des appels émis`}>
                       <span className={styles.valeurBrute}>{fmtNumber(a.appels_decroches_30s)}</span>
                       <span className={styles.tauxSuffixe} style={{ color: couleurTaux(a.tauxDecroche30s, SEUILS.echange30s, a.appels_emis) }}>{fmtPourcentage(a.tauxDecroche30s)}</span>
                     </td>
-                    <td className={styles.tdNum}>{fmtNumber(a.appels_exploitables)}</td>
-                    <td className={styles.tdNum}>{fmtNumber(a.fichesAgent)}</td>
+                    {/* Part des appels emis, meme base que les deux colonnes
+                        d'avant, pour que l'entonnoir se lise sur une seule regle. */}
+                    <td className={styles.tdNum} title={`${fmtPourcentage(a.tauxExploitables)} des appels émis`}>
+                      <span className={styles.valeurBrute}>{fmtNumber(a.appels_exploitables)}</span>
+                      <span className={styles.tauxSuffixe}>{fmtPourcentage(a.tauxExploitables)}</span>
+                    </td>
+                    {/* Ici la base change, et c'est voulu : une fiche se remplit
+                        apres un echange exploitable, pas apres un appel emis. */}
+                    <td className={styles.tdNum} title={`${fmtPourcentage(a.tauxCompletion)} des échanges exploitables`}>
+                      <span className={styles.valeurBrute}>{fmtNumber(a.fichesAgent)}</span>
+                      <span className={styles.tauxSuffixe}>{fmtPourcentage(a.tauxCompletion)}</span>
+                    </td>
                     <td className={styles.tdNum}>{fmtNumber(a.rdvs_pris)}</td>
                     <td className={styles.tdNum}>{fmtNumber(a.appels_non_exploitables)}</td>
                     <td className={styles.tdNum}>-</td>
