@@ -370,7 +370,12 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
     { label: 'Échanges > 30s',             value: decroches30s,        unit: '', compare: cmp(decroches30s, 'appels_decroches_30s', 'appels_decroches_30s'), trend: trend('Conversation de plus de 30 secondes, hors sonnerie'), exactValue: part(decroches30s, decroches1s ?? appelsEmis, decroches1s != null ? 'des échanges > 1s' : 'des appels émis') },
     { label: 'Échanges exploitables',      value: appelsExploitables,  unit: '', compare: cmp(appelsExploitables, 'appels_exploitables', 'appels_exploitables'), trend: trend('Fiche complétée/partielle, RDV pris, Rappel'), exactValue: part(appelsExploitables, decroches30s, 'des échanges > 30s') },
     { label: 'Fiches complétées',          value: fichesCompletees,    unit: '', compare: cmpFichesCompletees, trend: trend('Fiche complétée + RDV pris'), exactValue: part(fichesCompletees, appelsExploitables, 'des échanges exploitables') },
-    { label: 'Rendez-vous pris',           value: rdvPris,             unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm', 'rdvs_pris'), trend: trend('Transformation TLM → RDV'), color: 'green', exactValue: part(rdvPris, fichesCompletees, 'des fiches complétées') },
+    { label: 'Rendez-vous pris',           value: rdvPris,             unit: '', compare: cmp(rdvPris, 'rdvs_bookes_tlm', 'rdvs_pris'), trend: trend('Transformation TLM → RDV'), /* Rapporte aux echanges exploitables et non aux fiches completees :
+       celles-ci contiennent deja les RDV pris (definition validee par Jimmy,
+       voir plus haut), donc le numerateur etait dans son propre denominateur.
+       Le taux ne pouvait pas depasser 100 % et ne mesurait aucune conversion.
+       Question posee par Christophe le 14/08, tranchee le 13/10. */
+    exactValue: part(rdvPris, appelsExploitables, 'des échanges exploitables') },
     // Hors parcours, comme dans l'entonnoir : elle explique le taux de
     // transformation sans être une étape.
     { label: 'Data non exploitable',       value: nonExploitables,     unit: '', compare: cmp(nonExploitables, 'data_non_exploitable', 'appels_non_exploitables'), trend: trend('Tags Faux numéro, Doublon, Hors service'), exactValue: part(nonExploitables, appelsEmis, 'des appels émis') },
@@ -454,7 +459,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
         {kpis.map(k => <KPICard key={k.label} {...k} />)}
       </div>
 
-      <SectionLabel>Performance des agents MA</SectionLabel>
+      <SectionLabel>Performance des collaborateurs MA</SectionLabel>
       <Card title="Principaux leviers TLM">
         {agents.length > 0 ? (
           <table className={styles.perfTable}>
@@ -535,7 +540,7 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
             </tbody>
           </table>
         ) : (
-          <div className={styles.subNote}>Aucune donnée agent sur cette période</div>
+          <div className={styles.subNote}>Aucune donnée collaborateur sur cette période</div>
         )}
       </Card>
 
@@ -705,11 +710,10 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
             unit=""
             compare={isFilteredToAgent ? false : (compareSummary ? compareValueText(leadsARecycler, compareSummary.leads_a_recycler, comparePeriodKey) : null)}
             trend={trend(isFilteredToAgent ? 'Indisponible pour un collaborateur précis' : 'Pas de réponse, Répondeur, Injoignable, Rappel (ou sans tag)')}
-            color="amber"
           />
         </Card>
         <Card>
-          <KPICard label="Leads restants à contacter" value="-" unit="" compare={false} trend={trend('Saisi à la main, non calculable via API')} color="amber" />
+          <KPICard label="Leads restants à contacter" value="-" unit="" compare={false} trend={trend('Saisi à la main, non calculable via API')} />
         </Card>
       </div>
       </>

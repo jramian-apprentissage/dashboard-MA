@@ -142,7 +142,6 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               exactValue={fmtEurosExact(d.caGlobal)}
               compare={cmp(d.caGlobal, c?.caGlobal)}
               trend={{ dir: 'neutral', text: `Nouveaux clients : ${d.nbNouveauxClients ?? 0}` }}
-              color="blue"
             />
             <KPICard
               label="Marge brute"
@@ -150,7 +149,6 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               exactValue={fmtEurosExact(d.margeBruteGlobale)}
               compare={cmp(d.margeBruteGlobale, c?.margeBruteGlobale)}
               trend={cmpTaux('Taux de marge brute', fmtPourcentage(d.tauxMarge), d.tauxMarge, c?.tauxMarge)}
-              color="green"
             />
           </>
         ) : (
@@ -167,7 +165,6 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               unit=" clients"
               compare={cmp(d.nbClientsActifs, c?.nbClientsActifs)}
               trend={{ dir: 'neutral', text: `${d.nbClientsTotal ?? 0} clients au total` }}
-              color="blue"
             />
             <KPICard
               label="Missions perdues"
@@ -175,7 +172,6 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               unit=" missions"
               compare={cmpPerte(d.nbProfilsPerdus ?? 0, c?.nbProfilsPerdus)}
               trend={{ dir: 'neutral', text: `${d.nbClientsPerdus ?? 0} client${(d.nbClientsPerdus ?? 0) > 1 ? 's' : ''} concerné${(d.nbClientsPerdus ?? 0) > 1 ? 's' : ''}` }}
-              color="purple"
             />
           </>
         ) : (
@@ -194,7 +190,6 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               unit=" deals"
               compare={cmp(d.nbDealsGagnes, c?.nbDealsGagnes)}
               trend={{ dir: 'neutral', text: `CA associé : ${fmt(d.caDealsGagnes)}` }}
-              color="green"
             />
             <KPICard
               label="Pipeline pondéré"
@@ -204,7 +199,6 @@ function SyntheseContent({ result, compareResult, comparePeriodKey, monthly, sat
               trend={{ dir: 'neutral', text: d.nbPipelinePondere != null
                 ? `${d.nbPipelinePondere} deal${d.nbPipelinePondere > 1 ? 's' : ''} à 30 % de probabilité ou plus`
                 : 'Deals supérieurs à 30% de probabilité' }}
-              color="purple"
             />
           </>
         ) : (

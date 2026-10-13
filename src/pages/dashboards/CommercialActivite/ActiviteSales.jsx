@@ -185,20 +185,20 @@ function buildKPIs(result, rdvResult, compareResult, compareRdvResult, comparePe
      (OK + PI + CNA - Mail). Deux cartes pour deux nuances du même fait
      coupaient l'entonnoir en deux sans rien apprendre. */
   return [
-    { label: 'Appels émis',              value: total,              unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null, trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` }, color: 'blue' },
+    { label: 'Appels émis',              value: total,              unit: '', compare: cmp ? compareValueText(total, cmp.total, comparePeriodKey) : null, trend: { dir: 'neutral', text: `${nbCollabActifs} collaborateur${nbCollabActifs > 1 ? 's' : ''} actif${nbCollabActifs > 1 ? 's' : ''}` } },
     { label: 'Échanges > 1s',            value: echanges1s,         unit: '', compare: cmp ? compareValueText(echanges1s, cmp.echanges1s, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation de plus d’une seconde, hors sonnerie' }, exactValue: part(echanges1s, total, 'des appels émis') },
     { label: 'Échanges > 30s',           value: echanges30s,        unit: '', compare: cmp ? compareValueText(echanges30s, cmp.echanges30s, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation de plus de 30 secondes, hors sonnerie' }, exactValue: part(echanges30s, echanges1s, 'des échanges > 1s') },
-    { label: 'Échanges exploitables',    value: fichesExploitables, unit: '', compare: cmp ? compareValueText(fichesExploitables, cmp.fichesExploitables, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation ayant apporté des informations sur l’entreprise' }, color: 'amber', exactValue: part(fichesExploitables, echanges30s, 'des échanges > 30s') },
-    { label: 'RDV pris',                 value: rdvPris,            unit: '', compare: cmpRdv,     trend: { dir: 'neutral', text: rdvSrc }, color: 'green' },
+    { label: 'Échanges exploitables',    value: fichesExploitables, unit: '', compare: cmp ? compareValueText(fichesExploitables, cmp.fichesExploitables, comparePeriodKey) : null, trend: { dir: 'neutral', text: 'Conversation ayant apporté des informations sur l’entreprise' }, exactValue: part(fichesExploitables, echanges30s, 'des échanges > 30s') },
+    { label: 'RDV pris',                 value: rdvPris,            unit: '', compare: cmpRdv,     trend: { dir: 'neutral', text: rdvSrc } },
     /* « RDV pris » se lit à la date de prise, « RDV honorés » et le taux à la
        date du créneau (méthode du 15/09/2026, voir computeRDVData). */
-    { label: 'RDV honorés',              value: rdvHonores,         unit: '', compare: cmpRdvHonores, trend: { dir: 'neutral', text: rdvSrc }, color: 'green', exactValue: 'Créneau dans la période, quelle que soit la date de prise' },
-    { label: 'Taux RDV honorés',         value: tauxHon,            unit: '', compare: cmpTauxHon, trend: { dir: 'neutral', text: rdvSrc }, color: 'purple', exactValue: rdvEchus != null ? `sur ${rdvEchus} rendez-vous dont le créneau, dans la période, est passé` : undefined },
+    { label: 'RDV honorés',              value: rdvHonores,         unit: '', compare: cmpRdvHonores, trend: { dir: 'neutral', text: rdvSrc }, exactValue: 'Créneau dans la période, quelle que soit la date de prise' },
+    { label: 'Taux RDV honorés',         value: tauxHon,            unit: '', compare: cmpTauxHon, trend: { dir: 'neutral', text: rdvSrc }, exactValue: rdvEchus != null ? `sur ${rdvEchus} rendez-vous dont le créneau, dans la période, est passé` : undefined },
     /* Stock des RDV pris sur la période dont le créneau n'est pas encore
        arrivé. Sans comparaison de période — un stock de rendez-vous à venir se
        lit à l'instant présent, le comparer au stock d'il y a un mois n'apprend
        rien. */
-    { label: 'RDV à venir',              value: rdvAVenir,          unit: '', compare: null, trend: { dir: 'neutral', text: 'RDV pris sur la période, créneau pas encore arrivé' }, color: 'green' },
+    { label: 'RDV à venir',              value: rdvAVenir,          unit: '', compare: null, trend: { dir: 'neutral', text: 'RDV pris sur la période, créneau pas encore arrivé' } },
   ];
 
 }
@@ -291,7 +291,7 @@ export default function ActiviteSales({ selectedCollab = 'Tous', salesData, comp
         <Card><NotConnected>{salesData?.error ? 'échec du chargement, voir erreur ci-dessus' : 'en attente de l\'archive Ringover'}</NotConnected></Card>
       )}
 
-      <SectionLabel>Performance commerciale des agents</SectionLabel>
+      <SectionLabel>Performance commerciale des collaborateurs</SectionLabel>
       <Card title="Principaux leviers">
         {hasData && salesData.result.collabs ? (() => {
           const rows = salesData.result.collabs

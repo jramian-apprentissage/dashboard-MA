@@ -101,6 +101,13 @@ export default function KPICard({ label, value, unit, trend, compare, color = 'd
     flipTimer.current = setTimeout(() => setFlipped(false), FLIP_DURATION_MS);
   }
 
+  /* ATTENTION, LES SEULES VALEURS HONOREES SONT ICI. `variant` accepte
+     'accent' et 'accent-soft', `color` accepte 'accent' et 'accentAsus'. Toute
+     autre valeur est ignoree en silence : il n'existe aucune classe .blue,
+     .green, .purple, .amber ni .red dans la feuille de style. Une vingtaine
+     d'appels portaient ces couleurs depuis juillet sans rien produire, et ont
+     ete retires le 13/10. Si on veut une palette par famille d'indicateur ou
+     par pole, elle se declare d'abord ici et dans KPICard.module.css. */
   const cls = [
     styles.card,
     variant === 'accent'      ? styles.accent      : '',

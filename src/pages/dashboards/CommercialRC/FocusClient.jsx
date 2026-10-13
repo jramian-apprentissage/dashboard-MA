@@ -188,7 +188,6 @@ export default function FocusClient() {
                 unit=" clients"
                 compare={cmp(result.nbNouveauxClients, c?.nbNouveauxClients)}
                 trend={{ dir: 'neutral', text: `CA : ${fmtEuros(result.caNouveauxClients)}` }}
-                color="green"
               />
               {/* La perte se compte en missions, pas en clients : un contrat
                   qui porte cinq profils dont un s'arrête ne « perd » pas un
@@ -208,7 +207,6 @@ export default function FocusClient() {
                      departs : api.js pose un Set sur compte_id. */
                   text: `CA perdu : ${fmtEuros(result.caPerdu)} · ${result.nbClientsPerdus} client${result.nbClientsPerdus > 1 ? 's' : ''} touché${result.nbClientsPerdus > 1 ? 's' : ''}`,
                 }}
-                color="red"
               />
               <KPICard
                 label="Portefeuille de clients actifs"
@@ -216,7 +214,6 @@ export default function FocusClient() {
                 unit=" actifs"
                 compare={cmp(result.nbClientsActifs, c?.nbClientsActifs)}
                 trend={{ dir: 'neutral', text: 'Clients ayant générés du CA sur la période' }}
-                color="blue"
               />
               <KPICard
                 label="Marge brute nouveaux clients"

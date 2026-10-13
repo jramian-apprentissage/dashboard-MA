@@ -114,7 +114,7 @@ function RdvTable({ rdvList }) {
             <table className={styles.table}>
               <thead>
                 <tr>
-                  {['Contact', 'Client', 'Agent', 'Enregistrement'].map((h) => (
+                  {['Contact', 'Client', 'Collaborateur', 'Enregistrement'].map((h) => (
                     <th key={h} className={styles.th}>{h}</th>
                   ))}
                 </tr>

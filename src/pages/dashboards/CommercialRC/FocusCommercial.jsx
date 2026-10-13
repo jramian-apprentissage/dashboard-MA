@@ -185,7 +185,6 @@ export default function FocusCommercial() {
                   exactValue={fmtEurosExact(result.montantPipeline)}
                   compare={cmp(result.montantPipeline, c?.montantPipeline)}
                   trend={{ dir: 'neutral', text: 'Opportunités en cours' }}
-                  color="blue"
                 />
                 <KPICard
                   label="Pipeline pondéré"
@@ -198,7 +197,6 @@ export default function FocusCommercial() {
                   trend={{ dir: 'neutral', text: result.nbPipelinePondere != null
                     ? `${nbAffaires(result.nbPipelinePondere)} à 30 % de probabilité ou plus`
                     : 'Seuil ≥ 30% de probabilité' }}
-                  color="green"
                 />
                 <KPICard
                   label="Win rate"
@@ -216,7 +214,6 @@ export default function FocusCommercial() {
                   unit=" deals"
                   compare={cmp(result.nbDealsGagnes, c?.nbDealsGagnes)}
                   trend={{ dir: 'neutral', text: `CA associé : ${fmt(result.caDealsGagnes)}` }}
-                  color="green"
                 />
               </>
             )}
