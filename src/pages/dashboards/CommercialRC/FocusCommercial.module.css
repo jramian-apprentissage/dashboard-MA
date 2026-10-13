@@ -247,7 +247,9 @@
   .missionCards { display: block; }
 }
 @media (max-width: 480px) {
-  .kpiRow4 { grid-template-columns: 1fr; }
+  /* Deux cartes par ligne, meme arbitrage que la vue consolidee : une carte
+     pleine largeur fait scroller avant d'arriver au contenu (Clemence, 27/07). */
+  .kpiRow4 { grid-template-columns: 1fr 1fr; }
   .barLbl, .sectorLbl { width: 96px; font-size: 10px; }
   .missionMeta { width: auto; }
 }

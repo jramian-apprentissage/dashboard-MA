@@ -147,6 +147,21 @@ export default function DashboardLayout({
     toggleCompare, setCompareMode,
   } = usePeriod();
 
+  /* LA PERIODE SUIT LE DASHBOARD. Chaque dashboard ecarte les periodes qui
+     n'ont pas de sens pour lui (DASHBOARD_EXCLUDED_PERIODS), mais le filtrage
+     ne portait que sur la LISTE affichee, jamais sur la valeur retenue : apres
+     un « Aujourd'hui » pose sur l'Activite Sales, on arrivait sur Commercial et
+     Relation Client avec un bouton annoncant une option absente du menu, et des
+     widgets vides. L'ecran vide explique bien quoi faire, personne n'etait
+     bloque, mais le bouton mentait. On retombe sur le mois dernier, la valeur
+     par defaut. Demande de Clemence du 27/07, sur un cas produit par Tahina.
+     L'effet depend du dashboard et non de periodKey : sinon il annulerait en
+     boucle le choix de l'utilisateur. */
+  useEffect(() => {
+    if (excludePeriods.includes(periodKey)) onChange('last-month');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboardId]);
+
   const periodLabel = buildPeriodLabel(periodKey, customFrom, customTo);
   const filterParts = activeFilters.filter(Boolean);
   const subtitle = filterParts.length > 0

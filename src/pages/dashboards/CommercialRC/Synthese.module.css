@@ -97,6 +97,8 @@
   .chartsRow, .bottomRow { grid-template-columns: 1fr; }
 }
 @media (max-width: 480px) {
-  .kpiGrid { grid-template-columns: 1fr; gap: 10px; }
+  /* Deux cartes par ligne, arbitrage de Clemence du 27/07 : une carte pleine
+     largeur donne « trois trucs a scroller » avant d'atteindre le contenu. */
+  .kpiGrid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .pipelineHeader { flex-wrap: wrap; gap: 14px; }
 }

@@ -96,9 +96,16 @@ function fmtDateRelance(iso) {
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
 }
 
-function moisLabel(m) {
+/* L'annee n'apparait que si la fenetre en couvre deux, meme regle que le
+   serveur et que sheetsParser. La fenetre fait six mois : des qu'on regarde
+   novembre a avril, deux « nov. » sans annee sont indistinguables. Clemence
+   l'avait releve des la revue de juillet. */
+function moisLabel(m, tous) {
   const [y, mo] = m.split('-');
-  return new Date(parseInt(y), parseInt(mo) - 1).toLocaleString('fr-FR', { month: 'short' });
+  const surDeuxAnnees = Array.isArray(tous)
+    && new Set(tous.map(x => String(x).slice(0, 4))).size > 1;
+  return new Date(parseInt(y), parseInt(mo) - 1).toLocaleString('fr-FR',
+    surDeuxAnnees ? { month: 'short', year: '2-digit' } : { month: 'short' });
 }
 
 // Tri par défaut : étape (alphabétique) puis client (alphabétique) — repère
@@ -410,7 +417,7 @@ export default function FocusCommercial() {
               <div className={styles.lineWrap} style={{ height: 180 }}>
                 <Bar
                   data={{
-                    labels: leads.data.evolutionMensuelle.mois.map(m => moisLabel(m.mois)),
+                    labels: leads.data.evolutionMensuelle.mois.map((m, _i, tous) => moisLabel(m.mois, tous.map(x => x.mois))),
                     datasets: [
                       { label: 'Gagnés',   data: leads.data.evolutionMensuelle.mois.map(m => m.gagnes),  backgroundColor: 'rgba(142,207,170,0.75)', borderRadius: 3, borderSkipped: false },
                       { label: 'Perdus',   data: leads.data.evolutionMensuelle.mois.map(m => m.perdus),  backgroundColor: 'rgba(196,135,106,0.75)', borderRadius: 3, borderSkipped: false },
@@ -497,7 +504,7 @@ export default function FocusCommercial() {
                 const total = deals.reduce((s, d) => s + d.vente, 0);
                 return (
                   <ListeModale
-                    titre={`Deals gagnés en ${moisLabel(m.mois)}`}
+                    titre={`Deals gagnés en ${moisLabel(m.mois, leads.data.evolutionMensuelle.mois.map(x => x.mois))}`}
                     sousTitre={`${deals.length} deal${deals.length > 1 ? 's' : ''} signé${deals.length > 1 ? 's' : ''} · ${fmtEurosDetail(total)} de flux mensuel`}
                     onClose={() => setMoisGagnes(null)}
                   >

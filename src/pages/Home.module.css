@@ -268,7 +268,9 @@
   .content       { padding: 28px 16px 36px; }
   .heroTitle     { font-size: 24px; }
   .heroDesc      { font-size: 13px; }
-  .insightsGrid  { grid-template-columns: 1fr; }
-  .insightCard   { padding: 18px; }
+  /* Deux cartes par ligne plutot qu'une : « trois trucs a scroller » avant
+     d'atteindre quoi que ce soit, releve par Clemence le 27/07. */
+  .insightsGrid  { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .insightCard   { padding: 14px; }
   .sectionRow    { flex-direction: column; align-items: flex-start; gap: 4px; }
 }

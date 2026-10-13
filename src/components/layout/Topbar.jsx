@@ -135,6 +135,15 @@ export default function Topbar({ scrolled = false }) {
               </div>
             );
           })}
+          {/* Le glossaire est un outil de lecture des dashboards, pas un reglage
+              de compte : Clemence a demande le 27/07 qu'il quitte le menu de
+              l'avatar. Il est deja en bas de la feuille mobile (BottomNav). */}
+          <NavLink
+            to="/glossaire"
+            className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
+          >
+            Glossaire KPI
+          </NavLink>
         </nav>
       </div>
 
@@ -161,14 +170,6 @@ export default function Topbar({ scrolled = false }) {
               <div className={styles.dropName}>{user?.name}</div>
               <div className={styles.dropRole}>{roleLabel(user?.role)}</div>
             </div>
-            <div className={styles.dropSep} />
-            <button className={styles.dropItem} onClick={() => { navigate('/glossaire'); setDropdownOpen(false); }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-              </svg>
-              Glossaire KPI
-            </button>
             {user?.role === 'admin' && (
               <button className={styles.dropItem} onClick={() => { navigate('/admin'); setDropdownOpen(false); }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
