@@ -152,7 +152,10 @@ export default function ActiviteTLM({ selectedCollab = 'Tous', onCollabsChange }
   const [evoGranularity, setEvoGranularity] = useState('jour');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [agentSort, setAgentSort] = useState({ col: 'appels_emis', dir: 'desc' });
+  /* Meme tri d'ouverture que le tableau jumeau des Sales : alphabetique.
+     Les deux ecrans se lisent cote a cote, et chercher une personne dans un
+     classement par volume demande de parcourir toute la colonne. */
+  const [agentSort, setAgentSort] = useState({ col: 'agent_label', dir: 'asc' });
 
   function toggleAgentSort(col) {
     setAgentSort(s => (s.col === col ? { col, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { col, dir: col === 'agent_label' ? 'asc' : 'desc' }));

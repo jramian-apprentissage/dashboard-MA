@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { useAuth, DASHBOARDS } from '../../contexts/AuthContext';
+import { useAuth, DASHBOARDS, roleLabel } from '../../contexts/AuthContext';
 import { DASHBOARD_ROUTES, DASHBOARD_TABS, DASHBOARD_DEFAULT_TAB } from '../../data/dashboardTabs';
 import logoSun from '../../assets/logo/logo-full-sun.svg';
 import styles from './Topbar.module.css';
@@ -159,7 +159,7 @@ export default function Topbar({ scrolled = false }) {
           <div className={styles.dropdown}>
             <div className={styles.dropUser}>
               <div className={styles.dropName}>{user?.name}</div>
-              <div className={styles.dropRole}>{user?.role === 'admin' ? 'Administrateur' : 'Core Team'}</div>
+              <div className={styles.dropRole}>{roleLabel(user?.role)}</div>
             </div>
             <div className={styles.dropSep} />
             <button className={styles.dropItem} onClick={() => { navigate('/glossaire'); setDropdownOpen(false); }}>

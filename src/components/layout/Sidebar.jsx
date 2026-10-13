@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { useAuth, DASHBOARDS } from '../../contexts/AuthContext';
+import { useAuth, DASHBOARDS, roleLabel } from '../../contexts/AuthContext';
 import { DASHBOARD_ROUTES, DASHBOARD_TABS, DASHBOARD_DEFAULT_TAB } from '../../data/dashboardTabs';
 import logoSun from '../../assets/logo/logo-full-sun.svg';
 import styles from './Sidebar.module.css';
@@ -121,7 +121,7 @@ export default function Sidebar() {
           <div className={styles.avatar}>{user?.name?.charAt(0) || 'U'}</div>
           <div className={styles.userInfo}>
             <div className={styles.userName}>{user?.name}</div>
-            <div className={styles.userRole}>{user?.role === 'admin' ? 'Admin' : 'Core Team'}</div>
+            <div className={styles.userRole}>{roleLabel(user?.role)}</div>
           </div>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={styles.logoutIcon}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         </button>

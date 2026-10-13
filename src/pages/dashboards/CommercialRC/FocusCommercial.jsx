@@ -400,7 +400,10 @@ export default function FocusCommercial() {
             )}
           </Card>
         )}
-        <Card title="Évolution mensuelle des deals">
+        {/* La profondeur fait partie du titre : sans elle on ne sait pas sur
+            combien de mois on lit la courbe. Posee le 27/07 a la demande de
+            Clemence, perdue le 19/08 en reorganisant les libelles. */}
+        <Card title="Évolution mensuelle des deals sur 6 mois">
           {!SHOW_LEADS_KPIS ? (
             <NotConnected>{LEADS_HIDDEN_REASON}</NotConnected>
           ) : leads.error ? (

@@ -202,7 +202,11 @@ export default function FocusClient() {
                 compare={cmp(result.nbProfilsPerdus, c?.nbProfilsPerdus, true)}
                 trend={{
                   dir: 'neutral',
-                  text: `CA perdu : ${fmtEuros(result.caPerdu)} · ${result.nbClientsPerdus} client${result.nbClientsPerdus > 1 ? 's' : ''}`,
+                  /* « 3 clients » sous une carte rouge « Missions perdues » se lit
+                     « 3 clients perdus », le contresens releve par Tahina le 14/08.
+                     Le compteur mesure les clients TOUCHES par un arret, pas des
+                     departs : api.js pose un Set sur compte_id. */
+                  text: `CA perdu : ${fmtEuros(result.caPerdu)} · ${result.nbClientsPerdus} client${result.nbClientsPerdus > 1 ? 's' : ''} touché${result.nbClientsPerdus > 1 ? 's' : ''}`,
                 }}
                 color="red"
               />

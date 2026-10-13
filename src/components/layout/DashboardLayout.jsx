@@ -211,6 +211,12 @@ export default function DashboardLayout({
                 <>
                   Vous analysez les KPIs&nbsp;
                   <span className={styles.subtitlePeriod}>{subtitle}</span>
+                  {/* La periode de comparaison manquait du cote interne, alors
+                      qu'elle est dite depuis toujours cote client : on lisait un
+                      ecart sans savoir contre quoi il etait mesure. */}
+                  {compareActive && (
+                    <> versus <span className={styles.subtitlePeriod}>{comparePeriodKey === 'previous-year' ? "l'année précédente" : 'la période précédente'}</span></>
+                  )}
                 </>
               )}
             </p>
