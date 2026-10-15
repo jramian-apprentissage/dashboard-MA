@@ -28,7 +28,19 @@ const Admin              = lazy(() => import('./pages/Admin'));
 const GlossaireKPI       = lazy(() => import('./pages/GlossaireKPI'));
 const CommercialRC       = lazy(() => import('./pages/dashboards/CommercialRC'));
 const CommercialActivite = lazy(() => import('./pages/dashboards/CommercialActivite'));
-const RhEffectifs = lazy(() => import('./pages/dashboards/RhEffectifs'));
+/* CE QUE LE DRAPEAU FAIT, ET CE QU'IL NE FAIT PAS. Mesure sur le paquet livre :
+   la construction de production ne contient ni l'entree de navigation, ni la
+   route, ni les libelles d'onglets du Dash RH. Elle contient en revanche le
+   morceau RhEffectifs-*.js, parce que Rollup produit un morceau des qu'il voit
+   un import() dans le source, meme dans une branche morte. Ce morceau n'est
+   jamais charge, aucune route n'y menant, et il ne porte que des libelles
+   d'interface : ni donnee, ni jeton, ni adresse d'API exploitable sans secret.
+   L'eliminer demanderait un aliasing conditionnel dans la configuration de
+   build, porte par tout le monde et pour toujours : pas au prix de quelques
+   chaines de caracteres. */
+const RhEffectifs = DASH_RH_ACTIF
+  ? lazy(() => import('./pages/dashboards/RhEffectifs'))
+  : null;
 const Asus               = lazy(() => import('./pages/dashboards/Asus'));
 
 function RequireAuth({ children }) {
