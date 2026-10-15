@@ -12,6 +12,9 @@ const DASH_LABELS = {
 const DASH_COLORS = {
   'commercial-rc':       { bg: '#26001F', color: '#FFF993', border: '#26001F' },
   'commercial-activite': { bg: '#3A0030', color: 'rgba(255,249,147,0.75)', border: '#3A0030' },
+  /* Un identifiant absent de cette table retombe sur la pastille du commercial
+     et porte donc la mauvaise couleur, sans que rien ne le signale. */
+  'rh-effectifs':        { bg: '#C9AAC4', color: '#26001F', border: '#74516E' },
 };
 
 export default function GlossaireKPI() {

@@ -3,6 +3,8 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import { useRhEffectifs } from '../../../hooks/useRhData';
+import { compareValueText } from '../../../utils/compareText';
+import { usePeriod } from '../../../contexts/PeriodContext';
 import { fmtNumber } from '../../../utils/formatNumber';
 import styles from './Rh.module.css';
 
@@ -20,7 +22,8 @@ import styles from './Rh.module.css';
  * séance, pas à corriger en silence.
  */
 export default function Effectifs() {
-  const { result, loading, error } = useRhEffectifs();
+  const { result, compareResult, loading, error } = useRhEffectifs();
+  const { comparePeriodKey } = usePeriod();
 
   return (
     <Loader loading={loading && !result} label="Chargement des données RH…" minHeight={220}>
@@ -31,7 +34,7 @@ export default function Effectifs() {
         if (error) {
           return (
             <>
-              <SectionLabel>Portefeuille à date</SectionLabel>
+              <SectionLabel>L’agence Mon Ambassadeur</SectionLabel>
               <Card>
                 <div className={styles.etat}>
                   <div className={styles.etatTitre}>Les données RH ne répondent pas</div>
@@ -44,7 +47,7 @@ export default function Effectifs() {
         if (!result || result.effectifTotal === 0) {
           return (
             <>
-              <SectionLabel>Portefeuille à date</SectionLabel>
+              <SectionLabel>L’agence Mon Ambassadeur</SectionLabel>
               <Card>
                 <div className={styles.etat}>
                   <div className={styles.etatTitre}>En attente du registre</div>
@@ -64,13 +67,27 @@ export default function Effectifs() {
 
         return (
           <div className={styles.page}>
-            <SectionLabel badge="Registre RH">Portefeuille à date</SectionLabel>
+            <SectionLabel badge="Registre RH">L’agence Mon Ambassadeur</SectionLabel>
             <div className={styles.kpiGrid}>
+              {/* PREMIER INDICATEUR POSÉ, le 16/10.
+                  Le stock se lit au dernier jour de la période ; la ligne du
+                  dessous porte les deux FLUX qui expliquent l'écart, à la place
+                  de la définition. Un solde seul ne se lit pas : « + 5 » ne dit
+                  pas s'il vient de onze arrivées et six départs ou de cinq
+                  arrivées sans départ. La définition et sa réserve de méthode
+                  vivent au glossaire, pas sur la carte (arbitrage du 16/10). */}
               <KPICard
                 label="Effectif total"
                 value={fmtNumber(effectifTotal)}
-                unit=" agents"
-                trend={{ dir: 'neutral', text: 'Missions actives au dernier jour de la période' }}
+                unit=" collaborateurs"
+                compare={compareResult
+                  ? compareValueText(effectifTotal, compareResult.effectifTotal, comparePeriodKey)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: `${fmtNumber(result.demarrages)} démarrage${result.demarrages > 1 ? 's' : ''}, `
+                    + `${fmtNumber(result.fins)} fin${result.fins > 1 ? 's' : ''} de mission`,
+                }}
               />
               <KPICard
                 label="Effectif placé"

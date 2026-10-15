@@ -171,6 +171,20 @@ export const glossaireData = [
     dashboards: ['commercial-rc'],
   },
 
+  /* ── Suivi des effectifs ──────────────────────────────────────────── */
+  {
+    terme: 'Effectif total',
+    definition: "Collaborateurs en mission au dernier jour de la période, placés chez un client et internes réunis. "
+      + "Le registre est coupé en deux feuilles : « Suivi Entrées » ne garde que le portefeuille courant, et une personne en sort dès qu'elle s'en va. "
+      + "Le compte additionne donc les lignes des entrées démarrées au plus tard à la date et marquées actives, et celles des sorties démarrées au plus tard à la date mais terminées après elle. "
+      + "Les lignes sans date de début, sans date de fin, ou dont la fin précède le début sont écartées. "
+      + "RÉSERVE DE MÉTHODE : l'état « actif » est une valeur du JOUR appliquée à une date passée. "
+      + "Une personne en poste fin août mais inactive aujourd'hui sort rétroactivement du chiffre d'août. "
+      + "Les mois passés sont donc reconstitués et non historisés : ils peuvent bouger d'une consultation à l'autre, et la comparaison avec le mois précédent s'en ressent.",
+    source: 'Registre RH (#04 RH - LISTE DES COLLABORATEURS MA)',
+    dashboards: ['rh-effectifs'],
+  },
+
   /* ── Activité téléphonique : Sales ────────────────────────────────── */
   {
     terme: 'Appels émis',
