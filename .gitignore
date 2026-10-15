@@ -25,3 +25,12 @@ server/
 *.njsproj
 *.sln
 *.sw?
+
+# Scripts d'analyse ponctuels, embarques par megarde le 16/10 : ils ont servi
+# a produire le classeur de septembre, ils ne font pas partie du dashboard et
+# restent sur le poste.
+scripts/*.py
+scripts/*.sh
+scripts/n8n-*.mjs
+scripts/__pycache__/
+scripts/*.bak
