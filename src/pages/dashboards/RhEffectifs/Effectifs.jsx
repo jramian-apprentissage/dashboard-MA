@@ -113,9 +113,16 @@ export default function Effectifs() {
                 trend={{ dir: 'neutral', text: 'Core team, devs, commerciaux' }}
               />
               {/* La quatrième tuile reste vide, voir l'en-tête du fichier. */}
+              {/* Sans `compare`, KPICard annonce « Calcul en cours… » puis
+                  « Comparaison indisponible » au bout d'un délai. Or rien ne
+                  calcule ici : la tuile est vide par décision de Clémence, qui
+                  a sorti le vivier de cette rangée sans la combler. On le dit
+                  tout de suite plutôt que de promettre un chiffre qui ne
+                  viendra pas. */}
               <KPICard
                 label="Indicateur à définir"
                 value="—"
+                compare={{ dir: 'neutral', text: 'Comparaison indisponible' }}
                 trend={{ dir: 'neutral', text: 'Le vivier passe plus bas, détaillé par type de mission' }}
               />
             </div>
