@@ -125,6 +125,27 @@
    couverture plus douce que le myrtille uni par défaut. Le jaune soleil,
    pensé pour un fond sombre, n'y est pas plus lisible que sur le hero
    ASUS : mêmes reprises en encre myrtille pour le texte et les contrôles. */
+/* Bandeau du Dash RH. Même grammaire que le ciment : la teinte tient la
+   gauche, la photo apparaît à droite sous un dégradé qui s'éteint. L'image
+   « Collaboration au bureau lumineux » porte déjà un dégradé mauve sur son
+   bord gauche, qui se fond dans la glycine. */
+.heroGlycine { background: var(--glycine); }
+.heroGlycine .heroBg { opacity: 1; }
+.heroGlycine .heroOverlay {
+  background: linear-gradient(
+    100deg,
+    var(--glycine) 0%,
+    var(--glycine) 42%,
+    rgba(201,170,196,0.85) 50%,
+    rgba(201,170,196,0) 62%
+  );
+}
+.heroGlycine .title,
+.heroGlycine .titleEm,
+.heroGlycine .subtitle,
+.heroGlycine .subtitlePeriod,
+.heroGlycine .tabBadge { color: var(--myrtille); }
+
 .heroCiment { background: var(--ciment); }
 .heroCiment .heroBg { opacity: 1; }
 .heroCiment .heroOverlay {

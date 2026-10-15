@@ -70,6 +70,21 @@
 }
 .pill.themeMyrtille svg { color: rgba(38,0,31,0.55); }
 
+/* Thème « Suivi des effectifs » — pastilles posées sur le bandeau glycine.
+   L'encre #74516E vient de la maquette de Clémence, elle n'est pas dérivée de
+   la teinte de fond. */
+.pill.themeGlycine {
+  color: var(--glycine-encre);
+  background: rgba(116,81,110,0.08);
+  border-color: rgba(116,81,110,0.24);
+}
+.pill.themeGlycine:hover {
+  background: rgba(116,81,110,0.15);
+  border-color: rgba(116,81,110,0.42);
+  color: var(--glycine-encre);
+}
+.pill.themeGlycine svg { color: rgba(116,81,110,0.6); }
+
 .chevron { transition: transform 0.18s; flex-shrink: 0; }
 .chevronOpen { transform: rotate(180deg); }
 

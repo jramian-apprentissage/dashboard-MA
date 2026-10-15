@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../../components/layout/DashboardLayout';
+import heroRh from '../../../assets/hero-rh-effectifs.webp';
 import { DASHBOARD_TABS } from '../../../data/dashboardTabs';
 import Effectifs from './Effectifs';
 import Mouvements from './Mouvements';
@@ -28,6 +29,8 @@ export default function RhEffectifs() {
       subTabs={subTabs}
       activeSubTab={tab}
       onSubTabChange={id => navigate(`/rh-effectifs?tab=${id}`)}
+      heroBgSrc={heroRh}
+      heroBgPosition="center right"
     >
       {tab === 'effectifs'  && <Effectifs />}
       {tab === 'mouvements' && <Mouvements />}

@@ -25,6 +25,14 @@
   --myrtille:   #26001F;
   --sable:      #E3E1D8;
   --ciment:     #A7ADAA;
+
+  /* ─── Glycine — teinte du Dash RH, relevée dans la maquette validée ──
+     Trois valeurs et pas une : le fond des pastilles, leur état actif, et
+     l'encre qui s'y pose. Les trois viennent du fichier de Clémence, elles ne
+     sont pas dérivées les unes des autres. */
+  --glycine:        #C9AAC4;
+  --glycine-active: #C2A3BC;
+  --glycine-encre:  #74516E;
   --soleil:     #FFF993;
   --blanc:      #FFFFFF;
   --brouillard: #FBFBFB;
