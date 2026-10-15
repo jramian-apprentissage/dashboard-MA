@@ -192,6 +192,33 @@
 .heroCiment .compareModeBtn:not(:last-child) { border-right-color: rgba(38,0,31,0.22); }
 .heroCiment .compareModeBtn:hover { color: var(--myrtille); }
 .heroCiment .compareModeBtnActive { background: rgba(38,0,31,0.12); color: var(--myrtille); }
+
+/* Suivi des effectifs — filtres et comparaison à l'encre glycine. Sans ce
+   bloc ils retombent sur le soleil, la teinte par défaut, et deux pastilles
+   jaunes se posent au milieu d'une rangée mauve. L'état actif reprend le
+   #C2A3BC de la maquette. */
+.heroGlycine .heroBtn {
+  color: var(--glycine-encre);
+  border-color: rgba(116,81,110,0.32);
+}
+.heroGlycine .heroBtn:hover {
+  background: rgba(116,81,110,0.10);
+  border-color: rgba(116,81,110,0.58);
+  color: var(--glycine-encre);
+}
+.heroGlycine .heroBtnActive {
+  background: var(--glycine-active);
+  border-color: var(--glycine-encre);
+  color: var(--myrtille);
+}
+.heroGlycine .heroBtnX { color: rgba(116,81,110,0.5); }
+.heroGlycine .heroBtnX:hover { color: var(--glycine-encre); background: rgba(116,81,110,0.1); }
+.heroGlycine .dot { background: var(--glycine-encre); box-shadow: 0 0 5px rgba(116,81,110,0.5); }
+.heroGlycine .compareModeGroup { border-color: rgba(116,81,110,0.32); }
+.heroGlycine .compareModeBtn { color: rgba(116,81,110,0.6); }
+.heroGlycine .compareModeBtn:not(:last-child) { border-right-color: rgba(116,81,110,0.24); }
+.heroGlycine .compareModeBtn:hover { color: var(--glycine-encre); }
+.heroGlycine .compareModeBtnActive { background: var(--glycine-active); color: var(--myrtille); }
 /* Commercial & Relation Client — même principe de couverture moitié-moitié
    (photo nette sur la droite, dégradé plein sur la gauche), mais en gardant
    le myrtille par défaut du dashboard (pas de teinte de substitution) : on
