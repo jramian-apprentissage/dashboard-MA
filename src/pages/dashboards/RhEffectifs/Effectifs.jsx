@@ -89,17 +89,28 @@ export default function Effectifs() {
                     + `${fmtNumber(result.fins)} fin${result.fins > 1 ? 's' : ''} de mission`,
                 }}
               />
+              {/* DEUX CARTES COMPLÉMENTAIRES, et c'est pour cela qu'elles se
+                  posent ensemble : placé + interne = total, par construction.
+                  CEPREMIUM est compté comme CLIENT depuis l'arbitrage du 16/10,
+                  donc ses collaborateurs sont placés et non internes. Les
+                  descriptions sont celles de la maquette du 15/10. */}
               <KPICard
                 label="Effectif placé"
                 value={fmtNumber(effectifPlace)}
-                unit=" agents"
-                trend={{ dir: 'neutral', text: `${part(effectifPlace)} % de l’effectif, hors MA et CEP` }}
+                unit=" collaborateurs"
+                compare={compareResult
+                  ? compareValueText(effectifPlace, compareResult.effectifPlace, comparePeriodKey)
+                  : null}
+                trend={{ dir: 'neutral', text: `En mission chez un client · ${part(effectifPlace)} % de l’effectif` }}
               />
               <KPICard
                 label="Effectif interne"
                 value={fmtNumber(effectifInterne)}
-                unit=" agents"
-                trend={{ dir: 'neutral', text: 'Salariés de MA non placés : core team, devs, commerciaux' }}
+                unit=" collaborateurs"
+                compare={compareResult
+                  ? compareValueText(effectifInterne, compareResult.effectifInterne, comparePeriodKey)
+                  : null}
+                trend={{ dir: 'neutral', text: 'Core team, devs, commerciaux' }}
               />
               {/* La quatrième tuile reste vide, voir l'en-tête du fichier. */}
               <KPICard

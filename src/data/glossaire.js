@@ -185,6 +185,24 @@ export const glossaireData = [
     dashboards: ['rh-effectifs'],
   },
 
+  {
+    terme: 'Effectif placé',
+    definition: "Collaborateurs en mission chez un client au dernier jour de la période. "
+      + "Même périmètre que l'effectif total, moins les lignes rattachées à Mon Ambassadeur elle-même et à ses variantes d'écriture. "
+      + "CEPREMIUM n'en est PAS retiré : c'est un client de l'agence malgré le nom partagé, et ses collaborateurs sont bien en mission chez un client. "
+      + "Ce choix, arrêté le 16/10/2026, écarte de douze personnes le chiffre qui figurait sur la maquette, où CEPREMIUM était rangé dans l'interne.",
+    source: 'Registre RH (#04 RH - LISTE DES COLLABORATEURS MA)',
+    dashboards: ['rh-effectifs'],
+  },
+  {
+    terme: 'Effectif interne',
+    definition: "Salariés de Mon Ambassadeur non placés chez un client : core team, développeurs, commerciaux internes. "
+      + "C'est le complément exact de l'effectif placé, les deux sommant toujours à l'effectif total. "
+      + "Les lignes retenues sont celles dont l'entité est Mon Ambassadeur ou l'une de ses variantes d'écriture.",
+    source: 'Registre RH (#04 RH - LISTE DES COLLABORATEURS MA)',
+    dashboards: ['rh-effectifs'],
+  },
+
   /* ── Activité téléphonique : Sales ────────────────────────────────── */
   {
     terme: 'Appels émis',
