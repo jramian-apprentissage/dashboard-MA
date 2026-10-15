@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "dev:rh": "vite --mode rh --port 5174 --strictPort",
-    "build:rh": "vite build --mode rh"
+    "build:rh": "vite build --mode rh",
+    "verif:rh": "node scripts/verifier-cloisonnement-rh.mjs",
+    "postbuild": "node scripts/verifier-cloisonnement-rh.mjs"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
