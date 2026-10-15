@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:rh": "vite --mode rh --port 5174 --strictPort",
+    "build:rh": "vite build --mode rh"
   },
   "dependencies": {
     "chart.js": "^4.5.1",

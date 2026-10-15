@@ -1,7 +1,32 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "ma-dashboard", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 5173 },
-    { "name": "ma-backend", "runtimeExecutable": "node", "runtimeArgs": ["--env-file=server/.env", "server/src/index.js"], "port": 3001 }
+    {
+      "name": "ma-dashboard",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "ma-backend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "--env-file=server/.env",
+        "server/src/index.js"
+      ],
+      "port": 3001
+    },
+    {
+      "name": "ma-dashboard-rh",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev:rh"
+      ],
+      "port": 5174
+    }
   ]
 }

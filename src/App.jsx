@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { DASH_RH_ACTIF } from './config/dashRh';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, DASHBOARDS } from './contexts/AuthContext';
 import { DASHBOARD_ROUTES } from './data/dashboardTabs';
@@ -27,6 +28,7 @@ const Admin              = lazy(() => import('./pages/Admin'));
 const GlossaireKPI       = lazy(() => import('./pages/GlossaireKPI'));
 const CommercialRC       = lazy(() => import('./pages/dashboards/CommercialRC'));
 const CommercialActivite = lazy(() => import('./pages/dashboards/CommercialActivite'));
+const RhEffectifs = lazy(() => import('./pages/dashboards/RhEffectifs'));
 const Asus               = lazy(() => import('./pages/dashboards/Asus'));
 
 function RequireAuth({ children }) {
@@ -133,6 +135,13 @@ export default function App() {
             <Route path="/commercial-rc" element={<RequireAuth><RequireDashboard id="commercial-rc"><AppShell><CommercialRC /></AppShell></RequireDashboard></RequireAuth>} />
             <Route path="/commercial-activite" element={<RequireAuth><RequireDashboard id="commercial-activite"><AppShell><CommercialActivite /></AppShell></RequireDashboard></RequireAuth>} />
             <Route path="/asus" element={<RequireAuth><RequireDashboard id="asus"><AppShell><Asus /></AppShell></RequireDashboard></RequireAuth>} />
+            {/* Le Dash RH n'est monte que dans les constructions qui portent le
+                drapeau : absent du paquet de production. Pour le reste il est
+                protege exactement comme les autres, RequireAuth puis
+                RequireDashboard, donc visible seulement de qui y a droit. */}
+            {DASH_RH_ACTIF && (
+              <Route path="/rh-effectifs" element={<RequireAuth><RequireDashboard id="rh-effectifs"><AppShell><RhEffectifs /></AppShell></RequireDashboard></RequireAuth>} />
+            )}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AuthGate>
