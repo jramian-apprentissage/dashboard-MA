@@ -4,6 +4,8 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
 import EvolutionEffectifs from './EvolutionEffectifs';
+import MotifBar from '../../../components/ui/MotifBar';
+import { libelleFamille } from '../../../data/familles';
 import { useRhEffectifs } from '../../../hooks/useRhData';
 import { compareValueText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -93,6 +95,15 @@ export default function Effectifs() {
            pas effectifTotal. Voir la note sur la carte : les deux sont égaux
            tant que la route rend une partition, et l'écart doit se voir. */
         const totalContrats = contrats.reduce((s, c) => s + c.effectif, 0);
+        /* Dénominateur des barres de département : la somme des barres
+           elles-mêmes, qui vaut l’effectif PLACÉ et non l’effectif total.
+           Prendre effectifTotal ici donnerait des parts qui ne font pas
+           100 %, sans que rien ne le signale. */
+        const totalFamilles = familles.reduce((s, f) => s + f.effectif, 0);
+        /* Même logique pour les clients : le dénominateur est la somme des
+           lignes du tableau, pas effectifTotal. Les deux valent 74, et c’est
+           voulu depuis le 16/10 — toute la section compte les placés. */
+        const totalClients = entites.reduce((s, e) => s + e.effectif, 0);
 
         /* L'ANCIENNETÉ ARRIVE EN CHAÎNE, PAS EN NOMBRE. `round(..., 1)` rend un
            NUMERIC, et node-postgres rend tout NUMERIC en chaîne pour ne pas
@@ -194,6 +205,7 @@ export default function Effectifs() {
                 jour ils divergent, c'est que la route a cessé de rendre une
                 partition, et il vaut mieux que le cercle le montre plutôt
                 qu'un chiffre arrondi le cache. */}
+            <div className={styles.deuxCol}>
             <Card title="Répartition par type de contrat">
               <div className={styles.donutEtTable}>
                 <DonutChart
@@ -201,7 +213,7 @@ export default function Effectifs() {
                   data={contrats.map(c => c.effectif)}
                   labels={contrats.map(c => c.type_contrat)}
                   colors={contrats.map((_, i) => COULEURS_CONTRAT[i % COULEURS_CONTRAT.length])}
-                  height={212}
+                  height={196}
                   centerValue={totalContrats}
                   centerLabel="collaborateurs"
                   tooltip={(label, value, pct) =>
@@ -236,48 +248,81 @@ export default function Effectifs() {
               </div>
             </Card>
 
-            <div className={styles.deuxCol}>
-              <Card title="Effectif par type de mission">
+            {/* RÉPARTITION PAR CLIENT, posée à droite des contrats comme sur
+                la maquette du 15/10.
+
+                MÊME PÉRIMÈTRE QUE TOUTE LA SECTION, les 74 placés. La carte
+                n'écartait jusqu'ici que l'entité « MA » et rangeait donc
+                « MA (Nael) », un développeur interne, parmi les clients. Trois
+                cartes du même bloc comptaient deux populations différentes, ce
+                qui ne se voit pas à l'œil et ne s'explique pas en séance.
+                Corrigé côté route le 16/10, l'écart valait une personne.
+
+                QUATRE LIGNES ET UN RESTE, comme la maquette. Le portefeuille
+                compte trente-six clients : les lister tous ferait une carte
+                trois fois plus haute que sa voisine, pour un détail que
+                personne ne lit en séance. Le reste est chiffré dessous, il
+                n'est pas caché. */}
+              <Card title="Répartition par client">
                 <table className={styles.tbl}>
-                  <thead><tr><th>Type de mission</th><th>Agents</th><th>Part</th></tr></thead>
+                  <thead>
+                    <tr><th>Client</th><th>Effectif</th><th>Ancienneté moy.</th><th>Part</th></tr>
+                  </thead>
                   <tbody>
-                    {familles.map(f => (
-                      <tr key={f.famille}>
-                        <td>{f.famille}</td>
-                        <td className={styles.num}>{fmtNumber(f.effectif)}</td>
-                        <td className={styles.num}>{part(f.effectif)} %</td>
+                    {entites.slice(0, 4).map(e => (
+                      <tr key={e.entite}>
+                        <td>{e.entite}</td>
+                        <td className={styles.num}>{fmtNumber(e.effectif)}</td>
+                        <td className={styles.num}>{mois(e.anciennete_mois)}</td>
+                        <td className={styles.num}>{fmtPourcentage(partPct(e.effectif, totalClients))}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </Card>
-
-              {/* Remontée dans la rangée à deux colonnes le 16/10 : la carte
-                  des contrats prend désormais toute la largeur pour loger son
-                  camembert, et laisser « type de mission » seul sur une demi
-                  rangée faisait un trou. Les deux tableaux restants ont la
-                  même forme, ils se tiennent côte à côte. */}
-              <Card title="Répartition par entité">
-              <table className={styles.tbl}>
-                <thead><tr><th>Entité</th><th>Agents</th><th>Ancienneté moy.</th></tr></thead>
-                <tbody>
-                  {entites.slice(0, 10).map(e => (
-                    <tr key={e.entite}>
-                      <td>{e.entite}</td>
-                      <td className={styles.num}>{fmtNumber(e.effectif)}</td>
-                      <td className={styles.num}>{mois(e.anciennete_mois)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {entites.length > 10 && (
-                <div className={styles.mention}>
-                  {entites.length - 10} autres entités, {fmtNumber(entites.slice(10).reduce((s, e) => s + e.effectif, 0))} agents.
-                  Le tableau écarte MA, l’effectif interne est dans la tuile du dessus.
-                </div>
-              )}
+                {entites.length > 4 && (
+                  <div className={styles.mention}>
+                    {fmtNumber(entites.length - 4)} autres clients identifiés,{' '}
+                    {fmtNumber(entites.slice(4).reduce((s, e) => s + e.effectif, 0))} collaborateurs.
+                  </div>
+                )}
               </Card>
             </div>
+
+            {/* EFFECTIF PAR DÉPARTEMENT, posé le 16/10.
+                Il vivait dans une section « La composition de l'agence » sur la
+                maquette ; Jimmy a demandé qu'il rejoigne celle-ci, et ça se
+                tient : c'est une répartition des collaborateurs de plus, au
+                même titre que les contrats et les clients.
+
+                PLEINE LARGEUR, parce que la rangée du dessus est prise par les
+                deux cartes de la maquette et qu'une troisième carte à mi-chemin
+                laisserait un trou. C'est aussi la forme qu'elle avait sur la
+                maquette, dans sa section d'origine.
+
+                LE PÉRIMÈTRE EST PLUS ÉTROIT QUE CELUI DE LA PAGE, et c'est le
+                sous-titre de la maquette qui l'impose. La somme des cinq barres
+                fait l'effectif PLACÉ, 74 au 30/09, et non l'effectif total, 97.
+                On l'écrit sous la carte plutôt que de laisser quelqu'un
+                additionner les barres et s'étonner. */}
+            <Card title="Effectif par département">
+              <div className={styles.sousTitre}>
+                Uniquement l’effectif placé, en mission chez un client
+              </div>
+              {familles.map(f => (
+                <MotifBar
+                  key={f.famille}
+                  label={libelleFamille(f.famille)}
+                  pct={partPct(f.effectif, totalFamilles)}
+                  count={f.effectif}
+                  fillColor="rgba(38,0,31,0.95)"
+                />
+              ))}
+              <div className={styles.mention}>
+                {fmtNumber(totalFamilles)} collaborateurs placés, soit l’effectif de la
+                deuxième tuile. Les {fmtNumber(effectifInterne)} internes ne sont pas
+                dans ces barres.
+              </div>
+            </Card>
           </div>
         );
       }}

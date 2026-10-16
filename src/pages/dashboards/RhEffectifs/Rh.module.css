@@ -20,8 +20,12 @@
    grand écran et le cercle grossit jusqu'à écraser le tableau. */
 .donutEtTable {
   display: grid;
-  grid-template-columns: 236px 1fr;
-  gap: 28px;
+  /* 196px et non 236 : depuis le 16/10 cette carte partage sa rangée avec
+     « Répartition par client », elle ne fait donc plus toute la largeur. À
+     236 px de cercle et 28 px de gouttière, le tableau tombait sous 340 px et
+     ses quatre en-têtes se cassaient tous en deux lignes. */
+  grid-template-columns: 196px 1fr;
+  gap: 18px;
   align-items: center;
 }
 
@@ -46,6 +50,16 @@
 .tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
 .tbl tr:last-child td { border-bottom: none; }
 .num { text-align: right; font-weight: 700; white-space: nowrap; }
+
+/* Le sous-titre d'une carte : il porte un PÉRIMÈTRE, pas une décoration.
+   « Uniquement l'effectif placé » change ce que les chiffres du dessous
+   veulent dire, il doit donc se lire avant eux. */
+.sousTitre {
+  font-size: 10.5px;
+  color: var(--text3);
+  margin: -4px 0 14px;
+  line-height: 1.45;
+}
 
 .mention {
   font-size: 10.5px; color: var(--text2); margin-top: 10px;
