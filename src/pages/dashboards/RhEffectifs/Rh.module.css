@@ -5,6 +5,29 @@
 .kpiGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
 .deuxCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 
+/* Carte « camembert à gauche, tableau à droite », reprise de la maquette du
+   15/10. La colonne du donut est fixe : laissée en fraction, elle s'étire sur
+   grand écran et le cercle grossit jusqu'à écraser le tableau. */
+.donutEtTable {
+  display: grid;
+  grid-template-columns: 236px 1fr;
+  gap: 28px;
+  align-items: center;
+}
+
+/* La pastille de couleur devant le libellé. Elle DOIT porter le même littéral
+   que la tranche correspondante du donut : voir la note de palette dans
+   Effectifs.jsx, le canvas ne sait pas lire un jeton CSS. */
+.puce {
+  display: inline-block;
+  width: 9px; height: 9px;
+  border-radius: 2px;
+  margin-right: 8px;
+  vertical-align: baseline;
+  flex: none;
+}
+.libelle { display: inline-flex; align-items: center; }
+
 .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
 .tbl th {
   text-align: left; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase;
@@ -27,4 +50,5 @@
 
 @media (max-width: 1100px) { .kpiGrid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 900px)  { .deuxCol { grid-template-columns: 1fr; } }
+@media (max-width: 760px)  { .donutEtTable { grid-template-columns: 1fr; gap: 16px; } }
 @media (max-width: 480px)  { .kpiGrid { grid-template-columns: 1fr 1fr; gap: 10px; } }
