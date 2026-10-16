@@ -397,6 +397,7 @@ export default function Effectifs() {
                   label={libelleFamille(f.famille)}
                   pct={partPct(f.effectif, totalFamilles)}
                   count={f.effectif}
+                  extra={mois(f.anciennete_mois)}
                   fillColor="rgba(38,0,31,0.95)"
                 />
               ))}

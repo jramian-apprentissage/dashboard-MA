@@ -29,3 +29,13 @@
   font-variant-numeric: tabular-nums;
 }
 .val span { color: var(--text3); font-weight: 500; }
+
+/* Colonne élargie quand une troisième valeur est passée (`extra`). 78 px
+   suffisent pour « 47% → 35 » ; avec l'ancienneté en plus, les trois se
+   chevauchaient. Seuls les appels qui passent `extra` sont concernés. */
+.valLarge { width: 152px; }
+/* Séparée par un point médian plutôt que par une flèche : la flèche dit « dont
+   le nombre est », alors que l'ancienneté est une autre mesure, pas un détail
+   du compte. */
+.extra::before { content: '·'; margin-right: 5px; opacity: 0.55; }
+.extra { white-space: nowrap; }

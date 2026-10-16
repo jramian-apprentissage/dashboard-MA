@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import {fmtNumber, fmtPourcentage } from '../../utils/formatNumber';
 import styles from './MotifBar.module.css';
 
-export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)', title }) {
+/* `extra` : une troisième valeur à droite, après le pourcentage et le compte.
+   Ajoutée le 16/10 pour l'ancienneté moyenne par département du Dash RH. La
+   colonne de droite s'élargit quand elle est présente — sans cela, les trois
+   valeurs se chevauchent dans les 78 px prévus pour deux. Les appels qui ne la
+   passent pas gardent exactement la mise en page d'avant. */
+export default function MotifBar({ label, pct, count, extra, fillColor = 'var(--neg)', title }) {
   const [w, setW] = useState(0);
   useEffect(() => {
     const raf = requestAnimationFrame(() => setW(pct));
@@ -30,11 +35,12 @@ export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)', 
           }}
         />
       </div>
-      <div className={styles.val}>
+      <div className={`${styles.val} ${extra !== undefined ? styles.valLarge : ''}`}>
         {/* Virgule décimale française : une part sous 1 % s'écrit « 0,2 % ».
             Les valeurs entières passent inchangées. */}
         {typeof pct === 'number' ? fmtPourcentage(pct) : `${pct}%`}
         {count !== undefined && <span> → {fmtNumber(count)}</span>}
+        {extra !== undefined && <span className={styles.extra}>{extra}</span>}
       </div>
     </div>
   );
