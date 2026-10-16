@@ -80,12 +80,17 @@
   line-height: 1.5;
   transition: color 0.15s;
 }
-/* LE BLOC DES BARRES EST BRIDÉ EN LARGEUR, et c'est volontaire. La carte prend
-   toute la page ; sans ce plafond, la piste de la barre s'étire sur plus de
-   mille pixels et rejette le pourcentage et le nombre à l'autre bout de
-   l'écran, loin de la barre qu'ils chiffrent. L'œil doit alors traverser tout
-   le vide pour relier les deux (relevé par Jimmy le 16/10). */
-.barres { max-width: 880px; }
+/* LE BLOC DES BARRES PREND TOUTE LA LARGEUR DE LA CARTE, et c'est un arbitrage,
+   pas un oubli.
+   Il a d'abord été bridé à 880 px pour rapprocher le pourcentage et le nombre
+   de la barre qu'ils chiffrent. Mais cette carte est seule sur sa rangée et en
+   fait près de 1400 : le plafond déplaçait simplement le vide, de la piste vers
+   la droite des valeurs, en plus visible. Arbitrage de Jimmy du 16/10 : garder
+   la rangée telle que la maquette la dessine et étirer les barres. La piste
+   reste donc longue derrière une barre courte, c'est le prix assumé.
+   Si un jour une seconde carte vient partager cette rangée, le plafond
+   redeviendra inutile de lui-même. */
+.barres { width: 100%; }
 
 /* L'en-tête de la colonne d'ancienneté, dans la police du sous-titre de la
    carte, comme demandé.
