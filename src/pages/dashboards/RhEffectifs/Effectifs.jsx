@@ -44,6 +44,15 @@ const COULEURS_CONTRAT = [
  * l'effectif du vivier de cette rangée et laissé la place libre plutôt que de
  * la combler. On reproduit, on ne remplit pas de notre propre chef.
  *
+ * ET LE VIVIER NE REVIENDRA PAS SUR CETTE PAGE. Arbitrage de Jimmy du 16/10,
+ * qui tient à la définition même des deux mots : le vivier, ce sont des
+ * CANDIDATS, des gens que l'agence n'emploie pas. L'effectif, ce sont des
+ * collaborateurs en poste. Les mêler ferait gonfler l'effectif de personnes
+ * qui ne travaillent pas ici. Le vivier appartient à la partie RECRUTEMENT, et
+ * c'est là qu'il sera traité.
+ * La table rh_vivier reste donc vide et sans ingestion, non par oubli mais
+ * parce que ce n'est pas la source de cet écran.
+ *
  * LES DEUX PÉRIMÈTRES DE LA PAGE NE SONT PAS LES MÊMES, ET C'EST DANS LA
  * MAQUETTE. La tuile « effectif placé » écarte MA, MA (Nael) et CEP, donc 63
  * personnes sur 98. Le tableau par entité n'écarte que MA, donc 78. Quinze
@@ -184,12 +193,18 @@ export default function Effectifs() {
                   calcule ici : la tuile est vide par décision de Clémence, qui
                   a sorti le vivier de cette rangée sans la combler. On le dit
                   tout de suite plutôt que de promettre un chiffre qui ne
-                  viendra pas. */}
+                  viendra pas.
+
+                  LA LIGNE DE DÉTAIL ANNONÇAIT « le vivier passe plus bas »,
+                  ce qui était faux deux fois : rien ne figurait plus bas, et
+                  le vivier n'a de toute façon pas sa place dans un effectif,
+                  voir l'en-tête du fichier. Elle ne renvoie donc plus nulle
+                  part : une tuile en attente le dit, elle ne promet rien. */}
               <KPICard
                 label="Indicateur à définir"
                 value="—"
                 compare={{ dir: 'neutral', text: 'Comparaison indisponible' }}
-                trend={{ dir: 'neutral', text: 'Le vivier passe plus bas, détaillé par type de mission' }}
+                trend={{ dir: 'neutral', text: 'Place réservée sur la maquette, indicateur non encore arrêté' }}
               />
             </div>
 
