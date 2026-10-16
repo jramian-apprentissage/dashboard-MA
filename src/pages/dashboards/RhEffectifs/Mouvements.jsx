@@ -2,6 +2,7 @@ import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
+import { EvolutionMouvements } from './EvolutionEffectifs';
 import { useRhEffectifs } from '../../../hooks/useRhData';
 import { compareValueText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -67,7 +68,6 @@ export default function Mouvements() {
         }
 
         const { demarrages, fins } = result;
-        const solde = demarrages - fins;
 
         return (
           <div className={styles.page}>
@@ -98,34 +98,20 @@ export default function Mouvements() {
                   : null}
                 trend={{ dir: 'neutral', text: 'Missions arrêtées dans la période' }}
               />
-              {/* LE SOLDE N'EST PAS UN TROISIÈME INDICATEUR INDÉPENDANT, c'est
-                  la différence des deux précédents. Il est affiché parce qu'un
-                  lecteur la fait de tête de toute façon, et qu'il vaut mieux
-                  qu'elle soit juste. Sa comparaison est volontairement absente :
-                  comparer un solde à un autre solde se lit mal — passer de
-                  -2 à +5 n'est pas « +350 % ». */}
-              <KPICard
-                label="Solde net"
-                value={`${solde > 0 ? '+' : ''}${fmtNumber(solde)}`}
-                unit={Math.abs(solde) > 1 ? ' missions' : ' mission'}
-                compare={{ dir: 'neutral', text: 'Entrées moins sorties' }}
-                trend={{
-                  dir: solde > 0 ? 'up' : solde < 0 ? 'down' : 'neutral',
-                  text: `${fmtNumber(demarrages)} entrée${demarrages > 1 ? 's' : ''} `
-                    + `pour ${fmtNumber(fins)} sortie${fins > 1 ? 's' : ''}`,
-                }}
-              />
+              {/* PAS DE TROISIÈME TUILE « SOLDE NET » ICI. Elle y a figuré
+                  quelques heures le 16/10, puis a été retirée : ni Jimmy ni la
+                  maquette ne l'avaient demandée, je l'avais ajoutée de ma
+                  propre initiative et justifiée après coup. Le solde se lit
+                  désormais au survol d'un mois du graphique ci-dessous, là où
+                  ses deux termes sont déjà sous les yeux. */}
             </div>
 
-            <Card>
-              <div className={styles.etat}>
-                <div className={styles.etatTitre}>Vue en cours de composition</div>
-                <div className={styles.etatTexte}>
-                  Les entrées et les sorties sont posées. La répartition des mouvements
-                  et les motifs de départ viendront ensuite, carte par carte.
-                </div>
-              </div>
-            </Card>
+            {/* LES BARRES ARRIVENT DE LA PAGE PRÉCÉDENTE, où elles
+                cohabitaient avec la courbe d'effectif. Elles parlent de
+                mouvements, elles appartiennent donc à la page des mouvements.
+                Les deux graphiques lisent la même route, /api/rh/evolution,
+                donc les chiffres ne peuvent pas diverger. */}
+            <EvolutionMouvements mois={6} />
           </div>
         );
       }}

@@ -1,4 +1,4 @@
-import { Bar } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import Card from '../../../components/ui/Card';
 import { useRhEvolution } from '../../../hooks/useRhData';
@@ -8,6 +8,21 @@ import styles from './Rh.module.css';
 /* Chart.js s'enregistre par fichier dans ce projet — voir Synthese.jsx,
    ActiviteSales.jsx — et seulement pour ce qu'on utilise vraiment. */
 Chart.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip);
+
+/* DEUX GRAPHIQUES, DEUX PAGES, et c'est une séparation demandée par Jimmy le
+   16/10 après les avoir vus réunis.
+ *
+ * Ils tenaient d'abord sur un seul cadre, courbe d'effectif et barres de
+ * mouvements superposées. C'était défendable — l'écart entre deux points
+ * s'explique par les barres du second — mais cela forçait deux échelles sur un
+ * même dessin, l'effectif tournant autour de 90 et les mouvements autour de
+ * 10, et noyait le graphique des mouvements dans une page qui parle d'effectif.
+ *
+ * Désormais : la COURBE reste sur « Effectifs de l'agence », les BARRES vivent
+ * sur « Évolution et mouvements », chacune sur son axe et dans sa page. Les
+ * deux lisent la même route, /api/rh/evolution, donc les chiffres ne peuvent
+ * pas diverger.
+ */
 
 /* Styles d'axes repris à l'identique des graphiques du dashboard commercial,
    où ils sont redéclarés par fichier. On suit la convention du dépôt plutôt
@@ -46,26 +61,15 @@ function libelleMoisLong(ym) {
     .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
-/* LA COURBE ET LES BARRES NE SE LISENT PAS SUR LE MÊME AXE, et il ne faut pas
-   les y forcer. L'effectif tourne autour de 90, les mouvements autour de 10 :
-   sur un axe commun, les barres seraient écrasées au ras de l'abscisse et ne
-   diraient plus rien. D'où l'axe de droite, borné à zéro.
-
-   CE QUE LE GRAPHIQUE MONTRE VRAIMENT : le point d'un mois est l'effectif à sa
-   FIN, les barres sont les mouvements DU mois. L'écart entre deux points
-   s'explique donc par les deux barres du second — c'est précisément ce qu'on
-   veut pouvoir lire d'un coup d'œil, et ce qu'un solde seul cache. */
-export default function EvolutionEffectifs({ mois = 6 }) {
+/* L'enveloppe commune aux deux graphiques : même chargement, même gestion des
+   trois états, même source. Seul le dessin change. */
+function CarteEvolution({ mois, titre, rendu }) {
   const { points, loading, error } = useRhEvolution(mois);
-
-  const titre = `Effectif total et mouvements sur les ${mois} derniers mois`;
 
   if (error) {
     return (
       <Card title={titre}>
-        <div className={styles.etat}>
-          <div className={styles.etatTexte}>{error}</div>
-        </div>
+        <div className={styles.etat}><div className={styles.etatTexte}>{error}</div></div>
       </Card>
     );
   }
@@ -76,75 +80,50 @@ export default function EvolutionEffectifs({ mois = 6 }) {
       </Card>
     );
   }
+  return rendu(points, titre);
+}
 
-  return <GrapheEvolution points={points} titre={titre} />;
+/* ─────────── PAGE 1 : la courbe d'effectif, seule ─────────── */
+
+export default function EvolutionEffectifs({ mois = 6 }) {
+  return (
+    <CarteEvolution
+      mois={mois}
+      titre={`Effectif total sur les ${mois} derniers mois`}
+      rendu={(points, titre) => <GrapheEffectif points={points} titre={titre} />}
+    />
+  );
 }
 
 /* LA PARTIE QUI DESSINE, SÉPARÉE DE CELLE QUI CHARGE.
  *
  * Ce n'est pas une coquetterie : la page RH est derrière une session, et le
- * graphique ne peut donc pas être regardé sans se connecter. Avec ce découpage,
- * on monte le VRAI composant avec des points donnés à la main et on vérifie le
- * rendu réel — pas une copie du code, qui ne prouverait rien sur l'original. */
-export function GrapheEvolution({ points, titre }) {
-  const labels = points.map(p => libelleMois(p.mois));
-
-  /* PLAFOND DE L'AXE DES MOUVEMENTS, et ce n'est pas un réglage cosmétique.
-     Laissé en automatique, Chart.js cale cet axe sur le plus grand flux : une
-     barre de 15 occupe alors TOUTE la hauteur du cadre et passe par-dessus la
-     courbe qu'elle est censée expliquer. On lui donne deux fois et demie de
-     marge, les barres tiennent dans le tiers bas, la courbe reste lisible
-     au-dessus. Le minimum de 10 évite qu'un mois sans mouvement n'écrase
-     l'échelle à zéro. */
-  const maxFlux = Math.max(10, ...points.map(p => Math.max(p.demarrages, p.fins)));
-  const plafondFlux = Math.ceil((maxFlux * 2.5) / 5) * 5;
-
+ * graphique ne peut donc pas être regardé sans se connecter. Avec ce
+ * découpage, on monte le VRAI composant avec des points donnés à la main et on
+ * vérifie le rendu réel — pas une copie du code, qui ne prouverait rien sur
+ * l'original. */
+export function GrapheEffectif({ points, titre }) {
   return (
     <Card title={titre}>
       <div className={styles.chartWrap} style={{ height: 232 }}>
-        <Bar
+        <Line
           data={{
-            labels,
-            datasets: [
-              {
-                type: 'bar',
-                label: 'Entrées',
-                data: points.map(p => p.demarrages),
-                backgroundColor: C_ENTREES,
-                borderRadius: 4,
-                borderSkipped: false,
-                yAxisID: 'y2',
-                order: 2,
-              },
-              {
-                type: 'bar',
-                label: 'Sorties',
-                data: points.map(p => p.fins),
-                backgroundColor: C_SORTIES,
-                borderRadius: 4,
-                borderSkipped: false,
-                yAxisID: 'y2',
-                order: 2,
-              },
-              {
-                type: 'line',
-                label: 'Effectif total',
-                data: points.map(p => p.effectif),
-                borderColor: C_EFFECTIF,
-                pointBackgroundColor: C_EFFECTIF,
-                pointRadius: 3.5,
-                borderWidth: 2,
-                tension: 0.35,
-                fill: false,
-                yAxisID: 'y',
-                order: 0,
-              },
-            ],
+            labels: points.map(p => libelleMois(p.mois)),
+            datasets: [{
+              label: 'Effectif total',
+              data: points.map(p => p.effectif),
+              borderColor: C_EFFECTIF,
+              pointBackgroundColor: C_EFFECTIF,
+              pointRadius: 3.5,
+              borderWidth: 2,
+              tension: 0.35,
+              fill: false,
+            }],
           }}
           options={{
             responsive: true,
             maintainAspectRatio: false,
-            animation: barAnim,
+            animation: { duration: 900, easing: 'easeOutQuart' },
             interaction: { mode: 'index', intersect: false },
             plugins: {
               legend: { display: false },
@@ -157,11 +136,7 @@ export function GrapheEvolution({ points, titre }) {
                   title: items => libelleMoisLong(points[items[0].dataIndex].mois),
                   label: ctx => {
                     const p = points[ctx.dataIndex];
-                    if (ctx.dataset.label === 'Effectif total') {
-                      return `Effectif au ${p.fin.split('-').reverse().join('/')} : ${fmtNumber(ctx.parsed.y)}`;
-                    }
-                    const n = ctx.parsed.y;
-                    return `${ctx.dataset.label} : ${fmtNumber(n)} collaborateur${n > 1 ? 's' : ''}`;
+                    return `Effectif au ${p.fin.split('-').reverse().join('/')} : ${fmtNumber(ctx.parsed.y)}`;
                   },
                 },
               },
@@ -169,30 +144,98 @@ export function GrapheEvolution({ points, titre }) {
             scales: {
               x: { ticks: { ...tickStyle, maxRotation: 0 }, grid: gridStyle, border: borderCol },
               y: {
-                position: 'left',
                 beginAtZero: true,
                 ticks: tickStyle,
                 grid: gridStyle,
                 border: borderCol,
                 title: { display: true, text: 'Effectif', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
               },
-              y2: {
-                position: 'right',
+            },
+          }}
+        />
+      </div>
+    </Card>
+  );
+}
+
+/* ─────────── PAGE 2 : les barres de mouvements ─────────── */
+
+export function EvolutionMouvements({ mois = 6 }) {
+  return (
+    <CarteEvolution
+      mois={mois}
+      titre="Évolution mensuelle des entrées et sorties"
+      rendu={(points, titre) => <GrapheMouvements points={points} titre={titre} />}
+    />
+  );
+}
+
+export function GrapheMouvements({ points, titre }) {
+  return (
+    <Card title={titre}>
+      <div className={styles.chartWrap} style={{ height: 232 }}>
+        <Bar
+          data={{
+            labels: points.map(p => libelleMois(p.mois)),
+            datasets: [
+              {
+                label: 'Entrées',
+                data: points.map(p => p.demarrages),
+                backgroundColor: C_ENTREES,
+                borderRadius: 4,
+                borderSkipped: false,
+              },
+              {
+                label: 'Sorties',
+                data: points.map(p => p.fins),
+                backgroundColor: C_SORTIES,
+                borderRadius: 4,
+                borderSkipped: false,
+              },
+            ],
+          }}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: barAnim,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: items => libelleMoisLong(points[items[0].dataIndex].mois),
+                  label: ctx => {
+                    const n = ctx.parsed.y;
+                    return `${ctx.dataset.label} : ${fmtNumber(n)} mission${n > 1 ? 's' : ''}`;
+                  },
+                  /* LE SOLDE EN PIED D'INFOBULLE, et pas en carte séparée.
+                     C'est la différence des deux barres survolées : la donner
+                     là où les deux chiffres sont déjà sous les yeux évite d'en
+                     faire un indicateur de plus, que personne n'a demandé. */
+                  footer: items => {
+                    const p = points[items[0].dataIndex];
+                    const s = p.demarrages - p.fins;
+                    return `Solde : ${s > 0 ? '+' : ''}${fmtNumber(s)}`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: { ticks: { ...tickStyle, maxRotation: 0 }, grid: gridStyle, border: borderCol },
+              y: {
                 beginAtZero: true,
-                max: plafondFlux,
                 /* Pas de demi-personne sur un axe de mouvements. */
                 ticks: { ...tickStyle, precision: 0 },
-                grid: { display: false },
+                grid: gridStyle,
                 border: borderCol,
-                title: { display: true, text: 'Mouvements', color: 'rgba(167,173,170,0.7)', font: { size: 9 } },
+                title: { display: true, text: 'Missions', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
               },
             },
           }}
         />
       </div>
       <div className={styles.legende}>
-        <span className={styles.legDot} style={{ background: C_EFFECTIF }} />Effectif total
-        <span className={styles.legDot} style={{ background: C_ENTREES, marginLeft: 14 }} />Entrées
+        <span className={styles.legDot} style={{ background: C_ENTREES }} />Entrées
         <span className={styles.legDot} style={{ background: C_SORTIES, marginLeft: 14 }} />Sorties
       </div>
     </Card>

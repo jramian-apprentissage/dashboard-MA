@@ -212,8 +212,16 @@ export default function Effectifs() {
                 une section « Évolution des effectifs » à elle. Demande de
                 Jimmy du 16/10, et elle se tient : la courbe est la lecture
                 dans le temps des mêmes chiffres que les tuiles, pas un autre
-                sujet. Les deux barres mensuelles sont les mêmes flux que ceux
-                annoncés sous la première tuile, étalés sur six mois.
+                sujet.
+
+                LES BARRES D'ENTRÉES ET DE SORTIES ONT ÉTÉ RETIRÉES D'ICI le
+                même jour. Elles y cohabitaient avec la courbe, ce qui forçait
+                deux échelles sur un seul dessin — l'effectif tourne autour de
+                90, les mouvements autour de 10 — et noyait un graphique de
+                mouvements dans une page qui parle d'effectif. Elles vivent
+                désormais sur « Évolution et mouvements », sous le nom
+                « Évolution mensuelle des entrées et sorties ». Les deux lisent
+                la même route, /api/rh/evolution.
 
                 Son chargement est indépendant de celui des tuiles, voir
                 useRhEvolution : la carte se remplit après elles. */}
