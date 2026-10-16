@@ -179,7 +179,7 @@ export function GrapheMouvements({ points, titre }) {
      inférieure pour que la graduation tombe juste.
 
      UN SEUL AXE POUR LES TROIS SÉRIES, et c'est délibéré : entrées, sorties et
-     solde se comptent tous en missions. Leur donner deux échelles rendrait
+     solde se comptent tous en collaborateurs. Leur donner deux échelles rendrait
      comparables des hauteurs qui ne le sont pas, ce qui est précisément le
      défaut qu'on vient de corriger en séparant cette carte de la courbe
      d'effectif. */
@@ -247,7 +247,7 @@ export function GrapheMouvements({ points, titre }) {
                     if (ctx.dataset.label === 'Solde net') {
                       return `Solde net : ${n > 0 ? '+' : ''}${fmtNumber(n)}`;
                     }
-                    return `${ctx.dataset.label} : ${fmtNumber(n)} mission${n > 1 ? 's' : ''}`;
+                    return `${ctx.dataset.label} : ${fmtNumber(n)} collaborateur${n > 1 ? 's' : ''}`;
                   },
                 },
               },
@@ -268,7 +268,7 @@ export function GrapheMouvements({ points, titre }) {
                   lineWidth: ctx => (ctx.tick?.value === 0 ? 1.5 : 1),
                 },
                 border: borderCol,
-                title: { display: true, text: 'Missions', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                title: { display: true, text: 'Collaborateurs', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
               },
             },
           }}

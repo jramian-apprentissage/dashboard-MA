@@ -76,11 +76,11 @@ export default function Mouvements() {
               <KPICard
                 label="Entrées"
                 value={fmtNumber(demarrages)}
-                unit={demarrages > 1 ? ' missions' : ' mission'}
+                unit={demarrages > 1 ? ' collaborateurs' : ' collaborateur'}
                 compare={compareResult
                   ? compareValueText(demarrages, compareResult.demarrages, comparePeriodKey)
                   : null}
-                trend={{ dir: 'neutral', text: 'Missions démarrées dans la période' }}
+                trend={{ dir: 'neutral', text: 'Collaborateurs arrivés dans la période' }}
               />
               {/* LA COMPARAISON DES SORTIES EST INVERSÉE, quatrième argument à
                   true : moins de départs est une bonne nouvelle, la couleur
@@ -92,11 +92,11 @@ export default function Mouvements() {
               <KPICard
                 label="Sorties"
                 value={fmtNumber(fins)}
-                unit={fins > 1 ? ' missions' : ' mission'}
+                unit={fins > 1 ? ' collaborateurs' : ' collaborateur'}
                 compare={compareResult
                   ? compareValueText(fins, compareResult.fins, comparePeriodKey, true)
                   : null}
-                trend={{ dir: 'neutral', text: 'Missions arrêtées dans la période' }}
+                trend={{ dir: 'neutral', text: 'Collaborateurs partis dans la période' }}
               />
               {/* PAS DE TROISIÈME TUILE « SOLDE NET » ICI. Elle y a figuré
                   quelques heures le 16/10, puis a été retirée : ni Jimmy ni la
