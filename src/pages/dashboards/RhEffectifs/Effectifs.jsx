@@ -3,6 +3,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
+import EvolutionEffectifs from './EvolutionEffectifs';
 import { useRhEffectifs } from '../../../hooks/useRhData';
 import { compareValueText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -165,6 +166,17 @@ export default function Effectifs() {
                 trend={{ dir: 'neutral', text: 'Le vivier passe plus bas, détaillé par type de mission' }}
               />
             </div>
+
+            {/* L'ÉVOLUTION EST POSÉE ICI, SOUS LES QUATRE TUILES, et pas dans
+                une section « Évolution des effectifs » à elle. Demande de
+                Jimmy du 16/10, et elle se tient : la courbe est la lecture
+                dans le temps des mêmes chiffres que les tuiles, pas un autre
+                sujet. Les deux barres mensuelles sont les mêmes flux que ceux
+                annoncés sous la première tuile, étalés sur six mois.
+
+                Son chargement est indépendant de celui des tuiles, voir
+                useRhEvolution : la carte se remplit après elles. */}
+            <EvolutionEffectifs mois={6} />
 
             <SectionLabel>Répartition des collaborateurs de l’agence</SectionLabel>
 

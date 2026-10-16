@@ -5,6 +5,16 @@
 .kpiGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
 .deuxCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 
+/* Graphique d'évolution, posé sous les quatre tuiles. Mêmes classes que dans
+   Activite.module.css, redéclarées ici : un module par dashboard est la
+   convention du dépôt. */
+.chartWrap { position: relative; }
+.legende {
+  display: flex; align-items: center; flex-wrap: wrap;
+  font-size: 10.5px; color: var(--text2); gap: 6px; margin-top: 10px;
+}
+.legDot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; display: inline-block; }
+
 /* Carte « camembert à gauche, tableau à droite », reprise de la maquette du
    15/10. La colonne du donut est fixe : laissée en fraction, elle s'étire sur
    grand écran et le cercle grossit jusqu'à écraser le tableau. */

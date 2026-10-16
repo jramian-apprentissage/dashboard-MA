@@ -15,6 +15,36 @@ import { usePeriod } from '../contexts/PeriodContext';
 import { getPeriodRange } from '../components/ui/PeriodPicker';
 import { fetchRh } from '../services/apiRh';
 
+/* La série des six derniers mois : le stock en courbe, les deux flux en barres.
+ *
+ * HOOK SÉPARÉ DE useRhEffectifs, ET C'EST VOULU. Les deux ne répondent pas à la
+ * même question — un stock sur une période contre une série sur six mois — et
+ * surtout ils n'ont pas le même coût : la série lance dix-huit sous-comptages.
+ * Les fondre dans le même hook ferait recalculer l'historique à chaque appel de
+ * comparaison, pour rien.
+ *
+ * CONSÉQUENCE ASSUMÉE : la carte du graphique a son propre état de chargement.
+ * Elle se remplit donc après les quatre tuiles du dessus, ce qui est préférable
+ * à quatre tuiles qui attendent un graphique. */
+export function useRhEvolution(mois = 6) {
+  const { periodKey, customFrom, customTo } = usePeriod();
+  const [etat, setEtat] = useState({ points: null, loading: true, error: null });
+
+  useEffect(() => {
+    let annule = false;
+    setEtat(e => ({ ...e, loading: true }));
+    const { to } = getPeriodRange(periodKey, customFrom, customTo);
+
+    fetchRh(`/evolution?au=${to}&mois=${mois}`)
+      .then(r => { if (!annule) setEtat({ points: r.points, loading: false, error: null }); })
+      .catch(e => { if (!annule) setEtat({ points: null, loading: false, error: e.message }); });
+
+    return () => { annule = true; };
+  }, [periodKey, customFrom, customTo, mois]);
+
+  return etat;
+}
+
 export function useRhEffectifs() {
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });
