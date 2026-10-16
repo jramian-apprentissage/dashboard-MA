@@ -171,6 +171,21 @@ export function EvolutionMouvements({ mois = 6 }) {
 }
 
 export function GrapheMouvements({ points, titre }) {
+  const soldes = points.map(p => p.demarrages - p.fins);
+
+  /* L'AXE DOIT DESCENDRE SOUS ZÉRO, sinon la courbe du solde est tronquée les
+     mois où les départs l'emportent — juin 2026 affiche -10. On ne force donc
+     PAS beginAtZero, on borne au plus bas des soldes, arrondi à la dizaine
+     inférieure pour que la graduation tombe juste.
+
+     UN SEUL AXE POUR LES TROIS SÉRIES, et c'est délibéré : entrées, sorties et
+     solde se comptent tous en missions. Leur donner deux échelles rendrait
+     comparables des hauteurs qui ne le sont pas, ce qui est précisément le
+     défaut qu'on vient de corriger en séparant cette carte de la courbe
+     d'effectif. */
+  const bas = Math.min(0, ...soldes);
+  const minAxe = Math.floor(bas / 10) * 10;
+
   return (
     <Card title={titre}>
       <div className={styles.chartWrap} style={{ height: 232 }}>
@@ -192,6 +207,25 @@ export function GrapheMouvements({ points, titre }) {
                 borderRadius: 4,
                 borderSkipped: false,
               },
+              /* LE SOLDE NET, demandé par Jimmy le 16/10 à cet endroit précis
+                 et pas en tuile. Il y est à sa place : c'est la différence des
+                 deux barres du même mois, et la courbe la rend lisible dans le
+                 temps — on voit d'un coup d'œil les mois où l'agence a perdu
+                 du monde, mai et juin 2026, et ceux où elle en a gagné.
+                 `order: 0` la dessine PAR-DESSUS les barres ; sans cela elle
+                 passerait dessous et disparaîtrait derrière elles. */
+              {
+                type: 'line',
+                label: 'Solde net',
+                data: soldes,
+                borderColor: C_EFFECTIF,
+                pointBackgroundColor: C_EFFECTIF,
+                pointRadius: 3,
+                borderWidth: 2,
+                tension: 0.3,
+                fill: false,
+                order: 0,
+              },
             ],
           }}
           options={{
@@ -204,18 +238,16 @@ export function GrapheMouvements({ points, titre }) {
               tooltip: {
                 callbacks: {
                   title: items => libelleMoisLong(points[items[0].dataIndex].mois),
+                  /* Le solde porte son signe, les deux autres non : « +5 »
+                     se lit comme un gain, « 5 » comme un compte. Le pied
+                     d'infobulle qui portait le solde a disparu, la courbe le
+                     donne maintenant dans la liste. */
                   label: ctx => {
                     const n = ctx.parsed.y;
+                    if (ctx.dataset.label === 'Solde net') {
+                      return `Solde net : ${n > 0 ? '+' : ''}${fmtNumber(n)}`;
+                    }
                     return `${ctx.dataset.label} : ${fmtNumber(n)} mission${n > 1 ? 's' : ''}`;
-                  },
-                  /* LE SOLDE EN PIED D'INFOBULLE, et pas en carte séparée.
-                     C'est la différence des deux barres survolées : la donner
-                     là où les deux chiffres sont déjà sous les yeux évite d'en
-                     faire un indicateur de plus, que personne n'a demandé. */
-                  footer: items => {
-                    const p = points[items[0].dataIndex];
-                    const s = p.demarrages - p.fins;
-                    return `Solde : ${s > 0 ? '+' : ''}${fmtNumber(s)}`;
                   },
                 },
               },
@@ -223,10 +255,18 @@ export function GrapheMouvements({ points, titre }) {
             scales: {
               x: { ticks: { ...tickStyle, maxRotation: 0 }, grid: gridStyle, border: borderCol },
               y: {
-                beginAtZero: true,
+                suggestedMin: minAxe,
                 /* Pas de demi-personne sur un axe de mouvements. */
                 ticks: { ...tickStyle, precision: 0 },
-                grid: gridStyle,
+                /* LA LIGNE DE ZÉRO EST APPUYÉE. Depuis que la courbe du solde
+                   peut passer en négatif, zéro n'est plus le bas du cadre mais
+                   une frontière au milieu : sans la marquer, on ne voit pas
+                   d'un coup d'œil quels mois sont en perte. */
+                grid: {
+                  ...gridStyle,
+                  color: ctx => (ctx.tick?.value === 0 ? 'rgba(38,0,31,0.28)' : gridStyle.color),
+                  lineWidth: ctx => (ctx.tick?.value === 0 ? 1.5 : 1),
+                },
                 border: borderCol,
                 title: { display: true, text: 'Missions', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
               },
@@ -237,6 +277,7 @@ export function GrapheMouvements({ points, titre }) {
       <div className={styles.legende}>
         <span className={styles.legDot} style={{ background: C_ENTREES }} />Entrées
         <span className={styles.legDot} style={{ background: C_SORTIES, marginLeft: 14 }} />Sorties
+        <span className={styles.legDot} style={{ background: C_EFFECTIF, marginLeft: 14 }} />Solde net
       </div>
     </Card>
   );
