@@ -381,8 +381,15 @@ export default function Effectifs() {
                     ? 'Masquer les collaborateurs internes'
                     : 'Inclure les collaborateurs internes'}
                 >
-                  <span className={styles.basculeVoyant} aria-hidden="true" />
                   Internes
+                  {/* aria-hidden : l'état est déjà porté par aria-pressed sur
+                      le bouton. Le « ON / OFF » écrit dans la pastille est un
+                      doublon visuel, utile à l'œil, bruyant au lecteur
+                      d'écran. */}
+                  <span className={styles.basculeInterrupteur} aria-hidden="true">
+                    <span className={styles.basculeEtat}>{avecInternes ? 'ON' : 'OFF'}</span>
+                    <span className={styles.basculeCurseur} />
+                  </span>
                 </button>
               )}
             >

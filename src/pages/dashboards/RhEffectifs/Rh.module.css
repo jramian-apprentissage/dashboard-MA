@@ -103,37 +103,69 @@
 }
 
 /* La bascule « internes », en haut à droite de la carte des départements.
-   Discrète par défaut, demandée ainsi : elle ne doit pas concurrencer le titre
-   de la carte. Le voyant est l'état, le texte ne change jamais — un libellé qui
-   bascule entre deux mots oblige à relire pour savoir où l'on en est. */
+   Un VRAI interrupteur à glissière, demandé le 16/10 : la pastille d'état
+   précédente laissait deviner si elle disait l'état courant ou l'action à
+   venir. Un curseur qui glisse d'un bord à l'autre ne pose plus la question.
+
+   LE TEXTE NE CHANGE JAMAIS, seul le curseur bouge. Un libellé qui bascule
+   entre deux mots oblige à relire pour savoir où l'on en est, et c'est
+   exactement ce que l'interrupteur est censé supprimer. Le mot reste parce
+   qu'un interrupteur nu ne dit pas ce qu'il commande. */
 .bascule {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 3px 9px 3px 7px;
-  border: 1px solid var(--sable);
-  border-radius: 99px;
-  background: none;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 2px; border: none; background: none;
   font-family: inherit;
   font-size: 9px; font-weight: 600;
   letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--text3);
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  transition: color 0.15s;
 }
-.bascule:hover { color: var(--myrtille); border-color: var(--ciment); }
-.bascule:focus-visible { outline: 2px solid var(--myrtille); outline-offset: 2px; }
-.basculeActive {
-  color: var(--myrtille);
-  border-color: var(--glycine);
-  background: rgba(201,170,196,0.16);
-}
-.basculeVoyant {
-  width: 7px; height: 7px; border-radius: 50%;
-  border: 1px solid var(--ciment);
-  background: none;
+.bascule:hover { color: var(--myrtille); }
+.bascule:focus-visible { outline: 2px solid var(--myrtille); outline-offset: 3px; border-radius: 4px; }
+.basculeActive { color: var(--myrtille); }
+
+/* La piste. 44 x 20, sans bordure ; le curseur fait 16 px et part à 2 px du
+   bord. Sa course vaut donc 44 - 2 - 16 - 2 = 24 px, valeur reprise telle
+   quelle dans .basculeActive .basculeCurseur. Changer l'une sans l'autre
+   décale le curseur. */
+.basculeInterrupteur {
+  position: relative;
+  width: 44px; height: 20px;
+  border-radius: 99px;
+  background: var(--sable);
   flex: none;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.2s;
 }
-.basculeActive .basculeVoyant { background: var(--glycine-encre); border-color: var(--glycine-encre); }
+.basculeCurseur {
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--blanc);
+  box-shadow: 0 1px 2px rgba(38,0,31,0.28);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ON et OFF se lisent DU CÔTÉ OPPOSÉ AU CURSEUR, sans quoi le curseur blanc
+   passe par-dessus le mot. D'où la bascule de `right` à `left` : ce n'est pas
+   un centrage raté. */
+.basculeEtat {
+  position: absolute; top: 0; bottom: 0; right: 8px;
+  display: flex; align-items: center;
+  font-size: 8px; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--text3);
+  transition: color 0.2s;
+}
+.basculeActive .basculeInterrupteur { background: var(--glycine-encre); }
+.basculeActive .basculeCurseur { transform: translateX(24px); }
+.basculeActive .basculeEtat { right: auto; left: 9px; color: var(--blanc); }
+
+/* Le curseur glisse : sans cette coupure, l'animation est le seul indice de
+   changement pour qui la désactive, et c'est précisément ceux-là qu'elle gêne.
+   L'état reste lisible à la couleur et à la position. */
+@media (prefers-reduced-motion: reduce) {
+  .basculeCurseur { transition: none; }
+}
 
 .mentionBtn:hover { color: var(--myrtille); }
 .mentionBtn:focus-visible { outline: 2px solid var(--myrtille); outline-offset: 2px; }
