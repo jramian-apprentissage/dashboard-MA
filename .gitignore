@@ -34,3 +34,12 @@ scripts/*.sh
 scripts/n8n-*.mjs
 scripts/__pycache__/
 scripts/*.bak
+
+# Fichiers d'environnement.
+#
+# La règle `*.local` plus haut couvrait .env.local, mais PAS .env.rh, qui a
+# donc été commité avec son jeton le 15/10 (3a0702e). D'où une règle explicite
+# sur tout .env, et un .example versionné à la place pour la documentation.
+.env
+.env.*
+!.env.*.example
