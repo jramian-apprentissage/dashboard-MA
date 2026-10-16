@@ -66,6 +66,58 @@
   border-top: 1px solid var(--border); padding-top: 8px; line-height: 1.5;
 }
 
+/* Même apparence que .mention, mais cliquable : c'est le pied de carte qui
+   ouvre la liste complète des clients. Un vrai bouton plutôt qu'un div, pour
+   rester atteignable au clavier — le même choix que .subnoteBtn côté
+   commercial. La flèche est l'affordance : sans elle, rien ne distingue une
+   mention d'une mention cliquable. */
+.mentionBtn {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; text-align: left; background: none; cursor: pointer;
+  font-family: inherit;
+  font-size: 10.5px; color: var(--text2); margin-top: 10px;
+  border: none; border-top: 1px solid var(--border); padding: 8px 0 0;
+  line-height: 1.5;
+  transition: color 0.15s;
+}
+/* La bascule « internes », en haut à droite de la carte des départements.
+   Discrète par défaut, demandée ainsi : elle ne doit pas concurrencer le titre
+   de la carte. Le voyant est l'état, le texte ne change jamais — un libellé qui
+   bascule entre deux mots oblige à relire pour savoir où l'on en est. */
+.bascule {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px 3px 7px;
+  border: 1px solid var(--sable);
+  border-radius: 99px;
+  background: none;
+  font-family: inherit;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text3);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.bascule:hover { color: var(--myrtille); border-color: var(--ciment); }
+.bascule:focus-visible { outline: 2px solid var(--myrtille); outline-offset: 2px; }
+.basculeActive {
+  color: var(--myrtille);
+  border-color: var(--glycine);
+  background: rgba(201,170,196,0.16);
+}
+.basculeVoyant {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1px solid var(--ciment);
+  background: none;
+  flex: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+.basculeActive .basculeVoyant { background: var(--glycine-encre); border-color: var(--glycine-encre); }
+
+.mentionBtn:hover { color: var(--myrtille); }
+.mentionBtn:focus-visible { outline: 2px solid var(--myrtille); outline-offset: 2px; }
+.mentionFleche { flex: none; font-size: 12px; opacity: 0.6; }
+.mentionBtn:hover .mentionFleche { opacity: 1; }
+
 /* Les états d'attente. Trois cas distincts, jamais confondus : la source ne
    répond pas, la source répond vide, la vue n'est pas encore dessinée. */
 .etat { text-align: center; padding: 44px 20px; }

@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
+import ListeModale from '../../../components/ui/ListeModale';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import DonutChart from '../../../components/ui/DonutChart';
@@ -51,6 +53,15 @@ const COULEURS_CONTRAT = [
 export default function Effectifs() {
   const { result, compareResult, loading, error } = useRhEffectifs();
   const { comparePeriodKey } = usePeriod();
+  /* DÉCLARÉ ICI ET PAS DANS LE CORPS DU Loader. Ce corps est une fonction
+     passée en enfant, que le Loader n'appelle QUE s'il a fini de charger : un
+     useState posé dedans serait un appel de hook conditionnel, et React s'en
+     plaindrait dès le premier chargement. */
+  const [clientsOuverts, setClientsOuverts] = useState(false);
+  /* La bascule des départements. FERMÉE PAR DÉFAUT, c'est-à-dire sur les seuls
+     placés : c'est le périmètre que la maquette demande en sous-titre, et
+     l'ouvrir d'office ferait mentir ce sous-titre au premier coup d'œil. */
+  const [avecInternes, setAvecInternes] = useState(false);
 
   return (
     <Loader loading={loading && !result} label="Chargement des données RH…" minHeight={220}>
@@ -89,7 +100,7 @@ export default function Effectifs() {
           );
         }
 
-        const { effectifTotal, effectifPlace, effectifInterne, contrats, entites, familles } = result;
+        const { effectifTotal, effectifPlace, effectifInterne, contrats, entites, familles, famillesTous } = result;
         const part = n => (effectifTotal ? Math.round((n / effectifTotal) * 100) : 0);
         /* Le dénominateur du camembert est la somme de ses propres tranches,
            pas effectifTotal. Voir la note sur la carte : les deux sont égaux
@@ -99,7 +110,11 @@ export default function Effectifs() {
            elles-mêmes, qui vaut l’effectif PLACÉ et non l’effectif total.
            Prendre effectifTotal ici donnerait des parts qui ne font pas
            100 %, sans que rien ne le signale. */
-        const totalFamilles = familles.reduce((s, f) => s + f.effectif, 0);
+        /* `famillesTous` peut manquer : une API déployée avant le 16/10 ne le
+           rend pas. On retombe alors sur les placés plutôt que de planter, et
+           la bascule n'est tout simplement pas proposée. */
+        const famillesAffichees = avecInternes && famillesTous ? famillesTous : familles;
+        const totalFamilles = famillesAffichees.reduce((s, f) => s + f.effectif, 0);
         /* Même logique pour les clients : le dénominateur est la somme des
            lignes du tableau, pas effectifTotal. Les deux valent 74, et c’est
            voulu depuis le 16/10 — toute la section compte les placés. */
@@ -118,7 +133,7 @@ export default function Effectifs() {
 
         return (
           <div className={styles.page}>
-            <SectionLabel badge="Registre RH">L’agence Mon Ambassadeur</SectionLabel>
+            <SectionLabel badge="Sheet LISTE DES COLLABORATEURS">L’agence Mon Ambassadeur</SectionLabel>
             <div className={styles.kpiGrid}>
               {/* PREMIER INDICATEUR POSÉ, le 16/10.
                   Le stock se lit au dernier jour de la période ; la ligne du
@@ -280,10 +295,54 @@ export default function Effectifs() {
                   </tbody>
                 </table>
                 {entites.length > 4 && (
-                  <div className={styles.mention}>
-                    {fmtNumber(entites.length - 4)} autres clients identifiés,{' '}
-                    {fmtNumber(entites.slice(4).reduce((s, e) => s + e.effectif, 0))} collaborateurs.
-                  </div>
+                  <button
+                    type="button"
+                    className={styles.mentionBtn}
+                    onClick={() => setClientsOuverts(true)}
+                  >
+                    <span>
+                      {fmtNumber(entites.length - 4)} autres clients identifiés,{' '}
+                      {fmtNumber(entites.slice(4).reduce((s, e) => s + e.effectif, 0))} collaborateurs.
+                    </span>
+                    <span className={styles.mentionFleche} aria-hidden="true">→</span>
+                  </button>
+                )}
+
+                {/* LA LISTE COMPLÈTE EN POP-UP, posée le 16/10.
+                    La carte ne montre que quatre clients sur trente-six pour
+                    garder une hauteur stable à côté du camembert : c'est le
+                    raisonnement écrit en tête de ListeModale, une carte dont la
+                    hauteur dépend de la période déforme toute la page. Le reste
+                    n'est pas perdu pour autant, il vit ici.
+
+                    Le pied de carte sert de déclencheur plutôt qu'un bouton de
+                    plus : c'est lui qui annonce le reste, c'est donc lui qu'on
+                    a envie de cliquer. */}
+                {clientsOuverts && (
+                  <ListeModale
+                    titre="Répartition par client"
+                    sousTitre={
+                      `${fmtNumber(entites.length)} clients · ${fmtNumber(totalClients)} collaborateurs placés`
+                      + ' · effectif à la fin de la période'
+                    }
+                    onClose={() => setClientsOuverts(false)}
+                  >
+                    <table className={styles.tbl}>
+                      <thead>
+                        <tr><th>Client</th><th>Effectif</th><th>Ancienneté moy.</th><th>Part</th></tr>
+                      </thead>
+                      <tbody>
+                        {entites.map(e => (
+                          <tr key={e.entite}>
+                            <td>{e.entite}</td>
+                            <td className={styles.num}>{fmtNumber(e.effectif)}</td>
+                            <td className={styles.num}>{mois(e.anciennete_mois)}</td>
+                            <td className={styles.num}>{fmtPourcentage(partPct(e.effectif, totalClients))}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </ListeModale>
                 )}
               </Card>
             </div>
@@ -304,11 +363,35 @@ export default function Effectifs() {
                 fait l'effectif PLACÉ, 74 au 30/09, et non l'effectif total, 97.
                 On l'écrit sous la carte plutôt que de laisser quelqu'un
                 additionner les barres et s'étonner. */}
-            <Card title="Effectif par département">
+            <Card
+              title="Effectif par département"
+              action={famillesTous && (
+                /* LA BASCULE DES INTERNES, posée le 16/10.
+                   Le libellé ne change jamais, seul le voyant s'allume : un
+                   bouton dont le texte bascule entre deux mots oblige à relire
+                   pour savoir s'il annonce l'état courant ou l'action à venir.
+                   aria-pressed dit l'état aux lecteurs d'écran, qui ne voient
+                   pas le voyant. */
+                <button
+                  type="button"
+                  className={`${styles.bascule} ${avecInternes ? styles.basculeActive : ''}`}
+                  aria-pressed={avecInternes}
+                  onClick={() => setAvecInternes(v => !v)}
+                  title={avecInternes
+                    ? 'Masquer les collaborateurs internes'
+                    : 'Inclure les collaborateurs internes'}
+                >
+                  <span className={styles.basculeVoyant} aria-hidden="true" />
+                  Internes
+                </button>
+              )}
+            >
               <div className={styles.sousTitre}>
-                Uniquement l’effectif placé, en mission chez un client
+                {avecInternes
+                  ? 'Tout l’effectif, internes compris'
+                  : 'Uniquement l’effectif placé, en mission chez un client'}
               </div>
-              {familles.map(f => (
+              {famillesAffichees.map(f => (
                 <MotifBar
                   key={f.famille}
                   label={libelleFamille(f.famille)}
@@ -317,10 +400,19 @@ export default function Effectifs() {
                   fillColor="rgba(38,0,31,0.95)"
                 />
               ))}
+              {/* LE RANG DES BARRES CHANGE AVEC LA BASCULE, et c'est tout son
+                  intérêt : Support client et Administratif s'échangent leur
+                  place, parce que l'interne est surtout administratif et
+                  technique. On le dit, plutôt que de laisser croire à un bug
+                  d'affichage. */}
               <div className={styles.mention}>
-                {fmtNumber(totalFamilles)} collaborateurs placés, soit l’effectif de la
-                deuxième tuile. Les {fmtNumber(effectifInterne)} internes ne sont pas
-                dans ces barres.
+                {avecInternes
+                  ? <>{fmtNumber(totalFamilles)} collaborateurs, soit la première tuile.
+                      Les {fmtNumber(effectifInterne)} internes sont inclus, ce qui change
+                      l’ordre des départements.</>
+                  : <>{fmtNumber(totalFamilles)} collaborateurs placés, soit la deuxième
+                      tuile. Les {fmtNumber(effectifInterne)} internes ne sont pas dans ces
+                      barres.</>}
               </div>
             </Card>
           </div>

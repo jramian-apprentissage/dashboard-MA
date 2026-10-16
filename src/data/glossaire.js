@@ -181,7 +181,7 @@ export const glossaireData = [
       + "RÉSERVE DE MÉTHODE : l'état « actif » est une valeur du JOUR appliquée à une date passée. "
       + "Une personne en poste fin août mais inactive aujourd'hui sort rétroactivement du chiffre d'août. "
       + "Les mois passés sont donc reconstitués et non historisés : ils peuvent bouger d'une consultation à l'autre, et la comparaison avec le mois précédent s'en ressent.",
-    source: 'Registre RH (#04 RH - LISTE DES COLLABORATEURS MA)',
+    source: 'Sheet LISTE DES COLLABORATEURS',
     dashboards: ['rh-effectifs'],
   },
 
@@ -191,7 +191,7 @@ export const glossaireData = [
       + "Même périmètre que l'effectif total, moins les lignes rattachées à Mon Ambassadeur elle-même et à ses variantes d'écriture. "
       + "CEPREMIUM n'en est PAS retiré : c'est un client de l'agence malgré le nom partagé, et ses collaborateurs sont bien en mission chez un client. "
       + "Ce choix, arrêté le 16/10/2026, écarte de douze personnes le chiffre qui figurait sur la maquette, où CEPREMIUM était rangé dans l'interne.",
-    source: 'Registre RH (#04 RH - LISTE DES COLLABORATEURS MA)',
+    source: 'Sheet LISTE DES COLLABORATEURS',
     dashboards: ['rh-effectifs'],
   },
   {
@@ -199,7 +199,7 @@ export const glossaireData = [
     definition: "Salariés de Mon Ambassadeur non placés chez un client : core team, développeurs, commerciaux internes. "
       + "C'est le complément exact de l'effectif placé, les deux sommant toujours à l'effectif total. "
       + "Les lignes retenues sont celles dont l'entité est Mon Ambassadeur ou l'une de ses variantes d'écriture.",
-    source: 'Registre RH (#04 RH - LISTE DES COLLABORATEURS MA)',
+    source: 'Sheet LISTE DES COLLABORATEURS',
     dashboards: ['rh-effectifs'],
   },
 
