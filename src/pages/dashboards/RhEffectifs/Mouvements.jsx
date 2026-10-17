@@ -230,8 +230,14 @@ export default function Mouvements() {
                 <table className={styles.tbl}>
                   <thead>
                     <tr>
+                      {/* LES EN-TÊTES REPRENNENT MOT POUR MOT LES LIBELLÉS DES
+                          TUILES, et pas une abréviation maison : ce tableau en
+                          est la ventilation, pas une autre mesure. Un libellé
+                          raccourci laisserait croire à un indicateur voisin.
+                          Demande de Jimmy du 17/10. */}
                       <th>Département</th><th>Entrées</th><th>Sorties</th>
-                      <th>Ancienneté</th><th>Durée mission</th>
+                      <th>Ancienneté moy. à la fin de mission</th>
+                      <th>Durée moy. de mission terminée</th>
                     </tr>
                   </thead>
                   <tbody>

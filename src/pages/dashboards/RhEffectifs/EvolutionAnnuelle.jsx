@@ -48,7 +48,12 @@ export default function EvolutionAnnuelle() {
       </div>
       <table className={styles.tbl}>
         <thead>
-          <tr><th>Année</th><th>Entrées</th><th>Encore en poste</th><th>Partis</th><th>Rétention</th></tr>
+          {/* « Sorties » et non « Partis » : c'est le mot de la maquette et
+              celui de tout le reste du dashboard, tuile comprise. Inventer un
+              synonyme ici laissait croire à une autre mesure.
+              « Encore actif » garde le mot de Clémence en retirant le seul
+              morceau qui était faux, « fin d'année » : voir l'en-tête. */}
+          <tr><th>Année</th><th>Entrées</th><th>Encore actif</th><th>Sorties</th><th>Rétention</th></tr>
         </thead>
         <tbody>
           {lignes.map(l => (
@@ -67,7 +72,7 @@ export default function EvolutionAnnuelle() {
         </tbody>
       </table>
       <div className={styles.mention}>
-        « Encore en poste » s’entend à la fin de la période choisie, pas au 31 décembre
+        « Encore actif » s’entend à la fin de la période choisie, pas au 31 décembre
         de l’année concernée. Une année récente a donc mécaniquement une meilleure
         rétention qu’une ancienne.
       </div>
