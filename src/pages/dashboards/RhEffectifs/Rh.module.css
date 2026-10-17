@@ -92,21 +92,6 @@
    redeviendra inutile de lui-même. */
 .barres { width: 100%; }
 
-/* L'en-tête de la colonne d'ancienneté, dans la police du sous-titre de la
-   carte, comme demandé.
-   SA LARGEUR DOIT RESTER CELLE DE .gExtra DANS MotifBar.module.css (86 px) :
-   c'est ce qui le pose exactement au-dessus des valeurs. Les deux se changent
-   ensemble ou pas du tout. */
-.barresEntete { display: flex; justify-content: flex-end; margin-bottom: 7px; }
-.barresEnteteLib {
-  width: 86px;
-  text-align: right;
-  font-size: 10.5px;
-  color: var(--text3);
-  line-height: 1.45;
-  white-space: nowrap;
-}
-
 /* La bascule « internes », en haut à droite de la carte des départements.
    Un VRAI interrupteur à glissière, demandé le 16/10 : la pastille d'état
    précédente laissait deviner si elle disait l'état courant ou l'action à

@@ -2,21 +2,13 @@ import { useState, useEffect } from 'react';
 import {fmtNumber, fmtPourcentage } from '../../utils/formatNumber';
 import styles from './MotifBar.module.css';
 
-/* `extra` : une troisième valeur à droite, après le pourcentage et le compte.
-   Ajoutée le 16/10 pour l'ancienneté moyenne par département du Dash RH.
-
-   AVEC `extra`, LA ZONE DE DROITE PASSE EN GRILLE À COLONNES FIXES, et ce n'est
-   pas de la coquetterie. En flex, chaque valeur pousse la suivante : la flèche
-   de « 8% → 6 » ne tombait pas au même endroit que celle de « 47% → 35 », et la
-   colonne entière ondulait d'une ligne à l'autre selon la largeur des nombres
-   (relevé par Jimmy le 16/10). Des colonnes fixes et des chiffres tabulaires
-   règlent les deux d'un coup.
-
-   SANS `extra`, LE RENDU EST CELUI D'AVANT, à l'identique. Quatre pages du
-   dashboard commercial emploient ce composant ; leur mise en page ne doit pas
-   bouger parce que le Dash RH avait besoin d'une colonne de plus. D'où la
-   branche, plutôt qu'une grille imposée à tout le monde. */
-export default function MotifBar({ label, pct, count, extra, fillColor = 'var(--neg)', title }) {
+/* Une entrée `extra` a existé ici du 16 au 17/10, pour poser l'ancienneté
+   moyenne à côté du pourcentage et du nombre sur les barres par département du
+   Dash RH. Elle a été retirée avec la colonne qu'elle servait, cette
+   ancienneté passant sur la page Mouvements. Elle entraînait toute une
+   variante en grille à colonnes fixes : rien ne justifie de la garder sans
+   appelant, git la rendra si le besoin revient. */
+export default function MotifBar({ label, pct, count, fillColor = 'var(--neg)', title }) {
   const [w, setW] = useState(0);
   useEffect(() => {
     const raf = requestAnimationFrame(() => setW(pct));
@@ -44,23 +36,12 @@ export default function MotifBar({ label, pct, count, extra, fillColor = 'var(--
           }}
         />
       </div>
-      {/* Virgule décimale française : une part sous 1 % s'écrit « 0,2 % ».
-          Les valeurs entières passent inchangées. */}
-      {extra === undefined ? (
-        <div className={styles.val}>
-          {typeof pct === 'number' ? fmtPourcentage(pct) : `${pct}%`}
-          {count !== undefined && <span> → {fmtNumber(count)}</span>}
-        </div>
-      ) : (
-        <div className={styles.valGrille}>
-          <span className={styles.gPct}>
-            {typeof pct === 'number' ? fmtPourcentage(pct) : `${pct}%`}
-          </span>
-          <span className={styles.gFleche}>{count !== undefined ? '→' : ''}</span>
-          <span className={styles.gCount}>{count !== undefined ? fmtNumber(count) : ''}</span>
-          <span className={styles.gExtra}>{extra}</span>
-        </div>
-      )}
+      <div className={styles.val}>
+        {/* Virgule décimale française : une part sous 1 % s'écrit « 0,2 % ».
+            Les valeurs entières passent inchangées. */}
+        {typeof pct === 'number' ? fmtPourcentage(pct) : `${pct}%`}
+        {count !== undefined && <span> → {fmtNumber(count)}</span>}
+      </div>
     </div>
   );
 }
