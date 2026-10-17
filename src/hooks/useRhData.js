@@ -45,6 +45,28 @@ export function useRhEvolution(mois = 6) {
   return etat;
 }
 
+/* La cohorte par année d'entrée. Elle ne dépend que de la FIN de période, pas
+ * de son début : chaque ligne couvre une année civile entière, et seule la
+ * date à laquelle on demande « qui est encore là » bouge avec le sélecteur. */
+export function useRhAnnuel() {
+  const { periodKey, customFrom, customTo } = usePeriod();
+  const [etat, setEtat] = useState({ lignes: null, loading: true, error: null });
+
+  useEffect(() => {
+    let annule = false;
+    setEtat(e => ({ ...e, loading: true }));
+    const { to } = getPeriodRange(periodKey, customFrom, customTo);
+
+    fetchRh(`/annuel?au=${to}`)
+      .then(r => { if (!annule) setEtat({ lignes: r.lignes, loading: false, error: null }); })
+      .catch(e => { if (!annule) setEtat({ lignes: null, loading: false, error: e.message }); });
+
+    return () => { annule = true; };
+  }, [periodKey, customFrom, customTo]);
+
+  return etat;
+}
+
 export function useRhEffectifs() {
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });

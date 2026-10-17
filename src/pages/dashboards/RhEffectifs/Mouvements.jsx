@@ -3,6 +3,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import { EvolutionMouvements } from './EvolutionEffectifs';
+import EvolutionAnnuelle from './EvolutionAnnuelle';
 import { libelleFamille } from '../../../data/familles';
 import { useRhEffectifs } from '../../../hooks/useRhData';
 import { compareValueText } from '../../../utils/compareText';
@@ -255,6 +256,8 @@ export default function Mouvements() {
                   soit les deux premières tuiles.
                 </div>
               </Card>
+
+              <EvolutionAnnuelle />
             </div>
           </div>
         );
