@@ -67,7 +67,7 @@ export default function Mouvements() {
           );
         }
 
-        const { demarrages, fins, ancienneteFinMission } = result;
+        const { demarrages, fins, ancienneteFinMission, dureeMoyenneMission } = result;
 
         /* LA COMPARAISON D'UNE MOYENNE SANS POPULATION N'EXISTE PAS. Quand
            personne n'est parti sur la période de référence, il n'y a aucun
@@ -75,25 +75,28 @@ export default function Mouvements() {
            dans les mots de la maquette plutôt que d'afficher un écart
            fabriqué, ou pire, de traiter l'absence comme un zéro qui ferait
            chuter la moyenne de 100 %. */
-        const refAnciennete = compareResult?.ancienneteFinMission ?? null;
-        const comparaisonAnciennete = (() => {
-          if (ancienneteFinMission === null) {
-            return { dir: 'neutral', text: 'Aucun départ sur la période' };
-          }
+        /* Les deux tuiles du couple partagent exactement la même mécanique de
+           comparaison : même population, mêmes cas limites, même absence
+           d'inversion de couleur. Une seule fonction, donc, plutôt que deux
+           blocs jumeaux qui finiraient par diverger. */
+        const comparerMois = (valeur, reference) => {
+          if (valeur === null) return { dir: 'neutral', text: 'Aucun départ sur la période' };
           if (!compareResult) return null;
-          if (refAnciennete === null) {
+          if (reference === null || reference === undefined) {
             return { dir: 'neutral', text: '0 départ sur la période précédente' };
           }
           /* PAS D'INVERSION ICI, contrairement aux sorties. Une ancienneté qui
              monte n'est ni bonne ni mauvaise en soi : partir après deux ans
              n'est pas « pire » que partir après deux mois, c'est autre chose.
              On laisse donc la couleur neutre et on affiche l'écart brut. */
-          const ecart = Math.round((ancienneteFinMission - refAnciennete) * 10) / 10;
+          const ecart = Math.round((valeur - reference) * 10) / 10;
           return {
             dir: 'neutral',
             text: `${ecart > 0 ? '+' : ''}${fmtNumber(ecart)} mois vs période précédente`,
           };
-        })();
+        };
+        const comparaisonAnciennete = comparerMois(ancienneteFinMission, compareResult?.ancienneteFinMission ?? null);
+        const comparaisonDuree = comparerMois(dureeMoyenneMission, compareResult?.dureeMoyenneMission ?? null);
 
         return (
           <div className={styles.page}>
@@ -145,6 +148,34 @@ export default function Mouvements() {
                 unit={ancienneteFinMission === null ? '' : ' mois'}
                 compare={comparaisonAnciennete}
                 trend={{ dir: 'neutral', text: 'Profils récents ou expérimentés qui partent' }}
+              />
+
+              {/* DURÉE MOYENNE DE MISSION, quatrième tuile, posée le 17/10.
+                  Elle remplace « Repositionnement en mission client » de la
+                  maquette : c'est le second terme du couple que Clémence a
+                  décrit, et il n'a de sens qu'à côté du premier.
+
+                  MÊME POPULATION QUE L'ANCIENNETÉ, c'est la condition pour que
+                  son raisonnement tienne. Elle DIVISE les deux pour en tirer
+                  le nombre de missions par personne ; sur deux populations
+                  différentes le rapport ne voudrait rien dire. On mesure donc
+                  toutes les missions des personnes PARTIES sur la période, et
+                  pas seulement celle qui s'achève, puisque c'est leur
+                  enchaînement qu'on cherche à voir.
+
+                  LE RAPPORT N'EST PAS UN COMPTE EXACT, et il ne faut pas le
+                  vendre comme tel : vérifié sur trois mois, il donne 1,00
+                  contre 1,00 en septembre, 1,45 contre 1,40 en juin, 1,14
+                  contre 1,29 en mars. L'écart vient des missions menées
+                  SIMULTANÉMENT, dont les durées se chevauchent au lieu de
+                  s'ajouter. C'est un indicateur de tendance, pas un
+                  dénombrement. */}
+              <KPICard
+                label="Durée moy. de mission"
+                value={dureeMoyenneMission === null ? '—' : fmtNumber(dureeMoyenneMission)}
+                unit={dureeMoyenneMission === null ? '' : ' mois'}
+                compare={comparaisonDuree}
+                trend={{ dir: 'neutral', text: 'À lire avec l’ancienneté : l’écart révèle les missions enchaînées' }}
               />
 
               {/* PAS DE TROISIÈME TUILE « SOLDE NET » ICI. Elle y a figuré
