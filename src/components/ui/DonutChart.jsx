@@ -158,6 +158,17 @@ export default function DonutChart({
   centerLabel,
   tooltip,
   showDataLabels = true,
+  /* Marge latérale réservée autour du cercle. 32 px par défaut, parce que les
+     rappels filaires des petites tranches sont tracés HORS de l'anneau et
+     seraient rognés sans elle.
+     SUR UNE CARTE ÉTROITE SANS RAPPELS, cette marge coûte cher : elle réduit
+     le diamètre, donc le trou central, et le libellé finit plus large que le
+     trou. Mesuré sur le Dash RH le 17/10 : colonne de 196 px, trou de 76 px,
+     libellé « collaborateurs » de 83 px, donc un mot qui déborde sur l'anneau
+     et paraît coupé. La ramener à 8 px rend un trou de 95 px.
+     Entrée optionnelle plutôt que valeur conditionnelle : les quatre donuts du
+     dashboard commercial gardent exactement leur rendu. */
+  paddingLateral = 32,
 }) {
   const [ref, inView] = useInView(0.3);
 
@@ -206,7 +217,7 @@ export default function DonutChart({
               maintainAspectRatio: false,
               cutout,
               ...(isHalf ? { rotation: -90, circumference: 180 } : {}),
-              layout: { padding: { top: 16, bottom: isHalf ? 2 : 16, left: 32, right: 32 } },
+              layout: { padding: { top: 16, bottom: isHalf ? 2 : 16, left: paddingLateral, right: paddingLateral } },
               animation: {
                 animateRotate: true,
                 animateScale: !isRose,

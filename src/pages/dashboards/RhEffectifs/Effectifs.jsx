@@ -257,6 +257,10 @@ export default function Effectifs() {
                   tooltip={(label, value, pct) =>
                     `${label} : ${value} collaborateur${value > 1 ? 's' : ''} (${fmtPourcentage(pct)})`}
                   showDataLabels={false}
+                  /* Sans rappels filaires, la marge de 32 px ne sert plus qu’à
+                     rétrécir le trou central, où le mot « collaborateurs » ne
+                     tenait plus. Voir l’en-tête de DonutChart. */
+                  paddingLateral={8}
                 />
                 <table className={styles.tbl}>
                   <thead>
