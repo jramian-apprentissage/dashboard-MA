@@ -3,6 +3,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import { EvolutionMouvements } from './EvolutionEffectifs';
+import { libelleFamille } from '../../../data/familles';
 import { useRhEffectifs } from '../../../hooks/useRhData';
 import { compareValueText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -67,7 +68,12 @@ export default function Mouvements() {
           );
         }
 
-        const { demarrages, fins, ancienneteFinMission, dureeMoyenneMission } = result;
+        const { demarrages, fins, ancienneteFinMission, dureeMoyenneMission, departements } = result;
+
+        /* Les moyennes arrivent en nombre ou en null. Un tiret pour le null,
+           jamais un zéro : « 0 mois » se lirait comme un départ le jour de
+           l'arrivée, alors qu'il n'y a simplement eu aucun départ. */
+        const mois = v => (v === null || v === undefined ? '-' : `${fmtNumber(v)} mois`);
 
         /* LA COMPARAISON D'UNE MOYENNE SANS POPULATION N'EXISTE PAS. Quand
            personne n'est parti sur la période de référence, il n'y a aucun
@@ -192,6 +198,56 @@ export default function Mouvements() {
                 Les deux graphiques lisent la même route, /api/rh/evolution,
                 donc les chiffres ne peuvent pas diverger. */}
             <EvolutionMouvements />
+
+            {/* LES QUATRE INDICATEURS DE LA RANGÉE, VENTILÉS PAR DÉPARTEMENT.
+                Demande de Jimmy du 17/10. La carte de droite, « Évolution
+                annuelle », viendra compléter cette rangée.
+
+                UNE RÈGLE DE RATTACHEMENT A DÛ ÊTRE TRANCHÉE, parce qu'une
+                personne porte plusieurs missions donc plusieurs départements
+                possibles : une entrée se rattache à la mission qui l'a fait
+                entrer, une sortie à celle qu'elle quitte. Autrement on verrait
+                des entrées dans un département où la personne n'a pas mis les
+                pieds ce mois-là. Le détail est en tête de la requête, dans
+                server/src/routes/rh.js.
+
+                LES DEUX MOYENNES NE CONCERNENT QUE LES PARTANTS, comme les
+                tuiles dont elles sont la ventilation. Un département qui ne
+                perd personne n'a donc pas d'ancienneté à afficher : on y met
+                un tiret, pas un zéro, qui se lirait comme « ils partent le
+                jour de leur arrivée ». */}
+            <div className={styles.deuxCol}>
+              <Card title="Mouvements par département">
+                <table className={styles.tbl}>
+                  <thead>
+                    <tr>
+                      <th>Département</th><th>Entrées</th><th>Sorties</th>
+                      <th>Ancienneté</th><th>Durée mission</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {departements.map(d => (
+                      <tr key={d.famille}>
+                        <td>{libelleFamille(d.famille)}</td>
+                        <td className={styles.num}>{fmtNumber(d.entrees)}</td>
+                        <td className={styles.num}>{fmtNumber(d.sorties)}</td>
+                        <td className={styles.num}>{mois(d.anciennete)}</td>
+                        <td className={styles.num}>{mois(d.dureeMission)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {/* LE CONTRÔLE EST AFFICHÉ, pas seulement vérifié en coulisse :
+                    les deux colonnes de comptage doivent sommer aux deux
+                    premières tuiles, et le lire sous le tableau évite d'avoir
+                    à le croire. */}
+                <div className={styles.mention}>
+                  {fmtNumber(departements.reduce((s, d) => s + d.entrees, 0))} entrées et{' '}
+                  {fmtNumber(departements.reduce((s, d) => s + d.sorties, 0))} sorties,
+                  soit les deux premières tuiles.
+                </div>
+              </Card>
+            </div>
           </div>
         );
       }}
