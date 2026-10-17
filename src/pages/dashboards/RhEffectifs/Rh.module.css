@@ -172,3 +172,16 @@
 @media (max-width: 900px)  { .deuxCol { grid-template-columns: 1fr; } }
 @media (max-width: 760px)  { .donutEtTable { grid-template-columns: 1fr; gap: 16px; } }
 @media (max-width: 480px)  { .kpiGrid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+
+/* Les en-têtes des colonnes supplémentaires des barres par département.
+   LEUR LARGEUR EST UN CONTRAT avec MotifBar : 86 px chacune et 5 px de
+   gouttière, exactement comme .gExtra et le gap de .valGrille. C'est ce qui
+   les pose au-dessus des bonnes valeurs. Les deux se changent ensemble. */
+.barresEntete { display: flex; justify-content: flex-end; gap: 5px; margin-bottom: 7px; }
+.barresEnteteLib {
+  width: 86px;
+  text-align: right;
+  font-size: 10.5px;
+  color: var(--text3);
+  line-height: 1.3;
+}

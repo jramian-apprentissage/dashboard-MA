@@ -426,12 +426,22 @@ export default function Effectifs() {
                   : 'Uniquement l’effectif placé, en mission chez un client'}
               </div>
               <div className={styles.barres}>
+                {/* DEUX EN-TÊTES, et seulement pour les deux dernières
+                    colonnes : « 20,5 mois » après un « → 11 » ne dit pas de
+                    quoi il s'agit, alors que le pourcentage et le nombre se
+                    lisent seuls. Leur largeur est calée sur celle de MotifBar,
+                    voir le contrat écrit des deux côtés. */}
+                <div className={styles.barresEntete}>
+                  <span className={styles.barresEnteteLib}>Ancienneté moy.</span>
+                  <span className={styles.barresEnteteLib}>Durée moy. des missions</span>
+                </div>
                 {famillesAffichees.map(f => (
                   <MotifBar
                     key={f.famille}
                     label={libelleFamille(f.famille)}
                     pct={partPct(f.effectif, totalFamilles)}
                     count={f.effectif}
+                    extras={[mois(f.anciennete_mois), mois(f.duree_mission_mois)]}
                     fillColor="rgba(38,0,31,0.95)"
                   />
                 ))}
