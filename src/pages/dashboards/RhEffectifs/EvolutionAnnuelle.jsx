@@ -43,9 +43,14 @@ export default function EvolutionAnnuelle() {
 
   return (
     <Card title={titre}>
-      <div className={styles.sousTitre}>
-        Sur les collaborateurs arrivés chaque année, combien sont encore là
-      </div>
+      {/* PAS DE SOUS-TITRE AU-DESSUS DU TABLEAU. Il y en a eu un, « sur les
+          collaborateurs arrivés chaque année, combien sont encore là » :
+          c'était une aide à la lecture, pas un périmètre, et la carte a déjà
+          son pied de page pour ça. Retiré le 17/10, le texte est descendu dans
+          la mention.
+          La carte « Effectif par département » garde le sien, elle, parce
+          qu'il annonce un PÉRIMÈTRE : savoir qu'on ne regarde que les placés
+          change ce que les chiffres veulent dire, et doit se lire avant eux. */}
       <table className={styles.tbl}>
         <thead>
           {/* « Sorties » et non « Partis » : c'est le mot de la maquette et
@@ -72,9 +77,10 @@ export default function EvolutionAnnuelle() {
         </tbody>
       </table>
       <div className={styles.mention}>
-        « Encore actif » s’entend à la fin de la période choisie, pas au 31 décembre
-        de l’année concernée. Une année récente a donc mécaniquement une meilleure
-        rétention qu’une ancienne.
+        Chaque ligne se lit seule : sur les collaborateurs arrivés cette année-là,
+        combien sont encore en poste aujourd’hui. « Encore actif » s’entend à la fin
+        de la période choisie, pas au 31 décembre de l’année concernée. Une année
+        récente a donc mécaniquement une meilleure rétention qu’une ancienne.
       </div>
     </Card>
   );

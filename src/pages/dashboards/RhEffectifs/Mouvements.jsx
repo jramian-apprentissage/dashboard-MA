@@ -206,7 +206,12 @@ export default function Mouvements() {
                 mouvements, elles appartiennent donc à la page des mouvements.
                 Les deux graphiques lisent la même route, /api/rh/evolution,
                 donc les chiffres ne peuvent pas diverger. */}
-            <EvolutionMouvements />
+            {/* L'enveloppe porte la marge basse que le Card du graphe n'a pas :
+                voir .blocGraphe dans Rh.module.css. Sans elle, le graphe et la
+                rangée de deux cartes se touchent. */}
+            <div className={styles.blocGraphe}>
+              <EvolutionMouvements />
+            </div>
 
             {/* LES QUATRE INDICATEURS DE LA RANGÉE, VENTILÉS PAR DÉPARTEMENT.
                 Demande de Jimmy du 17/10. La carte de droite, « Évolution

@@ -5,6 +5,24 @@
 .kpiGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
 .deuxCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 
+/* ENVELOPPE DU GRAPHE D'ÉVOLUTION, pour lui donner la marge basse qu'un Card
+   n'a pas. Dans ce dépôt un Card ne porte jamais de marge : c'est la grille
+   qui espace, et .page est en gap: 0 parce que chaque bloc apporte la sienne.
+   Le graphe, lui, n'est ni une grille ni un bloc à marge, c'est un Card nu.
+
+   SUR LA PAGE 1 ÇA NE SE VOYAIT PAS : un SectionLabel suit le graphe et
+   apporte ses 46 px. Sur la page 2 la rangée de deux cartes vient
+   directement derrière, donc les deux bordures se touchaient à 0 px
+   (signalé par Jimmy le 17/10, capture de la page Mouvements).
+
+   POURQUOI PAS UN gap SUR .page, qui serait plus propre en apparence : le gap
+   d'un conteneur flex s'ajoute aux marges de ses enfants. Les 46 px du
+   SectionLabel de la page 1 seraient devenus 66, et sa rupture entre sections
+   - réglée sur un retour de Jimmy du 15/08 - aurait bougé sans qu'on l'ait
+   demandé. La marge est donc posée là où il manque quelque chose, pas
+   imposée partout. */
+.blocGraphe { margin-bottom: 20px; }
+
 /* Graphique d'évolution, posé sous les quatre tuiles. Mêmes classes que dans
    Activite.module.css, redéclarées ici : un module par dashboard est la
    convention du dépôt. */
