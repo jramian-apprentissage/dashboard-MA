@@ -176,8 +176,16 @@ export default function Mouvements() {
                   SIMULTANÉMENT, dont les durées se chevauchent au lieu de
                   s'ajouter. C'est un indicateur de tendance, pas un
                   dénombrement. */}
+              {/* « TERMINÉE » N'EST PAS UN ORNEMENT. Sans ce mot, la tuile
+                  laisse croire qu'elle mesure les missions en cours, et
+                  surtout elle rend incompréhensibles les mois où les deux
+                  chiffres du couple coïncident. Septembre 2026 en est un :
+                  les cinq partants n'avaient jamais eu qu'une seule mission,
+                  donc leur première mission EST leur dernière et l'ancienneté
+                  se confond avec sa durée. L'égalité est un constat, pas un
+                  défaut, et le libellé doit le laisser deviner. */}
               <KPICard
-                label="Durée moy. de mission"
+                label="Durée moy. de mission terminée"
                 value={dureeMoyenneMission === null ? '—' : fmtNumber(dureeMoyenneMission)}
                 unit={dureeMoyenneMission === null ? '' : ' mois'}
                 compare={comparaisonDuree}
