@@ -2,6 +2,7 @@ import { Line, Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import Card from '../../../components/ui/Card';
 import { useRhEvolution } from '../../../hooks/useRhData';
+import { useLargeurElement } from '../../../hooks/useLargeurElement';
 import { fmtNumber } from '../../../utils/formatNumber';
 import styles from './Rh.module.css';
 
@@ -61,35 +62,87 @@ function libelleMoisLong(ym) {
     .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
+/* DOUZE MOIS SUR GRAND ÉCRAN, SIX SUR TÉLÉPHONE, et ce n'est pas un compromis
+ * mou : les deux tailles servent une lecture différente.
+ *
+ * POURQUOI DOUZE PAR DÉFAUT. Six mois cachent l'histoire : on y lit une montée
+ * régulière de 84 à 96, là où douze montrent l'automne plat autour de 70, le
+ * pic de mars, le creux de juin et la reprise. Douze permettent surtout de
+ * comparer octobre à octobre, 96 contre 72, un tiers de croissance en un an.
+ * Et la vue « Turnover et fidélisation » travaille sur des taux annuels par
+ * définition : garder six ici ferait un dashboard qui se contredit.
+ * L'identité a été vérifiée sur vingt-quatre mois consécutifs sans une seule
+ * rupture, et la qualité des données ne se dégrade pas avec l'ancienneté.
+ *
+ * POURQUOI SIX SUR TÉLÉPHONE. Le graphique des mouvements porte deux barres
+ * par mois : vingt-quatre barres sur une largeur de téléphone deviennent des
+ * traits. La courbe d'effectif, elle, tiendrait, mais les deux cartes doivent
+ * raconter la même période sous peine de se contredire d'un coup d'œil.
+ *
+ * UN SEUL APPEL, QUELLE QUE SOIT LA LARGEUR. On demande toujours douze mois et
+ * on n'affiche que les six derniers quand l'écran est étroit. Faire dépendre
+ * la requête de la largeur relancerait un appel à chaque rotation de
+ * téléphone, pour des données déjà en main. */
+const MOIS_LARGE = 12;
+const MOIS_ETROIT = 6;
+
+/* LE SEUIL SE LIT SUR LA CARTE, PAS SUR LA FENÊTRE. Douze mois font
+ * vingt-quatre barres sur le graphique des mouvements ; en dessous de 720 px
+ * de carte, elles deviennent des traits. Ce cas n'est pas réservé au
+ * téléphone : une carte posée à côté sur desktop ramène celle-ci à une demi
+ * rangée, soit environ 690 px, sans que la fenêtre ait bougé d'un pixel.
+ * Mesuré avec useLargeurElement, le seuil tient dans les deux situations. */
+const SEUIL_DOUZE_MOIS = 720;
+
 /* L'enveloppe commune aux deux graphiques : même chargement, même gestion des
    trois états, même source. Seul le dessin change. */
-function CarteEvolution({ mois, titre, rendu }) {
-  const { points, loading, error } = useRhEvolution(mois);
+function CarteEvolution({ titre, rendu }) {
+  const { points, loading, error } = useRhEvolution(MOIS_LARGE);
+  const [ref, largeur] = useLargeurElement();
+
+  /* Tant que la largeur n'est pas mesurée (premier rendu, avant que
+     ResizeObserver ne se prononce), on suppose la carte large. C'est le cas
+     majoritaire, et la correction éventuelle arrive à la frame suivante,
+     pendant que la carte affiche encore son état de chargement. */
+  const affiches = largeur === 0 || largeur >= SEUIL_DOUZE_MOIS ? MOIS_LARGE : MOIS_ETROIT;
+
+  /* `titre` est une FONCTION du nombre de mois affichés, et pas une chaîne :
+     la carte de l'effectif l'annonce dans son titre, et un titre qui mentirait
+     sur la fenêtre serait pire que pas de titre du tout. */
+  const libelle = titre(affiches);
+
+  /* LE REF VIT SUR L'ENVELOPPE ET PAS SUR LA CARTE, parce qu'il doit survivre
+     aux trois états. Card n'expose pas de ref, et mesurer un élément interne
+     le perdrait à chaque changement d'état. */
+  const envelopper = contenu => <div ref={ref}>{contenu}</div>;
 
   if (error) {
-    return (
-      <Card title={titre}>
+    return envelopper(
+      <Card title={libelle}>
         <div className={styles.etat}><div className={styles.etatTexte}>{error}</div></div>
-      </Card>
+      </Card>,
     );
   }
   if (loading || !points) {
-    return (
-      <Card title={titre}>
+    return envelopper(
+      <Card title={libelle}>
         <div className={styles.chartWrap} style={{ height: 232 }} />
-      </Card>
+      </Card>,
     );
   }
-  return rendu(points, titre);
+  /* slice(-n) et pas un découpage par dates : la route rend déjà les mois dans
+     l'ordre, et le dernier point peut être borné à une date de milieu de mois
+     quand la période choisie s'y arrête. On coupe par le nombre, jamais par le
+     calendrier. */
+  return envelopper(rendu(points.slice(-affiches), libelle));
 }
 
 /* ─────────── PAGE 1 : la courbe d'effectif, seule ─────────── */
 
-export default function EvolutionEffectifs({ mois = 6 }) {
+export default function EvolutionEffectifs() {
   return (
     <CarteEvolution
-      mois={mois}
-      titre={`Effectif total sur les ${mois} derniers mois`}
+      titre={n => `Effectif total sur les ${n} derniers mois`}
       rendu={(points, titre) => <GrapheEffectif points={points} titre={titre} />}
     />
   );
@@ -160,11 +213,12 @@ export function GrapheEffectif({ points, titre }) {
 
 /* ─────────── PAGE 2 : les barres de mouvements ─────────── */
 
-export function EvolutionMouvements({ mois = 6 }) {
+export function EvolutionMouvements() {
   return (
     <CarteEvolution
-      mois={mois}
-      titre="Évolution mensuelle des entrées et sorties"
+      /* Ce titre-là ne nomme pas la fenêtre : « mensuelle » suffit, et il
+         resterait vrai sur six comme sur douze mois. */
+      titre={() => 'Évolution mensuelle des entrées et sorties'}
       rendu={(points, titre) => <GrapheMouvements points={points} titre={titre} />}
     />
   );

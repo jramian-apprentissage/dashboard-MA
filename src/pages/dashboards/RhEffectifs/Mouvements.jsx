@@ -111,7 +111,7 @@ export default function Mouvements() {
                 mouvements, elles appartiennent donc à la page des mouvements.
                 Les deux graphiques lisent la même route, /api/rh/evolution,
                 donc les chiffres ne peuvent pas diverger. */}
-            <EvolutionMouvements mois={6} />
+            <EvolutionMouvements />
           </div>
         );
       }}

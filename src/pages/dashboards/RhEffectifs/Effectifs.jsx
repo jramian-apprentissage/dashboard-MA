@@ -225,7 +225,7 @@ export default function Effectifs() {
 
                 Son chargement est indépendant de celui des tuiles, voir
                 useRhEvolution : la carte se remplit après elles. */}
-            <EvolutionEffectifs mois={6} />
+            <EvolutionEffectifs />
 
             <SectionLabel>Répartition des collaborateurs de l’agence</SectionLabel>
 
