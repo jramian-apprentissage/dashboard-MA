@@ -1,25 +1,46 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth, DASHBOARDS } from '../contexts/AuthContext';
+import { DASHBOARD_ROUTES } from '../data/dashboardTabs';
+import { DASH_RH_ACTIF } from '../config/dashRh';
 import heroBg from '../assets/hero-home.svg';
 import styles from './Home.module.css';
 
-const ROUTES = {
-  'commercial-rc': '/commercial-rc',
-  'commercial-activite': '/commercial-activite',
-  asus: '/asus',
-};
+/* L'ACCUEIL TENAIT SA PROPRE TABLE DE ROUTES, copie de DASHBOARD_ROUTES sans
+   l'entrée RH. Le bouton « Consulter » du Suivi des effectifs appelait donc
+   navigate(undefined) et ne faisait rien, signalé par Jimmy le 19/10.
+   La copie est supprimée au profit de la table partagée : c'est la seule
+   façon qu'un dashboard ajouté demain marche ici sans qu'on y pense. Les
+   libellés et icônes ci-dessous restent propres à l'accueil, eux, parce
+   qu'ils n'existent nulle part ailleurs. */
 
 // Titres longs pour les cartes de l'accueil — distincts des libellés de nav
 // (courts, utilisés dans le header/la barre basse) pour rester lisibles là-bas.
 // Peuvent tenir sur deux lignes (cf. FocusCommercial.module.css → insightDash).
 // Convention pour tout futur dashboard client : "Dashboard Client - [Nom]".
 const CARD_LABELS = {
+  /* Étalé derrière le drapeau comme partout ailleurs : le libellé contient
+     « Suivi des effectifs », qui est précisément le marqueur que
+     scripts/verifier-cloisonnement-rh.mjs cherche dans le paquet de
+     production. Écrit en dur ici, il ferait échouer la construction. */
+  ...(DASH_RH_ACTIF ? { 'rh-effectifs': 'Dashboard RH - Suivi des effectifs' } : {}),
   'commercial-rc':       'Dashboard Commercial et Relation Client',
   'commercial-activite': 'Dashboard Activités commerciales',
   asus:                  'Dashboard Client - Asus',
 };
 
 const DASH_ICONS = {
+  /* Sans entrée ici, la carte s'affichait avec une pastille vide : le bouton
+     ne marchait pas et la carte avait l'air inachevée. Deux silhouettes,
+     pour ne pas reprendre celle de l'Administration juste en dessous, qui
+     est une personne seule. */
+  ...(DASH_RH_ACTIF ? {
+    'rh-effectifs': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+    ),
+  } : {}),
   'commercial-rc': (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/>
@@ -91,7 +112,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <button className={styles.insightCTA} onClick={() => navigate(ROUTES[d.id])}>
+                  <button className={styles.insightCTA} onClick={() => navigate(DASHBOARD_ROUTES[d.id])}>
                     Consulter
                     {ARROW}
                   </button>
