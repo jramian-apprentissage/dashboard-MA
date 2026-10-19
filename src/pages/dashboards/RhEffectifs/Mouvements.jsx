@@ -149,12 +149,27 @@ export default function Mouvements() {
                   Mianintsoa, partie en juin, a une dernière mission d'UN JOUR
                   pour douze mois et demi d'ancienneté : c'est précisément ce
                   que ce couple donne à voir. */}
+              {/* LA LIGNE DU BAS DIT QUI EST COMPTÉ, comme sur les deux tuiles
+                  de gauche. Elle a d'abord dit « profils récents ou
+                  expérimentés qui partent » : c'était une question posée au
+                  lecteur, pas la description d'une mesure, et rien n'y
+                  permettait de savoir sur qui la moyenne était faite.
+                  Remplacée le 19/10.
+
+                  ATTENTION À LA LONGUEUR si on la retouche : c'est la plus
+                  longue des quatre, et elle tient à 3 px près. Mesuré le
+                  19/10 à 1101 px de fenêtre, le cas le plus serré puisque la
+                  grille passe à deux colonnes en dessous de 1100 : la tuile
+                  fait alors 252 px et le texte 212. Un mot de plus et il est
+                  COUPÉ sans qu'on le voie, parce que .card est en
+                  overflow: hidden et que .trend n'a pas la troncature avec
+                  points de suspension que porte .compare juste au-dessus. */}
               <KPICard
                 label="Ancienneté moy. à la fin de mission"
                 value={ancienneteFinMission === null ? '—' : fmtNumber(ancienneteFinMission)}
                 unit={ancienneteFinMission === null ? '' : ' mois'}
                 compare={comparaisonAnciennete}
-                trend={{ dir: 'neutral', text: 'Profils récents ou expérimentés qui partent' }}
+                trend={{ dir: 'neutral', text: 'Ancienneté des collaborateurs partis dans la période' }}
               />
 
               {/* DURÉE MOYENNE DE MISSION, quatrième tuile, posée le 17/10.
@@ -185,12 +200,22 @@ export default function Mouvements() {
                   donc leur première mission EST leur dernière et l'ancienneté
                   se confond avec sa durée. L'égalité est un constat, pas un
                   défaut, et le libellé doit le laisser deviner. */}
+              {/* MÊME TRAITEMENT QUE LA TUILE VOISINE, le 19/10. La ligne du
+                  bas disait « à lire avec l'ancienneté : l'écart révèle les
+                  missions enchaînées » : une consigne de lecture, suivie d'une
+                  affirmation que le commentaire ci-dessus nuance lui-même,
+                  puisque le rapport entre les deux chiffres est une tendance
+                  et pas un dénombrement de missions.
+                  Elle décrit maintenant la mesure : l'unité est UNE mission,
+                  la population est celle de la tuile de gauche. Le couple de
+                  Clémence reste lisible par la proximité des deux tuiles,
+                  sans qu'on ait à l'affirmer. */}
               <KPICard
                 label="Durée moy. de mission terminée"
                 value={dureeMoyenneMission === null ? '—' : fmtNumber(dureeMoyenneMission)}
                 unit={dureeMoyenneMission === null ? '' : ' mois'}
                 compare={comparaisonDuree}
-                trend={{ dir: 'neutral', text: 'À lire avec l’ancienneté : l’écart révèle les missions enchaînées' }}
+                trend={{ dir: 'neutral', text: 'Longueur d’une mission, sur ces mêmes partants' }}
               />
 
               {/* PAS DE TROISIÈME TUILE « SOLDE NET » ICI. Elle y a figuré

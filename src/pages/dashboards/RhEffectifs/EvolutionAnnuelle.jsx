@@ -77,10 +77,15 @@ export default function EvolutionAnnuelle() {
         </tbody>
       </table>
       <div className={styles.mention}>
+        {/* LA PHRASE « une année récente a donc mécaniquement une meilleure
+            rétention qu'une ancienne » a été retirée le 19/10. Ce qu'elle
+            annonçait reste vrai, et la précaution qui la précède suffit à le
+            faire comprendre : dire d'où vient l'écart, c'est renseigner ; en
+            tirer la conclusion à la place du lecteur, c'est désamorcer la
+            lecture que la carte existe précisément pour permettre. */}
         Chaque ligne se lit seule : sur les collaborateurs arrivés cette année-là,
         combien sont encore en poste aujourd’hui. « Encore actif » s’entend à la fin
-        de la période choisie, pas au 31 décembre de l’année concernée. Une année
-        récente a donc mécaniquement une meilleure rétention qu’une ancienne.
+        de la période choisie, pas au 31 décembre de l’année concernée.
       </div>
     </Card>
   );
