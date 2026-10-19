@@ -10,9 +10,17 @@ import styles from './Rh.module.css';
 
 /* Vue 3 du Suivi des effectifs, « Turnover et fidélisation ».
  *
+ * CETTE PAGE EST ANNUELLE DANS LA MAQUETTE, « Année en cours » et « vs année
+ * précédente », mais le sélecteur de période n'offre PAS d'année : jour,
+ * semaine, mois, trimestre, personnalisé. Elle s'ouvre donc sur le mois
+ * précédent, où le turnover vaut 5 % au lieu de 90, et l'année se regarde en
+ * passant par « Personnaliser ». Signalé à Jimmy le 19/10 avec la correction
+ * possible, ajouter l'année au sélecteur en l'écartant des dashboards
+ * commerciaux dont la source ne commence qu'au 1er août : il a tranché pour
+ * ne rien ajouter. À ne pas « corriger » de sa propre initiative.
+ *
  * EN COURS DE CONSTRUCTION, une carte à la fois. Ce que la maquette commande
  * pour cette page, et qui reste à poser :
- *   · taux de rétention à 1 an, avec le 2 ans en sous-titre
  *   · taux de réintégration après perte non fautive
  *   · délai de replacement après perte de mission
  *   · turnover par département
@@ -79,7 +87,8 @@ export default function Turnover() {
           );
         }
 
-        const { tauxTurnover, sorties, effectifMoyen, moisComptes } = result;
+        const { tauxTurnover, sorties, effectifMoyen, moisComptes,
+                retention1An, retention2Ans } = result;
 
         /* L'ÉCART EST EN POINTS, PAS EN POURCENTAGE : comparer deux taux en
            pourcentage donnerait « +73 % » pour un passage de 87 à 152, ce qui
@@ -90,13 +99,37 @@ export default function Turnover() {
            bonne nouvelle : la couleur vire au vert quand le chiffre descend,
            pendant que la flèche continue de suivre le chiffre. C'est la même
            distinction que sur la tuile « Sorties » de la page précédente. */
-        const comparaison = compareActive
-          ? comparePtsText(tauxTurnover, compareResult?.tauxTurnover ?? null, comparePeriodKey, true)
-          : false;
+        /* UN TAUX ABSENT N'EST PAS UN CALCUL EN COURS. Quand la période de
+           référence ne rend aucun taux, comparePtsText rend null, et KPICard
+           lit ce null comme « la comparaison n'est pas encore arrivée » : il
+           affiche « Calcul en cours… », indéfiniment. Constaté le 19/10 sur
+           2024, dont la période précédente n'a aucune cohorte d'un an.
+           On distingue donc les deux cas, et on DIT l'absence. */
+        const comparerPts = (valeur, reference, absence, invert = false) => {
+          if (!compareActive) return false;
+          if (valeur === null || valeur === undefined) return false;
+          if (reference === null || reference === undefined) return { dir: 'neutral', text: absence };
+          return comparePtsText(valeur, reference, comparePeriodKey, invert);
+        };
+
+        const comparaison = comparerPts(
+          tauxTurnover, compareResult?.tauxTurnover ?? null,
+          'Aucun effectif à comparer', true,
+        );
+
+        /* PAS D'INVERSION SUR LA RÉTENTION, contrairement au turnover : une
+           rétention qui monte est une bonne nouvelle, donc le sens par défaut
+           convient. Les deux tuiles voisines ont des conventions opposées,
+           c'est normal, elles mesurent des choses opposées. */
+        const comparaisonRetention = comparerPts(
+          retention1An?.taux ?? null, compareResult?.retention1An?.taux ?? null,
+          'Aucune cohorte à comparer',
+        );
 
         return (
           <div className={styles.page}>
             <SectionLabel badge="Sheet LISTE DES COLLABORATEURS">Turnover et fidélisation</SectionLabel>
+            <div className={styles.rangeeTuiles}>
             <div className={styles.kpiGrid}>
               {/* LE TAUX DE TURNOVER GLOBAL. La formule a été choisie sur
                   mesure le 19/10, les quatre candidates ayant été calculées
@@ -125,6 +158,53 @@ export default function Turnover() {
                     : `${fmtNumber(sorties)} départ${sorties > 1 ? 's' : ''} pour ${fmtNumber(effectifMoyen)} en moyenne sur ${moisComptes} mois`,
                 }}
               />
+
+              {/* LA RÉTENTION À 1 AN EST UNE SURVIE, pas une présence : parmi
+                  les gens qui ont ATTEINT leur douzième mois, combien étaient
+                  encore là CE JOUR-LÀ. L'autre lecture a été mesurée et
+                  écartée le 19/10, le détail est en tête de la route.
+
+                  LE 2 ANS VA DANS LA LIGNE DU BAS, comme sur la maquette, et
+                  il ressort plus HAUT que le 1 an : 49 % contre 33. Ce n'est
+                  pas une erreur, les deux ne portent pas sur les mêmes
+                  personnes, et c'est la note sous la rangée qui le dit. */}
+              <KPICard
+                label="Taux de rétention à 1 an"
+                value={retention1An?.taux === null || retention1An === undefined ? '-' : fmtNumber(retention1An.taux)}
+                unit={retention1An?.taux === null || retention1An === undefined ? '' : ' %'}
+                compare={comparaisonRetention}
+                trend={{
+                  dir: 'neutral',
+                  text: retention2Ans?.taux === null || retention2Ans === undefined
+                    /* Avant octobre 2026, personne n'avait deux ans
+                       d'ancienneté : on le dit, au lieu d'afficher un taux
+                       sur une cohorte vide. */
+                    ? 'Personne n’a encore deux ans d’ancienneté'
+                    : `À 2 ans : ${fmtNumber(retention2Ans.taux)} % sur ${fmtNumber(retention2Ans.n)} personnes`,
+                }}
+              />
+            </div>
+
+            {/* POURQUOI CETTE NOTE EXISTE. Deux taux de fidélisation dont le
+                plus long est le plus élevé se lisent comme une erreur de
+                calcul. Elle nomme la seule chose qui l'explique, la taille et
+                la nature des deux populations, sans conclure à la place du
+                lecteur sur ce qui a changé dans l'agence.
+
+                ELLE N'APPARAÎT QUE S'IL Y A DEUX TAUX. Sans cohorte à deux
+                ans, il n'y a pas de paradoxe à désamorcer, et la note
+                affirmait alors une absurdité : « 8 collaborateurs ont atteint
+                leur premier anniversaire, un taux à deux ans plus élevé n'est
+                donc pas une incohérence », sur une période où aucun taux à
+                deux ans n'existe. Vu sur 2024 le 19/10. */}
+            {retention1An?.n && retention2Ans?.n ? (
+              <div className={styles.mention}>
+                Les deux taux ne portent pas sur les mêmes personnes :{' '}
+                {fmtNumber(retention1An.n)} collaborateurs ont atteint leur premier
+                anniversaire dans l’agence, {fmtNumber(retention2Ans.n)} leur deuxième.
+                Un taux à deux ans plus élevé n’est donc pas une incohérence.
+              </div>
+            ) : null}
             </div>
 
             <Card>
