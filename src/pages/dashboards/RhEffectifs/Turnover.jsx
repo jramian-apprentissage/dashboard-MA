@@ -88,7 +88,7 @@ export default function Turnover() {
         }
 
         const { tauxTurnover, sorties, effectifMoyen, moisComptes,
-                retention1An, retention2Ans } = result;
+                retention1An, retention2Ans, reintegration, delaiReplacement } = result;
 
         /* L'ÉCART EST EN POINTS, PAS EN POURCENTAGE : comparer deux taux en
            pourcentage donnerait « +73 % » pour un passage de 87 à 152, ce qui
@@ -125,6 +125,31 @@ export default function Turnover() {
           retention1An?.taux ?? null, compareResult?.retention1An?.taux ?? null,
           'Aucune cohorte à comparer',
         );
+
+        const comparaisonReintegration = comparerPts(
+          reintegration?.taux ?? null, compareResult?.reintegration?.taux ?? null,
+          'Aucune perte à comparer',
+        );
+
+        /* UN DÉLAI NE SE COMPARE PAS EN POINTS. comparePtsText écrirait
+           « -13 pts », qui se lit comme un taux alors qu'il s'agit de jours.
+           D'où ces quelques lignes plutôt qu'un détournement de l'utilitaire
+           partagé, qui servirait mal les deux usages.
+           L'inversion est la même que sur le turnover : un délai qui raccourcit
+           est une bonne nouvelle, donc vert quand le chiffre descend. */
+        const comparaisonDelai = (() => {
+          if (!compareActive) return false;
+          const v = delaiReplacement?.moyen;
+          if (v === null || v === undefined) return false;
+          const ref = compareResult?.delaiReplacement?.moyen;
+          if (ref === null || ref === undefined) return { dir: 'neutral', text: 'Aucun replacement à comparer' };
+          const ecart = Math.round(v - ref);
+          return {
+            dir: ecart === 0 ? 'neutral' : ecart > 0 ? 'down' : 'up',
+            sens: ecart === 0 ? 'neutral' : ecart > 0 ? 'up' : 'down',
+            text: `${ecart === 0 ? '=' : (ecart > 0 ? '+' : '') + fmtNumber(ecart) + ' j'} vs période précédente`,
+          };
+        })();
 
         return (
           <div className={styles.page}>
@@ -181,6 +206,56 @@ export default function Turnover() {
                        sur une cohorte vide. */
                     ? 'Personne n’a encore deux ans d’ancienneté'
                     : `À 2 ans : ${fmtNumber(retention2Ans.taux)} % sur ${fmtNumber(retention2Ans.n)} personnes`,
+                }}
+              />
+
+              {/* RÉINTÉGRATION APRÈS PERTE NON FAUTIVE. « Non fautive » vaut
+                  ici « tout sauf démission », décision prise après mesure :
+                  la base n'a aucun motif de faute, les cinq valeurs de
+                  motif_normal sont arrêt client, démission, fin de mission,
+                  stand by et vide. Le détail est en tête de la route.
+
+                  LA LIGNE DU BAS DONNE LA BASE, et ce n'est pas une
+                  précaution de style : le taux repose sur 4 replacements en
+                  2026. Il n'est pas faux, il est fragile, et un lecteur qui
+                  voit 6,8 % sans le nombre de cas croit à une politique là
+                  où il n'y a que des cas isolés. */}
+              <KPICard
+                label="Taux de réintégration après perte non fautive"
+                value={reintegration?.taux === null || reintegration === undefined ? '-' : fmtNumber(reintegration.taux)}
+                unit={reintegration?.taux === null || reintegration === undefined ? '' : ' %'}
+                compare={comparaisonReintegration}
+                trend={{
+                  dir: 'neutral',
+                  /* « PERSONNES REPLACÉES » ET NON « REPLACEMENTS », parce
+                     que la tuile voisine compte des replacements au sens
+                     d'évènements et n'annonce pas le même nombre : 12 ici et
+                     13 là en 2025, une personne ayant été replacée deux fois.
+                     Les deux sont justes, mais le même mot sur deux chiffres
+                     voisins se lit comme une erreur de calcul. */
+                  text: reintegration?.pertes
+                    ? `${fmtNumber(reintegration.reprises)} personne${reintegration.reprises > 1 ? 's' : ''} replacée${reintegration.reprises > 1 ? 's' : ''} sur ${fmtNumber(reintegration.pertes)}`
+                    : 'Aucune perte non fautive sur la période',
+                }}
+              />
+
+              {/* DÉLAI DE REPLACEMENT. Moyenne en valeur et médiane dans la
+                  ligne du bas, choix de Jimmy le 19/10. Les deux sont rendus
+                  par la route parce qu'ils divergent franchement dès qu'un
+                  cas s'éloigne : 62 contre 38 jours en 2025, où un seul
+                  replacement à 217 jours tire toute la moyenne. Donner les
+                  deux évite d'avoir à choisir entre le chiffre que Clémence a
+                  vu sur la maquette et celui qui décrit le cas courant. */}
+              <KPICard
+                label="Délai de replacement après perte de mission"
+                value={delaiReplacement?.moyen === null || delaiReplacement === undefined ? '-' : fmtNumber(delaiReplacement.moyen)}
+                unit={delaiReplacement?.moyen === null || delaiReplacement === undefined ? '' : ' j'}
+                compare={comparaisonDelai}
+                trend={{
+                  dir: 'neutral',
+                  text: delaiReplacement?.cas
+                    ? `Médiane ${fmtNumber(delaiReplacement.median)} j, sur ${fmtNumber(delaiReplacement.cas)} replacement${delaiReplacement.cas > 1 ? 's' : ''}`
+                    : 'Aucun replacement sur la période',
                 }}
               />
             </div>

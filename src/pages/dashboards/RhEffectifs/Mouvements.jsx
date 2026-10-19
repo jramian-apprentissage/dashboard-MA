@@ -160,10 +160,14 @@ export default function Mouvements() {
                   longue des quatre, et elle tient à 3 px près. Mesuré le
                   19/10 à 1101 px de fenêtre, le cas le plus serré puisque la
                   grille passe à deux colonnes en dessous de 1100 : la tuile
-                  fait alors 252 px et le texte 212. Un mot de plus et il est
-                  COUPÉ sans qu'on le voie, parce que .card est en
-                  overflow: hidden et que .trend n'a pas la troncature avec
-                  points de suspension que porte .compare juste au-dessus. */}
+                  fait alors 252 px et le texte 212.
+                  CE QUI ARRIVE AU-DELÀ, vérifié sur la page 3 le même jour :
+                  le texte PASSE À LA LIGNE, il n'est pas coupé. .trend n'a
+                  pas la troncature à points de suspension de .compare, mais
+                  l'enveloppement suffit à tout montrer. Le défaut est donc
+                  cosmétique et non silencieux : la tuile prend deux lignes
+                  là où ses voisines en ont une, et toute la rangée grandit
+                  avec elle. */}
               <KPICard
                 label="Ancienneté moy. à la fin de mission"
                 value={ancienneteFinMission === null ? '—' : fmtNumber(ancienneteFinMission)}
