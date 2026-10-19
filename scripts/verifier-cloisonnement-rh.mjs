@@ -15,14 +15,29 @@
  * sans rien lui passer : pas de drapeau, donc attente de production.
  * `npm run build:rh` l'appelle en toutes lettres avec --rh, parce que deux
  * choses l'empêchent de deviner. D'abord npm n'attache postbuild qu'au script
- * nommé `build` : pendant des semaines `build:rh` n'a donc rien vérifié du
- * tout, constaté le 19/10. Ensuite `vite build --mode rh` lit bien
- * VITE_DASH_RH dans .env.rh, mais pour lui-même : la variable ne passe pas
- * dans process.env du script suivant. Sans le drapeau, la vérification qui
- * suit une construction RH croirait regarder la production et échouerait.
- * La variable d'environnement reste acceptée, c'est elle que pose le projet
- * Vercel du front RH, et `VITE_DASH_RH=1` en préfixe ne marche pas sous
- * Windows.
+ * nommé `build` : `build:rh` ne vérifiait donc rien du tout, constaté le
+ * 19/10. Ensuite `vite build --mode rh` lit bien VITE_DASH_RH dans .env.rh,
+ * mais pour lui-même : la variable ne passe pas dans process.env du script
+ * suivant. Sans le drapeau, la vérification qui suit une construction RH
+ * croirait regarder la production et échouerait. Le drapeau a l'avantage de
+ * marcher sous Windows, où `VITE_DASH_RH=1 npm run ...` n'existe pas.
+ *
+ * CE TROU NE CONCERNAIT QUE LE POSTE LOCAL, vérifié le 19/10 dans les
+ * réglages Vercel plutôt que supposé. Les DEUX projets sont en commande de
+ * build par défaut, l'override décoché : dashboard-ma en préréglage « Other »
+ * et dashboard-ma-rh en préréglage « Vite » lancent l'un comme l'autre
+ * `npm run build`. Le front RH n'est donc pas construit avec `build:rh` en
+ * ligne ; son postbuild tourne, et c'est VITE_DASH_RH posée dans les
+ * variables du projet qui lui dit de quel côté il est.
+ *
+ * CE QUI RESTE OUVERT, ET QUI N'EST PAS RIEN. Tant que le front RH se
+ * construit avec `npm run build`, la disparition de VITE_DASH_RH y serait
+ * MUETTE : sans elle le paquet ne contient plus le marqueur, le script croit
+ * regarder la production, et il dit « ok, bien absente » pendant que le site
+ * RH perd son dashboard. Le cas que ce script sait justement nommer, il ne
+ * peut pas le voir s'il n'est pas prévenu. Basculer la commande de build du
+ * projet RH sur `npm run build:rh` le préviendrait, et transformerait cette
+ * panne silencieuse en construction rouge. Décision de Jimmy, pas du code.
  *
  * CE QU'IL VÉRIFIE, et pourquoi c'est ce marqueur-là. L'entrée de navigation
  * est ce qui rend le dashboard ATTEIGNABLE : sans elle et sans sa route, le
