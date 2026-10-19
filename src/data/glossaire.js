@@ -171,7 +171,16 @@ export const glossaireData = [
     dashboards: ['commercial-rc'],
   },
 
-  /* ── Suivi des effectifs ──────────────────────────────────────────── */
+  /* ── Suivi des effectifs ──────────────────────────────────────────────
+     CES DÉFINITIONS PARTENT DANS LE PAQUET DE PRODUCTION, et c'est assumé :
+     décision de Jimmy le 19/10, après mesure. Elles n'y sont jamais affichées,
+     l'écran ne montrant que les termes dont un dashboard est accessible et
+     rh-effectifs n'existant pas dans la liste de production ; elles restent
+     en revanche lisibles dans le source de la page. Ce sont des définitions
+     de méthode, sans donnée nominative ni secret.
+     Les étaler derrière DASH_RH_ACTIF, comme les entrées de navigation,
+     suffirait à les en sortir : à faire seulement si quelqu'un le redemande,
+     pas de sa propre initiative. */
   {
     terme: 'Effectif total',
     definition: "Collaborateurs en mission au dernier jour de la période, placés chez un client et internes réunis. "
