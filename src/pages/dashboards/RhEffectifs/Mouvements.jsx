@@ -285,11 +285,15 @@ export default function Mouvements() {
                 {/* LE CONTRÔLE EST AFFICHÉ, pas seulement vérifié en coulisse :
                     les deux colonnes de comptage doivent sommer aux deux
                     premières tuiles, et le lire sous le tableau évite d'avoir
-                    à le croire. */}
+                    à le croire.
+                    « soit les deux premières tuiles » a été retiré le 19/10 :
+                    les tuiles sont juste au-dessus, le rapprochement se fait
+                    tout seul, et la phrase expliquait au lecteur ce qu'il
+                    voyait déjà. Le total, lui, reste : c'est lui qui prouve
+                    que le tableau et les tuiles disent la même chose. */}
                 <div className={styles.mention}>
                   {fmtNumber(departements.reduce((s, d) => s + d.entrees, 0))} entrées et{' '}
-                  {fmtNumber(departements.reduce((s, d) => s + d.sorties, 0))} sorties,
-                  soit les deux premières tuiles.
+                  {fmtNumber(departements.reduce((s, d) => s + d.sorties, 0))} sorties.
                 </div>
               </Card>
 
