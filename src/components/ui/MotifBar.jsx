@@ -22,12 +22,26 @@ import styles from './MotifBar.module.css';
    plutôt qu'une grille imposée à tout le monde. */
 export const LARGEUR_EXTRA = 86;
 
-export default function MotifBar({ label, pct, count, extras, fillColor = 'var(--neg)', title }) {
+/* `largeur` : la longueur de la barre, quand elle ne doit PAS être le nombre
+   affiché. Par défaut les deux sont confondus, et c'est le cas de toutes les
+   parts d'un total, qui vivent entre 0 et 100.
+
+   LE DASH RH A CASSÉ CETTE ÉQUIVALENCE avec son turnover par département :
+   ce ne sont pas des parts d'un total mais des TAUX, et un taux de turnover
+   dépasse allègrement 100 % quand les missions durent quelques mois.
+   L'administratif est à 170 % en 2026. Sans ce paramètre, la barre serait
+   large de 170 % de son rail, déborderait de la carte et se ferait couper
+   par son overflow: hidden ; la seule autre issue aurait été d'écrêter à
+   100 %, c'est-à-dire d'afficher l'administratif et un département à 100 %
+   avec la même longueur. L'appelant passe donc une largeur mise à l'échelle
+   du plus fort, et le nombre affiché reste le vrai taux. */
+export default function MotifBar({ label, pct, count, extras, fillColor = 'var(--neg)', title, largeur }) {
+  const cible = largeur === undefined ? pct : largeur;
   const [w, setW] = useState(0);
   useEffect(() => {
-    const raf = requestAnimationFrame(() => setW(pct));
+    const raf = requestAnimationFrame(() => setW(cible));
     return () => cancelAnimationFrame(raf);
-  }, [pct]);
+  }, [cible]);
 
   return (
     // `title` optionnel : porte la comparaison à la période précédente sans

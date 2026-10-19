@@ -4,6 +4,7 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import MotifBar from '../../../components/ui/MotifBar';
 import { libelleMotif } from '../../../data/motifsSortie';
+import { libelleFamille } from '../../../data/familles';
 import { useRhTurnover } from '../../../hooks/useRhData';
 import { comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -91,7 +92,7 @@ export default function Turnover() {
 
         const { tauxTurnover, sorties, effectifMoyen, moisComptes,
                 retention1An, retention2Ans, reintegration, delaiReplacement,
-                sortiesParMotif } = result;
+                sortiesParMotif, turnoverParDepartement } = result;
 
         /* L'ÉCART EST EN POINTS, PAS EN POURCENTAGE : comparer deux taux en
            pourcentage donnerait « +73 % » pour un passage de 87 à 152, ce qui
@@ -291,16 +292,50 @@ export default function Turnover() {
                 droite s'étaler sur toute la largeur, qu'il faudrait défaire
                 en l'ajoutant. */}
             <div className={styles.deuxCol}>
-              <Card>
-                <div className={styles.etat}>
-                  <div className={styles.etatTitre}>Turnover par département</div>
-                  <div className={styles.etatTexte}>
-                    Carte à faire. La maquette y montre 206 % sur l’administratif :
-                    l’échelle devra l’accepter sans écrêter, puisqu’une agence dont
-                    les missions durent quelques mois remplace plus d’une fois
-                    chaque poste dans l’année.
+              {/* TURNOVER PAR DÉPARTEMENT.
+                  LES BARRES SONT À L'ÉCHELLE DU PLUS FORT, pas sur 100, et
+                  c'est pour ça que MotifBar a reçu une largeur distincte de
+                  sa valeur. Ce ne sont pas des parts d'un total mais des
+                  TAUX : l'administratif est à 170 % en 2026. Écrêter à 100
+                  aurait donné la même longueur à un département qui remplace
+                  tout son effectif une fois et à un autre qui le remplace
+                  presque deux fois.
+
+                  LA VENTILATION EST UNE VRAIE DÉCOMPOSITION, vérifié à
+                  chaque appel par la route : la somme des sorties vaut la
+                  tuile, celle des effectifs moyens vaut le dénominateur
+                  global. Le taux d'ensemble est donc la combinaison de
+                  ceux-ci, et non un chiffre calculé à part qui pourrait
+                  diverger en silence. */}
+              <Card title="Turnover par département">
+                {turnoverParDepartement?.length ? (
+                  <>
+                    {(() => {
+                      const max = Math.max(...turnoverParDepartement.map(d => d.taux || 0), 1);
+                      return turnoverParDepartement.map(d => (
+                        <MotifBar
+                          key={d.famille}
+                          label={libelleFamille(d.famille)}
+                          pct={d.taux === null ? 0 : d.taux}
+                          largeur={d.taux === null ? 0 : Math.round((100 * d.taux) / max)}
+                          count={d.sorties}
+                          fillColor="rgba(38,0,31,0.95)"
+                          title={`${fmtNumber(d.sorties)} sortie${d.sorties > 1 ? 's' : ''} pour ${fmtNumber(d.effectifMoyen)} personnes en moyenne`}
+                        />
+                      ));
+                    })()}
+                    <div className={styles.mention}>
+                      Taux de turnover du département, et non une part d’un total :
+                      les barres sont à l’échelle du plus fort. Au-dessus de 100 %, le
+                      département a remplacé plus d’une fois chacun de ses postes sur
+                      la période. Le nombre à droite est celui des sorties.
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.etat}>
+                    <div className={styles.etatTexte}>Aucun département sur la période.</div>
                   </div>
-                </div>
+                )}
               </Card>
 
               {/* PART DES SORTIES PAR MOTIF.
