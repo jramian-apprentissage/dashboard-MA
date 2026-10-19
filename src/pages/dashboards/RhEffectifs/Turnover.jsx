@@ -2,6 +2,8 @@ import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
+import MotifBar from '../../../components/ui/MotifBar';
+import { libelleMotif } from '../../../data/motifsSortie';
 import { useRhTurnover } from '../../../hooks/useRhData';
 import { comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -88,7 +90,8 @@ export default function Turnover() {
         }
 
         const { tauxTurnover, sorties, effectifMoyen, moisComptes,
-                retention1An, retention2Ans, reintegration, delaiReplacement } = result;
+                retention1An, retention2Ans, reintegration, delaiReplacement,
+                sortiesParMotif } = result;
 
         /* L'ÉCART EST EN POINTS, PAS EN POURCENTAGE : comparer deux taux en
            pourcentage donnerait « +73 % » pour un passage de 87 à 152, ce qui
@@ -282,16 +285,60 @@ export default function Turnover() {
             ) : null}
             </div>
 
-            <Card>
-              <div className={styles.etat}>
-                <div className={styles.etatTitre}>Vue en construction</div>
-                <div className={styles.etatTexte}>
-                  Première tuile posée. Viennent ensuite la rétention à un an, la
-                  réintégration après perte non fautive, le délai de replacement, le
-                  turnover par département et le motif des sorties.
+            {/* LA RANGÉE DE LA MAQUETTE : turnover par département à gauche,
+                part des sorties par motif à droite. La carte de gauche reste
+                à faire, et elle garde sa place plutôt que de laisser celle de
+                droite s'étaler sur toute la largeur, qu'il faudrait défaire
+                en l'ajoutant. */}
+            <div className={styles.deuxCol}>
+              <Card>
+                <div className={styles.etat}>
+                  <div className={styles.etatTitre}>Turnover par département</div>
+                  <div className={styles.etatTexte}>
+                    Carte à faire. La maquette y montre 206 % sur l’administratif :
+                    l’échelle devra l’accepter sans écrêter, puisqu’une agence dont
+                    les missions durent quelques mois remplace plus d’une fois
+                    chaque poste dans l’année.
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+
+              {/* PART DES SORTIES PAR MOTIF.
+                  ELLE COMPTE DES FINS DE MISSION, pas des personnes, et c'est
+                  la seule exception assumée à la règle de la page : un motif
+                  appartient à une mission qui s'arrête. Cinq personnes voient
+                  d'ailleurs leurs missions s'arrêter pour des motifs
+                  différents en 2026. D'où le total annoncé en toutes lettres
+                  sous les barres, pour qu'on ne le confonde pas avec la tuile
+                  « Sorties » de la page 2, qui compte 78 personnes là où il y
+                  a 86 fins de mission. */}
+              <Card title="Part des sorties par motif">
+                {sortiesParMotif?.lignes?.length ? (
+                  <>
+                    {sortiesParMotif.lignes.map(l => (
+                      <MotifBar
+                        key={l.motif || 'non-saisi'}
+                        label={libelleMotif(l.motif)}
+                        pct={l.part}
+                        count={l.n}
+                        fillColor="rgba(38,0,31,0.95)"
+                      />
+                    ))}
+                    <div className={styles.mention}>
+                      {fmtNumber(sortiesParMotif.total)} fins de mission sur la période.
+                      Le motif porte sur la mission qui s’arrête, pas sur la personne :
+                      quelqu’un qui quitte deux missions compte deux fois.
+                    </div>
+                  </>
+                ) : (
+                  <div className={styles.etat}>
+                    <div className={styles.etatTexte}>
+                      Aucune fin de mission sur la période.
+                    </div>
+                  </div>
+                )}
+              </Card>
+            </div>
           </div>
         );
       }}
