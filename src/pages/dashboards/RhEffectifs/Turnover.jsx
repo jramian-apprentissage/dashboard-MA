@@ -92,7 +92,16 @@ export default function Turnover() {
 
         const { tauxTurnover, sorties, effectifMoyen, moisComptes,
                 retention1An, retention2Ans, reintegration, delaiReplacement,
-                sortiesParMotif, turnoverParDepartement } = result;
+                sortiesParMotif, turnoverParDepartement, causesDeDepart } = result;
+
+        /* Les trois nombres de la mention du bas, calculés ici pour qu'ils ne
+           puissent pas se contredire : sans commentaire, avec un commentaire
+           qui ne dit pas la cause, et le total qui ne dit pas pourquoi. */
+        const sansCommentaire = causesDeDepart
+          ? causesDeDepart.total - causesDeDepart.avecCommentaire
+          : 0;
+        const nonRenseignees = causesDeDepart?.lignes?.find(l => l.cause === 'Non renseigné')?.n ?? 0;
+        const notesSansCause = Math.max(0, nonRenseignees - sansCommentaire);
 
         /* L'ÉCART EST EN POINTS, PAS EN POURCENTAGE : comparer deux taux en
            pourcentage donnerait « +73 % » pour un passage de 87 à 152, ce qui
@@ -374,6 +383,49 @@ export default function Turnover() {
                 )}
               </Card>
             </div>
+
+            {/* L'ANALYSE DES SORTIES, demandée par Clémence en relecture.
+                ELLE NE SORT PAS DE LA COLONNE MOTIF, qui dit QUI a mis fin à
+                la mission et jamais POURQUOI, mais du commentaire en texte
+                libre, lu par une grille de mots-clés. Le détail des règles et
+                leurs pièges sont dans server/src/causesDepart.js.
+
+                C'EST LA SEULE CARTE DE LA PAGE DONT LES CHIFFRES SONT
+                INTERPRÉTÉS, et la mention du bas le dit : ailleurs on compte
+                des dates, ici on lit des phrases écrites à la main. */}
+            {causesDeDepart?.lignes?.length ? (
+              <>
+                <SectionLabel>Analyse des sorties</SectionLabel>
+                <Card title="Cause des départs">
+                  <table className={styles.tbl}>
+                    <thead>
+                      <tr><th>Cause</th><th>Sorties</th><th>Part</th></tr>
+                    </thead>
+                    <tbody>
+                      {causesDeDepart.lignes.map(l => (
+                        <tr key={l.cause}>
+                          <td>{l.cause}</td>
+                          <td className={styles.num}>{fmtNumber(l.n)}</td>
+                          <td className={styles.num}>{fmtNumber(l.part)} %</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className={styles.mention}>
+                    {fmtNumber(causesDeDepart.avecCommentaire)} des{' '}
+                    {fmtNumber(causesDeDepart.total)} fins de mission portent un
+                    commentaire.
+                    {notesSansCause > 0 && (
+                      <> Sur ces commentaires, {fmtNumber(notesSansCause)} notent une
+                      date de démarrage ou une consigne interne plutôt qu’une cause.</>
+                    )}{' '}
+                    La cause est donc lue dans une phrase écrite à la main, pas dans une
+                    colonne prévue pour ça : c’est le seul endroit de la page où le
+                    chiffre repose sur une interprétation.
+                  </div>
+                </Card>
+              </>
+            ) : null}
           </div>
         );
       }}
