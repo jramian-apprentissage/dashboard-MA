@@ -23,14 +23,13 @@
    imposée partout. */
 .blocGraphe { margin-bottom: 20px; }
 
-/* UNE NOTE SOUS LA RANGÉE DE TUILES, et non sous une carte. .mention est
-   dessinée pour être le pied d'une carte ; employée telle quelle après la
-   grille, elle hériterait des 24 px de marge basse de .kpiGrid et flotterait
-   à 34 px des tuiles qu'elle commente, où elle se lirait comme un paragraphe
-   de page. L'enveloppe reprend donc la marge à son compte et l'ôte à la
-   grille, plutôt que de la rattraper par une marge négative. */
-.rangeeTuiles { margin-bottom: 24px; }
-.rangeeTuiles .kpiGrid { margin-bottom: 0; }
+/* .rangeeTuiles a existé ici du 19/10 au 19/10 : une enveloppe qui reprenait
+   la marge basse de .kpiGrid à son compte, pour coller une note sous la
+   rangée de tuiles de la page Turnover sans la laisser flotter à 34 px.
+   La note a été retirée le jour même, à la demande de Jimmy, et l'enveloppe
+   avec elle. Si une note revient sous une rangée de tuiles, c'est ce
+   mécanisme qu'il faut reposer : .mention est dessinée pour être le pied
+   d'une carte, pas d'une grille. */
 
 /* Graphique d'évolution, posé sous les quatre tuiles. Mêmes classes que dans
    Activite.module.css, redéclarées ici : un module par dashboard est la

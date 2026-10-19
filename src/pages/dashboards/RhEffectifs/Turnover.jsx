@@ -94,14 +94,11 @@ export default function Turnover() {
                 retention1An, retention2Ans, reintegration, delaiReplacement,
                 sortiesParMotif, turnoverParDepartement, causesDeDepart } = result;
 
-        /* Les trois nombres de la mention du bas, calculés ici pour qu'ils ne
-           puissent pas se contredire : sans commentaire, avec un commentaire
-           qui ne dit pas la cause, et le total qui ne dit pas pourquoi. */
-        const sansCommentaire = causesDeDepart
-          ? causesDeDepart.total - causesDeDepart.avecCommentaire
-          : 0;
-        const nonRenseignees = causesDeDepart?.lignes?.find(l => l.cause === 'Non renseigné')?.n ?? 0;
-        const notesSansCause = Math.max(0, nonRenseignees - sansCommentaire);
+        /* Les trois nombres de la mention du bas de la carte des causes
+           vivaient ici, calculés ensemble pour ne pas pouvoir se contredire.
+           Retirés le 19/10 avec elle. La route rend toujours `total` et
+           `avecCommentaire` : il suffit de les reprendre pour remettre la
+           mention, le calcul tenait en deux lignes. */
 
         /* L'ÉCART EST EN POINTS, PAS EN POURCENTAGE : comparer deux taux en
            pourcentage donnerait « +73 % » pour un passage de 87 à 152, ce qui
@@ -167,7 +164,6 @@ export default function Turnover() {
         return (
           <div className={styles.page}>
             <SectionLabel badge="Sheet LISTE DES COLLABORATEURS">Turnover et fidélisation</SectionLabel>
-            <div className={styles.rangeeTuiles}>
             <div className={styles.kpiGrid}>
               {/* LE TAUX DE TURNOVER GLOBAL. La formule a été choisie sur
                   mesure le 19/10, les quatre candidates ayant été calculées
@@ -273,27 +269,22 @@ export default function Turnover() {
               />
             </div>
 
-            {/* POURQUOI CETTE NOTE EXISTE. Deux taux de fidélisation dont le
-                plus long est le plus élevé se lisent comme une erreur de
-                calcul. Elle nomme la seule chose qui l'explique, la taille et
-                la nature des deux populations, sans conclure à la place du
-                lecteur sur ce qui a changé dans l'agence.
-
-                ELLE N'APPARAÎT QUE S'IL Y A DEUX TAUX. Sans cohorte à deux
-                ans, il n'y a pas de paradoxe à désamorcer, et la note
-                affirmait alors une absurdité : « 8 collaborateurs ont atteint
-                leur premier anniversaire, un taux à deux ans plus élevé n'est
-                donc pas une incohérence », sur une période où aucun taux à
-                deux ans n'existe. Vu sur 2024 le 19/10. */}
-            {retention1An?.n && retention2Ans?.n ? (
-              <div className={styles.mention}>
-                Les deux taux ne portent pas sur les mêmes personnes :{' '}
-                {fmtNumber(retention1An.n)} collaborateurs ont atteint leur premier
-                anniversaire dans l’agence, {fmtNumber(retention2Ans.n)} leur deuxième.
-                Un taux à deux ans plus élevé n’est donc pas une incohérence.
-              </div>
-            ) : null}
-            </div>
+            {/* NOTE RETIRÉE LE 19/10, demande de Jimmy, en même temps que les
+                mentions des trois cartes. Elle disait que les deux taux de
+                rétention ne portent pas sur les mêmes personnes, 152 contre
+                45, et qu'un taux à deux ans plus élevé n'est donc pas une
+                incohérence.
+                CE QU'ON PERD, et c'est le plus gênant des quatre retraits :
+                les deux taux se lisent CÔTE À CÔTE dans la rangée, 32,9 % à un
+                an et 48,9 % à deux, et plus rien n'explique pourquoi le plus
+                long est le plus élevé. Les tailles de population sont dans la
+                ligne du bas de la seconde tuile, « À 2 ans : 48,9 % sur 45
+                personnes », c'est désormais le seul indice.
+                Elle n'apparaissait que s'il y avait deux taux : sans cohorte à
+                deux ans elle affirmait une absurdité, vu sur 2024. Reposer la
+                condition avec elle si elle revient, ainsi que l'enveloppe
+                .rangeeTuiles, qui n'existait que pour la coller sous la
+                grille et qui est partie avec. */}
 
             {/* LA RANGÉE DE LA MAQUETTE : turnover par département à gauche,
                 part des sorties par motif à droite. La carte de gauche reste
@@ -333,12 +324,14 @@ export default function Turnover() {
                         />
                       ));
                     })()}
-                    <div className={styles.mention}>
-                      Taux de turnover du département, et non une part d’un total :
-                      les barres sont à l’échelle du plus fort. Au-dessus de 100 %, le
-                      département a remplacé plus d’une fois chacun de ses postes sur
-                      la période. Le nombre à droite est celui des sorties.
-                    </div>
+                    {/* MENTION RETIRÉE LE 19/10, demande de Jimmy. Elle disait
+                        que les barres sont à l'échelle du plus fort et non des
+                        parts d'un total, et ce qu'un taux au-dessus de 100 %
+                        signifie. Ce qu'on perd : la carte voisine affiche des
+                        PARTS avec la même forme de barres, donc rien ne
+                        distingue plus les deux lectures à l'écran. Le titre et
+                        le mot « turnover » doivent suffire. À reposer si
+                        quelqu'un lit l'administratif comme 170 % d'un total. */}
                   </>
                 ) : (
                   <div className={styles.etat}>
@@ -368,11 +361,14 @@ export default function Turnover() {
                         fillColor="rgba(38,0,31,0.95)"
                       />
                     ))}
-                    <div className={styles.mention}>
-                      {fmtNumber(sortiesParMotif.total)} fins de mission sur la période.
-                      Le motif porte sur la mission qui s’arrête, pas sur la personne :
-                      quelqu’un qui quitte deux missions compte deux fois.
-                    </div>
+                    {/* MENTION RETIRÉE LE 19/10, demande de Jimmy. Elle
+                        annonçait le total, « 86 fins de mission sur la
+                        période », et disait que le motif porte sur la mission
+                        et non sur la personne. Ce qu'on perd est réel : cette
+                        carte compte 86 là où la tuile « Sorties » de la page 2
+                        compte 78 personnes, et plus rien à l'écran n'explique
+                        l'écart. Il reste lisible en additionnant les nombres
+                        des barres, mais plus personne ne le dit. */}
                   </>
                 ) : (
                   <div className={styles.etat}>
@@ -411,18 +407,16 @@ export default function Turnover() {
                       ))}
                     </tbody>
                   </table>
-                  <div className={styles.mention}>
-                    {fmtNumber(causesDeDepart.avecCommentaire)} des{' '}
-                    {fmtNumber(causesDeDepart.total)} fins de mission portent un
-                    commentaire.
-                    {notesSansCause > 0 && (
-                      <> Sur ces commentaires, {fmtNumber(notesSansCause)} notent une
-                      date de démarrage ou une consigne interne plutôt qu’une cause.</>
-                    )}{' '}
-                    La cause est donc lue dans une phrase écrite à la main, pas dans une
-                    colonne prévue pour ça : c’est le seul endroit de la page où le
-                    chiffre repose sur une interprétation.
-                  </div>
+                  {/* MENTION RETIRÉE LE 19/10, demande de Jimmy. Elle disait
+                      combien de fins portent un commentaire, combien de ces
+                      commentaires notent une date plutôt qu'une cause, et que
+                      la cause est LUE dans du texte libre.
+                      C'est celle dont le retrait coûte le plus cher : c'est la
+                      seule carte de la page dont les nombres reposent sur une
+                      interprétation, et plus rien ne le signale. « Non
+                      renseigné » à 48,8 % reste le seul indice que la source
+                      est incomplète. À reposer si quelqu'un prend ce tableau
+                      pour le compte exact des causes de départ. */}
                 </Card>
               </>
             ) : null}
