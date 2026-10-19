@@ -3,12 +3,14 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import MotifBar from '../../../components/ui/MotifBar';
+import DonutChart from '../../../components/ui/DonutChart';
+import { couleurCause } from '../../../data/causesDepart';
 import { libelleMotif } from '../../../data/motifsSortie';
 import { libelleFamille } from '../../../data/familles';
 import { useRhTurnover } from '../../../hooks/useRhData';
 import { comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { fmtNumber } from '../../../utils/formatNumber';
+import { fmtNumber, fmtPourcentage } from '../../../utils/formatNumber';
 import styles from './Rh.module.css';
 
 /* Vue 3 du Suivi des effectifs, « Turnover et fidélisation ».
@@ -393,6 +395,33 @@ export default function Turnover() {
               <>
                 <SectionLabel>Analyse des sorties</SectionLabel>
                 <Card title="Cause des départs">
+                  <div className={styles.donutEtTable}>
+                    {/* L'ANNEAU SUIT L'ORDRE DÉCLARÉ DES CAUSES, pas le
+                        classement par volume, et le tableau à droite suit le
+                        volume. Ce n'est pas une incohérence : une couleur doit
+                        suivre la cause et jamais son rang, sinon un mois où
+                        l'insatisfaction passe devant la faute repeint les deux
+                        tranches et deux captures du même écran ne se comparent
+                        plus. L'adjacence validée au validateur est celle de cet
+                        ordre-là. Le détail est dans data/causesDepart.js. */}
+                    <DonutChart
+                      variant="donut"
+                      data={[...causesDeDepart.lignes].sort((a, b) => a.rang - b.rang).map(l => l.n)}
+                      labels={[...causesDeDepart.lignes].sort((a, b) => a.rang - b.rang).map(l => l.cause)}
+                      colors={[...causesDeDepart.lignes].sort((a, b) => a.rang - b.rang).map(l => couleurCause(l.rang))}
+                      height={196}
+                      centerValue={causesDeDepart.total}
+                      centerLabel="départs"
+                      tooltip={(label, value, pct) =>
+                        `${label} : ${value} départ${value > 1 ? 's' : ''} (${fmtPourcentage(pct)})`}
+                      /* Pas de rappels filaires : neuf tranches dont plusieurs
+                         sous 3 % les feraient se chevaucher. Le tableau de
+                         droite est la légende, et c'est aussi le secours que le
+                         validateur exige pour les teintes dont le contraste sur
+                         fond blanc reste sous 3:1. */
+                      showDataLabels={false}
+                      paddingLateral={8}
+                    />
                   <table className={styles.tbl}>
                     <thead>
                       <tr><th>Cause</th><th>Sorties</th><th>Part</th></tr>
@@ -400,13 +429,22 @@ export default function Turnover() {
                     <tbody>
                       {causesDeDepart.lignes.map(l => (
                         <tr key={l.cause}>
-                          <td>{l.cause}</td>
+                          <td>
+                            <span className={styles.libelle}>
+                              <span
+                                className={styles.puce}
+                                style={{ background: couleurCause(l.rang) }}
+                              />
+                              {l.cause}
+                            </span>
+                          </td>
                           <td className={styles.num}>{fmtNumber(l.n)}</td>
                           <td className={styles.num}>{fmtNumber(l.part)} %</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                  </div>
                   {/* MENTION RETIRÉE LE 19/10, demande de Jimmy. Elle disait
                       combien de fins portent un commentaire, combien de ces
                       commentaires notent une date plutôt qu'une cause, et que
