@@ -85,14 +85,23 @@ export function compareValueText(current, ref, comparePeriodKey, invert = false)
 // (retour de Jimmy, 16/08). Un écart en points ne se lit pas à la décimale
 // près — l'entier est la seule forme utile, et la seule qui ne peut pas
 // dégénérer.
-export function comparePtsText(current, ref, comparePeriodKey) {
+// `invert` : même rôle que sur compareValueText, et ajouté le 19/10 pour le
+// taux de turnover du Dash RH. Sur un taux de PERTE, le chiffre qui descend
+// est une bonne nouvelle : la couleur doit virer au vert quand il baisse,
+// pendant que la flèche continue de suivre le chiffre. Sans ce paramètre, la
+// tuile annonçait « -42 pts » en rouge, c'est-à-dire exactement le contraire
+// de ce qu'il faut comprendre. Par défaut faux, donc les quatre appels
+// existants du dashboard commercial ne bougent pas.
+export function comparePtsText(current, ref, comparePeriodKey, invert = false) {
   if (ref == null || !Number.isFinite(ref) || !Number.isFinite(current)) return null;
   const diff = Math.round(current - ref);
   const sign = diff > 0 ? '+' : '';
   const unit = Math.abs(diff) === 1 ? 'pt' : 'pts';
   const sens = diff > 0 ? 'up' : diff < 0 ? 'down' : 'neutral';
+  let dir = sens;
+  if (invert && dir !== 'neutral') dir = dir === 'up' ? 'down' : 'up';
   return {
-    dir: Math.abs(diff) < SEUIL_STABILITE_PTS ? 'neutral' : sens,
+    dir: Math.abs(diff) < SEUIL_STABILITE_PTS ? 'neutral' : dir,
     sens,
     text: `${diff === 0 ? '=' : sign + diff + ' ' + unit} vs ${compareLabel(comparePeriodKey)}`,
   };

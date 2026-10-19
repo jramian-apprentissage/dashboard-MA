@@ -67,6 +67,43 @@ export function useRhAnnuel() {
   return etat;
 }
 
+/* Vue 3, « Turnover et fidélisation ».
+ *
+ * HOOK SÉPARÉ DE useRhEffectifs, pour la même raison que la série : ce n'est
+ * pas la même question ni le même coût. L'effectif moyen fait un sous-comptage
+ * par mois de la période, donc dix à douze sur une année. Le fondre dans le
+ * hook de la page 1 ferait payer ce balayage à des écrans qui n'en ont pas
+ * besoin.
+ *
+ * DEUX BORNES, parce que le taux est un flux rapporté à un stock moyen : les
+ * sorties se comptent sur l'intervalle, et l'effectif moyen se calcule sur ce
+ * même intervalle. Une seule date ne suffirait ni à l'un ni à l'autre. */
+export function useRhTurnover() {
+  const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
+  const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });
+
+  useEffect(() => {
+    let annule = false;
+    setEtat(e => ({ ...e, loading: true }));
+    const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
+
+    Promise.all([
+      fetchRh(`/turnover?du=${from}&au=${to}`),
+      compareActive && compareRange
+        ? fetchRh(`/turnover?du=${compareRange.from}&au=${compareRange.to}`)
+        : Promise.resolve(null),
+    ])
+      .then(([result, compareResult]) => {
+        if (!annule) setEtat({ result, compareResult, loading: false, error: null });
+      })
+      .catch(e => { if (!annule) setEtat({ result: null, compareResult: null, loading: false, error: e.message }); });
+
+    return () => { annule = true; };
+  }, [periodKey, customFrom, customTo, compareActive, compareRange]);
+
+  return etat;
+}
+
 export function useRhEffectifs() {
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });
