@@ -16,9 +16,14 @@ import { LoaderMark } from './Loader';
    que chaque onglet relise la base. `CLE_SYNCHRO_MONDAY` fait contourner le
    cache navigateur par ces nouvelles lectures (voir services/api.js). */
 
+/* `ferme` compte autant que `cree` et `maj` : une ligne fermée parce que son
+   élément a disparu du board est une modification à part entière, et souvent
+   la plus lourde. Le 20/10, la toute première fermeture a retiré 600 € du CA
+   du mois — un profil supprimé sur Monday que la base facturait encore. Sans
+   ce terme, le bouton aurait répondu « aucune modification » ce jour-là. */
 function nbModifications(bilan) {
   return ['comptes', 'profils', 'leads']
-    .reduce((s, k) => s + (bilan?.[k]?.cree || 0) + (bilan?.[k]?.maj || 0), 0);
+    .reduce((s, k) => s + (bilan?.[k]?.cree || 0) + (bilan?.[k]?.maj || 0) + (bilan?.[k]?.ferme || 0), 0);
 }
 
 export default function MajMonday({ className, classeStatut }) {
