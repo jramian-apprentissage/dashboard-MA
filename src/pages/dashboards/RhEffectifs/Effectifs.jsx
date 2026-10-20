@@ -420,11 +420,11 @@ export default function Effectifs() {
                 </button>
               )}
             >
-              <div className={styles.sousTitre}>
-                {avecInternes
-                  ? 'Tout l’effectif, internes compris'
-                  : 'Uniquement l’effectif placé, en mission chez un client'}
-              </div>
+              {/* RIEN AU-DESSUS DES BARRES. Le périmètre s'écrivait ici, en
+                  sous-titre ; il est descendu en pied de carte le 20/10, à la
+                  demande de Jimmy : aucun commentaire ne doit ouvrir un
+                  graphique. Même geste que sur la carte « Évolution annuelle »
+                  de la page 2, pour la même raison. */}
               <div className={styles.barres}>
                 {/* DEUX EN-TÊTES, et seulement pour les deux dernières
                     colonnes : « 20,5 mois » après un « → 11 » ne dit pas de
@@ -446,19 +446,22 @@ export default function Effectifs() {
                   />
                 ))}
               </div>
-              {/* LE RANG DES BARRES CHANGE AVEC LA BASCULE, et c'est tout son
-                  intérêt : Support client et Administratif s'échangent leur
-                  place, parce que l'interne est surtout administratif et
-                  technique. On le dit, plutôt que de laisser croire à un bug
-                  d'affichage. */}
+              {/* LE PÉRIMÈTRE, ET RIEN D'AUTRE. Cette ligne disait auparavant
+                  le total et le rapprochait de la tuile correspondante, en
+                  prévenant que la bascule change l'ordre des départements :
+                  Support client et Administratif s'échangent leur place,
+                  parce que l'interne est surtout administratif et technique.
+                  Retiré le 20/10 à la demande de Jimmy, en même temps que les
+                  pieds de carte de la page 3.
+                  CE QUI RESTE EST LE STRICT NÉCESSAIRE : la bascule a deux
+                  états et les barres ne disent pas lequel est actif. Sans
+                  cette ligne, rien ne distingue un effectif de 95 d'un
+                  effectif placé de 73, et l'échange de rang entre deux
+                  départements passerait pour un défaut d'affichage. */}
               <div className={styles.mention}>
                 {avecInternes
-                  ? <>{fmtNumber(totalFamilles)} collaborateurs, soit la première tuile.
-                      Les {fmtNumber(effectifInterne)} internes sont inclus, ce qui change
-                      l’ordre des départements.</>
-                  : <>{fmtNumber(totalFamilles)} collaborateurs placés, soit la deuxième
-                      tuile. Les {fmtNumber(effectifInterne)} internes ne sont pas dans ces
-                      barres.</>}
+                  ? 'Tout l’effectif, internes compris'
+                  : 'Uniquement l’effectif placé, en mission chez un client'}
               </div>
             </Card>
           </div>

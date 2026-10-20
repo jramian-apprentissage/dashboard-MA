@@ -77,15 +77,14 @@
 .tbl tr:last-child td { border-bottom: none; }
 .num { text-align: right; font-weight: 700; white-space: nowrap; }
 
-/* Le sous-titre d'une carte : il porte un PÉRIMÈTRE, pas une décoration.
-   « Uniquement l'effectif placé » change ce que les chiffres du dessous
-   veulent dire, il doit donc se lire avant eux. */
-.sousTitre {
-  font-size: 10.5px;
-  color: var(--text3);
-  margin: -4px 0 14px;
-  line-height: 1.45;
-}
+/* .sousTitre a vécu ici jusqu'au 20/10 : la ligne de périmètre d'une carte,
+   posée AVANT ses chiffres parce qu'elle change ce qu'ils veulent dire.
+   Deux cartes l'ont portée, « Évolution annuelle » puis « Effectif par
+   département », et toutes deux l'ont vue descendre en pied de carte sur
+   décision de Jimmy : aucun commentaire ne doit ouvrir un graphique.
+   La règle est retirée plutôt que laissée morte. Si un périmètre doit un
+   jour se lire avant les chiffres, c'est elle qu'il faut reposer, et non
+   .mention, qui est dessinée pour un pied de carte et porte son filet. */
 
 .mention {
   font-size: 10.5px; color: var(--text2); margin-top: 10px;
