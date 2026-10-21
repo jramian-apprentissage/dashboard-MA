@@ -222,6 +222,25 @@
   border-color: var(--myrtille);
 }
 
+/* ─── Groupes « internes » / « clients » ────────────────────────────────────
+   Demande de Clémence du 27/07 : les dashboards internes au-dessus, les
+   clients en dessous, pour qu'un Julien ou un Christophe ne scrolle pas les
+   dashboards clients avant de trouver les siens.
+   Le séparateur est celui de la section Administration, à l'identique : c'est
+   déjà le trait qui dit « autre nature » sur cette page, en poser un second,
+   différent, ferait croire à deux niveaux de hiérarchie. Le titre reprend
+   .heroLabel, l'intertitre de la maison. */
+.scopeSection + .scopeSection { margin-top: 30px; }
+.scopeDivider { height: 1px; background: rgba(38,0,31,0.08); margin-bottom: 20px; }
+.scopeTitle {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  color: rgba(38,0,31,0.55);
+}
+
 /* ─── Section admin — décorrélée des cartes dashboards ──────────────────── */
 .adminSection { margin-top: 8px; }
 .adminDivider { height: 1px; background: rgba(38,0,31,0.08); margin-bottom: 20px; }

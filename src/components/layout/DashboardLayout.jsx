@@ -172,8 +172,8 @@ export default function DashboardLayout({
   // se trouve, sur le hero desktop comme sur le bandeau compact mobile
   // (voir compactHeader plus bas, qui n'est pas un descendant du hero donc
   // ne peut pas hériter de .heroAsus/.heroCiment/.heroCommercialRC via CSS).
-  const periodPickerTheme = dashboardId === 'asus' ? 'asus' : dashboardId === 'commercial-rc' ? 'argent' : dashboardId === 'commercial-activite' ? 'myrtille' : dashboardId === 'rh-effectifs' ? 'glycine' : dashboardId === 'rh-recrutement' ? 'sauge' : 'default';
-  const heroThemeCls = dashboardId === 'asus' ? styles.heroAsus : dashboardId === 'commercial-activite' ? styles.heroCiment : dashboardId === 'commercial-rc' ? styles.heroCommercialRC : dashboardId === 'rh-effectifs' ? styles.heroGlycine : dashboardId === 'rh-recrutement' ? styles.heroSauge : '';
+  const periodPickerTheme = dashboardId === 'asus' ? 'asus' : dashboardId === 'commercial-rc' ? 'argent' : dashboardId === 'commercial-activite' ? 'myrtille' : dashboardId === 'rh-effectifs' ? 'glycine' : dashboardId === 'rh-recrutement' ? 'abricot' : 'default';
+  const heroThemeCls = dashboardId === 'asus' ? styles.heroAsus : dashboardId === 'commercial-activite' ? styles.heroCiment : dashboardId === 'commercial-rc' ? styles.heroCommercialRC : dashboardId === 'rh-effectifs' ? styles.heroGlycine : dashboardId === 'rh-recrutement' ? styles.heroAbricot : '';
   const compactThemeCls = dashboardId === 'asus' ? styles.compactHeaderAsus : dashboardId === 'commercial-activite' ? styles.compactHeaderCiment : dashboardId === 'commercial-rc' ? styles.compactHeaderCommercialRC : '';
 
   return (

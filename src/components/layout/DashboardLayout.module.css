@@ -154,22 +154,22 @@
    POURQUOI UNE SECONDE TEINTE : les deux dashboards RH sont voisins dans
    le menu et partagent leurs filtres. Sans couleur propre, on ne sait plus
    lequel on regarde après un changement d'onglet. */
-.heroSauge { background: var(--sauge); }
-.heroSauge .heroBg { opacity: 1; }
-.heroSauge .heroOverlay {
+.heroAbricot { background: var(--abricot); }
+.heroAbricot .heroBg { opacity: 1; }
+.heroAbricot .heroOverlay {
   background: linear-gradient(
     100deg,
-    var(--sauge) 0%,
-    var(--sauge) 42%,
-    rgba(142,207,170,0.85) 50%,
-    rgba(142,207,170,0) 62%
+    var(--abricot) 0%,
+    var(--abricot) 42%,
+    rgba(224,185,158,0.85) 50%,
+    rgba(224,185,158,0) 62%
   );
 }
-.heroSauge .title,
-.heroSauge .titleEm,
-.heroSauge .subtitle,
-.heroSauge .subtitlePeriod,
-.heroSauge .tabBadge { color: var(--myrtille); }
+.heroAbricot .title,
+.heroAbricot .titleEm,
+.heroAbricot .subtitle,
+.heroAbricot .subtitlePeriod,
+.heroAbricot .tabBadge { color: var(--myrtille); }
 
 .heroCiment { background: var(--ciment); }
 .heroCiment .heroBg { opacity: 1; }
@@ -245,31 +245,31 @@
 .heroGlycine .compareModeBtn:hover { color: var(--glycine-encre); }
 .heroGlycine .compareModeBtnActive { background: var(--glycine-active); color: var(--myrtille); }
 
-/* Recrutement et pipeline — mêmes reprises que la glycine, à l'encre sauge.
+/* Recrutement et pipeline — mêmes reprises que la glycine, à l'encre abricot.
    Sans ce bloc les filtres retombent sur le soleil, la teinte par défaut, et
-   deux pastilles jaunes se posent au milieu d'une rangée verte. */
-.heroSauge .heroBtn {
-  color: var(--sauge-encre);
-  border-color: rgba(53,107,80,0.32);
+   deux pastilles jaunes se posent au milieu d'une rangée abricot. */
+.heroAbricot .heroBtn {
+  color: var(--abricot-encre);
+  border-color: rgba(136,84,48,0.32);
 }
-.heroSauge .heroBtn:hover {
-  background: rgba(53,107,80,0.10);
-  border-color: rgba(53,107,80,0.58);
-  color: var(--sauge-encre);
+.heroAbricot .heroBtn:hover {
+  background: rgba(136,84,48,0.10);
+  border-color: rgba(136,84,48,0.58);
+  color: var(--abricot-encre);
 }
-.heroSauge .heroBtnActive {
-  background: var(--sauge-active);
-  border-color: var(--sauge-encre);
+.heroAbricot .heroBtnActive {
+  background: var(--abricot-active);
+  border-color: var(--abricot-encre);
   color: var(--myrtille);
 }
-.heroSauge .heroBtnX { color: rgba(53,107,80,0.5); }
-.heroSauge .heroBtnX:hover { color: var(--sauge-encre); background: rgba(53,107,80,0.1); }
-.heroSauge .dot { background: var(--sauge-encre); box-shadow: 0 0 5px rgba(53,107,80,0.5); }
-.heroSauge .compareModeGroup { border-color: rgba(53,107,80,0.32); }
-.heroSauge .compareModeBtn { color: rgba(53,107,80,0.6); }
-.heroSauge .compareModeBtn:not(:last-child) { border-right-color: rgba(53,107,80,0.24); }
-.heroSauge .compareModeBtn:hover { color: var(--sauge-encre); }
-.heroSauge .compareModeBtnActive { background: var(--sauge-active); color: var(--myrtille); }
+.heroAbricot .heroBtnX { color: rgba(136,84,48,0.5); }
+.heroAbricot .heroBtnX:hover { color: var(--abricot-encre); background: rgba(136,84,48,0.1); }
+.heroAbricot .dot { background: var(--abricot-encre); box-shadow: 0 0 5px rgba(136,84,48,0.5); }
+.heroAbricot .compareModeGroup { border-color: rgba(136,84,48,0.32); }
+.heroAbricot .compareModeBtn { color: rgba(136,84,48,0.6); }
+.heroAbricot .compareModeBtn:not(:last-child) { border-right-color: rgba(136,84,48,0.24); }
+.heroAbricot .compareModeBtn:hover { color: var(--abricot-encre); }
+.heroAbricot .compareModeBtnActive { background: var(--abricot-active); color: var(--myrtille); }
 /* Commercial & Relation Client — même principe de couverture moitié-moitié
    (photo nette sur la droite, dégradé plein sur la gauche), mais en gardant
    le myrtille par défaut du dashboard (pas de teinte de substitution) : on

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Fragment } from 'react';
 import { useAuth, DASHBOARDS, roleLabel } from '../../contexts/AuthContext';
 import { DASHBOARD_ROUTES, DASHBOARD_TABS, DASHBOARD_DEFAULT_TAB } from '../../data/dashboardTabs';
 import logoSun from '../../assets/logo/logo-full-sun.svg';
@@ -72,7 +72,7 @@ export default function Topbar({ scrolled = false }) {
             </NavLink>
           )}
 
-          {accessible.map(d => {
+          {accessible.map((d, i) => {
             const tabs = DASHBOARD_TABS[d.id] || [];
             const hasTabs = tabs.length > 1;
             const isActive = isRouteActive(d.id);
@@ -84,10 +84,20 @@ export default function Topbar({ scrolled = false }) {
             const submenuThemeCls = d.id === 'commercial-activite' ? styles.submenuMyrtille
               : d.id === 'commercial-rc' ? styles.submenuArgent
               : d.id === 'asus' ? styles.submenuAsus
+              : d.id === 'rh-effectifs' ? styles.submenuGlycine
+              : d.id === 'rh-recrutement' ? styles.submenuAbricot
               : '';
+            /* Frontière entre les dashboards internes et les clients (demande
+               de Clémence du 27/07). Dans une barre horizontale on ne peut pas
+               poser un intitulé de section : c'est un trait vertical, le même
+               que celui qui sépare déjà le logo de la navigation. Il n'apparaît
+               que si les deux groupes sont là. */
+            const frontiereDeScope = i > 0 && accessible[i - 1].scope !== d.scope;
 
             return (
-              <div key={d.id} className={styles.navItem} ref={isOpen ? submenuRef : null}>
+              <Fragment key={d.id}>
+              {frontiereDeScope && <div className={styles.navGroupDivider} />}
+              <div className={styles.navItem} ref={isOpen ? submenuRef : null}>
                 <NavLink
                   to={defaultTab ? `${DASHBOARD_ROUTES[d.id]}?tab=${defaultTab}` : DASHBOARD_ROUTES[d.id]}
                   className={() => `${styles.link} ${isActive ? styles.active : ''} ${hasTabs ? styles.linkWithSub : ''}`}
@@ -133,6 +143,7 @@ export default function Topbar({ scrolled = false }) {
                   </div>
                 )}
               </div>
+              </Fragment>
             );
           })}
           {/* Le glossaire est un outil de lecture des dashboards, pas un reglage

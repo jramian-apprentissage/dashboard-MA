@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Fragment } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth, DASHBOARDS } from '../../contexts/AuthContext';
+import { useAuth, DASHBOARDS, DASHBOARD_SCOPES } from '../../contexts/AuthContext';
 import { usePeriod } from '../../contexts/PeriodContext';
 import { useExtraFilters } from '../../contexts/ExtraFiltersContext';
 import { DASHBOARD_ROUTES, DASHBOARD_DEFAULT_TAB, DASHBOARD_EXCLUDED_PERIODS } from '../../data/dashboardTabs';
@@ -60,12 +60,21 @@ export default function BottomNav() {
   const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
   const pageItems = [
     ...(hasAccessToDashboard(user, 'home') ? [{ id: 'home', label: 'Accueil', to: '/' }] : []),
+    /* Le scope suit l'entrée jusque dans la feuille : c'est lui qui y pose les
+       intertitres « internes » / « clients » demandés par Clémence le 27/07.
+       L'accueil n'en porte pas — ce n'est pas un dashboard, il reste en tête
+       sans étiquette. */
     ...accessible.map(d => ({
       id: d.id,
       label: d.label,
+      scope: d.scope,
       to: DASHBOARD_DEFAULT_TAB[d.id] ? `${DASHBOARD_ROUTES[d.id]}?tab=${DASHBOARD_DEFAULT_TAB[d.id]}` : DASHBOARD_ROUTES[d.id],
     })),
   ];
+  /* À un seul groupe accessible, pas d'intertitre : catégoriser une liste qui
+     ne contient qu'une catégorie n'apprend rien et coûte deux lignes sur un
+     écran de téléphone. */
+  const groupesMultiples = new Set(accessible.map(d => d.scope)).size > 1;
   const currentPageItem = pageItems.find(it => it.id === 'home' ? location.pathname === '/' : location.pathname === DASHBOARD_ROUTES[it.id]);
   const currentDashboardId = Object.entries(DASHBOARD_ROUTES).find(([, route]) => location.pathname === route)?.[0];
   const excludePeriods = DASHBOARD_EXCLUDED_PERIODS[currentDashboardId] || [];
@@ -138,20 +147,29 @@ export default function BottomNav() {
             {sheet === 'page' && (
               <>
                 <div className={styles.sheetTitle}>Tableaux de bord</div>
-                {pageItems.map(it => (
-                  <button
-                    key={it.id}
-                    type="button"
-                    className={`${styles.sheetItem} ${currentPageItem?.id === it.id ? styles.sheetItemActive : ''}`}
-                    onClick={() => { navigate(it.to); setSheet(null); }}
-                  >
-                    {currentPageItem?.id === it.id
-                      ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                      : <span className={styles.sheetDot} />
-                    }
-                    {it.label}
-                  </button>
-                ))}
+                {pageItems.map((it, i) => {
+                  const ouvreUnGroupe = groupesMultiples && it.scope
+                    && (i === 0 || pageItems[i - 1].scope !== it.scope);
+                  const libelleDuGroupe = ouvreUnGroupe
+                    ? DASHBOARD_SCOPES.find(s => s.id === it.scope)?.label
+                    : null;
+                  return (
+                    <Fragment key={it.id}>
+                      {libelleDuGroupe && <div className={styles.sheetGroupLabel}>{libelleDuGroupe}</div>}
+                      <button
+                        type="button"
+                        className={`${styles.sheetItem} ${currentPageItem?.id === it.id ? styles.sheetItemActive : ''}`}
+                        onClick={() => { navigate(it.to); setSheet(null); }}
+                      >
+                        {currentPageItem?.id === it.id
+                          ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          : <span className={styles.sheetDot} />
+                        }
+                        {it.label}
+                      </button>
+                    </Fragment>
+                  );
+                })}
                 <button type="button" className={styles.sheetItem} onClick={() => { navigate('/glossaire'); setSheet(null); }}>
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                   Glossaire KPI

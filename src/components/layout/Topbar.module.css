@@ -21,6 +21,18 @@
 
 .divider { width: 1px; height: 18px; background: rgba(227,225,216,0.12); flex-shrink: 0; }
 
+/* Frontière entre les dashboards internes et les clients (Clémence, 27/07).
+   Même trait que celui qui sépare le logo de la navigation, mais plus court
+   et entouré d'air : il doit se lire comme une respiration dans une liste,
+   pas comme la fin d'une zone. */
+.navGroupDivider {
+  width: 1px;
+  height: 13px;
+  background: rgba(227,225,216,0.14);
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
 /* ─── Navigation links ───────────────────────────────────────────────────────── */
 .nav { display: flex; align-items: center; gap: 2px; }
 
@@ -141,6 +153,32 @@
 .submenuArgent .submenuItem:hover { background: rgba(167,173,170,0.08); color: var(--ciment); }
 .submenuArgent .submenuItemActive { color: var(--ciment); }
 .submenuArgent .submenuDot { background: rgba(167,173,170,0.35); }
+
+/* Les deux dashboards RH n'avaient aucun thème ici : leur « Choisir une vue »
+   retombait sur le soleil, seul popup jaune d'une application où tous les
+   autres reprennent la teinte de leur hero.
+   ON Y MET L'ENCRE, PAS LA TEINTE DU BANDEAU. Le panneau est blanc à 97 % :
+   la glycine #C9AAC4 et l'abricot #E0B99E y tomberaient à 1,95 et 1,69 de
+   contraste, soit illisibles. Leurs encres #74516E et #885430, elles, y
+   mesurent 6,23 et 5,84. C'est bien la même teinte que le bandeau, prise à
+   la clarté qui convient au fond sur lequel elle se pose. */
+.submenuGlycine,
+.submenuAbricot {
+  background: rgba(255,255,255,0.97);
+}
+.submenuGlycine { border-color: rgba(116,81,110,0.18); }
+.submenuGlycine .submenuLabel { color: rgba(116,81,110,0.5); }
+.submenuGlycine .submenuItem { color: rgba(116,81,110,0.7); }
+.submenuGlycine .submenuItem:hover { background: rgba(116,81,110,0.07); color: var(--glycine-encre); }
+.submenuGlycine .submenuItemActive { color: var(--glycine-encre); }
+.submenuGlycine .submenuDot { background: rgba(116,81,110,0.3); }
+
+.submenuAbricot { border-color: rgba(136,84,48,0.18); }
+.submenuAbricot .submenuLabel { color: rgba(136,84,48,0.5); }
+.submenuAbricot .submenuItem { color: rgba(136,84,48,0.7); }
+.submenuAbricot .submenuItem:hover { background: rgba(136,84,48,0.07); color: var(--abricot-encre); }
+.submenuAbricot .submenuItemActive { color: var(--abricot-encre); }
+.submenuAbricot .submenuDot { background: rgba(136,84,48,0.3); }
 
 /* ─── Avatar button + dropdown ───────────────────────────────────────────────── */
 .right { position: relative; }

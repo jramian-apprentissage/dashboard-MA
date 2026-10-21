@@ -34,21 +34,25 @@
   --glycine-active: #C2A3BC;
   --glycine-encre:  #74516E;
 
-  /* ─── Sauge — teinte du dashboard Recrutement et pipeline ───────────────
+  /* ─── Abricot — teinte du dashboard Recrutement et pipeline ─────────────
      Choisie par Jimmy le 21/10 pour distinguer le second dashboard RH du
      premier, qui garde la glycine.
 
-     ELLE N'EST PAS INVENTÉE : #8ECFAA est le vert déjà employé par le
-     dashboard commercial sur ses graphiques, et la charte décrit --pos
-     comme « vert sauge très désaturé ». On reste donc dans la maison.
+     LE FOND VIENT DE LA MAQUETTE, planche 18, qui propose trois teintes pour
+     le Dash RH : glycine #D3B5CE (retenue), sauge #A9CBB7 et abricot
+     #E0B99E, « la plus chaude des trois, la plus visible aussi ». C'est donc
+     une valeur relevée, pas dérivée de la palette commerciale.
 
-     LES TROIS VALEURS SUIVENT LA RELATION DE LA GLYCINE, mesurée plutôt
-     qu'estimée. Contraste du texte myrtille sur le fond : 10,6 contre 9,1
-     pour la glycine. Contraste de l'encre sur son fond : 3,46 contre 3,19.
-     Le thème sauge est donc un peu plus lisible que celui qu'il imite. */
-  --sauge:          #8ECFAA;
-  --sauge-active:   #86C7A2;
-  --sauge-encre:    #356B50;
+     L'ENCRE ET L'ÉTAT ACTIF SONT CALQUÉS SUR LA GLYCINE, mesurés plutôt
+     qu'estimés, puisque la maquette ne donne que le fond. L'encre partage la
+     teinte de son fond (H=24,5 comme #E0B99E, exactement comme #74516E
+     partage H=310 avec #C9AAC4) et descend la clarté dans le même rapport.
+     Contraste du texte myrtille sur le fond : 10,5 contre 9,1 pour la
+     glycine ; contraste de l'encre sur son fond : 3,46 contre 3,19. L'état
+     actif reprend l'écart exact de #C9AAC4 à #C2A3BC, soit -7 -7 -8. */
+  --abricot:        #E0B99E;
+  --abricot-active: #D9B296;
+  --abricot-encre:  #885430;
 
   --soleil:     #FFF993;
   --blanc:      #FFFFFF;

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useAuth, DASHBOARDS } from '../contexts/AuthContext';
+import { useAuth, DASHBOARDS, DASHBOARD_SCOPES } from '../contexts/AuthContext';
 import { DASHBOARD_ROUTES } from '../data/dashboardTabs';
 import { DASH_RH_ACTIF } from '../config/dashRh';
 import heroBg from '../assets/hero-home.svg';
@@ -85,6 +85,13 @@ export default function Home() {
   const navigate = useNavigate();
   const accessible = DASHBOARDS.filter(d => hasAccessToDashboard(user, d.id));
 
+  /* Les groupes effectivement remplis, dans l'ordre de DASHBOARD_SCOPES. On
+     les calcule avant le rendu parce que leur NOMBRE décide de l'affichage :
+     à deux groupes on titre et on sépare, à un seul on ne titre rien. */
+  const groupes = DASHBOARD_SCOPES
+    .map(scope => ({ scope, dashboards: accessible.filter(d => d.scope === scope.id) }))
+    .filter(g => g.dashboards.length > 0);
+
   const firstName = user?.name?.split(' ')[0] || 'vous';
 
   return (
@@ -108,28 +115,49 @@ export default function Home() {
         </div>
 
         {/* ─ Dashboards — la section "Insights IA" reste masquée tant qu'aucune
-            synthèse automatique n'est réellement branchée sur un dashboard. */}
-        {accessible.length > 0 && (
-          <section>
-            <div className={styles.insightsGrid}>
-              {accessible.map(d => (
-                <div key={d.id} className={styles.insightCard}>
-                  <div className={styles.insightHeader}>
-                    <div className={styles.insightIconWrap}>{DASH_ICONS[d.id]}</div>
-                    <div className={styles.insightMeta}>
-                      <div className={styles.insightDash}>{CARD_LABELS[d.id] || d.label}</div>
-                    </div>
-                  </div>
+            synthèse automatique n'est réellement branchée sur un dashboard.
 
-                  <button className={styles.insightCTA} onClick={() => navigate(DASHBOARD_ROUTES[d.id])}>
-                    Consulter
-                    {ARROW}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+            DEUX SECTIONS ET NON UNE SEULE GRILLE : demande de Clémence au call
+            du 27/07, « une catégorie dashboard interne et après en dessous
+            dashboard externe », parce qu'un Julien ou un Christophe ne doit
+            pas scroller les dashboards clients pour trouver les siens. Un
+            groupe sans aucune carte accessible disparaît entièrement, titre
+            compris : quelqu'un qui n'a que l'Asus ne doit pas lire un
+            intertitre « Dashboards internes » suivi de rien. Et si un seul
+            groupe subsiste, on retombe sur l'affichage d'avant, sans titre ni
+            séparateur, pour ne pas catégoriser une liste unique. */}
+        {groupes.map((groupe, i) => {
+          const { scope, dashboards: duScope } = groupe;
+          return (
+            <section key={scope.id} className={styles.scopeSection}>
+              {groupes.length > 1 && (
+                <>
+                  {/* Séparateur seulement à partir du second groupe : au-dessus
+                      du premier, il viendrait couper le hero de ses cartes. */}
+                  {i > 0 && <div className={styles.scopeDivider} />}
+                  <div className={styles.scopeTitle}>{scope.label}</div>
+                </>
+              )}
+              <div className={styles.insightsGrid}>
+                {duScope.map(d => (
+                  <div key={d.id} className={styles.insightCard}>
+                    <div className={styles.insightHeader}>
+                      <div className={styles.insightIconWrap}>{DASH_ICONS[d.id]}</div>
+                      <div className={styles.insightMeta}>
+                        <div className={styles.insightDash}>{CARD_LABELS[d.id] || d.label}</div>
+                      </div>
+                    </div>
+
+                    <button className={styles.insightCTA} onClick={() => navigate(DASHBOARD_ROUTES[d.id])}>
+                      Consulter
+                      {ARROW}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })}
 
         {/* Administration — volontairement décorrélée des cartes dashboards
             (section propre, séparateur) pour ne pas se lire comme un

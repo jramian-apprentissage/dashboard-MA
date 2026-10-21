@@ -285,15 +285,58 @@ export const useAuth = () => useContext(AuthContext);
 
 /* L'entree RH n'existe que dans les constructions qui portent le drapeau :
    la production ne la voit pas, et le code de ses pages n'est meme pas dans
-   son paquet (voir config/dashRh.js). */
+   son paquet (voir config/dashRh.js).
+
+   L'ORDRE ET LE SCOPE VIENNENT DE DEUX DEMANDES DE CLEMENCE, qui se
+   completent.
+
+   1. LE SCOPE, call du 27/07 a 03:47 : « il va falloir que tu aies plutot une
+      categorie dashboard interne et apres en dessous dashboard externe »,
+      motive a 03:05 : « Pour un Julien, par exemple, ou un Christophe, il ne
+      va pas falloir qu'il scrolle tous les dashboards clients pour trouver
+      les siens. » Les internes passent donc AVANT les clients, partout.
+   2. L'ORDRE INTERNE, maquette planche 4, dont le bandeau se lit « Accueil ·
+      Commercial & Relation Client · Activites commerciales · Client - Asus ·
+      Suivi des effectifs · Recrutement ». Les deux entrees RH arrivent apres
+      les deux commerciales, et pas en tete comme elles l'etaient jusqu'au
+      21/10. Le tableau explicatif de la meme planche les cite dans l'autre
+      sens, Recrutement d'abord : c'est l'ordre de sa demonstration, pas celui
+      de la navigation, et c'est la barre dessinee qui fait foi.
+
+   LES DEUX SE CONTREDISENT SUR UN SEUL POINT, la place d'Asus : la maquette
+   le montre en troisieme position, le groupement le renvoie en dernier. La
+   maquette a ete dessinee le 27/09, alors que le groupement n'etait pas
+   encore code et ne l'est toujours pas au 15/10 ; sa barre ne fait donc
+   qu'ajouter les deux entrees RH a l'existant, sans se prononcer sur le
+   classement. C'est le groupement, demande explicite et motivee, qui tranche.
+
+   CE TABLEAU EST LA SEULE SOURCE DE L'ORDRE : le Topbar, le BottomNav, les
+   cartes d'accueil, le Glossaire et la grille d'acces de l'Admin le
+   parcourent tous. Le corriger ici les corrige tous les cinq d'un coup.
+   (Sidebar.jsx le parcourt aussi, mais ce fichier n'est importe nulle part :
+   verifie le 21/10, c'est du code mort, il ne compte pas.)
+
+   LE SCOPE NE TOUCHE PAS AUX DROITS : hasAccessToDashboard reste la seule
+   porte. Il ne fait que classer ce a quoi on a deja acces. */
 export const DASHBOARDS = [
+  { id: 'commercial-rc',       label: 'Commercial & Relation Client', scope: 'interne' },
+  { id: 'commercial-activite', label: 'Activités commerciales',       scope: 'interne' },
   ...(DASH_RH_ACTIF ? [
-    { id: 'rh-effectifs',   label: 'Suivi des effectifs' },
-    { id: 'rh-recrutement', label: 'Recrutement' },
+    { id: 'rh-effectifs',   label: 'Suivi des effectifs', scope: 'interne' },
+    { id: 'rh-recrutement', label: 'Recrutement',         scope: 'interne' },
   ] : []),
-  { id: 'commercial-rc',       label: 'Commercial & Relation Client' },
-  { id: 'commercial-activite', label: 'Activités commerciales' },
-  { id: 'asus',                label: 'Client - Asus' },
+  { id: 'asus',                label: 'Client - Asus',                scope: 'client' },
+];
+
+/* Les deux groupes, dans l'ordre d'affichage. Les libelles ne sont dits en
+   toutes lettres que sur l'accueil, ou il y a la place d'un titre de section.
+   Le Topbar et le BottomNav n'en reprennent que la FRONTIERE, sous forme d'un
+   separateur : un intitule de section tient mal dans une barre horizontale.
+   « clients » et non « externes » : c'est le mot deja employe par la carte
+   d'accueil d'Asus, « Dashboard Client - Asus ». */
+export const DASHBOARD_SCOPES = [
+  { id: 'interne', label: 'Dashboards internes' },
+  { id: 'client',  label: 'Dashboards clients' },
 ];
 
 // Accueil suit exactement le même mécanisme d'autorisation que DASHBOARDS

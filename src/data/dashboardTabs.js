@@ -28,7 +28,7 @@ export const DASHBOARD_TABS = {
        mêmes libellés qu'elle. */
     'rh-recrutement': [
       { id: 'besoins', label: 'Besoins & recrutements' },
-      { id: 'pipeline', label: 'Pipeline & délais' },
+      { id: 'pipeline', label: 'Pipeline candidats & délais' },
       { id: 'performance', label: 'Performance & qualité' },
     ],
   } : {}),

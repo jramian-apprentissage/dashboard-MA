@@ -68,6 +68,17 @@
   font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
   color: rgba(255,249,147,0.35); margin-bottom: 8px; padding: 0 4px;
 }
+/* Intertitre de groupe dans la feuille « Tableaux de bord » (Clémence, 27/07).
+   Plus discret que .sheetTitle, qui le surplombe : deux titres de même force
+   l'un sous l'autre se liraient comme deux listes, alors qu'il s'agit d'une
+   seule liste en deux parts. Le premier n'a pas besoin d'air au-dessus,
+   .sheetTitle vient juste de lui en donner. */
+.sheetGroupLabel {
+  font-size: 8.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em;
+  color: rgba(255,249,147,0.22); padding: 0 4px; margin: 10px 0 4px;
+}
+.sheetGroupLabel:first-of-type { margin-top: 0; }
+
 .sheetCentered { display: flex; justify-content: center; padding: 4px 0 8px; }
 .sheetExtraFilters { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 0 16px; }
 

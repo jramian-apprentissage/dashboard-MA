@@ -14,10 +14,11 @@ import Performance from './Performance';
  * LA PHOTO EST CELLE QUI SERVAIT AU SUIVI DES EFFECTIFS, déplacée ici le
  * 21/10 : le Suivi des effectifs a reçu une nouvelle image le même jour.
  *
- * LA TEINTE EST LA SAUGE, et pas la glycine du dashboard voisin. Les deux
+ * LA TEINTE EST L'ABRICOT #E0B99E, relevée dans la maquette (planche 18) et
+ * pas la glycine du dashboard voisin. Les deux
  * dashboards RH se suivent dans le menu et partagent leurs filtres : sans
  * couleur propre, on ne sait plus lequel on regarde après un changement
- * d'onglet. Voir .heroSauge dans DashboardLayout.module.css.
+ * d'onglet. Voir .heroAbricot dans DashboardLayout.module.css.
  *
  * LA SOURCE EST LE CLASSEUR FCC, onglet « Suivi de commande RH Q2 », et elle
  * n'est PAS ENCORE INGÉRÉE : aucune table, aucune route. L'inventaire du
