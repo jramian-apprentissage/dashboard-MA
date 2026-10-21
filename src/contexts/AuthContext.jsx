@@ -295,20 +295,30 @@ export const useAuth = () => useContext(AuthContext);
       motive a 03:05 : « Pour un Julien, par exemple, ou un Christophe, il ne
       va pas falloir qu'il scrolle tous les dashboards clients pour trouver
       les siens. » Les internes passent donc AVANT les clients, partout.
-   2. L'ORDRE INTERNE, maquette planche 4, dont le bandeau se lit « Accueil ·
-      Commercial & Relation Client · Activites commerciales · Client - Asus ·
-      Suivi des effectifs · Recrutement ». Les deux entrees RH arrivent apres
-      les deux commerciales, et pas en tete comme elles l'etaient jusqu'au
-      21/10. Le tableau explicatif de la meme planche les cite dans l'autre
-      sens, Recrutement d'abord : c'est l'ordre de sa demonstration, pas celui
-      de la navigation, et c'est la barre dessinee qui fait foi.
+   2. L'ORDRE, mail du 30/09 sur la planche 4 : « Que dis-tu d'ordonnancer les
+      dashboards sous la forme d'un entonnoir ? Recrutement > Suivi des
+      effectifs > Activites Commerciales > Commercial et Relation Client >
+      Client - Asus. » C'est un ENTONNOIR et il se lit comme tel : on recrute,
+      les recrutes deviennent l'effectif, l'effectif produit l'activite
+      commerciale, l'activite produit la relation client, la relation client
+      sert le client. Chaque entree est la consequence de la precedente, et
+      l'ordre n'est donc pas negociable entrez par entree.
 
-   LES DEUX SE CONTREDISENT SUR UN SEUL POINT, la place d'Asus : la maquette
-   le montre en troisieme position, le groupement le renvoie en dernier. La
-   maquette a ete dessinee le 27/09, alors que le groupement n'etait pas
-   encore code et ne l'est toujours pas au 15/10 ; sa barre ne fait donc
-   qu'ajouter les deux entrees RH a l'existant, sans se prononcer sur le
-   classement. C'est le groupement, demande explicite et motivee, qui tranche.
+   LES DEUX NE SE CONTREDISENT PAS, c'est ce qui rend ce tableau simple :
+   l'entonnoir se termine naturellement par le seul dashboard client, si bien
+   que la frontiere du groupement tombe exactement entre la quatrieme et la
+   cinquieme entree. Aucun arbitrage a rendre.
+
+   NE PAS SE FIER A LA PLANCHE 4 DE LA MAQUETTE pour l'ordre : le fichier en
+   circulation est la version du 27/09, ANTERIEURE a ce mail, et sa barre de
+   navigation montre encore l'ancien classement. S'y fier a conduit a coder
+   un ordre faux le 21/10, corrige le jour meme. La source de l'ordre est le
+   mail, pas le dessin.
+
+   CET ORDRE CHANGE AUSSI LA PRODUCTION, et c'est voulu : « Activites
+   commerciales » passe devant « Commercial & Relation Client », alors que
+   c'etait l'inverse depuis toujours. L'entonnoir de Clemence porte sur les
+   cinq entrees, pas sur les seules nouvelles.
 
    CE TABLEAU EST LA SEULE SOURCE DE L'ORDRE : le Topbar, le BottomNav, les
    cartes d'accueil, le Glossaire et la grille d'acces de l'Admin le
@@ -319,12 +329,12 @@ export const useAuth = () => useContext(AuthContext);
    LE SCOPE NE TOUCHE PAS AUX DROITS : hasAccessToDashboard reste la seule
    porte. Il ne fait que classer ce a quoi on a deja acces. */
 export const DASHBOARDS = [
-  { id: 'commercial-rc',       label: 'Commercial & Relation Client', scope: 'interne' },
-  { id: 'commercial-activite', label: 'Activités commerciales',       scope: 'interne' },
   ...(DASH_RH_ACTIF ? [
-    { id: 'rh-effectifs',   label: 'Suivi des effectifs', scope: 'interne' },
     { id: 'rh-recrutement', label: 'Recrutement',         scope: 'interne' },
+    { id: 'rh-effectifs',   label: 'Suivi des effectifs', scope: 'interne' },
   ] : []),
+  { id: 'commercial-activite', label: 'Activités commerciales',       scope: 'interne' },
+  { id: 'commercial-rc',       label: 'Commercial & Relation Client', scope: 'interne' },
   { id: 'asus',                label: 'Client - Asus',                scope: 'client' },
 ];
 
