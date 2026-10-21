@@ -22,7 +22,10 @@ const CARD_LABELS = {
      « Suivi des effectifs », qui est précisément le marqueur que
      scripts/verifier-cloisonnement-rh.mjs cherche dans le paquet de
      production. Écrit en dur ici, il ferait échouer la construction. */
-  ...(DASH_RH_ACTIF ? { 'rh-effectifs': 'Dashboard RH - Suivi des effectifs' } : {}),
+  ...(DASH_RH_ACTIF ? {
+    'rh-effectifs':   'Dashboard RH - Suivi des effectifs',
+    'rh-recrutement': 'Dashboard RH - Recrutement et pipeline',
+  } : {}),
   'commercial-rc':       'Dashboard Commercial et Relation Client',
   'commercial-activite': 'Dashboard Activités commerciales',
   asus:                  'Dashboard Client - Asus',
@@ -34,6 +37,12 @@ const DASH_ICONS = {
      pour ne pas reprendre celle de l'Administration juste en dessous, qui
      est une personne seule. */
   ...(DASH_RH_ACTIF ? {
+    /* Un entonnoir : c'est un pipeline de recrutement, pas un effectif. */
+    'rh-recrutement': (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 4h18l-7 8v7l-4 2v-9z"/>
+      </svg>
+    ),
     'rh-effectifs': (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>

@@ -8,7 +8,7 @@ import { DASH_RH_ACTIF } from '../config/dashRh';
    paquet de production. */
 
 export const DASHBOARD_ROUTES = {
-  ...(DASH_RH_ACTIF ? { 'rh-effectifs': '/rh-effectifs' } : {}),
+  ...(DASH_RH_ACTIF ? { 'rh-effectifs': '/rh-effectifs', 'rh-recrutement': '/rh-recrutement' } : {}),
   'commercial-rc': '/commercial-rc',
   'commercial-activite': '/commercial-activite',
   asus: '/asus',
@@ -24,6 +24,13 @@ export const DASHBOARD_TABS = {
       { id: 'mouvements', label: 'Évolution & mouvements' },
       { id: 'turnover', label: 'Turnover & fidélisation' },
     ],
+    /* Second dashboard de la commande RH. Les trois vues de la maquette,
+       mêmes libellés qu'elle. */
+    'rh-recrutement': [
+      { id: 'besoins', label: 'Besoins & recrutements' },
+      { id: 'pipeline', label: 'Pipeline & délais' },
+      { id: 'performance', label: 'Performance & qualité' },
+    ],
   } : {}),
   'commercial-rc': [
     { id: 'synthese', label: 'KPIs principaux' },
@@ -38,7 +45,7 @@ export const DASHBOARD_TABS = {
 };
 
 export const DASHBOARD_DEFAULT_TAB = {
-  ...(DASH_RH_ACTIF ? { 'rh-effectifs': 'effectifs' } : {}),
+  ...(DASH_RH_ACTIF ? { 'rh-effectifs': 'effectifs', 'rh-recrutement': 'besoins' } : {}),
   'commercial-rc': 'synthese',
   'commercial-activite': 'sales',
 };
@@ -51,6 +58,6 @@ export const DASHBOARD_EXCLUDED_PERIODS = {
   /* Meme raison que le commercial : la saisie des sorties n'est jamais a jour
      sur le mois courant, 18 departs en juin puis 2 en juillet et 0 en aout.
      Une page « aujourd'hui » serait fausse et le dirait sans le dire. */
-  ...(DASH_RH_ACTIF ? { 'rh-effectifs': ['today', 'yesterday'] } : {}),
+  ...(DASH_RH_ACTIF ? { 'rh-effectifs': ['today', 'yesterday'], 'rh-recrutement': ['today', 'yesterday'] } : {}),
   'commercial-rc': ['today', 'yesterday'],
 };

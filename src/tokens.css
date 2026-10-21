@@ -33,6 +33,23 @@
   --glycine:        #C9AAC4;
   --glycine-active: #C2A3BC;
   --glycine-encre:  #74516E;
+
+  /* ─── Sauge — teinte du dashboard Recrutement et pipeline ───────────────
+     Choisie par Jimmy le 21/10 pour distinguer le second dashboard RH du
+     premier, qui garde la glycine.
+
+     ELLE N'EST PAS INVENTÉE : #8ECFAA est le vert déjà employé par le
+     dashboard commercial sur ses graphiques, et la charte décrit --pos
+     comme « vert sauge très désaturé ». On reste donc dans la maison.
+
+     LES TROIS VALEURS SUIVENT LA RELATION DE LA GLYCINE, mesurée plutôt
+     qu'estimée. Contraste du texte myrtille sur le fond : 10,6 contre 9,1
+     pour la glycine. Contraste de l'encre sur son fond : 3,46 contre 3,19.
+     Le thème sauge est donc un peu plus lisible que celui qu'il imite. */
+  --sauge:          #8ECFAA;
+  --sauge-active:   #86C7A2;
+  --sauge-encre:    #356B50;
+
   --soleil:     #FFF993;
   --blanc:      #FFFFFF;
   --brouillard: #FBFBFB;

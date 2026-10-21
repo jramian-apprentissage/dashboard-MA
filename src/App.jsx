@@ -41,6 +41,9 @@ const CommercialActivite = lazy(() => import('./pages/dashboards/CommercialActiv
 const RhEffectifs = DASH_RH_ACTIF
   ? lazy(() => import('./pages/dashboards/RhEffectifs'))
   : null;
+const RhRecrutement = DASH_RH_ACTIF
+  ? lazy(() => import('./pages/dashboards/RhRecrutement'))
+  : null;
 const Asus               = lazy(() => import('./pages/dashboards/Asus'));
 
 function RequireAuth({ children }) {
@@ -153,6 +156,9 @@ export default function App() {
                 RequireDashboard, donc visible seulement de qui y a droit. */}
             {DASH_RH_ACTIF && (
               <Route path="/rh-effectifs" element={<RequireAuth><RequireDashboard id="rh-effectifs"><AppShell><RhEffectifs /></AppShell></RequireDashboard></RequireAuth>} />
+            )}
+            {DASH_RH_ACTIF && (
+              <Route path="/rh-recrutement" element={<RequireAuth><RequireDashboard id="rh-recrutement"><AppShell><RhRecrutement /></AppShell></RequireDashboard></RequireAuth>} />
             )}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

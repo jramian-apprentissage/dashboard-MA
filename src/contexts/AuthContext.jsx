@@ -287,7 +287,10 @@ export const useAuth = () => useContext(AuthContext);
    la production ne la voit pas, et le code de ses pages n'est meme pas dans
    son paquet (voir config/dashRh.js). */
 export const DASHBOARDS = [
-  ...(DASH_RH_ACTIF ? [{ id: 'rh-effectifs', label: 'Suivi des effectifs' }] : []),
+  ...(DASH_RH_ACTIF ? [
+    { id: 'rh-effectifs',   label: 'Suivi des effectifs' },
+    { id: 'rh-recrutement', label: 'Recrutement' },
+  ] : []),
   { id: 'commercial-rc',       label: 'Commercial & Relation Client' },
   { id: 'commercial-activite', label: 'Activités commerciales' },
   { id: 'asus',                label: 'Client - Asus' },

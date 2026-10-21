@@ -85,6 +85,22 @@
 }
 .pill.themeGlycine svg { color: rgba(116,81,110,0.6); }
 
+/* Thème « Recrutement et pipeline » — mêmes pastilles sur le bandeau sauge.
+   L'encre #356B50 est calée sur la relation qu'entretient #74516E avec la
+   glycine : contraste mesuré 3,46 contre 3,19, donc un peu plus lisible que
+   le thème qu'il imite. */
+.pill.themeSauge {
+  color: var(--sauge-encre);
+  background: rgba(53,107,80,0.08);
+  border-color: rgba(53,107,80,0.24);
+}
+.pill.themeSauge:hover {
+  background: rgba(53,107,80,0.15);
+  border-color: rgba(53,107,80,0.42);
+  color: var(--sauge-encre);
+}
+.pill.themeSauge svg { color: rgba(53,107,80,0.6); }
+
 .chevron { transition: transform 0.18s; flex-shrink: 0; }
 .chevronOpen { transform: rotate(180deg); }
 

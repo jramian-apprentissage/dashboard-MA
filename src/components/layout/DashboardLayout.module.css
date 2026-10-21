@@ -146,6 +146,31 @@
 .heroGlycine .subtitlePeriod,
 .heroGlycine .tabBadge { color: var(--myrtille); }
 
+/* Bandeau du dashboard Recrutement et pipeline. Même grammaire que la
+   glycine dont il est le jumeau : la teinte tient la gauche, la photo
+   apparaît à droite sous un dégradé qui s'éteint. Les bornes du dégradé
+   sont reprises telles quelles, les deux bandeaux portant des photos de
+   même format et de même cadrage.
+   POURQUOI UNE SECONDE TEINTE : les deux dashboards RH sont voisins dans
+   le menu et partagent leurs filtres. Sans couleur propre, on ne sait plus
+   lequel on regarde après un changement d'onglet. */
+.heroSauge { background: var(--sauge); }
+.heroSauge .heroBg { opacity: 1; }
+.heroSauge .heroOverlay {
+  background: linear-gradient(
+    100deg,
+    var(--sauge) 0%,
+    var(--sauge) 42%,
+    rgba(142,207,170,0.85) 50%,
+    rgba(142,207,170,0) 62%
+  );
+}
+.heroSauge .title,
+.heroSauge .titleEm,
+.heroSauge .subtitle,
+.heroSauge .subtitlePeriod,
+.heroSauge .tabBadge { color: var(--myrtille); }
+
 .heroCiment { background: var(--ciment); }
 .heroCiment .heroBg { opacity: 1; }
 .heroCiment .heroOverlay {
@@ -219,6 +244,32 @@
 .heroGlycine .compareModeBtn:not(:last-child) { border-right-color: rgba(116,81,110,0.24); }
 .heroGlycine .compareModeBtn:hover { color: var(--glycine-encre); }
 .heroGlycine .compareModeBtnActive { background: var(--glycine-active); color: var(--myrtille); }
+
+/* Recrutement et pipeline — mêmes reprises que la glycine, à l'encre sauge.
+   Sans ce bloc les filtres retombent sur le soleil, la teinte par défaut, et
+   deux pastilles jaunes se posent au milieu d'une rangée verte. */
+.heroSauge .heroBtn {
+  color: var(--sauge-encre);
+  border-color: rgba(53,107,80,0.32);
+}
+.heroSauge .heroBtn:hover {
+  background: rgba(53,107,80,0.10);
+  border-color: rgba(53,107,80,0.58);
+  color: var(--sauge-encre);
+}
+.heroSauge .heroBtnActive {
+  background: var(--sauge-active);
+  border-color: var(--sauge-encre);
+  color: var(--myrtille);
+}
+.heroSauge .heroBtnX { color: rgba(53,107,80,0.5); }
+.heroSauge .heroBtnX:hover { color: var(--sauge-encre); background: rgba(53,107,80,0.1); }
+.heroSauge .dot { background: var(--sauge-encre); box-shadow: 0 0 5px rgba(53,107,80,0.5); }
+.heroSauge .compareModeGroup { border-color: rgba(53,107,80,0.32); }
+.heroSauge .compareModeBtn { color: rgba(53,107,80,0.6); }
+.heroSauge .compareModeBtn:not(:last-child) { border-right-color: rgba(53,107,80,0.24); }
+.heroSauge .compareModeBtn:hover { color: var(--sauge-encre); }
+.heroSauge .compareModeBtnActive { background: var(--sauge-active); color: var(--myrtille); }
 /* Commercial & Relation Client — même principe de couverture moitié-moitié
    (photo nette sur la droite, dégradé plein sur la gauche), mais en gardant
    le myrtille par défaut du dashboard (pas de teinte de substitution) : on

@@ -58,7 +58,20 @@ import { join } from 'path';
 const DIST = 'dist/assets';
 /* L'entrée du menu. C'est elle qui décide si le dashboard existe pour
    l'utilisateur, et elle vit dans DASHBOARDS, derrière le drapeau. */
-const MARQUEUR = 'Suivi des effectifs';
+const MARQUEURS = [
+  /* L'entrée de navigation du premier dashboard RH. */
+  'Suivi des effectifs',
+  /* Le titre de carte d'accueil du second dashboard. Son libellé de
+     navigation, « Recrutement », est un mot trop courant pour servir de
+     marqueur ; sa route, « /rh-recrutement », a été essayée et REJETÉE le
+     21/10 parce qu'elle vit dans le morceau paresseux, que Rollup émet même
+     en branche morte. Ce titre-là vit dans Home.jsx, donc dans le paquet
+     principal, derrière le drapeau : c'est exactement la même nature que le
+     marqueur du premier dashboard.
+     Sans ce second marqueur, une fuite du dashboard Recrutement serait
+     passée sans bruit, le garde-fou ne cherchant que le premier. */
+  'Dashboard RH - Recrutement et pipeline',
+];
 const RH_ACTIF = process.env.VITE_DASH_RH === '1' || process.argv.includes('--rh');
 
 let fichiers;
@@ -69,13 +82,20 @@ try {
   process.exit(1);
 }
 
-const porteurs = fichiers.filter(f => readFileSync(join(DIST, f), 'utf8').includes(MARQUEUR));
+/* Un marqueur manquant suffit à alerter, un seul marqueur présent suffit à
+   dénoncer : on garde donc le détail de chacun plutôt qu'un booléen global. */
+const parMarqueur = MARQUEURS.map(m => ({
+  marqueur: m,
+  porteurs: fichiers.filter(f => readFileSync(join(DIST, f), 'utf8').includes(m)),
+}));
+const absents = parMarqueur.filter(x => x.porteurs.length === 0);
+const presents = parMarqueur.filter(x => x.porteurs.length > 0);
 
-if (RH_ACTIF && porteurs.length === 0) {
+if (RH_ACTIF && absents.length > 0) {
   console.error(
     'verif:rh — ÉCHEC. Cette construction est annoncée comme celle du front '
     + `RH, mais le paquet ne contient pas l'entrée de navigation `
-    + `« ${MARQUEUR} ». Le front de développement ne `
+    + `${absents.map(x => `« ${x.marqueur} »`).join(' et ')}. Le front de développement ne `
     + "montrerait pas le Dash RH. Vérifier que config/dashRh.js lit bien la "
     + 'variable, et que le mode de build la reçoit : sur Vercel elle vient '
     + 'des variables du projet, en local de .env.rh via --mode rh.',
@@ -83,11 +103,11 @@ if (RH_ACTIF && porteurs.length === 0) {
   process.exit(1);
 }
 
-if (!RH_ACTIF && porteurs.length > 0) {
+if (!RH_ACTIF && presents.length > 0) {
   console.error(
     'verif:rh — ÉCHEC. Ni --rh ni VITE_DASH_RH=1, donc cette construction '
-    + `est celle de la PRODUCTION, et pourtant l'entrée de navigation `
-    + `« ${MARQUEUR} » est dans le paquet : ${porteurs.join(', ')}.\n`
+    + `est celle de la PRODUCTION, et pourtant le paquet porte `
+    + `${presents.map(x => `« ${x.marqueur} » dans ${x.porteurs.join(', ')}`).join(', et ')}.\n`
     + 'Le Dash RH apparaîtrait sur dashboard-ma.vercel.app, devant des gens à '
     + "qui il n'est pas destiné. Construction interrompue.\n"
     + "Cause la plus probable : une déclaration du Dash RH posée en dehors de "
@@ -99,6 +119,6 @@ if (!RH_ACTIF && porteurs.length > 0) {
 }
 
 console.log(
-  `verif:rh — ok. ${RH_ACTIF ? 'Front RH' : 'Production'} : l'entrée « ${MARQUEUR} » est `
-  + `${RH_ACTIF ? 'bien présente' : 'bien absente'}.`,
+  `verif:rh — ok. ${RH_ACTIF ? 'Front RH' : 'Production'} : les ${MARQUEURS.length} entrées RH sont `
+  + `${RH_ACTIF ? 'bien présentes' : 'bien absentes'}.`,
 );

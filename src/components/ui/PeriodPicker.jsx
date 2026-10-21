@@ -145,7 +145,7 @@ const avancer = (d, vue) => vue === 'jours'  ? new Date(d.getFullYear(), d.getMo
                           :                    new Date(d.getFullYear() + 12, d.getMonth(), 1);
 
 export default function PeriodPicker({ value, customFrom, customTo, onChange, excludeKeys = [], theme = 'default', onClose }) {
-  const themeCls = theme === 'asus' ? styles.themeAsus : theme === 'argent' ? styles.themeArgent : theme === 'myrtille' ? styles.themeMyrtille : theme === 'glycine' ? styles.themeGlycine : '';
+  const themeCls = theme === 'asus' ? styles.themeAsus : theme === 'argent' ? styles.themeArgent : theme === 'myrtille' ? styles.themeMyrtille : theme === 'glycine' ? styles.themeGlycine : theme === 'sauge' ? styles.themeSauge : '';
   const visiblePeriods = excludeKeys.length ? PERIODS.filter(p => !excludeKeys.includes(p.key)) : PERIODS;
   const [open, setOpen] = useState(false);
   // Coordonnées viewport (position:fixed) calculées à l'ouverture
