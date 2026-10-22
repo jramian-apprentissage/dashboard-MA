@@ -1,5 +1,5 @@
-import { Line } from 'react-chartjs-2';
-import { Chart, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
@@ -13,9 +13,15 @@ import styles from '../RhEffectifs/Rh.module.css';
 
 /* Chart.js s'enregistre par fichier dans ce projet, et seulement pour ce qu'on
    utilise : voir EvolutionEffectifs.jsx et Synthese.jsx. */
-Chart.register(LineElement, PointElement, CategoryScale, LinearScale, Tooltip);
+Chart.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip);
 
-const C_DELAI = 'rgba(38,0,31,0.88)';
+/* LITTERAUX, jamais `var(--abricot-encre)` : le canvas de Chart.js ne
+   resout pas les variables CSS, il ignore SILENCIEUSEMENT ce qu il ne sait
+   pas lire et garde la couleur precedente. La regle est deja ecrite en tete
+   de la palette ASUS et elle a coute un bug muet. */
+const C_MOYENNE = 'rgba(38,0,31,0.88)';     // myrtille
+const C_MEDIANE = 'rgba(136,84,48,0.90)';   // encre abricot, la teinte de ce dashboard
+const C_BESOINS = 'rgba(167,173,170,0.50)'; // ciment, en retrait derriere les courbes
 
 /* '2026-04' → 'avr.', fabriqué en UTC. Un `new Date('2026-04')` est interprété
    en UTC puis réaffiché en heure locale, ce qui recule d'un mois à l'ouest de
@@ -96,6 +102,9 @@ export default function Pipeline() {
 
         const {
           demandes, candidats, candidatsN,
+          profilsDemandes, profilsDemandesN,
+          presentesBrut, presentesBrutN,
+          retenusBrut, retenusBrutN, tauxProfil,
           pourvoirN, pourvoirMoy, pourvoirMed,
           dureeN, dureeMoy, dureeMed,
           delaiN, dansDelai, tauxDelai,
@@ -111,72 +120,80 @@ export default function Pipeline() {
         return (
           <div className={styles.page}>
 
-            {/* ── Planche 14, section « Candidatures et délais » ── */}
+            {/* ── « Candidatures et délais » : L'ENTONNOIR DES PROFILS ──
+                Arbitrage de Jimmy du 22/10 : besoin en profils, profils
+                présentés, profils retenus, taux de transformation. La rangée
+                se lit comme une phrase, chaque tuile étant le reste de la
+                précédente.
+
+                LES SOMMES SONT BRUTES, donc le taux est la DIVISION VISIBLE
+                des deux tuiles d'à côté, 62 sur 171. Le lecteur peut la
+                refaire de tête. L'autre lecture, qui n'additionne que les
+                besoins portant les deux colonnes, donnerait 47 % au lieu de
+                36 % : plus pure, mais introuvable depuis les tuiles affichées.
+                Chaque sous-titre dit donc sur combien de besoins sa somme
+                repose.
+
+                LES QUATRE TUILES DE DÉLAIS QUI OCCUPAIENT CETTE RANGÉE sont
+                descendues en bas de page, en attendant que Jimmy dise où les
+                placer. Elles ne sont pas supprimées : c'est sa consigne. */}
             <SectionLabel badge="Onglet Suivi de commande RH Q2">Candidatures et délais</SectionLabel>
             <div className={styles.kpiGrid}>
 
               <KPICard
-                label="Candidats en cours de recrutement"
-                value={fmtNumber(candidats)}
-                unit={` candidat${s(candidats)}`}
+                label="Besoin en profils"
+                value={fmtNumber(profilsDemandes)}
+                unit={` profil${s(profilsDemandes)}`}
                 compare={compareResult
-                  ? sansJugement(compareValueText(candidats, compareResult.candidats, comparePeriodKey))
+                  ? compareValueText(profilsDemandes, compareResult.profilsDemandes, comparePeriodKey)
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: candidatsN === 0
-                    ? 'Aucun besoin en cours ne porte de candidat compté'
-                    : `Candidats présentés · colonne remplie sur ${fmtNumber(candidatsN)} besoin${s(candidatsN)}`,
+                  text: `Postes à pourvoir · sur ${fmtNumber(profilsDemandesN)} besoin${s(profilsDemandesN)} renseigné${s(profilsDemandesN)}`,
                 }}
               />
 
-              {/* L'INDICATEUR LE PLUS TROUÉ DE LA PAGE, affiché comme sur la
-                  maquette avec son effectif en clair. La date de démarrage
-                  n'est renseignée que sur 35 % des commandes et 21
-                  recrutements aboutis en manquent : le sous-titre dit sur
-                  combien de besoins la moyenne porte. */}
+              {/* Couleur neutralisée : présenter davantage de profils, c'est
+                  plus de choix pour le client et plus de travail pour la même
+                  place. Aucun des deux sens n'est bon en soi. */}
               <KPICard
-                label="Délai moy. pour pourvoir un poste"
-                value={j(pourvoirMoy)}
-                unit={pourvoirMoy == null ? '' : ' j'}
+                label="Profils présentés"
+                value={fmtNumber(presentesBrut)}
+                unit={` profil${s(presentesBrut)}`}
                 compare={compareResult
-                  ? compareValueText(pourvoirMoy, compareResult.pourvoirMoy, comparePeriodKey, true)
+                  ? sansJugement(compareValueText(presentesBrut, compareResult.presentesBrut, comparePeriodKey))
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: pourvoirN === 0
-                    ? 'Aucun démarrage daté sur la période'
-                    : `De l’ouverture au démarrage · médiane ${j(pourvoirMed)} j · ${fmtNumber(pourvoirN)} besoin${s(pourvoirN)}`,
+                  text: `Présentés au client · sur ${fmtNumber(presentesBrutN)} besoin${s(presentesBrutN)} renseigné${s(presentesBrutN)}`,
                 }}
               />
 
               <KPICard
-                label="Durée moy. du recrutement"
-                value={j(dureeMoy)}
-                unit={dureeMoy == null ? '' : ' j'}
+                label="Profils retenus"
+                value={fmtNumber(retenusBrut)}
+                unit={` profil${s(retenusBrut)}`}
                 compare={compareResult
-                  ? compareValueText(dureeMoy, compareResult.dureeMoy, comparePeriodKey, true)
+                  ? compareValueText(retenusBrut, compareResult.retenusBrut, comparePeriodKey)
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: dureeN === 0
-                    ? 'Aucune recherche datée sur la période'
-                    : `De l’ouverture à la fin R3 · médiane ${j(dureeMed)} j · ${fmtNumber(dureeN)} recherche${s(dureeN)}`,
+                  text: `Retenus par le client · sur ${fmtNumber(retenusBrutN)} besoin${s(retenusBrutN)} renseigné${s(retenusBrutN)}`,
                 }}
               />
 
               <KPICard
-                label="Taux de recrutements réalisés dans les délais"
-                value={tauxDelai == null ? '-' : fmtNumber(tauxDelai)}
-                unit={tauxDelai == null ? '' : ' %'}
+                label="Taux de transformation de profil"
+                value={tauxProfil == null ? '-' : fmtNumber(tauxProfil)}
+                unit={tauxProfil == null ? '' : ' %'}
                 compare={compareResult
-                  ? comparePtsText(tauxDelai, compareResult.tauxDelai, comparePeriodKey)
+                  ? comparePtsText(tauxProfil, compareResult.tauxProfil, comparePeriodKey)
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: delaiN === 0
-                    ? 'Aucune recherche close sur la période'
-                    : `Fin de recherche avant l’échéance R3 · ${fmtNumber(dansDelai)} sur ${fmtNumber(delaiN)}`,
+                  text: presentesBrut === 0
+                    ? 'Aucun profil présenté sur la période'
+                    : `${fmtNumber(retenusBrut)} retenu${s(retenusBrut)} sur ${fmtNumber(presentesBrut)} présenté${s(presentesBrut)}`,
                 }}
               />
             </div>
@@ -197,24 +214,61 @@ export default function Pipeline() {
                 ) : (
                   <>
                     <div className={styles.chartWrap} style={{ height: 232 }}>
-                      <Line
+                      <Bar
                         data={{
                           labels: evolution.map(p => libelleMois(p.mois)),
-                          datasets: [{
-                            label: 'Délai médian',
-                            data: evolution.map(p => p.mediane),
-                            borderColor: C_DELAI,
-                            pointBackgroundColor: C_DELAI,
-                            pointRadius: 3.5,
-                            borderWidth: 2,
-                            tension: 0.35,
-                            fill: false,
-                            /* LES MOIS SANS DÉMARRAGE RESTENT DES TROUS. Avec
-                               spanGaps, Chart.js relierait février à avril
-                               d'un trait continu et l'on y lirait une
-                               évolution régulière là où mars n'a rien eu. */
-                            spanGaps: false,
-                          }],
+                          datasets: [
+                            /* LA BARRE PORTE LE VOLUME, LES COURBES LE DELAI,
+                               et les deux vivent sur des axes separes : des
+                               jours et des besoins ne se comparent pas sur la
+                               meme echelle. Sans second axe, une barre de 6
+                               besoins ecraserait des courbes a 40 jours, ou
+                               l inverse selon le mois. */
+                            {
+                              label: 'Besoins pourvus',
+                              data: evolution.map(p => p.n),
+                              backgroundColor: C_BESOINS,
+                              borderRadius: 4,
+                              borderSkipped: false,
+                              yAxisID: 'y2',
+                              order: 2,
+                            },
+                            {
+                              type: 'line',
+                              label: 'Moyenne',
+                              data: evolution.map(p => p.moyenne),
+                              borderColor: C_MOYENNE,
+                              pointBackgroundColor: C_MOYENNE,
+                              pointRadius: 3,
+                              borderWidth: 2,
+                              tension: 0.3,
+                              fill: false,
+                              spanGaps: false,
+                              yAxisID: 'y',
+                              /* order 0 dessine la courbe PAR-DESSUS les barres ;
+                                 sans cela elle passerait dessous et
+                                 disparaitrait derriere elles. */
+                              order: 0,
+                            },
+                            {
+                              type: 'line',
+                              label: 'Mediane',
+                              data: evolution.map(p => p.mediane),
+                              borderColor: C_MEDIANE,
+                              pointBackgroundColor: C_MEDIANE,
+                              pointRadius: 3,
+                              borderWidth: 2,
+                              tension: 0.3,
+                              fill: false,
+                              /* LES MOIS SANS DEMARRAGE RESTENT DES TROUS : avec
+                                 spanGaps, Chart.js relierait fevrier a avril
+                                 d un trait continu et l on y lirait une
+                                 evolution reguliere la ou mars n a rien eu. */
+                              spanGaps: false,
+                              yAxisID: 'y',
+                              order: 1,
+                            },
+                          ],
                         }}
                         options={{
                           responsive: true,
@@ -226,23 +280,46 @@ export default function Pipeline() {
                             tooltip: {
                               callbacks: {
                                 title: items => libelleMoisLong(evolution[items[0].dataIndex].mois),
-                                /* L'EFFECTIF VOYAGE AVEC CHAQUE POINT, et c'est
-                                   indispensable ici : plusieurs mois ne portent
-                                   qu'un seul démarrage. Un point à n=1 n'est pas
-                                   une tendance, et seul l'effectif le dit. */
                                 label: ctx => {
-                                  const p = evolution[ctx.dataIndex];
-                                  return `Médiane ${fmtNumber(p.mediane)} j · moyenne ${fmtNumber(p.moyenne)} j · ${fmtNumber(p.n)} démarrage${p.n > 1 ? 's' : ''}`;
+                                  const v = ctx.parsed.y;
+                                  if (v == null) return null;
+                                  if (ctx.dataset.label === 'Besoins pourvus') {
+                                    return `${fmtNumber(v)} besoin${v > 1 ? 's' : ''} pourvu${v > 1 ? 's' : ''}`;
+                                  }
+                                  return `${ctx.dataset.label} : ${fmtNumber(v)} j`;
                                 },
                               },
                             },
                           },
                           scales: {
-                            y: { beginAtZero: true, ticks: { precision: 0 } },
                             x: { grid: { display: false } },
+                            y: {
+                              position: 'left',
+                              beginAtZero: true,
+                              ticks: { precision: 0 },
+                              title: { display: true, text: 'Jours', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                            },
+                            y2: {
+                              position: 'right',
+                              beginAtZero: true,
+                              /* Pas de demi-besoin, et pas de grille en double :
+                                 celle de l axe des jours suffit, deux trames
+                                 superposees brouillent la lecture. */
+                              ticks: { precision: 0 },
+                              grid: { drawOnChartArea: false },
+                              title: { display: true, text: 'Besoins', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                            },
                           },
                         }}
                       />
+                    </div>
+                    {/* LEGENDE EN HTML, pas celle de Chart.js, comme partout
+                        dans ce depot : trois series sur deux axes ne se
+                        devinent pas, et la legende native se place mal. */}
+                    <div className={styles.legende}>
+                      <span className={styles.legDot} style={{ background: C_BESOINS }} />Besoins pourvus
+                      <span className={styles.legDot} style={{ background: C_MOYENNE, marginLeft: 12 }} />Moyenne
+                      <span className={styles.legDot} style={{ background: C_MEDIANE, marginLeft: 12 }} />Mediane
                     </div>
                     {/* CETTE LIGNE EXISTE PARCE QUE LE GRAPHE ET LA TUILE NE
                         COMPTENT PAS LA MÊME CHOSE, et que sans elle on les
@@ -375,6 +452,81 @@ export default function Pipeline() {
                 </>
               )}
             </Card>
+
+            {/* ── EN ATTENTE DE PLACEMENT ──
+                Ces quatre tuiles occupaient la rangée « Candidatures et
+                délais » avant qu'elle ne devienne l'entonnoir des profils.
+                Jimmy a demandé le 22/10 de les descendre ici en attendant de
+                dire où elles vont, et de ne rien supprimer. Le titre de
+                section est volontairement explicite : une section provisoire
+                qui ne dit pas qu'elle l'est finit par passer pour un choix. */}
+            <SectionLabel>Indicateurs à replacer</SectionLabel>
+            <div className={styles.kpiGrid}>
+              <KPICard
+                label="Candidats en cours de recrutement"
+                value={fmtNumber(candidats)}
+                unit={` candidat${s(candidats)}`}
+                compare={compareResult
+                  ? sansJugement(compareValueText(candidats, compareResult.candidats, comparePeriodKey))
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: candidatsN === 0
+                    ? 'Aucun besoin en cours ne porte de candidat compté'
+                    : `Candidats présentés · colonne remplie sur ${fmtNumber(candidatsN)} besoin${s(candidatsN)}`,
+                }}
+              />
+
+              {/* L'INDICATEUR LE PLUS TROUÉ DE LA PAGE, affiché comme sur la
+                  maquette avec son effectif en clair. La date de démarrage
+                  n'est renseignée que sur 35 % des commandes et 21
+                  recrutements aboutis en manquent : le sous-titre dit sur
+                  combien de besoins la moyenne porte. */}
+              <KPICard
+                label="Délai moy. pour pourvoir un poste"
+                value={j(pourvoirMoy)}
+                unit={pourvoirMoy == null ? '' : ' j'}
+                compare={compareResult
+                  ? compareValueText(pourvoirMoy, compareResult.pourvoirMoy, comparePeriodKey, true)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: pourvoirN === 0
+                    ? 'Aucun démarrage daté sur la période'
+                    : `De l’ouverture au démarrage · médiane ${j(pourvoirMed)} j · ${fmtNumber(pourvoirN)} besoin${s(pourvoirN)}`,
+                }}
+              />
+
+              <KPICard
+                label="Durée moy. du recrutement"
+                value={j(dureeMoy)}
+                unit={dureeMoy == null ? '' : ' j'}
+                compare={compareResult
+                  ? compareValueText(dureeMoy, compareResult.dureeMoy, comparePeriodKey, true)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: dureeN === 0
+                    ? 'Aucune recherche datée sur la période'
+                    : `De l’ouverture à la fin R3 · médiane ${j(dureeMed)} j · ${fmtNumber(dureeN)} recherche${s(dureeN)}`,
+                }}
+              />
+
+              <KPICard
+                label="Taux de recrutements réalisés dans les délais"
+                value={tauxDelai == null ? '-' : fmtNumber(tauxDelai)}
+                unit={tauxDelai == null ? '' : ' %'}
+                compare={compareResult
+                  ? comparePtsText(tauxDelai, compareResult.tauxDelai, comparePeriodKey)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: delaiN === 0
+                    ? 'Aucune recherche close sur la période'
+                    : `Fin de recherche avant l’échéance R3 · ${fmtNumber(dansDelai)} sur ${fmtNumber(delaiN)}`,
+                }}
+              />
+            </div>
           </div>
         );
       }}
