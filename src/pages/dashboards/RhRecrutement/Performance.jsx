@@ -327,6 +327,7 @@ export default function Performance() {
                 même motif ne produit pas la même issue. « Besoin couvert
                 autrement » est clos six fois sur huit, « sans retour du
                 client » est annulé trois fois sur trois. */}
+            <div className={styles.blocGraphe}>
             <Card title="Motifs des besoins non aboutis">
               {motifTotal === 0 ? (
                 <div className={styles.etat}>
@@ -360,6 +361,7 @@ export default function Performance() {
                 </>
               )}
             </Card>
+            </div>
 
             {/* ANNOTATION 5 DE CLÉMENCE : ce tableau est le détail du taux de
                 besoins non aboutis, pas de la répartition des besoins. Il
@@ -411,6 +413,7 @@ export default function Performance() {
                 LE « SANS RESPONSABLE » EST HORS DU CLASSEMENT, en mention : ce
                 n'est pas un recruteur, c'est une case vide, et lui donner une
                 barre inventerait une personne. */}
+            <div className={styles.blocGraphe}>
             <Card title="Besoins ouverts par recruteur">
               {parRecruteur.length === 0 ? (
                 <div className={styles.etat}>
@@ -441,6 +444,7 @@ export default function Performance() {
                 </>
               )}
             </Card>
+            </div>
 
             {/* ANNOTATION 2 DE CLÉMENCE, posée EN BAS DE PAGE le 22/10 : c'est
                 une lecture d'ensemble, elle vient après le détail.
@@ -455,6 +459,7 @@ export default function Performance() {
                 mai » et « 61 % en février » se liraient comme deux mois
                 comparables, alors que mai porte quatre besoins et février
                 dix-huit. */}
+            <div className={styles.blocGraphe}>
             <Card title="Réalisés et non aboutis, mois par mois">
               {evolution.every(p => p.demandes === 0) ? (
                 <div className={styles.etat}>
@@ -579,6 +584,7 @@ export default function Performance() {
                 </>
               )}
             </Card>
+            </div>
 
             {/* LES DEUX TAUX PAR TYPE DE MISSION, pour fermer la vue.
                 Même découpage et même table de correspondance que la carte des

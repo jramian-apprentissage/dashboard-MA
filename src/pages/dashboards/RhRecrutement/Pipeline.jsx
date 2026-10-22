@@ -673,7 +673,7 @@ export default function Pipeline() {
             </Card>
             </div>
 
-              <Card title="Évolution du délai pour pourvoir un poste">
+              <Card title="Évolution de la durée pour pourvoir un poste">
                 {evolution.length === 0 ? (
                   <div className={styles.etat}>
                     <div className={styles.etatTexte}>
@@ -805,7 +805,7 @@ export default function Pipeline() {
                         QUOI — les deux sont nécessaires et ne se remplacent
                         pas. */}
                     <div className={styles.mention}>
-                      Délai entre la DEMANDE et le démarrage, par mois de démarrage
+                      Durée entre la DEMANDE et le démarrage, par mois de démarrage
                       · douze derniers mois ·{' '}
                       {fmtNumber(totalDemarrages)} démarrage{s(totalDemarrages)} daté{s(totalDemarrages)}.
                     </div>

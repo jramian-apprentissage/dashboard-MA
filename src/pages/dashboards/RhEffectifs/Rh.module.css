@@ -7,7 +7,7 @@
    quatre : la planche 16 en pose trois. En les passant dans .kpiGrid, la
    quatrième colonne restait vide et la rangée paraissait amputée. */
 .kpiGrid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-.deuxCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.deuxCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
 
 /* ENVELOPPE DU GRAPHE D'ÉVOLUTION, pour lui donner la marge basse qu'un Card
    n'a pas. Dans ce dépôt un Card ne porte jamais de marge : c'est la grille
@@ -25,7 +25,16 @@
    - réglée sur un retour de Jimmy du 15/08 - aurait bougé sans qu'on l'ait
    demandé. La marge est donc posée là où il manque quelque chose, pas
    imposée partout. */
-.blocGraphe { margin-bottom: 20px; }
+.blocGraphe { margin-bottom: 24px; }
+
+/* UN SEUL ÉCART ENTRE DEUX BLOCS D'UNE PAGE, 24 px, et c'est le relevé du
+   22/10 qui l'a imposé : les rangées de tuiles espaçaient de 24, les rangées
+   de deux cartes et les graphes de 20, et trois cartes de la vue Qualité se
+   touchaient à 0 px faute d'enveloppe. Trois valeurs pour une même respiration,
+   dont une nulle.
+   LA VALEUR RETENUE EST CELLE DES TUILES, 24, parce que c'est la rangée la plus
+   fréquente en tête de page : aligner les autres dessus évitait de toucher au
+   bloc que l'œil voit en premier. */
 
 /* .rangeeTuiles a existé ici du 19/10 au 19/10 : une enveloppe qui reprenait
    la marge basse de .kpiGrid à son compte, pour coller une note sous la
