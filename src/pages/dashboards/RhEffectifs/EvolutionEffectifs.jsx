@@ -1,4 +1,4 @@
-import { Line, Bar } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import Card from '../../../components/ui/Card';
 import { useRhEvolution } from '../../../hooks/useRhData';
@@ -8,6 +8,9 @@ import styles from './Rh.module.css';
 
 /* Chart.js s'enregistre par fichier dans ce projet — voir Synthese.jsx,
    ActiviteSales.jsx — et seulement pour ce qu'on utilise vraiment. */
+/* LineElement et PointElement restent enregistres : le graphe de cette page
+   est un <Bar> qui porte un dataset de type 'line', et celui de la page 2 est
+   un <Bar> pur. Les retirer casserait la courbe de l'effectif total. */
 Chart.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip);
 
 /* DEUX GRAPHIQUES, DEUX PAGES, et c'est une séparation demandée par Jimmy le
@@ -47,6 +50,15 @@ const barAnim = {
 const C_ENTREES  = 'rgba(126,184,154,0.72)';
 const C_SORTIES  = 'rgba(196,135,106,0.72)';
 const C_EFFECTIF = 'rgba(38,0,31,0.88)';
+
+/* LES DEUX COMPOSANTES DE L'EFFECTIF, ajoutées le 22/10. Glycine et ciment,
+   la palette de cette page — et surtout PAS le vert et le terracotta du
+   graphique des mouvements : ces deux couleurs y veulent dire « ça avance » et
+   « ça se perd », les reprendre pour dire « placé » et « interne » ferait lire
+   un jugement là où il n'y a qu'une répartition. Un interne n'est pas une
+   perte, c'est la core team. */
+const C_PLACES   = 'rgba(201,170,196,0.78)'; // glycine
+const C_INTERNES = 'rgba(167,173,170,0.62)'; // ciment
 
 /* '2026-04' → 'avr.' — fabriqué en UTC, parce qu'un `new Date('2026-04')` est
    interprété en UTC puis réaffiché en heure locale, ce qui recule d'un mois à
@@ -159,19 +171,57 @@ export function GrapheEffectif({ points, titre }) {
   return (
     <Card title={titre}>
       <div className={styles.chartWrap} style={{ height: 232 }}>
-        <Line
+        {/* DEUX BARRES SOUS LA COURBE, demande de Jimmy du 22/10 : l'effectif
+            total ne dit pas d'ou vient sa croissance. Entre novembre et
+            octobre il passe de 72 a 94, mais les places vont de 62 a 72 quand
+            les internes doublent, de 10 a 22. La courbe seule laissait croire
+            a une croissance uniforme.
+
+            LES TROIS SERIES PARTAGENT UN SEUL AXE, parce qu'elles partagent
+            une unite : des personnes. Un second axe pour les barres les
+            mettrait a une echelle differente de la courbe qui les totalise, et
+            on y lirait des rapports faux.
+
+            LES BARRES SONT COTE A COTE, non empilees. Empilees, leur sommet
+            tomberait exactement sur la courbe, ce qui est elegant mais fait
+            disparaitre la courbe dans le haut de la pile sur la moitie des
+            mois. Cote a cote, les deux composantes se comparent entre elles
+            d'une annee sur l'autre, ce qui est la lecture utile ici. */}
+        <Bar
           data={{
             labels: points.map(p => libelleMois(p.mois)),
-            datasets: [{
-              label: 'Effectif total',
-              data: points.map(p => p.effectif),
-              borderColor: C_EFFECTIF,
-              pointBackgroundColor: C_EFFECTIF,
-              pointRadius: 3.5,
-              borderWidth: 2,
-              tension: 0.35,
-              fill: false,
-            }],
+            datasets: [
+              {
+                label: 'Placés',
+                data: points.map(p => p.places ?? null),
+                backgroundColor: C_PLACES,
+                borderRadius: 4,
+                borderSkipped: false,
+                order: 2,
+              },
+              {
+                label: 'Internes',
+                data: points.map(p => p.internes ?? null),
+                backgroundColor: C_INTERNES,
+                borderRadius: 4,
+                borderSkipped: false,
+                order: 2,
+              },
+              {
+                type: 'line',
+                label: 'Effectif total',
+                data: points.map(p => p.effectif),
+                borderColor: C_EFFECTIF,
+                pointBackgroundColor: C_EFFECTIF,
+                pointRadius: 3.5,
+                borderWidth: 2,
+                tension: 0.35,
+                fill: false,
+                /* order 0 dessine la courbe PAR-DESSUS les barres ; sans cela
+                   elle passerait dessous et disparaitrait derriere elles. */
+                order: 0,
+              },
+            ],
           }}
           options={{
             responsive: true,
@@ -182,14 +232,19 @@ export function GrapheEffectif({ points, titre }) {
               legend: { display: false },
               tooltip: {
                 callbacks: {
-                  /* L'en-tête dit le mois EN TOUTES LETTRES avec son année :
-                     l'axe est abrégé en « avr. », et sur une fenêtre qui
-                     enjambe un 31 décembre, deux « janv. » se ressembleraient
+                  /* L'en-tete dit le mois EN TOUTES LETTRES avec son annee :
+                     l'axe est abrege en « avr. », et sur une fenetre qui
+                     enjambe un 31 decembre, deux « janv. » se ressembleraient
                      trop. */
                   title: items => libelleMoisLong(points[items[0].dataIndex].mois),
                   label: ctx => {
                     const p = points[ctx.dataIndex];
-                    return `Effectif au ${p.fin.split('-').reverse().join('/')} : ${fmtNumber(ctx.parsed.y)}`;
+                    const v = ctx.parsed.y;
+                    if (v == null) return null;
+                    if (ctx.dataset.label === 'Effectif total') {
+                      return `Effectif au ${p.fin.split('-').reverse().join('/')} : ${fmtNumber(v)}`;
+                    }
+                    return `${ctx.dataset.label} : ${fmtNumber(v)}`;
                   },
                 },
               },
@@ -206,6 +261,13 @@ export function GrapheEffectif({ points, titre }) {
             },
           }}
         />
+      </div>
+      {/* LEGENDE EN HTML, pas celle de Chart.js, comme partout dans ce depot :
+          trois series ne se devinent pas, et la legende native se place mal. */}
+      <div className={styles.legende}>
+        <span className={styles.legDot} style={{ background: C_EFFECTIF }} />Effectif total
+        <span className={styles.legDot} style={{ background: C_PLACES, marginLeft: 12 }} />Placés
+        <span className={styles.legDot} style={{ background: C_INTERNES, marginLeft: 12 }} />Internes
       </div>
     </Card>
   );
