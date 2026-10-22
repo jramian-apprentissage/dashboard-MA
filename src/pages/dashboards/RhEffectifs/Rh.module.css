@@ -55,16 +55,31 @@
   align-items: center;
 }
 
-/* VARIANTE VERTICALE : le camembert AU-DESSUS de son tableau, demande de Jimmy
-   du 22/10 pour les tranches d'ancienneté.
-   Ce n'est pas un caprice de mise en page, c'est la place disponible : cette
-   carte-là partage sa rangée avec le suivi par client, elle ne fait donc que
-   la moitié de la largeur. En grille à deux colonnes il resterait moins de
-   150 px pour trois en-têtes, qui se casseraient tous en deux lignes —
-   exactement le problème qui a déjà fait passer .donutEtTable de 236 à
-   196 px le 16/10. Empilés, le cercle et le tableau ont chacun toute la
-   largeur de la carte. */
-.donutPuisTable { display: flex; flex-direction: column; gap: 10px; }
+/* LE CAMEMBERT DES TRANCHES ET SON TABLEAU, côte à côte.
+   Grille séparée de .donutEtTable, qui sert la carte des contrats : celle-ci
+   porte QUATRE colonnes et a besoin d'une colonne de cercle fixe à 196 px,
+   là où les tranches n'en ont que trois et peuvent laisser respirer le
+   graphe. Les fondre obligerait à régler les deux cartes du même cran.
+   LA COLONNE DU CERCLE EST PROPORTIONNELLE, pas fixe : un demi-camembert est
+   limité par sa LARGEUR, son rayon vaut la moitié de la colonne. Figée à
+   196 px, la carte gagnait de la largeur sur grand écran et le cercle restait
+   petit, avec un tableau étiré à côté — le reproche fait au dashboard
+   commercial le 20/08. Le minmax empêche l'inverse sur carte étroite.
+   align-items: center parce que les deux hauteurs ne s'égalisent jamais : le
+   cercle est plus bas que quatre lignes de tableau, il se pose au milieu. */
+.donutEtTranches {
+  display: grid;
+  grid-template-columns: minmax(180px, 52%) 1fr;
+  gap: 16px;
+  align-items: center;
+  /* LE BLOC SE CENTRE DANS LA HAUTEUR QUE LUI LAISSE SA VOISINE. Les deux
+     cartes de la rangee s'etirent a la meme hauteur, mais ce bloc-ci ne peut
+     pas la remplir : un demi-camembert est deux fois plus large que haut, son
+     rayon est limite par la LARGEUR de sa colonne, et l'allonger n'ajouterait
+     que du vide dans le canvas. Sans ce margin auto, tout le creux tombait
+     d'un coup sous le tableau et la carte paraissait inachevee. */
+  margin-block: auto;
+}
 
 /* LA RANGÉE DE L'ANCIENNETÉ GARDE UNE HAUTEUR CONSTANTE, demande de Jimmy du
    22/10 : tenir cinq clients même quand la liste en compte moins, pour que les
@@ -246,6 +261,9 @@
 @media (max-width: 1100px) { .kpiGrid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 900px)  { .deuxCol { grid-template-columns: 1fr; } }
 @media (max-width: 760px)  { .donutEtTable { grid-template-columns: 1fr; gap: 16px; } }
+/* Sur mobile le tableau des tranches repasse SOUS le cercle, demande de
+   Jimmy du 22/10 : à cette largeur deux colonnes ne tiennent plus. */
+@media (max-width: 760px)  { .donutEtTranches { grid-template-columns: 1fr; gap: 14px; } }
 @media (max-width: 480px)  { .kpiGrid { grid-template-columns: 1fr 1fr; gap: 10px; } }
 
 /* Les en-têtes des colonnes supplémentaires des barres par département.

@@ -56,7 +56,7 @@ import styles from '../RhEffectifs/Rh.module.css';
    esthétique : c'est ce qui garde la carte de droite à la hauteur de celle de
    gauche, qui porte quatre barres. Sans plafond, une période large allongerait
    l'une et laisserait l'autre vide à côté. */
-const CLIENTS_APERCU = 5;
+const CLIENTS_APERCU = 6;
 
 /* PALETTE DU CAMEMBERT DES TRANCHES — des LITTÉRAUX, jamais `var(--myrtille)`.
  *
@@ -293,11 +293,18 @@ export default function Besoins() {
                   sa forme ; quatre barres indépendantes laissaient croire à
                   quatre mesures sans rapport.
 
-                  LE TABLEAU EST SOUS LE GRAPHE et non à sa droite comme sur le
-                  dashboard commercial, également demandé le 22/10 — et c'est
-                  le bon arbitrage ici : cette carte ne fait que la MOITIÉ de la
-                  largeur, un cercle et un tableau côte à côte y laisseraient
-                  trois colonnes dans moins de 150 px.
+                  LE TABLEAU EST À DROITE DU GRAPHE, comme sur le dashboard
+                  commercial. Il est passé dessous puis revenu à côté le même
+                  jour, à la demande de Jimmy, et l'essai valait la peine : un
+                  demi-camembert est DEUX FOIS PLUS LARGE QUE HAUT, donc empilé
+                  il tassait son cercle en haut d'une carte devenue très haute.
+                  Côte à côte, les deux occupent la même bande et la carte
+                  retombe à la hauteur de son tableau — ce qui laisse la place
+                  d'allonger la liste des clients juste à côté. Trois colonnes
+                  seulement ici, contre quatre sur la carte des contrats : elles
+                  tiennent dans ce qui reste.
+                  SUR MOBILE le tableau repasse dessous, sous 760 px : deux
+                  colonnes y seraient illisibles.
 
                   LES QUATRE TRANCHES SONT TOUJOURS LISTÉES, même à zéro.
                   Celle de 30 à 60 jours est vide sur toutes les périodes
@@ -321,13 +328,13 @@ export default function Besoins() {
                     </div>
                   </div>
                 ) : (
-                  <div className={styles.donutPuisTable}>
+                  <div className={styles.donutEtTranches}>
                     <DonutChart
                       variant="half-rose"
                       data={tranches.map(t => t.besoins)}
                       labels={tranches.map(t => t.libelle)}
                       colors={tranches.map((_, i) => COULEURS_TRANCHE[i])}
-                      height={188}
+                      height={192}
                       tooltip={(label, value, pct) =>
                         `${label} : ${value} besoin${value > 1 ? 's' : ''} en cours (${fmtPourcentage(pct)})`}
                     />
