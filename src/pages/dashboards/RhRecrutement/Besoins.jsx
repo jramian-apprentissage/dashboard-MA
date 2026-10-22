@@ -125,23 +125,37 @@ export default function Besoins() {
            différent. L'écrire deux fois, c'est prendre le risque qu'ils
            divergent à la première colonne ajoutée. */
         const tableauClients = lignes => (
+          /* LES COLONNES SONT CELLES DE LA PLANCHE 13, dans son ordre :
+             besoins en cours, recrutements, taux pourvu, ancienneté. Elles
+             avaient été remplacées par « demandés / réalisés / en cours /
+             plus ancien » de ma propre initiative, ce que personne n'avait
+             demandé.
+
+             CE QUI EST CORRIGÉ SANS TOUCHER AUX COLONNES : la maquette
+             affichait pour REGARD INC « 5 recrutements » et « 0 % pourvu » sur
+             la même ligne, parce que sa colonne RECRUTEMENTS lisait la date de
+             démarrage pendant que TAUX POURVU lisait les profils retenus. Les
+             deux sortent ici de la MÊME source, le statut « En poste », donc
+             elles ne peuvent plus se contredire. */
           <table className={styles.tbl}>
             <thead>
               <tr>
                 <th>Client</th>
-                <th className={styles.num}>Demandés</th>
-                <th className={styles.num}>Réalisés</th>
-                <th className={styles.num}>En cours</th>
-                <th className={styles.num}>Plus ancien</th>
+                <th className={styles.num}>Besoins en cours</th>
+                <th className={styles.num}>Recrutements</th>
+                <th className={styles.num}>Taux pourvu</th>
+                <th className={styles.num}>Ancienneté</th>
               </tr>
             </thead>
             <tbody>
               {lignes.map(e => (
                 <tr key={e.entite}>
                   <td>{e.entite}</td>
-                  <td className={styles.num}>{fmtNumber(e.demandes)}</td>
-                  <td className={styles.num}>{fmtNumber(e.realises)}</td>
                   <td className={styles.num}>{fmtNumber(e.en_cours)}</td>
+                  <td className={styles.num}>{fmtNumber(e.realises)}</td>
+                  <td className={styles.num}>
+                    {e.demandes > 0 ? `${Math.round((100 * e.realises) / e.demandes)} %` : '-'}
+                  </td>
                   {/* `plus_ancien_j` ne peut pas être nul ici : la route ne
                       rend que les clients ayant au moins un besoin en cours,
                       et un besoin de la cohorte porte une date. */}
