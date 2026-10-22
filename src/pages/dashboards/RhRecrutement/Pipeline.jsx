@@ -82,6 +82,16 @@ function libelleMoisLong(ym) {
    cinq le même jour : à trois, la carte montrait les deux gros clients et une
    seule des dix-sept autres lignes, ce qui donnait à croire que le pipeline
    tenait en trois noms. */
+/* UN BESOIN CLOS N'A PAS D'ANCIENNETÉ : il ne vieillit plus, et le classeur ne
+   porte aucune date de clôture pour dire l'âge qu'il avait en s'arrêtant. La
+   route rend donc NULL et la colonne écrit un tiret. */
+const ISSUES = {
+  en_cours: 'En cours',
+  realise: 'Pourvu',
+  annule: 'Annulé',
+  clos_sans: 'Clos sans recrutement',
+};
+
 const CLIENTS_APERCU = 5;
 
 export default function Pipeline() {
@@ -98,7 +108,7 @@ export default function Pipeline() {
         if (error) {
           return (
             <div className={styles.page}>
-              <SectionLabel badge="Onglet Suivi de commande RH Q2">Candidatures et délais</SectionLabel>
+              <SectionLabel badge="Onglet Suivi de commande RH Q2">Placement de profils</SectionLabel>
               <Card>
                 <div className={styles.etat}>
                   <div className={styles.etatTitre}>Les données du FCC ne répondent pas</div>
@@ -111,7 +121,7 @@ export default function Pipeline() {
         if (!result || result.demandes === 0) {
           return (
             <div className={styles.page}>
-              <SectionLabel badge="Onglet Suivi de commande RH Q2">Candidatures et délais</SectionLabel>
+              <SectionLabel badge="Onglet Suivi de commande RH Q2">Placement de profils</SectionLabel>
               <Card>
                 <div className={styles.etat}>
                   <div className={styles.etatTitre}>Aucun besoin sur cette période</div>
@@ -170,7 +180,7 @@ export default function Pipeline() {
                 LES QUATRE TUILES DE DÉLAIS QUI OCCUPAIENT CETTE RANGÉE sont
                 descendues en bas de page, en attendant que Jimmy dise où les
                 placer. Elles ne sont pas supprimées : c'est sa consigne. */}
-            <SectionLabel badge="Onglet Suivi de commande RH Q2">Candidatures et délais</SectionLabel>
+            <SectionLabel badge="Onglet Suivi de commande RH Q2">Placement de profils</SectionLabel>
             <div className={styles.kpiGrid}>
 
               <KPICard
@@ -261,7 +271,7 @@ export default function Pipeline() {
               {candidatsParClient.length === 0 ? (
                 <div className={styles.etat}>
                   <div className={styles.etatTexte}>
-                    Aucun besoin n’est en cours chez un client sur cette période.
+                    Aucun besoin n’a été demandé par un client sur cette période.
                   </div>
                 </div>
               ) : (
@@ -302,7 +312,9 @@ export default function Pipeline() {
                       Le reste (le survol, l'absence de pourcentage) se
                       découvre en survolant, ou ne change rien à la lecture. */}
                   <div className={styles.mention}>
-                    La barre situe le besoin le plus avancé du client, de R0 à « En poste ».
+                    La barre situe le besoin le plus avancé du client, de R0 à « En poste » :
+                    elle atteint donc le bout dès qu’un seul besoin a été pourvu. Ouvrir la
+                    liste pour lire chaque besoin à sa position, avec son issue.
                     Un tiret signale une colonne non saisie.
                   </div>
                 </>
@@ -642,7 +654,7 @@ export default function Pipeline() {
                 large
                 titre="Détails par prospects/clients"
                 sousTitre={
-                  `${fmtNumber(detailsClients.length)} besoin${s(detailsClients.length)} en cours`
+                  `${fmtNumber(detailsClients.length)} besoin${s(detailsClients.length)}`
                   + ` · ${fmtNumber(candidatsParClient.length)} client${s(candidatsParClient.length)}`
                 }
                 onClose={() => setClientsOuverts(false)}
@@ -665,6 +677,7 @@ export default function Pipeline() {
                       <th>Client</th>
                       <th>Poste</th>
                       <th>Étape</th>
+                      <th>Issue</th>
                       <th className={styles.num}>Commande</th>
                       <th className={styles.num}>Échéance R3</th>
                       <th className={styles.num}>Ancienneté</th>
@@ -682,6 +695,11 @@ export default function Pipeline() {
                             seule ligne pour que la colonne ne saute pas. */}
                         <td>{(d.poste || '-').replace(/\s+/g, ' ')}</td>
                         <td>{libelleEtape(d.etape) || '-'}</td>
+                        {/* L'ISSUE EST DEVENUE INDISPENSABLE le jour où la carte
+                            a cessé de ne montrer que des besoins ouverts : sans
+                            elle, un besoin arrêté à R4 se lirait comme une
+                            recherche en cours alors qu'il est annulé. */}
+                        <td>{ISSUES[d.issue] || '-'}</td>
                         <td className={styles.num}>{dateCourte(d.dateCommande)}</td>
                         <td className={styles.num}>{dateCourte(d.echeanceR3)}</td>
                         {/* L'ANCIENNETÉ ARRIVE ICI depuis le suivi par client de
@@ -691,7 +709,9 @@ export default function Pipeline() {
                             résumé de client. Il est d'ailleurs plus juste ici :
                             par besoin il se lit tel quel, là où par client il
                             fallait prendre le plus ancien et l'expliquer. */}
-                        <td className={styles.num}>{fmtNumber(d.ageJ)} j</td>
+                        <td className={styles.num}>
+                          {d.ageJ == null ? '-' : `${fmtNumber(d.ageJ)} j`}
+                        </td>
                         <td className={styles.num}>{ouTiret(d.profilsDemandes)}</td>
                         <td className={styles.num}>{ouTiret(d.presentes)}</td>
                         <td className={styles.num}>{ouTiret(d.retenus)}</td>
