@@ -96,6 +96,16 @@ export function AuthProvider({ children }) {
     return () => { cancelled = true; };
   }, [token]);
 
+  /* Rend `true`, ou la RAISON de l'échec : 'identifiants' quand le serveur a
+     bien répondu qu'ils sont faux, 'serveur' pour tout le reste.
+     POURQUOI LA DISTINCTION. Jusqu'au 22/10 cette fonction rendait `false`
+     dans les trois cas, et l'écran affichait « Email ou mot de passe
+     incorrect » aussi bien pour une erreur 500 que pour une panne de réseau.
+     Le jour où la base de production a refusé une connexion, le message a
+     accusé la personne de s'être trompée de mot de passe : elle a cherché du
+     côté de ses identifiants pendant que la panne était ailleurs. Un message
+     d'erreur qui désigne le mauvais coupable coûte plus cher que pas de
+     message du tout. */
   async function login(email, password) {
     let res;
     try {
@@ -104,9 +114,10 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ email, password }),
       });
     } catch {
-      return false;
+      return 'serveur';
     }
-    if (!res.ok) return false;
+    if (res.status === 401) return 'identifiants';
+    if (!res.ok) return 'serveur';
     const { token: t, user: u } = await res.json();
     localStorage.setItem(TOKEN_KEY, t);
     localStorage.setItem(USER_KEY, JSON.stringify(u));

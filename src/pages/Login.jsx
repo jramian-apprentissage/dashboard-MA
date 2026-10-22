@@ -19,12 +19,16 @@ export default function Login() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const ok = await login(email, password);
+    const resultat = await login(email, password);
     setLoading(false);
-    if (ok) {
+    if (resultat === true) {
       navigate('/');
-    } else {
+    } else if (resultat === 'identifiants') {
       setError('Email ou mot de passe incorrect. Vérifiez vos identifiants.');
+    } else {
+      /* Ne JAMAIS accuser les identifiants quand le serveur n'a pas tranché :
+         voir l'en-tête de login() dans AuthContext. */
+      setError('Le serveur ne répond pas. Vos identifiants n’ont pas pu être vérifiés, réessayez dans un instant.');
     }
   }
 
