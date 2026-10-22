@@ -3,6 +3,10 @@
 .page { display: flex; flex-direction: column; gap: 0; }
 
 .kpiGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+/* TROIS TUILES, pour la seule rangée du dashboard RH qui n'en compte pas
+   quatre : la planche 16 en pose trois. En les passant dans .kpiGrid, la
+   quatrième colonne restait vide et la rangée paraissait amputée. */
+.kpiGrid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
 .deuxCol { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
 
 /* ENVELOPPE DU GRAPHE D'ÉVOLUTION, pour lui donner la marge basse qu'un Card
@@ -258,13 +262,13 @@
 .etatTitre { font-weight: 700; color: var(--myrtille); font-size: 14px; margin-bottom: 6px; }
 .etatTexte { font-size: 12.5px; color: var(--text3); max-width: 460px; margin: 0 auto; line-height: 1.55; }
 
-@media (max-width: 1100px) { .kpiGrid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1100px) { .kpiGrid, .kpiGrid3 { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 900px)  { .deuxCol { grid-template-columns: 1fr; } }
 @media (max-width: 760px)  { .donutEtTable { grid-template-columns: 1fr; gap: 16px; } }
 /* Sur mobile le tableau des tranches repasse SOUS le cercle, demande de
    Jimmy du 22/10 : à cette largeur deux colonnes ne tiennent plus. */
 @media (max-width: 760px)  { .donutEtTranches { grid-template-columns: 1fr; gap: 14px; } }
-@media (max-width: 480px)  { .kpiGrid { grid-template-columns: 1fr 1fr; gap: 10px; } }
+@media (max-width: 480px)  { .kpiGrid, .kpiGrid3 { grid-template-columns: 1fr 1fr; gap: 10px; } }
 
 /* Les en-têtes des colonnes supplémentaires des barres par département.
    LEUR LARGEUR EST UN CONTRAT avec MotifBar : 86 px chacune et 5 px de

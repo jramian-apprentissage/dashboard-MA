@@ -7,6 +7,7 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import ListeModale from '../../../components/ui/ListeModale';
 import MotifBar from '../../../components/ui/MotifBar';
+import BarreEtapes, { EnteteEtapes, libelleEtape } from '../../../components/ui/BarreEtapes';
 import { useRhPipeline } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
@@ -68,9 +69,11 @@ function libelleMoisLong(ym) {
  * dont aucun sens n'est bon en soi, les candidats en cours et les profils
  * présentés par besoin : leur couleur est NEUTRALISÉE plutôt que de leur faire
  * porter un jugement indéfendable. */
-/* TROIS LIGNES SUR LA CARTE, le reste en pop-up : à cet endroit le
-   classement compte plus que l'exhaustivité. */
-const CLIENTS_APERCU = 3;
+/* CINQ LIGNES SUR LA CARTE, le reste en pop-up. Trois jusqu'au 22/10, porté à
+   cinq le même jour : à trois, la carte montrait les deux gros clients et une
+   seule des dix-sept autres lignes, ce qui donnait à croire que le pipeline
+   tenait en trois noms. */
+const CLIENTS_APERCU = 5;
 
 export default function Pipeline() {
   const { result, compareResult, loading, error } = useRhPipeline();
@@ -122,6 +125,29 @@ export default function Pipeline() {
           evolution, candidatsParClient, etapes, sansEtape, enCours,
         } = result;
         const s = n => (n > 1 ? 's' : '');
+
+        /* UNE CELLULE VIDE S'ÉCRIT « - », JAMAIS « 0 ». La distinction vient de
+           la maquette, qui mettait déjà un tiret sur ses deux dernières lignes :
+           « aucun profil retenu » est un résultat, « colonne non saisie » est une
+           absence d'information. Les confondre ferait passer onze besoins non
+           renseignés pour onze échecs. */
+        const ouTiret = v => (v == null ? '-' : fmtNumber(v));
+
+        /* Le survol d'une ligne : les postes, un par ligne, puis l'étape
+           atteinte en toutes lettres. C'est là que vit le détail qu'une barre
+           à neuf cases ne peut pas porter. */
+        const survolClient = c => {
+          const postes = (c.postes || '')
+            .split(' ; ')
+            .map(x => x.replace(/\s+/g, ' ').trim())
+            .filter(Boolean);
+          const etape = libelleEtape(c.etape);
+          return [
+            `${fmtNumber(c.besoins)} besoin${s(c.besoins)} en cours`,
+            ...postes.map(x => `• ${x}`),
+            etape ? `Étape la plus avancée : ${etape}` : 'Étape non renseignée au fichier',
+          ].join('\n');
+        };
         const j = v => (v == null ? '-' : fmtNumber(v));
         /* Neutralise la couleur d'une comparaison sans toucher au chiffre ni à
            la flèche : pour les indicateurs dont aucun sens n'est bon en soi. */
@@ -216,39 +242,49 @@ export default function Pipeline() {
                 qu'on vient de lire, il se place donc contre lui et non deux
                 sections plus bas.
 
-                AU STYLE DE « EFFECTIF PAR DÉPARTEMENT » : barres MotifBar avec
-                une colonne supplémentaire et son en-tête. La largeur de cette
-                colonne est un CONTRAT avec MotifBar, 86 px, écrit des deux
-                côtés — la changer ici sans la changer là désaligne les deux.
+                TROIS MESURES, LES MÊMES QUE LA RANGÉE — besoin en profils,
+                présentés, retenus. La carte ne porte plus un seul chiffre mais
+                rejoue l'entonnoir client par client, et se lit donc à la
+                verticale des tuiles du dessus.
 
-                TROIS LIGNES SUR LA CARTE, le reste en pop-up : à cet endroit
-                le classement compte plus que l'exhaustivité, on veut savoir où
-                se concentre le pipeline, pas lire soixante clients. */}
+                LA BARRE N'EST PLUS UNE PART MAIS UN AVANCEMENT, et c'est le
+                changement de fond du 22/10. Elle portait la part de candidats
+                du client dans le total, ce qui comparait des clients entre eux ;
+                elle porte maintenant les NEUF ÉTAPES du processus, R0 à R7 puis
+                « En poste », et situe chaque client sur son propre parcours.
+                La question posée n'est plus « qui pèse le plus » mais « qui est
+                le plus près d'aboutir ».
+
+                AUCUN POURCENTAGE SOUS LA BARRE, volontairement : « étape 6 sur
+                9 » ne veut pas dire « 67 % du travail fait ». Les étapes n'ont
+                ni la même durée ni la même difficulté, et le classeur ne les
+                chronomètre pas.
+
+                LE SURVOL PORTE LES POSTES, demandé le 22/10 : un client porte
+                souvent plusieurs recrutements — REGARD INC en a cinq — et la
+                ligne ne peut pas les nommer sans devenir un tableau. */}
             <Card title="Candidats en recrutement par prospects/clients">
               {candidatsParClient.length === 0 ? (
                 <div className={styles.etat}>
                   <div className={styles.etatTexte}>
-                    Aucun besoin en cours ne porte de candidat compté sur cette période.
+                    Aucun besoin n’est en cours chez un client sur cette période.
                   </div>
                 </div>
               ) : (
                 <>
                   <div className={styles.barres}>
-                    {/* UN SEUL EN-TÊTE, pour la seule colonne qui ne se lit pas
-                        seule : « 3 » après un « → 5 » ne dit pas de quoi il
-                        s'agit, alors que le pourcentage et le nombre de
-                        candidats se comprennent sans légende. */}
-                    <div className={styles.barresEntete}>
-                      <span className={styles.barresEnteteLib}>Besoins</span>
-                    </div>
+                    <EnteteEtapes colonnes={['Besoin', 'Présentés', 'Retenus']} />
                     {candidatsParClient.slice(0, CLIENTS_APERCU).map(c => (
-                      <MotifBar
+                      <BarreEtapes
                         key={c.entite}
                         label={c.entite}
-                        pct={partPct(c.candidats, candidats)}
-                        count={c.candidats}
-                        extras={[fmtNumber(c.besoins)]}
-                        fillColor="rgba(38,0,31,0.95)"
+                        etape={c.etape}
+                        valeurs={[
+                          ouTiret(c.profilsDemandes),
+                          ouTiret(c.presentes),
+                          ouTiret(c.retenus),
+                        ]}
+                        title={survolClient(c)}
                       />
                     ))}
                   </div>
@@ -261,6 +297,12 @@ export default function Pipeline() {
                       Voir les {fmtNumber(candidatsParClient.length)} clients
                     </button>
                   )}
+                  <div className={styles.mention}>
+                    La barre situe le besoin le plus avancé du client sur les neuf étapes du
+                    processus, de R0 à « En poste » ; elle ne mesure pas une part de travail
+                    accompli. Au survol d’une ligne : les postes concernés et l’étape atteinte.
+                    Un tiret signale une colonne non saisie au classeur, et non un zéro.
+                  </div>
                 </>
               )}
             </Card>
@@ -584,24 +626,34 @@ export default function Pipeline() {
                 titre="Candidats en recrutement par prospects/clients"
                 sousTitre={
                   `${fmtNumber(candidatsParClient.length)} client${s(candidatsParClient.length)}`
-                  + ` · ${fmtNumber(candidats)} candidat${s(candidats)} sur des besoins en cours`
+                  + ` · ${fmtNumber(candidatsParClient.reduce((n, c) => n + c.besoins, 0))} besoin`
+                  + `${s(candidatsParClient.reduce((n, c) => n + c.besoins, 0))} en cours`
                 }
                 onClose={() => setClientsOuverts(false)}
               >
+                {/* LA POP-UP NOMME LES POSTES, là où la carte les laisse au
+                    survol : elle a la place d'une colonne, et c'est ce qu'on
+                    vient y chercher quand on déplie la liste. */}
                 <table className={styles.tbl}>
                   <thead>
                     <tr>
                       <th>Client</th>
-                      <th className={styles.num}>Candidats</th>
-                      <th className={styles.num}>Besoins</th>
+                      <th>Poste</th>
+                      <th>Étape</th>
+                      <th className={styles.num}>Besoin</th>
+                      <th className={styles.num}>Présentés</th>
+                      <th className={styles.num}>Retenus</th>
                     </tr>
                   </thead>
                   <tbody>
                     {candidatsParClient.map(c => (
                       <tr key={c.entite}>
                         <td>{c.entite}</td>
-                        <td className={styles.num}>{fmtNumber(c.candidats)}</td>
-                        <td className={styles.num}>{fmtNumber(c.besoins)}</td>
+                        <td>{(c.postes || '-').replace(/\s+/g, ' ')}</td>
+                        <td>{libelleEtape(c.etape) || '-'}</td>
+                        <td className={styles.num}>{ouTiret(c.profilsDemandes)}</td>
+                        <td className={styles.num}>{ouTiret(c.presentes)}</td>
+                        <td className={styles.num}>{ouTiret(c.retenus)}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -145,6 +145,42 @@ export function useRhBesoins() {
   return etat;
 }
 
+/* Vue 3 du dashboard Recrutement, « Performance et qualité ».
+ *
+ * MÊME COHORTE QUE LES VUES 1 ET 2 : la période choisit les besoins NÉS
+ * dedans, la route dit ce qu'ils sont devenus. Les trois vues doivent répondre
+ * la même chose à « combien de besoins en septembre », sinon le lecteur qui
+ * change d'onglet croit à un bug.
+ *
+ * LA SÉRIE MENSUELLE NE DÉPEND PAS DE LA LARGEUR DE LA PÉRIODE, seulement de
+ * sa fin : douze mois glissants, comme sur la vue 2. La période déplace la
+ * fenêtre, elle ne la rétrécit pas à un point. */
+export function useRhQualite() {
+  const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
+  const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });
+
+  useEffect(() => {
+    let annule = false;
+    setEtat(e => ({ ...e, loading: true }));
+    const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
+
+    Promise.all([
+      fetchRh(`/qualite?du=${from}&au=${to}`),
+      compareActive && compareRange
+        ? fetchRh(`/qualite?du=${compareRange.from}&au=${compareRange.to}`)
+        : Promise.resolve(null),
+    ])
+      .then(([result, compareResult]) => {
+        if (!annule) setEtat({ result, compareResult, loading: false, error: null });
+      })
+      .catch(e => { if (!annule) setEtat({ result: null, compareResult: null, loading: false, error: e.message }); });
+
+    return () => { annule = true; };
+  }, [periodKey, customFrom, customTo, compareActive, compareRange]);
+
+  return etat;
+}
+
 /* Vue 2 du dashboard Recrutement, « Pipeline candidats et délais ».
  *
  * MÊME LECTURE EN COHORTE QUE LA VUE 1, et ce n'est pas un détail : les deux

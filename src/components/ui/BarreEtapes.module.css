@@ -1,0 +1,79 @@
+/* Même gabarit de ligne que MotifBar : 145 px de libellé, une piste qui prend
+   le reste, des colonnes fixes à droite. Les deux composants se succèdent dans
+   une même carte sans décalage. */
+.row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+
+.label {
+  font-size: 11px;
+  color: var(--text2);
+  width: 145px;
+  flex-shrink: 0;
+  line-height: 1.3;
+}
+
+/* NEUF SEGMENTS DE LARGEUR ÉGALE, et c'est le point : la barre situe, elle ne
+   mesure pas. Des segments proportionnels à la durée des étapes diraient autre
+   chose, et personne n'a cette durée au fichier.
+   `flex: 1` sur chacun plutôt qu'une grille à neuf colonnes : la gouttière de
+   2 px reste constante quelle que soit la largeur de la carte, là où un
+   `repeat(9, 1fr)` avec gap fait varier le rapport trait/creux au pixel près
+   sur les cartes étroites. */
+.piste {
+  flex: 1;
+  display: flex;
+  gap: 2px;
+  height: 10px;
+}
+
+.segment {
+  flex: 1;
+  border-radius: 2px;
+  /* Le creux : la même teinte que le rail de MotifBar, pour que les barres des
+     deux familles aient le même fond dans une carte qui les mélange. */
+  background: var(--sable-light);
+  transition: background 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Les extrémités s'arrondissent comme un rail plein, sinon la suite de neuf
+   cases ne se lit plus comme UNE barre. */
+.piste .segment:first-child { border-top-left-radius: 5px; border-bottom-left-radius: 5px; }
+.piste .segment:last-child  { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
+
+/* UN LISERÉ SUR LES SEGMENTS ATTEINTS. Les premières teintes de la rampe sont
+   très pâles — #DBE6DD sur un rail #F5F1EC se distingue mal, et une étape R0
+   paraîtrait vide. Le contour tranche sans assombrir la couleur. */
+.atteint { box-shadow: inset 0 0 0 1px rgba(38, 0, 31, 0.10); }
+
+.valeurs {
+  display: grid;
+  gap: 5px;
+  align-items: baseline;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.valeurs span { text-align: right; }
+
+/* Les en-têtes des colonnes de droite. Elles se calent sur le même gabarit que
+   .valeurs — largeur et gouttière identiques, posées par le composant appelant.
+   Sans elles, trois nombres nus ne disent pas lequel est lequel. */
+.entete {
+  display: grid;
+  gap: 5px;
+  flex-shrink: 0;
+  font-size: 9px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text3);
+  font-weight: 600;
+}
+.entete span { text-align: right; line-height: 1.2; }
+
+/* La ligne d'en-tête reprend l'ossature d'une ligne de barre pour que ses
+   colonnes tombent au même endroit : libellé fantôme, piste fantôme, colonnes
+   réelles. */
+.ligneEntete { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 8px; }
+.enteteVide { width: 145px; flex-shrink: 0; }
+.entetePiste { flex: 1; }
