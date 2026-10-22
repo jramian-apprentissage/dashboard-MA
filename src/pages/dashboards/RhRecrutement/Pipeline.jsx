@@ -229,7 +229,7 @@ export default function Pipeline() {
           libelle: m.cle ? libelleFamille(m.cle) : 'À classer',
           couleur: m.cle ? (COULEURS_MISSION[m.cle] || COULEUR_A_CLASSER) : COULEUR_A_CLASSER,
         }));
-        const retenusMissions = missions.reduce((n, m) => n + (m.retenus || 0), 0);
+        const besoinsMissions = missions.reduce((n, m) => n + m.besoins, 0);
 
         /* LA NORMALISATION RETIRE LES ACCENTS avant de comparer : chercher
            « etendard » doit trouver « Étendard », et « telepro » doit trouver
@@ -435,10 +435,13 @@ export default function Pipeline() {
               )}
             </Card>
 
-            {/* ── Planche 14, section « Délais et pipeline de recrutement » ──
-                Titre validé par Clémence le 30/09, qui remplace « time to fill
-                et candidats par client ». */}
-            <SectionLabel>Délais et pipeline de recrutement</SectionLabel>
+            {/* ── Planche 14, la section des durées ──
+                « Durée de recrutement » depuis le 22/10. Elle s'appelait
+                « Délais et pipeline de recrutement », titre validé par Clémence
+                le 30/09 — mais le pipeline a quitté la section le même jour,
+                avec les étapes du workflow, et un titre qui annonce ce qui n'y
+                est plus vaut moins qu'un titre exact. */}
+            <SectionLabel>Durée de recrutement</SectionLabel>
             {/* LES QUATRE TUILES REVIENNENT ICI, à leur place dans la
                 maquette. Elles avaient été poussées en bas de page le 22/10
                 quand la première rangée est devenue l'entonnoir des profils,
@@ -550,21 +553,27 @@ export default function Pipeline() {
                 sur le dashboard commercial : même composant, même variante
                 'half-rose', camembert à gauche et tableau à droite.
 
-                LE CERCLE EST DIMENSIONNÉ PAR LES PROFILS RETENUS, demande de
-                Jimmy du 22/10 : c'est ce qui ABOUTIT, donc la part de chaque
-                métier dans le travail effectivement livré. Le nombre de besoins
-                dirait la demande, pas le résultat ; il reste dans le tableau.
+                LE CERCLE EST DIMENSIONNÉ PAR LES BESOINS et le tableau porte
+                les quatre durées — arbitrage de Jimmy du 22/10, après un
+                premier essai sur les profils retenus. C'est le bon : la carte
+                vit dans la section des durées, et la question qu'on lui pose
+                est « quel métier met le plus de temps ». Le cercle donne le
+                poids de chaque métier, les colonnes disent son rythme.
 
-                LE SURVOL PORTE LES QUATRE INDICATEURS de « Placement de
-                profils », également demandé : on retrouve l'entonnoir de la
-                rangée du haut, métier par métier, sans quitter le cercle.
+                LE SURVOL REPREND LES QUATRE MÊMES MESURES, chacune avec son
+                effectif, pour qui lit le cercle sans descendre au tableau.
 
-                LE TYPE DE MISSION N'EST PAS DANS LE FICHIER. Il est reconstitué
-                par une table de correspondance écrite à la main, le temps que
-                l'équipe RH ajoute les deux initiales aux libellés de poste. La
-                mention sous la carte le dit, parce qu'un classement provisoire
-                qui ne s'annonce pas devient un classement officiel au premier
-                export. */}
+                LE TYPE DE MISSION EST RECONSTITUÉ à partir de l'intitulé de
+                poste, voir familleCommande.js côté serveur. Ce n'est pas dit à
+                l'écran, Jimmy l'ayant retiré de la mention le 22/10. */}
+            {/* UN Card NE PORTE JAMAIS SA MARGE dans ce dépôt, c'est la grille
+                qui espace — et .page est en gap: 0 parce que chaque bloc
+                apporte la sienne. Deux cartes qui se suivent sans grille se
+                touchent donc à 0 px, ce qui s'est vu ici entre la répartition
+                et le graphe (signalé le 22/10). Le même défaut avait déjà été
+                corrigé sur la page des mouvements le 17/10, avec la même
+                enveloppe. */}
+            <div className={styles.blocGraphe}>
             <Card title="Répartition par type de mission">
               {missions.length === 0 ? (
                 <div className={styles.etat}>
@@ -578,7 +587,7 @@ export default function Pipeline() {
                     <div className={styles.repartDonut}>
                       <DonutChart
                         variant="half-rose"
-                        data={missions.map(m => m.retenus || 0)}
+                        data={missions.map(m => m.besoins)}
                         labels={missions.map(m => m.libelle)}
                         colors={missions.map(m => m.couleur)}
                         height={240}
@@ -589,11 +598,11 @@ export default function Pipeline() {
                           const m = missions.find(x => x.libelle === label);
                           if (!m) return `${label} : ${fmtNumber(value)}`;
                           return [
-                            `${label} — ${fmtPourcentage(pct)} des profils retenus`,
-                            `Besoin en profils : ${ouTiret(m.profilsDemandes)}`,
-                            `Profils présentés : ${ouTiret(m.presentes)}`,
-                            `Profils retenus : ${ouTiret(m.retenus)}`,
-                            `Taux de transformation : ${m.tauxProfil == null ? '-' : fmtPourcentage(m.tauxProfil)}`,
+                            `${label} — ${fmtNumber(value)} besoin${s(value)}, ${fmtPourcentage(pct)}`,
+                            `Fin de recherche : ${j(m.rechercheMoy)} j sur ${fmtNumber(m.rechercheN)}`,
+                            `Présentation client : ${j(m.presentationMoy)} j sur ${fmtNumber(m.presentationN)}`,
+                            `Pourvoir un poste : ${j(m.pourvoirMoy)} j sur ${fmtNumber(m.pourvoirN)}`,
+                            `Dans les délais : ${m.tauxDelai == null ? '-' : fmtPourcentage(m.tauxDelai)} sur ${fmtNumber(m.delaiN)}`,
                           ];
                         }}
                       />
@@ -604,10 +613,10 @@ export default function Pipeline() {
                           <tr>
                             <th>Type de mission</th>
                             <th className={styles.num}>Besoins</th>
-                            <th className={styles.num}>Besoin en profils</th>
-                            <th className={styles.num}>Présentés</th>
-                            <th className={styles.num}>Retenus</th>
-                            <th className={styles.num}>Taux</th>
+                            <th className={styles.num}>Fin de recherche</th>
+                            <th className={styles.num}>Présentation</th>
+                            <th className={styles.num}>Pourvoir</th>
+                            <th className={styles.num}>Dans les délais</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -620,11 +629,27 @@ export default function Pipeline() {
                                 </span>
                               </td>
                               <td className={styles.num}>{fmtNumber(m.besoins)}</td>
-                              <td className={styles.num}>{ouTiret(m.profilsDemandes)}</td>
-                              <td className={styles.num}>{ouTiret(m.presentes)}</td>
-                              <td className={styles.num}>{ouTiret(m.retenus)}</td>
+                              {/* CHAQUE DURÉE PORTE SON EFFECTIF, en gris à côté
+                                  d'elle. À ce niveau de découpage les moyennes
+                                  reposent parfois sur une ou deux observations :
+                                  le Tech n'a qu'UN démarrage daté sur l'année.
+                                  Une moyenne sans son compte se lirait comme un
+                                  fait établi. */}
                               <td className={styles.num}>
-                                {m.tauxProfil == null ? '-' : fmtPourcentage(m.tauxProfil)}
+                                {j(m.rechercheMoy)}{m.rechercheMoy == null ? '' : ' j'}
+                                <span className={styles.effectif}>{fmtNumber(m.rechercheN)}</span>
+                              </td>
+                              <td className={styles.num}>
+                                {j(m.presentationMoy)}{m.presentationMoy == null ? '' : ' j'}
+                                <span className={styles.effectif}>{fmtNumber(m.presentationN)}</span>
+                              </td>
+                              <td className={styles.num}>
+                                {j(m.pourvoirMoy)}{m.pourvoirMoy == null ? '' : ' j'}
+                                <span className={styles.effectif}>{fmtNumber(m.pourvoirN)}</span>
+                              </td>
+                              <td className={styles.num}>
+                                {m.tauxDelai == null ? '-' : fmtPourcentage(m.tauxDelai)}
+                                <span className={styles.effectif}>{fmtNumber(m.delaiN)}</span>
                               </td>
                             </tr>
                           ))}
@@ -632,16 +657,21 @@ export default function Pipeline() {
                       </table>
                     </div>
                   </div>
+                  {/* LA MENTION NE PARLE PLUS DE LA TABLE DE CORRESPONDANCE.
+                      Elle l'annonçait, par précaution de ma part ; Jimmy l'a
+                      retirée le 22/10 — « ça c'est juste à discuter avec
+                      l'équipe, pas à mettre là ». Le point reste écrit où il
+                      sert : dans familleCommande.js et dans le document des
+                      correctifs. Ne reste ici que ce qui aide à lire la
+                      carte. */}
                   <div className={styles.mention}>
-                    Le cercle répartit les {fmtNumber(retenusMissions)} profils retenus.
-                    LE TYPE DE MISSION N’EST PAS DANS LE CLASSEUR : il est reconstitué à
-                    partir de l’intitulé de poste, par une table écrite à la main et
-                    provisoire, en attendant que les libellés portent leurs deux initiales
-                    comme dans le registre des collaborateurs.
+                    Le cercle répartit les {fmtNumber(besoinsMissions)} besoins. En gris, le
+                    nombre de besoins sur lequel chaque durée est calculée.
                   </div>
                 </>
               )}
             </Card>
+            </div>
 
               <Card title="Évolution du délai pour pourvoir un poste">
                 {evolution.length === 0 ? (
