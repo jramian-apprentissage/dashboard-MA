@@ -104,6 +104,33 @@ export function useRhTurnover() {
   return etat;
 }
 
+/* Vue 1 du dashboard Recrutement, « Besoins et recrutements ».
+ *
+ * SEUL HOOK RH QUI NE DÉPEND PAS DE LA PÉRIODE, et il faut savoir pourquoi
+ * avant de « corriger » ce qui ressemble à un oubli. Un besoin en cours est un
+ * stock, et le classeur FCC ne porte aucune date de changement de statut : on
+ * sait qu'une commande est aujourd'hui terminée, jamais quand elle l'est
+ * devenue. L'état du stock à une date passée n'est donc pas reconstituable.
+ * Brancher le sélecteur de période ferait changer un chiffre qui, lui, ne
+ * change pas, ce qui est pire qu'un chiffre figé et assumé.
+ *
+ * Conséquence volontaire : pas de `compareResult`, et les cartes de cette page
+ * passent `compare={false}` pour que la comparaison soit éteinte à l'écran et
+ * non laissée en attente d'un calcul qui ne viendra jamais. */
+export function useRhBesoins() {
+  const [etat, setEtat] = useState({ result: null, loading: true, error: null });
+
+  useEffect(() => {
+    let annule = false;
+    fetchRh('/besoins')
+      .then(r => { if (!annule) setEtat({ result: r, loading: false, error: null }); })
+      .catch(e => { if (!annule) setEtat({ result: null, loading: false, error: e.message }); });
+    return () => { annule = true; };
+  }, []);
+
+  return etat;
+}
+
 export function useRhEffectifs() {
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });
