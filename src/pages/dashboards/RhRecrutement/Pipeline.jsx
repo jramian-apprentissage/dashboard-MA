@@ -166,15 +166,15 @@ export default function Pipeline() {
         }
 
         const {
-          demandes, candidats, candidatsN,
+          demandes,
           profilsDemandes, profilsDemandesN,
           presentesBrut, presentesBrutN,
           retenusBrut, retenusBrutN, tauxProfil,
+          rechercheN, rechercheMoy, rechercheMed,
+          presentationN, presentationMoy, presentationMed,
           pourvoirN, pourvoirMoy, pourvoirMed,
-          dureeN, dureeMoy, dureeMed,
           delaiN, dansDelai, tauxDelai,
-          transfoN, presentes, retenus, tauxTransfo, parBesoin,
-          evolution, candidatsParClient, detailsClients, etapes, sansEtape, enCours,
+          evolution, candidatsParClient, detailsClients,
         } = result;
         const s = n => (n > 1 ? 's' : '');
 
@@ -408,29 +408,68 @@ export default function Pipeline() {
                 le délai pour pourvoir un poste, c'est-à-dire la deuxième de
                 ces tuiles dépliée dans le temps. On lit le chiffre, puis son
                 histoire. */}
+            {/* QUATRE DURÉES, TOUTES COMPTÉES DEPUIS LA DEMANDE, liste arrêtée
+                par Jimmy le 22/10. C'est un changement de référence, pas un
+                réglage : elles partaient de l'ouverture de recherche R0, une
+                date que l'équipe RH POSE elle-même. Mesurer depuis elle, c'est
+                mesurer le travail de recherche en excluant le temps mis à
+                l'ouvrir. Le client, lui, compte à partir du jour où il a
+                demandé — et la date de la commande est la seule du fichier
+                remplie à 100 %.
+
+                LES TROIS PREMIÈRES SONT INVERSÉES : une durée qui baisse est
+                une bonne nouvelle, la couleur doit virer au vert. Le paramètre
+                n'inverse que la COULEUR, la flèche suit le chiffre.
+
+                CHAQUE SOUS-TITRE NOMME SES DEUX DATES, et ce n'est pas du
+                bavardage : quatre tuiles qui disent toutes « durée moyenne »
+                se confondraient sans cela, et le lecteur ne saurait pas
+                laquelle contient laquelle.
+
+                LA MÉDIANE VOYAGE AVEC LA MOYENNE, parce qu'elles divergent
+                fortement : 24 contre 12 jours sur la présentation au client,
+                une commande ayant mis 149 jours. La moyenne seule ferait lire
+                un délai courant deux fois plus long qu'il n'est.
+
+                ET L'EFFECTIF AVEC, parce qu'il va de 90 à 32 selon la tuile :
+                la date de démarrage n'est renseignée que sur un tiers des
+                commandes. L'afficher quand même avec son compte en clair est
+                la convention de la maquette ; le masquer serait décider à la
+                place de qui lit. */}
             <div className={styles.kpiGrid}>
+
               <KPICard
-                label="Candidats en cours de recrutement"
-                value={fmtNumber(candidats)}
-                unit={` candidat${s(candidats)}`}
+                label="Durée moy. jusqu'à la fin de recherche"
+                value={j(rechercheMoy)}
+                unit={rechercheMoy == null ? '' : ' j'}
                 compare={compareResult
-                  ? sansJugement(compareValueText(candidats, compareResult.candidats, comparePeriodKey))
+                  ? compareValueText(rechercheMoy, compareResult.rechercheMoy, comparePeriodKey, true)
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: candidatsN === 0
-                    ? 'Aucun besoin en cours ne porte de candidat compté'
-                    : `Candidats présentés · colonne remplie sur ${fmtNumber(candidatsN)} besoin${s(candidatsN)}`,
+                  text: rechercheN === 0
+                    ? 'Aucune recherche close sur la période'
+                    : `De la demande à la fin R3 · médiane ${j(rechercheMed)} j · ${fmtNumber(rechercheN)} besoin${s(rechercheN)}`,
                 }}
               />
 
-              {/* L'INDICATEUR LE PLUS TROUÉ DE LA PAGE, affiché comme sur la
-                  maquette avec son effectif en clair. La date de démarrage
-                  n'est renseignée que sur 35 % des commandes et 21
-                  recrutements aboutis en manquent : le sous-titre dit sur
-                  combien de besoins la moyenne porte. */}
               <KPICard
-                label="Délai moy. pour pourvoir un poste"
+                label="Durée moy. jusqu'à la présentation client"
+                value={j(presentationMoy)}
+                unit={presentationMoy == null ? '' : ' j'}
+                compare={compareResult
+                  ? compareValueText(presentationMoy, compareResult.presentationMoy, comparePeriodKey, true)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: presentationN === 0
+                    ? 'Aucun rendez-vous client daté sur la période'
+                    : `De la demande au rendez-vous R5 · médiane ${j(presentationMed)} j · ${fmtNumber(presentationN)} besoin${s(presentationN)}`,
+                }}
+              />
+
+              <KPICard
+                label="Durée moy. pour pourvoir un poste"
                 value={j(pourvoirMoy)}
                 unit={pourvoirMoy == null ? '' : ' j'}
                 compare={compareResult
@@ -440,22 +479,7 @@ export default function Pipeline() {
                   dir: 'neutral',
                   text: pourvoirN === 0
                     ? 'Aucun démarrage daté sur la période'
-                    : `De l’ouverture au démarrage · médiane ${j(pourvoirMed)} j · ${fmtNumber(pourvoirN)} besoin${s(pourvoirN)}`,
-                }}
-              />
-
-              <KPICard
-                label="Durée moy. du recrutement"
-                value={j(dureeMoy)}
-                unit={dureeMoy == null ? '' : ' j'}
-                compare={compareResult
-                  ? compareValueText(dureeMoy, compareResult.dureeMoy, comparePeriodKey, true)
-                  : null}
-                trend={{
-                  dir: 'neutral',
-                  text: dureeN === 0
-                    ? 'Aucune recherche datée sur la période'
-                    : `De l’ouverture à la fin R3 · médiane ${j(dureeMed)} j · ${fmtNumber(dureeN)} recherche${s(dureeN)}`,
+                    : `De la demande au démarrage · médiane ${j(pourvoirMed)} j · ${fmtNumber(pourvoirN)} besoin${s(pourvoirN)}`,
                 }}
               />
 
@@ -473,12 +497,8 @@ export default function Pipeline() {
                     : `Fin de recherche avant l’échéance R3 · ${fmtNumber(dansDelai)} sur ${fmtNumber(delaiN)}`,
                 }}
               />
-            </div>
 
-            {/* LE GRAPHE PREND TOUTE LA LARGEUR depuis que les candidats
-                par client sont remontes sous la rangee : une grille a deux
-                colonnes dont une est vide laisse un trou, et une courbe a
-                douze points respire mieux large. */}
+            </div>
 
               <Card title="Évolution du délai pour pourvoir un poste">
                 {evolution.length === 0 ? (
@@ -612,111 +632,34 @@ export default function Pipeline() {
                         QUOI — les deux sont nécessaires et ne se remplacent
                         pas. */}
                     <div className={styles.mention}>
-                      Délai entre l’ouverture de recherche et le démarrage, par mois
-                      de démarrage · douze derniers mois ·{' '}
+                      Délai entre la DEMANDE et le démarrage, par mois de démarrage
+                      · douze derniers mois ·{' '}
                       {fmtNumber(totalDemarrages)} démarrage{s(totalDemarrages)} daté{s(totalDemarrages)}.
                     </div>
                   </>
                 )}
               </Card>
 
-            {/* ── Planche 15, section « La transformation des profils » ──
-                « Besoins » et non « commandes » : Clémence, sur cette planche,
-                « si c'est pareil, mettre besoin ». */}
-            <SectionLabel>La transformation des profils</SectionLabel>
-            <div className={styles.kpiGrid}>
+            {/* LES DEUX SECTIONS QUI SUIVAIENT ONT ÉTÉ RETIRÉES le 22/10 sur
+                décision de Jimmy, « supprime tout le reste en bas ».
 
-              <KPICard
-                label="Besoins en cours de recrutement"
-                value={fmtNumber(enCours)}
-                unit={` besoin${s(enCours)}`}
-                compare={compareResult
-                  ? compareValueText(enCours, compareResult.enCours, comparePeriodKey, true)
-                  : null}
-                trend={{ dir: 'neutral', text: `Sur ${fmtNumber(demandes)} besoin${s(demandes)} demandé${s(demandes)}` }}
-              />
+                « LA TRANSFORMATION DES PROFILS » portait un second taux de
+                transformation, 47 % contre les 36 % de la rangée du haut. Les
+                deux étaient justes sur deux bases différentes — l'un sur tous
+                les profils, l'autre sur les seuls besoins portant les deux
+                colonnes — et c'est précisément ce qui posait problème : deux
+                nombres sous des libellés presque identiques, à deux écrans
+                d'intervalle.
 
-              <KPICard
-                label="Taux de transformation des profils présentés"
-                value={tauxTransfo == null ? '-' : fmtNumber(tauxTransfo)}
-                unit={tauxTransfo == null ? '' : ' %'}
-                compare={compareResult
-                  ? comparePtsText(tauxTransfo, compareResult.tauxTransfo, comparePeriodKey)
-                  : null}
-                trend={{
-                  dir: 'neutral',
-                  text: transfoN === 0
-                    ? 'Aucun besoin ne porte les deux comptes'
-                    : `${fmtNumber(retenus)} retenu${s(retenus)} sur ${fmtNumber(presentes)} présenté${s(presentes)} · ${fmtNumber(transfoN)} besoin${s(transfoN)}`,
-                }}
-              />
+                « LES ÉTAPES DU WORKFLOW RH » comptait les besoins ouverts par
+                étape. L'information n'est pas perdue : la barre à neuf crans de
+                la carte par client la porte désormais, besoin par besoin, et
+                la pop-up en donne la colonne Étape.
 
-              {/* Couleur neutralisée : plus de profils présentés par besoin,
-                  c'est plus de choix pour le client et plus de travail pour la
-                  même place. Aucun des deux sens n'est bon en soi. */}
-              <KPICard
-                label="Profils présentés par besoin de recrutement"
-                value={parBesoin == null ? '-' : fmtNumber(parBesoin)}
-                unit={parBesoin == null ? '' : ' profils'}
-                compare={compareResult
-                  ? sansJugement(compareValueText(parBesoin, compareResult.parBesoin, comparePeriodKey))
-                  : null}
-                trend={{
-                  dir: 'neutral',
-                  text: transfoN === 0
-                    ? 'Aucun besoin renseigné'
-                    : `${fmtNumber(presentes)} présenté${s(presentes)} sur ${fmtNumber(transfoN)} besoin${s(transfoN)} renseigné${s(transfoN)}`,
-                }}
-              />
-            </div>
+                Les agrégats correspondants ont été retirés de la route dans le
+                même mouvement : une réponse qui porte des champs que personne
+                ne lit finit par les voir diverger sans que rien ne le dise. */}
 
-            {/* ── Planche 15, section « Les étapes du workflow RH » ──
-                SUR LES SEULS BESOINS EN COURS. Sur l'ensemble des commandes,
-                « En poste » écraserait tout et le tableau cesserait de décrire
-                un pipeline : la maquette le disait déjà en pied de carte. Les
-                huit étapes sont toujours affichées, même à zéro — un trou au
-                milieu du tunnel est précisément ce qu'on veut voir. */}
-            <SectionLabel>Les étapes du workflow RH</SectionLabel>
-            <Card title="Processus de recrutement">
-              {enCours === 0 ? (
-                <div className={styles.etat}>
-                  <div className={styles.etatTexte}>
-                    Aucun besoin n’est en cours de recrutement sur cette période.
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className={styles.barres}>
-                    {etapes.map(e => (
-                      <MotifBar
-                        key={e.cle}
-                        label={e.libelle}
-                        pct={partPct(e.besoins, enCours)}
-                        count={e.besoins}
-                        fillColor="rgba(38,0,31,0.95)"
-                      />
-                    ))}
-                  </div>
-                  {/* Les besoins en cours sans étape saisie ne sont pas rangés
-                      d'office en R0 : ils sont nommés, sinon le tunnel paraît
-                      complet alors qu'il lui manque des lignes. */}
-                  {sansEtape > 0 && (
-                    <div className={styles.mention}>
-                      {fmtNumber(sansEtape)} besoin{s(sansEtape)} en cours sans étape RH saisie,
-                      hors de ce tableau.
-                    </div>
-                  )}
-                </>
-              )}
-            </Card>
-
-            {/* ── EN ATTENTE DE PLACEMENT ──
-                Ces quatre tuiles occupaient la rangée « Candidatures et
-                délais » avant qu'elle ne devienne l'entonnoir des profils.
-                Jimmy a demandé le 22/10 de les descendre ici en attendant de
-                dire où elles vont, et de ne rien supprimer. Le titre de
-                section est volontairement explicite : une section provisoire
-                qui ne dit pas qu'elle l'est finit par passer pour un choix. */}
             {clientsOuverts && (
               <ListeModale
                 large
