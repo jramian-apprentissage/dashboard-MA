@@ -323,8 +323,6 @@ export const useAuth = () => useContext(AuthContext);
    CE TABLEAU EST LA SEULE SOURCE DE L'ORDRE : le Topbar, le BottomNav, les
    cartes d'accueil, le Glossaire et la grille d'acces de l'Admin le
    parcourent tous. Le corriger ici les corrige tous les cinq d'un coup.
-   (Sidebar.jsx le parcourt aussi, mais ce fichier n'est importe nulle part :
-   verifie le 21/10, c'est du code mort, il ne compte pas.)
 
    LE SCOPE NE TOUCHE PAS AUX DROITS : hasAccessToDashboard reste la seule
    porte. Il ne fait que classer ce a quoi on a deja acces. */
@@ -351,8 +349,10 @@ export const DASHBOARD_SCOPES = [
 
 // Accueil suit exactement le même mécanisme d'autorisation que DASHBOARDS
 // (id dans user.dashboards, vérifié par hasAccessToDashboard) mais reste à
-// part : ce n'est pas un dashboard à onglets, la Sidebar ne doit pas le
-// boucler avec DASHBOARD_TABS/DASHBOARD_ROUTES sous peine de casser son rendu.
+// part : ce n'est pas un dashboard à onglets, aucune barre de navigation ne
+// doit le boucler avec DASHBOARD_TABS/DASHBOARD_ROUTES sous peine de casser
+// son rendu. La consigne visait la Sidebar, supprimée le 22/10 parce qu'elle
+// n'était montée nulle part ; elle vaut pour le Topbar et le BottomNav.
 export const HOME_PAGE = { id: 'home', label: 'Accueil' };
 
 export const ROLES = [
