@@ -34,6 +34,15 @@ function libelleMois(ym) {
   const [a, m] = ym.split('-').map(Number);
   return new Date(Date.UTC(a, m - 1, 1)).toLocaleDateString('fr-FR', { month: 'short', timeZone: 'UTC' });
 }
+/* '2026-09-24' -> '24/09/26'. Les dates arrivent en ISO depuis la route,
+   format trie et sans ambiguite sur le fil, et se lisent a la francaise a
+   l'ecran. */
+function dateCourte(iso) {
+  if (!iso) return '-';
+  const [a, m, j] = iso.split('-');
+  return `${j}/${m}/${a.slice(2)}`;
+}
+
 function libelleMoisLong(ym) {
   const [a, m] = ym.split('-').map(Number);
   return new Date(Date.UTC(a, m - 1, 1))
@@ -122,7 +131,7 @@ export default function Pipeline() {
           dureeN, dureeMoy, dureeMed,
           delaiN, dansDelai, tauxDelai,
           transfoN, presentes, retenus, tauxTransfo, parBesoin,
-          evolution, candidatsParClient, etapes, sansEtape, enCours,
+          evolution, candidatsParClient, detailsClients, etapes, sansEtape, enCours,
         } = result;
         const s = n => (n > 1 ? 's' : '');
 
@@ -263,7 +272,7 @@ export default function Pipeline() {
                 LE SURVOL PORTE LES POSTES, demandé le 22/10 : un client porte
                 souvent plusieurs recrutements — REGARD INC en a cinq — et la
                 ligne ne peut pas les nommer sans devenir un tableau. */}
-            <Card title="Candidats en recrutement par prospects/clients">
+            <Card title="Détails par prospects/clients">
               {candidatsParClient.length === 0 ? (
                 <div className={styles.etat}>
                   <div className={styles.etatTexte}>
@@ -288,20 +297,29 @@ export default function Pipeline() {
                       />
                     ))}
                   </div>
-                  {candidatsParClient.length > CLIENTS_APERCU && (
-                    <button
-                      type="button"
-                      className={styles.voirPlus}
-                      onClick={() => setClientsOuverts(true)}
-                    >
-                      Voir les {fmtNumber(candidatsParClient.length)} clients
-                    </button>
-                  )}
+                  {/* LE BOUTON EST TOUJOURS LÀ, même quand la carte montre déjà
+                      tous les clients, demande de Jimmy du 22/10. Il ne promet
+                      plus « N clients » mais « voir plus », et c'est exact : la
+                      pop-up porte DEUX COLONNES QUE LA CARTE N'A PAS, le poste
+                      et l'étape en toutes lettres. Il y a donc toujours plus à
+                      voir, même sur une période à deux clients — où le bouton
+                      conditionnel privait justement de ce détail. */}
+                  <button
+                    type="button"
+                    className={styles.voirPlus}
+                    onClick={() => setClientsOuverts(true)}
+                  >
+                    Voir plus
+                  </button>
+                  {/* MENTION RACCOURCIE le 22/10 : quatre phrases sous une
+                      carte, personne ne les lit. Ne restent que les deux
+                      choses qu'on ne peut PAS deviner en regardant la carte —
+                      ce que situe la barre, et qu'un tiret n'est pas un zéro.
+                      Le reste (le survol, l'absence de pourcentage) se
+                      découvre en survolant, ou ne change rien à la lecture. */}
                   <div className={styles.mention}>
-                    La barre situe le besoin le plus avancé du client sur les neuf étapes du
-                    processus, de R0 à « En poste » ; elle ne mesure pas une part de travail
-                    accompli. Au survol d’une ligne : les postes concernés et l’étape atteinte.
-                    Un tiret signale une colonne non saisie au classeur, et non un zéro.
+                    La barre situe le besoin le plus avancé du client, de R0 à « En poste ».
+                    Un tiret signale une colonne non saisie.
                   </div>
                 </>
               )}
@@ -637,37 +655,53 @@ export default function Pipeline() {
                 qui ne dit pas qu'elle l'est finit par passer pour un choix. */}
             {clientsOuverts && (
               <ListeModale
-                titre="Candidats en recrutement par prospects/clients"
+                large
+                titre="Détails par prospects/clients"
                 sousTitre={
-                  `${fmtNumber(candidatsParClient.length)} client${s(candidatsParClient.length)}`
-                  + ` · ${fmtNumber(candidatsParClient.reduce((n, c) => n + c.besoins, 0))} besoin`
-                  + `${s(candidatsParClient.reduce((n, c) => n + c.besoins, 0))} en cours`
+                  `${fmtNumber(detailsClients.length)} besoin${s(detailsClients.length)} en cours`
+                  + ` · ${fmtNumber(candidatsParClient.length)} client${s(candidatsParClient.length)}`
                 }
                 onClose={() => setClientsOuverts(false)}
               >
-                {/* LA POP-UP NOMME LES POSTES, là où la carte les laisse au
-                    survol : elle a la place d'une colonne, et c'est ce qu'on
-                    vient y chercher quand on déplie la liste. */}
+                {/* UNE LIGNE PAR BESOIN, ET NON PLUS PAR CLIENT. La carte
+                    résume un client, la pop-up s'appelle « détails » : elle
+                    descend donc d'un cran. Tant qu'elle agrégeait, la cellule
+                    « poste » de REGARD INC empilait cinq intitulés, et les
+                    deux dates demandées le 22/10 y auraient empilé cinq dates
+                    chacune. Un besoin par ligne, et chaque colonne redevient
+                    une vraie valeur.
+
+                    LES DEUX DATES SONT REMPLIES À 100 % sur les besoins
+                    ouverts, 26 sur 26 au 22/10. C'est l'exception dans ce
+                    classeur, où la plupart des colonnes de dates sont
+                    trouées : celles-ci s'affichent sans réserve. */}
                 <table className={styles.tbl}>
                   <thead>
                     <tr>
                       <th>Client</th>
                       <th>Poste</th>
                       <th>Étape</th>
+                      <th className={styles.num}>Commande</th>
+                      <th className={styles.num}>Échéance R3</th>
                       <th className={styles.num}>Besoin</th>
                       <th className={styles.num}>Présentés</th>
                       <th className={styles.num}>Retenus</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {candidatsParClient.map(c => (
-                      <tr key={c.entite}>
-                        <td>{c.entite}</td>
-                        <td>{(c.postes || '-').replace(/\s+/g, ' ')}</td>
-                        <td>{libelleEtape(c.etape) || '-'}</td>
-                        <td className={styles.num}>{ouTiret(c.profilsDemandes)}</td>
-                        <td className={styles.num}>{ouTiret(c.presentes)}</td>
-                        <td className={styles.num}>{ouTiret(c.retenus)}</td>
+                    {detailsClients.map(d => (
+                      <tr key={d.numero}>
+                        <td>{d.entite}</td>
+                        {/* Les intitulés du classeur portent parfois un retour
+                            à la ligne en plein milieu : on les remet sur une
+                            seule ligne pour que la colonne ne saute pas. */}
+                        <td>{(d.poste || '-').replace(/\s+/g, ' ')}</td>
+                        <td>{libelleEtape(d.etape) || '-'}</td>
+                        <td className={styles.num}>{dateCourte(d.dateCommande)}</td>
+                        <td className={styles.num}>{dateCourte(d.echeanceR3)}</td>
+                        <td className={styles.num}>{ouTiret(d.profilsDemandes)}</td>
+                        <td className={styles.num}>{ouTiret(d.presentes)}</td>
+                        <td className={styles.num}>{ouTiret(d.retenus)}</td>
                       </tr>
                     ))}
                   </tbody>

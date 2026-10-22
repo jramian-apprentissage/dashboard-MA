@@ -35,6 +35,12 @@
      une partie de vh et coupait le bas de la liste. */
   max-height: calc(100dvh - 40px);
 }
+
+/* La variante large, voir le commentaire de `large` dans le .jsx. Elle ne
+   change QUE le plafond : la modale reste à width 100 % et se rétrécit donc
+   d'elle-même sur un écran plus petit, où le défilement horizontal du corps
+   prend le relais. */
+.large { max-width: 980px; }
 @keyframes modaleIn {
   from { opacity: 0; transform: translateY(8px) scale(0.98); }
   to   { opacity: 1; transform: translateY(0) scale(1); }

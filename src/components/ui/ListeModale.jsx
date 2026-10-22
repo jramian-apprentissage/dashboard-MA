@@ -16,7 +16,14 @@ import styles from './ListeModale.module.css';
  *
  * Portail, fermeture à Échap et blocage du défilement de fond : les trois
  * oublis classiques d'une modale, repris de AccesDashboards. */
-export default function ListeModale({ titre, sousTitre, onClose, children }) {
+/* `large` : une modale plus large, pour un tableau qui porte plus de cinq
+   colonnes. La largeur par défaut est calée sur un tableau à quatre colonnes ;
+   le détail des besoins par client en porte huit depuis le 22/10, dates
+   comprises, et son tableau dépassait de 70 px à l'intérieur de la modale.
+   Entrée optionnelle plutôt qu'un élargissement général : les cinq autres
+   modales du dépôt portent des listes étroites, qu'une boîte de 980 px
+   laisserait flotter au milieu du vide. */
+export default function ListeModale({ titre, sousTitre, onClose, children, large = false }) {
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose(); }
     document.addEventListener('keydown', onKey);
@@ -32,7 +39,7 @@ export default function ListeModale({ titre, sousTitre, onClose, children }) {
   return createPortal(
     <div className={styles.overlay} onClick={onClose}>
       <div
-        className={styles.modal}
+        className={`${styles.modal} ${large ? styles.large : ''}`}
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
