@@ -187,6 +187,24 @@
 .mentionFleche { flex: none; font-size: 12px; opacity: 0.6; }
 .mentionBtn:hover .mentionFleche { opacity: 1; }
 
+/* OUVRIR LA LISTE COMPLÈTE : la pastille du dashboard commercial, reprise ici
+   à l'identique (.hsMore de FocusClient).
+   Elle remplace le pied de carte à flèche, qui disait « 32 autres clients
+   identifiés → » : une phrase descriptive suivie d'une flèche ne se lit pas
+   comme un bouton, et rien n'annonçait qu'un clic ouvrirait quelque chose.
+   Jimmy, 22/10 : « le bouton flèche partout dans le RH doit être plus clair
+   comme dans commercial avec Voir les X ». Le verbe d'abord, le nombre
+   ensuite : on sait ce qu'on déclenche et sur quoi avant de cliquer. */
+.voirPlus {
+  display: block; margin: 12px auto 0; padding: 8px 18px;
+  background: var(--sable-light); border: 1px solid var(--border);
+  border-radius: 99px; font-family: inherit;
+  font-size: 11.5px; font-weight: 600; color: var(--myrtille); cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.voirPlus:hover { border-color: var(--myrtille); background: var(--sable); }
+.voirPlus:focus-visible { outline: 2px solid var(--myrtille); outline-offset: 2px; }
+
 /* Les états d'attente. Trois cas distincts, jamais confondus : la source ne
    répond pas, la source répond vide, la vue n'est pas encore dessinée. */
 .etat { text-align: center; padding: 44px 20px; }

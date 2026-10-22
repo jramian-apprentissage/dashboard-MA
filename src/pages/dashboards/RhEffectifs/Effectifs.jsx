@@ -321,17 +321,20 @@ export default function Effectifs() {
                     ))}
                   </tbody>
                 </table>
+                {/* LE VERBE D'ABORD, LE NOMBRE ENSUITE. Ce pied de carte
+                    disait « 32 autres clients identifiés, 108 collaborateurs »
+                    suivi d'une flèche : une phrase descriptive ne se lit pas
+                    comme un bouton, et rien n'annonçait qu'un clic ouvrirait
+                    la liste. On reprend la pastille du dashboard commercial,
+                    « Voir les N … », pour que l'action soit lisible avant le
+                    clic (Jimmy, 22/10). */}
                 {entites.length > 4 && (
                   <button
                     type="button"
-                    className={styles.mentionBtn}
+                    className={styles.voirPlus}
                     onClick={() => setClientsOuverts(true)}
                   >
-                    <span>
-                      {fmtNumber(entites.length - 4)} autres clients identifiés,{' '}
-                      {fmtNumber(entites.slice(4).reduce((s, e) => s + e.effectif, 0))} collaborateurs.
-                    </span>
-                    <span className={styles.mentionFleche} aria-hidden="true">→</span>
+                    Voir les {fmtNumber(entites.length)} clients
                   </button>
                 )}
 

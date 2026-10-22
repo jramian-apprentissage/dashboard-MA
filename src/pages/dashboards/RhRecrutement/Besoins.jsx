@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
+import ListeModale from '../../../components/ui/ListeModale';
 import Loader from '../../../components/ui/Loader';
 import { useRhBesoins } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
@@ -50,9 +52,20 @@ import styles from '../RhEffectifs/Rh.module.css';
  * besoins ARRIVÉS sur la période, ce qu'ils sont devenus AUJOURD'HUI. Le stock
  * à une date passée n'est pas calculable, le classeur ne portant aucune date
  * de changement de statut. */
+/* CINQ LIGNES SUR LA CARTE, le reste en pop-up. Ce n'est pas un chiffre
+   esthétique : c'est ce qui garde la carte de droite à la hauteur de celle de
+   gauche, qui porte quatre barres. Sans plafond, une période large allongerait
+   l'une et laisserait l'autre vide à côté. */
+const CLIENTS_APERCU = 5;
+
 export default function Besoins() {
   const { result, compareResult, loading, error } = useRhBesoins();
   const { comparePeriodKey } = usePeriod();
+  /* DÉCLARÉ ICI ET PAS DANS LE CORPS DU Loader : ce corps est une fonction que
+     le Loader n'appelle QUE s'il a fini de charger, donc un useState posé
+     dedans serait un appel de hook conditionnel. Même raison que sur la page
+     « Effectifs de l'agence ». */
+  const [clientsOuverts, setClientsOuverts] = useState(false);
 
   return (
     <Loader loading={loading && !result} label="Chargement des besoins…" minHeight={220}>
@@ -92,8 +105,8 @@ export default function Besoins() {
 
         const {
           demandes, realises, enCours, enCours15j,
-          annules, closSansRecrutement, postesDemandes, sansProfil, entites, tauxPourvu,
-          tranches, parEntite,
+          annules, closSansRecrutement, postesDemandes, sansProfil, clients, tauxPourvu,
+          tranches, parClient,
         } = result;
         const s = n => (n > 1 ? 's' : '');
 
@@ -106,7 +119,38 @@ export default function Besoins() {
            ne doit en aucun cas répéter le libellé de la tuile. */
         const postes = sansProfil === 0 && postesDemandes !== demandes
           ? `${fmtNumber(postesDemandes)} postes à pourvoir`
-          : `Sur ${fmtNumber(entites)} entité${s(entites)}`;
+          : `Sur ${fmtNumber(clients)} client${s(clients)}`;
+
+        /* Le même tableau sert la carte et la pop-up, avec un jeu de lignes
+           différent. L'écrire deux fois, c'est prendre le risque qu'ils
+           divergent à la première colonne ajoutée. */
+        const tableauClients = lignes => (
+          <table className={styles.tbl}>
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th className={styles.num}>Demandés</th>
+                <th className={styles.num}>Réalisés</th>
+                <th className={styles.num}>En cours</th>
+                <th className={styles.num}>Plus ancien</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lignes.map(e => (
+                <tr key={e.entite}>
+                  <td>{e.entite}</td>
+                  <td className={styles.num}>{fmtNumber(e.demandes)}</td>
+                  <td className={styles.num}>{fmtNumber(e.realises)}</td>
+                  <td className={styles.num}>{fmtNumber(e.en_cours)}</td>
+                  {/* `plus_ancien_j` ne peut pas être nul ici : la route ne
+                      rend que les clients ayant au moins un besoin en cours,
+                      et un besoin de la cohorte porte une date. */}
+                  <td className={styles.num}>{fmtNumber(e.plus_ancien_j)} j</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        );
 
         return (
           <div className={styles.page}>
@@ -181,81 +225,91 @@ export default function Besoins() {
 
             </div>
 
-            {/* L'ANCIENNETÉ DES BESOINS QUI RESTENT. La phrase : parmi ce qui
-                attend encore, voici depuis combien de temps.
+            {/* LES DEUX BLOCS CÔTE À CÔTE, comme sur la planche 13 et comme la
+                paire contrats / clients du Suivi des effectifs. Empilés, ils
+                obligeaient à faire défiler pour relier l'âge du stock aux
+                clients qui le portent, alors que c'est la même question posée
+                deux fois : qu'est-ce qui traîne, et chez qui.
 
-                LES QUATRE TRANCHES SONT TOUJOURS AFFICHÉES, même à zéro. Celle
-                de 30 à 60 jours est vide sur toutes les périodes mesurées le
-                22/10 : la masquer donnerait trois barres et laisserait croire
-                que la tranche n'existe pas, alors que c'est un trou réel et
-                qu'il dit quelque chose du renouvellement du stock. */}
-            <SectionLabel>Ancienneté des besoins en cours</SectionLabel>
-            <Card>
-              {enCours === 0 ? (
-                <div className={styles.etat}>
-                  <div className={styles.etatTexte}>
-                    Aucun besoin n’est en attente sur cette période.
+                LES DEUX CARTES ONT LA MÊME HAUTEUR par construction : les
+                éléments d'une grille s'étirent sur la hauteur de leur rangée.
+                C'est pour cela que le tableau est PLAFONNÉ À CINQ LIGNES et
+                que le reste part en pop-up — sans plafond, une période large
+                allongerait la carte de droite et laisserait la gauche vide. */}
+            <SectionLabel>Analyse de l’ancienneté</SectionLabel>
+            <div className={styles.deuxCol}>
+
+              {/* LES QUATRE TRANCHES SONT TOUJOURS AFFICHÉES, même à zéro.
+                  Celle de 30 à 60 jours est vide sur toutes les périodes
+                  mesurées le 22/10 : la masquer donnerait trois barres et
+                  laisserait croire que la tranche n'existe pas, alors que ce
+                  trou dit quelque chose du renouvellement du stock. */}
+              <Card title="Besoins en cours par tranche d’ancienneté">
+                {enCours === 0 ? (
+                  <div className={styles.etat}>
+                    <div className={styles.etatTexte}>
+                      Aucun besoin n’est en attente sur cette période.
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className={styles.barres}>
-                  {tranches.map(t => (
-                    <MotifBar
-                      key={t.cle}
-                      label={t.libelle}
-                      pct={partPct(t.besoins, enCours)}
-                      count={t.besoins}
-                      fillColor="rgba(38,0,31,0.95)"
-                    />
-                  ))}
-                </div>
-              )}
-            </Card>
-
-            {/* LE SUIVI PAR ENTITÉ REPREND LA MÊME PHRASE QUE LA RANGÉE :
-                demandés, réalisés, en cours. S'y ajoute la seule chose qu'un
-                tableau peut dire et qu'une tuile ne peut pas, l'âge du plus
-                ancien besoin qui attend chez ce client.
-
-                PAS DE COLONNE DE TAUX, volontairement. « 33 % » seul pose le
-                même problème de lisibilité que sur les tuiles, et le couple
-                réalisés / demandés le donne déjà, lisible et vérifiable. */}
-            <SectionLabel>Suivi des besoins par entité</SectionLabel>
-            <Card>
-              {parEntite.length === 0 ? (
-                <div className={styles.etat}>
-                  <div className={styles.etatTexte}>
-                    Aucune entité n’a de besoin en attente sur cette période.
-                  </div>
-                </div>
-              ) : (
-                <table className={styles.tbl}>
-                  <thead>
-                    <tr>
-                      <th>Entité</th>
-                      <th className={styles.num}>Demandés</th>
-                      <th className={styles.num}>Réalisés</th>
-                      <th className={styles.num}>En cours</th>
-                      <th className={styles.num}>Plus ancien</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {parEntite.map(e => (
-                      <tr key={e.entite}>
-                        <td>{e.entite}</td>
-                        <td className={styles.num}>{fmtNumber(e.demandes)}</td>
-                        <td className={styles.num}>{fmtNumber(e.realises)}</td>
-                        <td className={styles.num}>{fmtNumber(e.en_cours)}</td>
-                        {/* `plus_ancien_j` ne peut pas être nul ici : la route
-                            ne rend que les entités qui ont au moins un besoin
-                            en cours, et un besoin en cours porte une date. */}
-                        <td className={styles.num}>{fmtNumber(e.plus_ancien_j)} j</td>
-                      </tr>
+                ) : (
+                  <div className={styles.barres}>
+                    {tranches.map(t => (
+                      <MotifBar
+                        key={t.cle}
+                        label={t.libelle}
+                        pct={partPct(t.besoins, enCours)}
+                        count={t.besoins}
+                        fillColor="rgba(38,0,31,0.95)"
+                      />
                     ))}
-                  </tbody>
-                </table>
-              )}
-            </Card>
+                  </div>
+                )}
+              </Card>
+
+              {/* LE SUIVI PAR ENTITÉ REPREND LA PHRASE DE LA RANGÉE :
+                  demandés, réalisés, en cours. S'y ajoute la seule chose qu'un
+                  tableau peut dire et qu'une tuile ne peut pas, l'âge du plus
+                  ancien besoin qui attend chez ce client.
+
+                  PAS DE COLONNE DE TAUX, volontairement. « 33 % » seul pose le
+                  même problème de lisibilité que sur les tuiles, et le couple
+                  réalisés / demandés le donne déjà, lisible et vérifiable. */}
+              <Card title="Suivi des besoins par prospects/clients">
+                {parClient.length === 0 ? (
+                  <div className={styles.etat}>
+                    <div className={styles.etatTexte}>
+                      Aucun client n’a de besoin en attente sur cette période.
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {tableauClients(parClient.slice(0, CLIENTS_APERCU))}
+                    {parClient.length > CLIENTS_APERCU && (
+                      <button
+                        type="button"
+                        className={styles.voirPlus}
+                        onClick={() => setClientsOuverts(true)}
+                      >
+                        Voir les {fmtNumber(parClient.length)} clients
+                      </button>
+                    )}
+                  </>
+                )}
+              </Card>
+            </div>
+
+            {clientsOuverts && (
+              <ListeModale
+                titre="Suivi des besoins par prospects/clients"
+                sousTitre={
+                  `${fmtNumber(parClient.length)} client${s(parClient.length)} avec au moins un besoin en attente`
+                  + ` · ${fmtNumber(enCours)} besoin${s(enCours)} en cours`
+                }
+                onClose={() => setClientsOuverts(false)}
+              >
+                {tableauClients(parClient)}
+              </ListeModale>
+            )}
           </div>
         );
       }}
