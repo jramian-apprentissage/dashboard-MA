@@ -116,6 +116,9 @@ export default function Pipeline() {
         /* Neutralise la couleur d'une comparaison sans toucher au chiffre ni à
            la flèche : pour les indicateurs dont aucun sens n'est bon en soi. */
         const sansJugement = c => (c ? { ...c, dir: 'neutral' } : c);
+        /* Le volume de la fenêtre glissante, à ne pas confondre avec celui de
+           la tuile, qui est borné à la cohorte. */
+        const totalDemarrages = evolution.reduce((t, p) => t + p.n, 0);
 
         return (
           <div className={styles.page}>
@@ -252,7 +255,7 @@ export default function Pipeline() {
                             },
                             {
                               type: 'line',
-                              label: 'Mediane',
+                              label: 'Médiane',
                               data: evolution.map(p => p.mediane),
                               borderColor: C_MEDIANE,
                               pointBackgroundColor: C_MEDIANE,
@@ -319,7 +322,7 @@ export default function Pipeline() {
                     <div className={styles.legende}>
                       <span className={styles.legDot} style={{ background: C_BESOINS }} />Besoins pourvus
                       <span className={styles.legDot} style={{ background: C_MOYENNE, marginLeft: 12 }} />Moyenne
-                      <span className={styles.legDot} style={{ background: C_MEDIANE, marginLeft: 12 }} />Mediane
+                      <span className={styles.legDot} style={{ background: C_MEDIANE, marginLeft: 12 }} />Médiane
                     </div>
                     {/* CETTE LIGNE EXISTE PARCE QUE LE GRAPHE ET LA TUILE NE
                         COMPTENT PAS LA MÊME CHOSE, et que sans elle on les
@@ -329,12 +332,16 @@ export default function Pipeline() {
                         ancrée sur la fin de période, comme tous les graphes
                         d'évolution de ce dépôt. Une courbe réduite au mois
                         sélectionné n'aurait qu'un point. */}
+                    {/* LA MENTION DÉCRIT LES TROIS SÉRIES, pas seulement la
+                        médiane : elle ne parlait que d'elle depuis que les
+                        barres et la moyenne ont été ajoutées. Une légende dit
+                        QUI est quoi, une mention dit CE QU'ON MESURE et SUR
+                        QUOI — les deux sont nécessaires et ne se remplacent
+                        pas. */}
                     <div className={styles.mention}>
-                      Médiane du délai entre l’ouverture de recherche et le démarrage,
-                      par mois de démarrage · douze derniers mois ·{' '}
-                      {fmtNumber(evolution.reduce((t, p) => t + p.n, 0))} démarrage
-                      {evolution.reduce((t, p) => t + p.n, 0) > 1 ? 's' : ''} daté
-                      {evolution.reduce((t, p) => t + p.n, 0) > 1 ? 's' : ''}.
+                      Délai entre l’ouverture de recherche et le démarrage, par mois
+                      de démarrage · douze derniers mois ·{' '}
+                      {fmtNumber(totalDemarrages)} démarrage{s(totalDemarrages)} daté{s(totalDemarrages)}.
                     </div>
                   </>
                 )}
