@@ -7,12 +7,14 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import ListeModale from '../../../components/ui/ListeModale';
 import RechercheAvecSuggestions from '../../../components/ui/RechercheAvecSuggestions';
+import DonutChart from '../../../components/ui/DonutChart';
+import { libelleFamille } from '../../../data/familles';
 import MotifBar from '../../../components/ui/MotifBar';
 import BarreEtapes, { EnteteEtapes, libelleEtape } from '../../../components/ui/BarreEtapes';
 import { useRhPipeline } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { fmtNumber, partPct } from '../../../utils/formatNumber';
+import { fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import styles from '../RhEffectifs/Rh.module.css';
 
 /* Chart.js s'enregistre par fichier dans ce projet, et seulement pour ce qu'on
@@ -108,6 +110,33 @@ const COLONNES = [
   { cle: 'retenus', libelle: 'Retenus', num: true, valeur: d => d.retenus },
 ];
 
+/* UNE COULEUR PAR TYPE DE MISSION, et surtout PAS une rampe : les cinq
+   familles ne sont pas ordonnées, aucune n'est « plus » qu'une autre. Une rampe
+   ferait lire une progression là où il n'y a que des catégories.
+
+   LES CINQ TEINTES SONT CELLES DU DASHBOARD COMMERCIAL, qui découpe le revenu
+   par les mêmes types de mission : deux écrans de la même maison qui parlent
+   des mêmes cinq métiers ne peuvent pas les peindre différemment.
+
+   ELLES SONT ICI LIÉES AU CODE, pas à la position dans le tableau. Sur le
+   dashboard commercial la palette est indexée par rang, si bien qu'une famille
+   change de couleur quand le classement change. Ici « Commercial » est jaune
+   quoi qu'il arrive, ce qui est la seule façon de comparer deux périodes d'un
+   coup d'œil.
+
+   DES LITTÉRAUX, jamais `var(--soleil)` : le canvas de Chart.js ne résout pas
+   les variables CSS et garde silencieusement la couleur précédente. */
+const COULEURS_MISSION = {
+  SO: 'rgba(255,249,147,0.95)', // soleil
+  AV: 'rgba(38,0,31,0.80)',     // myrtille
+  CS: 'rgba(196,135,106,0.85)', // terracotta
+  IT: 'rgba(123,170,191,0.75)', // bleu
+  DS: 'rgba(142,207,170,0.75)', // vert
+};
+/* Les commandes dont l'intitulé ne dit pas le métier. En ciment, la couleur du
+   « reste » partout dans ce dépôt : elle ne se confond avec aucune famille. */
+const COULEUR_A_CLASSER = 'rgba(167,173,170,0.50)';
+
 const ISSUES = {
   en_cours: 'En cours',
   realise: 'Pourvu',
@@ -174,7 +203,7 @@ export default function Pipeline() {
           presentationN, presentationMoy, presentationMed,
           pourvoirN, pourvoirMoy, pourvoirMed,
           delaiN, dansDelai, tauxDelai,
-          evolution, candidatsParClient, detailsClients,
+          evolution, candidatsParClient, detailsClients, parMission,
         } = result;
         const s = n => (n > 1 ? 's' : '');
 
@@ -184,6 +213,23 @@ export default function Pipeline() {
            absence d'information. Les confondre ferait passer onze besoins non
            renseignés pour onze échecs. */
         const ouTiret = v => (v == null ? '-' : fmtNumber(v));
+
+        /* Les lignes de la répartition, libellées et colorées une seule fois :
+           le camembert, le tableau et l'infobulle lisent la même liste, donc ils
+           ne peuvent pas se contredire. */
+        /* LE `?? []` N'EST PAS DE LA COQUETTERIE. Le front et l'API se
+           déploient séparément, Vercel d'un côté et Railway de l'autre : entre
+           les deux mises en ligne, cette page reçoit une réponse qui n'a pas
+           encore `parMission`. Sans garde, `.map` lève et la PAGE ENTIÈRE part
+           en blanc — pas la carte, la page. Avec, la carte est vide une minute
+           et le reste s'affiche. Vu en local le 22/10 pendant le redémarrage du
+           serveur. */
+        const missions = (parMission ?? []).map(m => ({
+          ...m,
+          libelle: m.cle ? libelleFamille(m.cle) : 'À classer',
+          couleur: m.cle ? (COULEURS_MISSION[m.cle] || COULEUR_A_CLASSER) : COULEUR_A_CLASSER,
+        }));
+        const retenusMissions = missions.reduce((n, m) => n + (m.retenus || 0), 0);
 
         /* LA NORMALISATION RETIRE LES ACCENTS avant de comparer : chercher
            « etendard » doit trouver « Étendard », et « telepro » doit trouver
@@ -499,6 +545,103 @@ export default function Pipeline() {
               />
 
             </div>
+
+            {/* RÉPARTITION PAR TYPE DE MISSION, au modèle de celle du revenu
+                sur le dashboard commercial : même composant, même variante
+                'half-rose', camembert à gauche et tableau à droite.
+
+                LE CERCLE EST DIMENSIONNÉ PAR LES PROFILS RETENUS, demande de
+                Jimmy du 22/10 : c'est ce qui ABOUTIT, donc la part de chaque
+                métier dans le travail effectivement livré. Le nombre de besoins
+                dirait la demande, pas le résultat ; il reste dans le tableau.
+
+                LE SURVOL PORTE LES QUATRE INDICATEURS de « Placement de
+                profils », également demandé : on retrouve l'entonnoir de la
+                rangée du haut, métier par métier, sans quitter le cercle.
+
+                LE TYPE DE MISSION N'EST PAS DANS LE FICHIER. Il est reconstitué
+                par une table de correspondance écrite à la main, le temps que
+                l'équipe RH ajoute les deux initiales aux libellés de poste. La
+                mention sous la carte le dit, parce qu'un classement provisoire
+                qui ne s'annonce pas devient un classement officiel au premier
+                export. */}
+            <Card title="Répartition par type de mission">
+              {missions.length === 0 ? (
+                <div className={styles.etat}>
+                  <div className={styles.etatTexte}>
+                    Aucun besoin n’a été demandé sur cette période.
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.repartSplit}>
+                    <div className={styles.repartDonut}>
+                      <DonutChart
+                        variant="half-rose"
+                        data={missions.map(m => m.retenus || 0)}
+                        labels={missions.map(m => m.libelle)}
+                        colors={missions.map(m => m.couleur)}
+                        height={240}
+                        /* Chart.js accepte un TABLEAU de lignes : les quatre
+                           indicateurs se lisent l'un sous l'autre plutôt que sur
+                           une ligne de cent caractères. */
+                        tooltip={(label, value, pct) => {
+                          const m = missions.find(x => x.libelle === label);
+                          if (!m) return `${label} : ${fmtNumber(value)}`;
+                          return [
+                            `${label} — ${fmtPourcentage(pct)} des profils retenus`,
+                            `Besoin en profils : ${ouTiret(m.profilsDemandes)}`,
+                            `Profils présentés : ${ouTiret(m.presentes)}`,
+                            `Profils retenus : ${ouTiret(m.retenus)}`,
+                            `Taux de transformation : ${m.tauxProfil == null ? '-' : fmtPourcentage(m.tauxProfil)}`,
+                          ];
+                        }}
+                      />
+                    </div>
+                    <div className={styles.repartListe}>
+                      <table className={styles.tbl}>
+                        <thead>
+                          <tr>
+                            <th>Type de mission</th>
+                            <th className={styles.num}>Besoins</th>
+                            <th className={styles.num}>Besoin en profils</th>
+                            <th className={styles.num}>Présentés</th>
+                            <th className={styles.num}>Retenus</th>
+                            <th className={styles.num}>Taux</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {missions.map(m => (
+                            <tr key={m.cle || 'a-classer'}>
+                              <td>
+                                <span className={styles.libelle}>
+                                  <span className={styles.puce} style={{ background: m.couleur }} />
+                                  {m.libelle}
+                                </span>
+                              </td>
+                              <td className={styles.num}>{fmtNumber(m.besoins)}</td>
+                              <td className={styles.num}>{ouTiret(m.profilsDemandes)}</td>
+                              <td className={styles.num}>{ouTiret(m.presentes)}</td>
+                              <td className={styles.num}>{ouTiret(m.retenus)}</td>
+                              <td className={styles.num}>
+                                {m.tauxProfil == null ? '-' : fmtPourcentage(m.tauxProfil)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className={styles.mention}>
+                    Le cercle répartit les {fmtNumber(retenusMissions)} profils retenus.
+                    LE TYPE DE MISSION N’EST PAS DANS LE CLASSEUR : il est reconstitué à
+                    partir de l’intitulé de poste, par une table écrite à la main et
+                    provisoire, en attendant que les libellés portent leurs deux initiales
+                    comme dans le registre des collaborateurs.
+                  </div>
+                </>
+              )}
+            </Card>
 
               <Card title="Évolution du délai pour pourvoir un poste">
                 {evolution.length === 0 ? (

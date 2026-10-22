@@ -59,6 +59,20 @@
   align-items: center;
 }
 
+/* « Camembert à gauche, tableau à droite », reprise du même bloc sur le
+   dashboard commercial. La colonne du cercle est PROPORTIONNELLE et plafonnée :
+   figée, elle restait petite pendant que la liste absorbait toute la largeur
+   gagnée sur grand écran — le reproche fait à cette carte-là le 20/08. */
+.repartSplit { display: flex; gap: 24px; align-items: center; }
+.repartDonut { flex: 0 0 38%; max-width: 480px; }
+.repartListe { flex: 1; min-width: 0; }
+/* Sous 900 px la carte n'a plus la largeur de deux colonnes : le tableau passe
+   sous le cercle, qui reprend toute la largeur. */
+@media (max-width: 900px) {
+  .repartSplit { flex-direction: column; gap: 10px; }
+  .repartDonut { flex: none; width: 100%; max-width: none; }
+}
+
 /* LE CAMEMBERT DES TRANCHES ET SON TABLEAU, côte à côte.
    Grille séparée de .donutEtTable, qui sert la carte des contrats : celle-ci
    porte QUATRE colonnes et a besoin d'une colonne de cercle fixe à 196 px,
