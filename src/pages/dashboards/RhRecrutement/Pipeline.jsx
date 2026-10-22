@@ -311,6 +311,88 @@ export default function Pipeline() {
                 Titre validé par Clémence le 30/09, qui remplace « time to fill
                 et candidats par client ». */}
             <SectionLabel>Délais et pipeline de recrutement</SectionLabel>
+            {/* LES QUATRE TUILES REVIENNENT ICI, à leur place dans la
+                maquette. Elles avaient été poussées en bas de page le 22/10
+                quand la première rangée est devenue l'entonnoir des profils,
+                avec consigne de ne rien supprimer en attendant — « je te
+                dirai où les mettre ». C'est ce bloc-ci : le mail de Clémence
+                du 30/09 nomme ces quatre indicateurs ET ce titre de section
+                dans la même phrase, « Candidats en cours de recrutement,
+                Délai moy. pour pourvoir un poste, Durée moy. du recrutement,
+                Taux de recrutements réalisés dans les délais ; le bloc
+                s'intitule Délais et pipeline de recrutement ».
+
+                ELLES PRÉCÈDENT LE GRAPHE, et pas l'inverse : le graphe trace
+                le délai pour pourvoir un poste, c'est-à-dire la deuxième de
+                ces tuiles dépliée dans le temps. On lit le chiffre, puis son
+                histoire. */}
+            <div className={styles.kpiGrid}>
+              <KPICard
+                label="Candidats en cours de recrutement"
+                value={fmtNumber(candidats)}
+                unit={` candidat${s(candidats)}`}
+                compare={compareResult
+                  ? sansJugement(compareValueText(candidats, compareResult.candidats, comparePeriodKey))
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: candidatsN === 0
+                    ? 'Aucun besoin en cours ne porte de candidat compté'
+                    : `Candidats présentés · colonne remplie sur ${fmtNumber(candidatsN)} besoin${s(candidatsN)}`,
+                }}
+              />
+
+              {/* L'INDICATEUR LE PLUS TROUÉ DE LA PAGE, affiché comme sur la
+                  maquette avec son effectif en clair. La date de démarrage
+                  n'est renseignée que sur 35 % des commandes et 21
+                  recrutements aboutis en manquent : le sous-titre dit sur
+                  combien de besoins la moyenne porte. */}
+              <KPICard
+                label="Délai moy. pour pourvoir un poste"
+                value={j(pourvoirMoy)}
+                unit={pourvoirMoy == null ? '' : ' j'}
+                compare={compareResult
+                  ? compareValueText(pourvoirMoy, compareResult.pourvoirMoy, comparePeriodKey, true)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: pourvoirN === 0
+                    ? 'Aucun démarrage daté sur la période'
+                    : `De l’ouverture au démarrage · médiane ${j(pourvoirMed)} j · ${fmtNumber(pourvoirN)} besoin${s(pourvoirN)}`,
+                }}
+              />
+
+              <KPICard
+                label="Durée moy. du recrutement"
+                value={j(dureeMoy)}
+                unit={dureeMoy == null ? '' : ' j'}
+                compare={compareResult
+                  ? compareValueText(dureeMoy, compareResult.dureeMoy, comparePeriodKey, true)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: dureeN === 0
+                    ? 'Aucune recherche datée sur la période'
+                    : `De l’ouverture à la fin R3 · médiane ${j(dureeMed)} j · ${fmtNumber(dureeN)} recherche${s(dureeN)}`,
+                }}
+              />
+
+              <KPICard
+                label="Taux de recrutements réalisés dans les délais"
+                value={tauxDelai == null ? '-' : fmtNumber(tauxDelai)}
+                unit={tauxDelai == null ? '' : ' %'}
+                compare={compareResult
+                  ? comparePtsText(tauxDelai, compareResult.tauxDelai, comparePeriodKey)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: delaiN === 0
+                    ? 'Aucune recherche close sur la période'
+                    : `Fin de recherche avant l’échéance R3 · ${fmtNumber(dansDelai)} sur ${fmtNumber(delaiN)}`,
+                }}
+              />
+            </div>
+
             {/* LE GRAPHE PREND TOUTE LA LARGEUR depuis que les candidats
                 par client sont remontes sous la rangee : une grille a deux
                 colonnes dont une est vide laisse un trou, et une courbe a
@@ -553,74 +635,6 @@ export default function Pipeline() {
                 dire où elles vont, et de ne rien supprimer. Le titre de
                 section est volontairement explicite : une section provisoire
                 qui ne dit pas qu'elle l'est finit par passer pour un choix. */}
-            <SectionLabel>Indicateurs à replacer</SectionLabel>
-            <div className={styles.kpiGrid}>
-              <KPICard
-                label="Candidats en cours de recrutement"
-                value={fmtNumber(candidats)}
-                unit={` candidat${s(candidats)}`}
-                compare={compareResult
-                  ? sansJugement(compareValueText(candidats, compareResult.candidats, comparePeriodKey))
-                  : null}
-                trend={{
-                  dir: 'neutral',
-                  text: candidatsN === 0
-                    ? 'Aucun besoin en cours ne porte de candidat compté'
-                    : `Candidats présentés · colonne remplie sur ${fmtNumber(candidatsN)} besoin${s(candidatsN)}`,
-                }}
-              />
-
-              {/* L'INDICATEUR LE PLUS TROUÉ DE LA PAGE, affiché comme sur la
-                  maquette avec son effectif en clair. La date de démarrage
-                  n'est renseignée que sur 35 % des commandes et 21
-                  recrutements aboutis en manquent : le sous-titre dit sur
-                  combien de besoins la moyenne porte. */}
-              <KPICard
-                label="Délai moy. pour pourvoir un poste"
-                value={j(pourvoirMoy)}
-                unit={pourvoirMoy == null ? '' : ' j'}
-                compare={compareResult
-                  ? compareValueText(pourvoirMoy, compareResult.pourvoirMoy, comparePeriodKey, true)
-                  : null}
-                trend={{
-                  dir: 'neutral',
-                  text: pourvoirN === 0
-                    ? 'Aucun démarrage daté sur la période'
-                    : `De l’ouverture au démarrage · médiane ${j(pourvoirMed)} j · ${fmtNumber(pourvoirN)} besoin${s(pourvoirN)}`,
-                }}
-              />
-
-              <KPICard
-                label="Durée moy. du recrutement"
-                value={j(dureeMoy)}
-                unit={dureeMoy == null ? '' : ' j'}
-                compare={compareResult
-                  ? compareValueText(dureeMoy, compareResult.dureeMoy, comparePeriodKey, true)
-                  : null}
-                trend={{
-                  dir: 'neutral',
-                  text: dureeN === 0
-                    ? 'Aucune recherche datée sur la période'
-                    : `De l’ouverture à la fin R3 · médiane ${j(dureeMed)} j · ${fmtNumber(dureeN)} recherche${s(dureeN)}`,
-                }}
-              />
-
-              <KPICard
-                label="Taux de recrutements réalisés dans les délais"
-                value={tauxDelai == null ? '-' : fmtNumber(tauxDelai)}
-                unit={tauxDelai == null ? '' : ' %'}
-                compare={compareResult
-                  ? comparePtsText(tauxDelai, compareResult.tauxDelai, comparePeriodKey)
-                  : null}
-                trend={{
-                  dir: 'neutral',
-                  text: delaiN === 0
-                    ? 'Aucune recherche close sur la période'
-                    : `Fin de recherche avant l’échéance R3 · ${fmtNumber(dansDelai)} sur ${fmtNumber(delaiN)}`,
-                }}
-              />
-            </div>
-
             {clientsOuverts && (
               <ListeModale
                 titre="Candidats en recrutement par prospects/clients"
