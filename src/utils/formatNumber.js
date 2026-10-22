@@ -62,6 +62,45 @@ export function partPct(n, total) {
   return Math.round(p);
 }
 
+/* LES PARTS D'UNE PARTITION, ARRONDIES MAIS SOMMANT À 100 — méthode du plus
+   fort reste.
+   `partPct` arrondit chaque part indépendamment, ce qui est juste ligne à ligne
+   et faux en colonne : 5, 5, 0 et 4 besoins sur 14 donnent 36 + 36 + 0 + 29 =
+   101 %. Vu sur les tranches d'ancienneté le 22/10, et tranché par Jimmy — une
+   colonne de parts qui ne fait pas 100 fait douter du reste du tableau.
+   LE PRIX EST ASSUMÉ : une part affichée peut tomber un point sous son propre
+   rapport (4/14 = 28,6 %, affiché 28 et non 29) pour que la colonne tombe
+   juste. C'est le compromis habituel, et c'est celui que le tableau rend
+   vérifiable puisqu'il montre aussi les effectifs.
+   À N'EMPLOYER QUE SUR UNE PARTITION, c'est-à-dire une liste dont les valeurs
+   font exactement le tout. Sur des catégories qui se recoupent ou qui ne
+   couvrent pas tout, forcer la somme à 100 mentirait : `partPct` reste la bonne
+   fonction dans ce cas.
+   UNE VALEUR NULLE NE REÇOIT JAMAIS DE POINT : zéro besoin doit s'afficher
+   0 %, jamais 1 % parce qu'il restait un point à placer. */
+export function partsAJustees(valeurs) {
+  const nombres = valeurs.map(v => (Number.isFinite(v) && v > 0 ? v : 0));
+  const total = nombres.reduce((a, b) => a + b, 0);
+  if (total <= 0) return nombres.map(() => 0);
+
+  const exactes = nombres.map(v => (v / total) * 100);
+  const parts = exactes.map(Math.floor);
+  let reste = 100 - parts.reduce((a, b) => a + b, 0);
+
+  /* Les indices triés par reste décroissant ; à reste égal, le plus grand
+     effectif d'abord, et l'ordre d'origine pour départager — sans ce dernier
+     critère le résultat dépendrait de la stabilité du tri du moteur. */
+  const ordre = nombres
+    .map((v, i) => ({ i, v, reste: exactes[i] - parts[i] }))
+    .filter(e => e.v > 0)
+    .sort((a, b) => b.reste - a.reste || b.v - a.v || a.i - b.i);
+
+  for (let k = 0; reste > 0 && k < ordre.length; k += 1, reste -= 1) {
+    parts[ordre[k].i] += 1;
+  }
+  return parts;
+}
+
 /* Mise en forme française du résultat de partPct : virgule décimale, et rien
    d'inutile sur les valeurs entières. « 0,2 % » et non « 0.2% ». */
 export function fmtPourcentage(p) {

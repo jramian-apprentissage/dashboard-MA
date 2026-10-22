@@ -8,7 +8,7 @@ import DonutChart from '../../../components/ui/DonutChart';
 import { useRhBesoins } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
+import { fmtNumber, partsAJustees, fmtPourcentage } from '../../../utils/formatNumber';
 import styles from '../RhEffectifs/Rh.module.css';
 
 /* Vue 1 du dashboard Recrutement, « Besoins et recrutements ».
@@ -134,6 +134,12 @@ export default function Besoins() {
           tranches, parClient,
         } = result;
         const s = n => (n > 1 ? 's' : '');
+
+        /* LES PARTS DES TRANCHES SONT CALCULÉES ENSEMBLE, pas une par une :
+           les quatre font exactement le stock des besoins en cours, donc la
+           colonne doit tomber sur 100. Avec un arrondi ligne à ligne, août à
+           octobre affichait 36 + 36 + 0 + 29 = 101 %. Voir partsAJustees. */
+        const partsTranches = partsAJustees(tranches.map(t => t.besoins));
 
         /* Le sous-titre de la première tuile dit d'abord les POSTES, quand ils
            diffèrent des besoins : une commande peut en porter plusieurs, et
@@ -301,12 +307,12 @@ export default function Besoins() {
                   lui, ne dessine rien pour une tranche vide — c'est le tableau
                   qui porte le zéro, à sa place.
 
-                  LA PART EST CALCULÉE SUR `enCours`, le total de la rangée, et
-                  non sur la somme des tranches : les deux sont égaux et
-                  doivent le rester, puisque la route rend une partition. S'ils
-                  divergeaient un jour, les parts cesseraient de faire 100 % et
-                  le tableau le montrerait, là où un total recalculé sur
-                  lui-même le cacherait. */}
+                  LES PARTS SOMMENT À 100 par construction (partsAJustees, plus
+                  fort reste) et non par arrondi de chaque ligne : les quatre
+                  tranches font exactement le stock, une colonne à 101 % ferait
+                  douter du reste du tableau. Le prix est qu'une part peut
+                  tomber un point sous son propre rapport ; les effectifs sont
+                  dans la colonne d'à côté, donc rien n'est caché. */}
               <Card title="Besoins en cours par tranche d’ancienneté">
                 {enCours === 0 ? (
                   <div className={styles.etat}>
@@ -347,7 +353,7 @@ export default function Besoins() {
                             </td>
                             <td className={styles.num}>{fmtNumber(t.besoins)}</td>
                             <td className={styles.num}>
-                              {fmtPourcentage(partPct(t.besoins, enCours))}
+                              {fmtPourcentage(partsTranches[i])}
                             </td>
                           </tr>
                         ))}
