@@ -429,7 +429,6 @@ export default function Pipeline() {
                       découvre en survolant, ou ne change rien à la lecture. */}
                   <div className={styles.mention}>
                     La barre situe le besoin le plus avancé du client, de R0 à « En poste ».
-                    Un tiret signale une colonne non saisie.
                   </div>
                 </>
               )}
@@ -665,8 +664,8 @@ export default function Pipeline() {
                       correctifs. Ne reste ici que ce qui aide à lire la
                       carte. */}
                   <div className={styles.mention}>
-                    Le cercle répartit les {fmtNumber(besoinsMissions)} besoins. En gris, le
-                    nombre de besoins sur lequel chaque durée est calculée.
+                    Le cercle répartit les {fmtNumber(besoinsMissions)} besoins. En gris,
+                    l’effectif de chaque durée.
                   </div>
                 </>
               )}
@@ -805,9 +804,7 @@ export default function Pipeline() {
                         QUOI — les deux sont nécessaires et ne se remplacent
                         pas. */}
                     <div className={styles.mention}>
-                      Durée entre la DEMANDE et le démarrage, par mois de démarrage
-                      · douze derniers mois ·{' '}
-                      {fmtNumber(totalDemarrages)} démarrage{s(totalDemarrages)} daté{s(totalDemarrages)}.
+                      De la demande au démarrage, par mois de démarrage, sur douze mois.
                     </div>
                   </>
                 )}

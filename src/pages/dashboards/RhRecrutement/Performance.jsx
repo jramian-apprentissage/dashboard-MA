@@ -1,12 +1,11 @@
-import { useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
-import ListeModale from '../../../components/ui/ListeModale';
 import MotifBar from '../../../components/ui/MotifBar';
+import DonutChart from '../../../components/ui/DonutChart';
 import { libelleFamille } from '../../../data/familles';
 import { useRhQualite } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
@@ -45,14 +44,6 @@ function libelleMoisLong(ym) {
     .toLocaleDateString('fr-FR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
-function dateCourte(iso) {
-  if (!iso) return '-';
-  const [a, m, j] = iso.split('-');
-  return `${j}/${m}/${a.slice(2)}`;
-}
-
-const ISSUES = { annule: 'Annulé', clos_sans: 'Clôturé sans recrutement' };
-
 /* UNE COULEUR PAR MOTIF, dans l'ordre de la nomenclature. Pas une rampe : les
    motifs ne sont pas ordonnés, aucun n'est « plus » qu'un autre.
    « NON RENSEIGNÉ » EST EN CIMENT, la couleur du « reste » partout dans ce
@@ -71,14 +62,22 @@ const COULEURS_MOTIF = {
 
 /* Les deux couleurs du graphe mensuel. Littéraux, le canvas ne lit pas les
    jetons CSS. */
+/* LES MÊMES CINQ TEINTES QUE SUR LE PIPELINE, liées au code du métier et non
+   à son rang : deux cartes du même dashboard qui découpent les mêmes métiers
+   doivent les peindre pareil, sinon on ne compare plus rien d'un écran à
+   l'autre. Littéraux, le canvas ne lit pas les jetons CSS. */
+const COULEURS_MISSION = {
+  SO: 'rgba(255,249,147,0.95)', // soleil
+  AV: 'rgba(38,0,31,0.80)',     // myrtille
+  CS: 'rgba(196,135,106,0.85)', // terracotta
+  IT: 'rgba(123,170,191,0.75)', // bleu
+  DS: 'rgba(142,207,170,0.75)', // vert
+};
+const COULEUR_A_CLASSER = 'rgba(167,173,170,0.50)';
+
 const C_MOIS_REALISE = 'rgba(38,0,31,0.78)';
 const C_MOIS_PERDU = 'rgba(196,135,106,0.85)';
 const C_MOIS_VOLUME = 'rgba(38,0,31,0.88)';
-
-/* Six lignes sur la carte, le reste en pop-up. Le détail des besoins clôturés
-   sert à repérer ce qui se répète — un client, un type de poste — pas à lire
-   trente et une lignes d'affilée. */
-const CLOTURES_APERCU = 6;
 
 /* Vue 3 du dashboard Recrutement, « Performance et qualité », planche 16.
  *
@@ -123,7 +122,6 @@ export default function Performance() {
   /* Déclaré ici et pas dans le corps du Loader : ce corps est une fonction que
      le Loader n'appelle QUE s'il a fini de charger, donc un useState posé
      dedans serait un appel de hook conditionnel. */
-  const [cloturesOuvertes, setCloturesOuvertes] = useState(false);
   const { result, compareResult, loading, error } = useRhQualite();
 
   return (
@@ -170,7 +168,7 @@ export default function Performance() {
           tauxPrez, prezBase, prezAboutis,
           satisfactionN, satisfaits, tauxSatisfaction,
           motifs, parMission,
-          parRecruteur, sansRecruteur, clotures, evolution,
+          evolution,
         } = result;
         const s = n => (n > 1 ? 's' : '');
 
@@ -178,7 +176,9 @@ export default function Performance() {
         const missions = parMission.map(m => ({
           ...m,
           libelle: m.cle ? libelleFamille(m.cle) : 'À classer',
+          couleur: m.cle ? (COULEURS_MISSION[m.cle] || COULEUR_A_CLASSER) : COULEUR_A_CLASSER,
         }));
+        const besoinsMissions = missions.reduce((n, m) => n + m.demandes, 0);
 
         /* La charge totale porte TOUS les besoins ouverts, y compris ceux dont
            la case « responsable » est vide : c'est elle qui fait le dénominateur
@@ -186,35 +186,6 @@ export default function Performance() {
            des barres calculées sur un sous-ensemble. */
         const chargeTotale = enCours;
 
-        const tableauClotures = lignes => (
-          <table className={styles.tbl}>
-            <thead>
-              <tr>
-                <th>Besoin</th>
-                <th>Client</th>
-                <th>Poste</th>
-                <th>Recruteur</th>
-                <th>Issue</th>
-                <th className={styles.num}>Ouvert le</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lignes.map(c => (
-                <tr key={c.numero}>
-                  <td>{c.numero}</td>
-                  <td>{c.entite || '-'}</td>
-                  {/* Le poste manque sur quelques lignes du classeur. Un tiret
-                      le dit ; inventer « Non précisé » laisserait croire que
-                      quelqu'un a renseigné quelque chose. */}
-                  <td>{c.poste || '-'}</td>
-                  <td>{c.recruteur || '-'}</td>
-                  <td>{ISSUES[c.issue]}</td>
-                  <td className={styles.num}>{dateCourte(c.dateCommande)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        );
 
         return (
           <div className={styles.page}>
@@ -353,112 +324,25 @@ export default function Performance() {
                       />
                     ))}
                   </div>
-                  <div className={styles.mention}>
-                    Motifs relevés dans le commentaire de chaque commande. Le classeur n’a
-                    pas de colonne de motif : ceux qui n’en portent aucun sont comptés
-                    « non renseigné » plutôt que répartis.
-                  </div>
                 </>
               )}
             </Card>
             </div>
 
-            {/* ANNOTATION 5 DE CLÉMENCE : ce tableau est le détail du taux de
-                besoins non aboutis, pas de la répartition des besoins. Il
-                remonte donc ici, contre les tuiles dont il donne les lignes, et
-                a quitté la section « Répartition des besoins » où la maquette
-                l'avait posé. */}
-            <Card title="Détail des besoins clôturés">
-              {clotures.length === 0 ? (
-                <div className={styles.etat}>
-                  <div className={styles.etatTexte}>
-                    Aucun besoin de cette période n’a été annulé ni clôturé sans recrutement.
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {tableauClotures(clotures.slice(0, CLOTURES_APERCU))}
-                  {clotures.length > CLOTURES_APERCU && (
-                    <button
-                      type="button"
-                      className={styles.voirPlus}
-                      onClick={() => setCloturesOuvertes(true)}
-                    >
-                      Voir les {fmtNumber(clotures.length)} besoins
-                    </button>
-                  )}
-                  <div className={styles.mention}>
-                    {fmtNumber(annules)} annulé{s(annules)} et {fmtNumber(closSansRecrutement)} clôturé
-                    {s(closSansRecrutement)} sans recrutement, les plus récents d’abord. Le motif de
-                    chacun est dans la carte du dessus.
-                  </div>
-                </>
-              )}
-            </Card>
+            {/* DEUX CARTES ONT ÉTÉ RETIRÉES ICI le 22/10, sur demande.
 
-            {/* ── Planche 16, section « Répartition des besoins » ──────────── */}
-            <SectionLabel>Répartition des besoins</SectionLabel>
+                « DÉTAIL DES BESOINS CLÔTURÉS » listait les 31 besoins annulés ou
+                clos ligne à ligne. Son emplacement venait d'une annotation de
+                Clémence — « intervertir l'ordre, ce widget est lié au taux de
+                besoins non aboutis » — et la carte des MOTIFS, posée le même
+                jour juste au-dessus, répond mieux à la même question : elle dit
+                POURQUOI, là où le tableau disait seulement lesquels.
 
-            {/* ANNOTATION 4 DE CLÉMENCE, « je suis pas fan », et son mail :
-                recentrer sur la CHARGE ASSIGNÉE, pas sur la performance
-                individuelle. La carte ne compte donc que ce que chacun porte
-                ENCORE — les besoins ouverts aujourd'hui — et jamais ce qu'il a
-                conclu. C'est la différence entre « qui est chargé » et « qui
-                réussit », et c'est exactement la lecture en palmarès qu'elle
-                refuse.
-                LE TITRE DE LA SECTION Y PARTICIPE : la maquette l'appelait
-                « Performance des recruteurs & suivi des besoins » dans son
-                sommaire, ce qui rétablissait le palmarès par le titre. C'est
-                « Répartition des besoins », comme sur la planche elle-même.
-                LE « SANS RESPONSABLE » EST HORS DU CLASSEMENT, en mention : ce
-                n'est pas un recruteur, c'est une case vide, et lui donner une
-                barre inventerait une personne. */}
-            <div className={styles.blocGraphe}>
-            <Card title="Besoins ouverts par recruteur">
-              {parRecruteur.length === 0 ? (
-                <div className={styles.etat}>
-                  <div className={styles.etatTexte}>
-                    Aucun besoin de cette période n’est encore ouvert.
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className={styles.barres}>
-                    {parRecruteur.map(r => (
-                      <MotifBar
-                        key={r.cle}
-                        label={r.libelle}
-                        pct={partPct(r.enCours, chargeTotale)}
-                        count={r.enCours}
-                        fillColor="rgba(38,0,31,0.95)"
-                      />
-                    ))}
-                  </div>
-                  <div className={styles.mention}>
-                    Charge en cours, pas un classement : on compte les besoins qu’il reste à
-                    pourvoir, pas les recrutements conclus.
-                    {sansRecruteur > 0
-                      ? ` ${fmtNumber(sansRecruteur)} besoin${s(sansRecruteur)} ouvert${s(sansRecruteur)} ${sansRecruteur > 1 ? 'n’ont' : 'n’a'} pas de responsable au fichier.`
-                      : ''}
-                  </div>
-                </>
-              )}
-            </Card>
-            </div>
+                « BESOINS OUVERTS PAR RECRUTEUR », et avec elle toute la section
+                « Répartition des besoins », qui ne portait qu'elle. Elle venait
+                de la planche 16 et répondait à l'annotation « je ne suis pas
+                fan » de Clémence en recentrant sur la charge assignée. */}
 
-            {/* ANNOTATION 2 DE CLÉMENCE, posée EN BAS DE PAGE le 22/10 : c'est
-                une lecture d'ensemble, elle vient après le détail.
-
-                LES DEUX TAUX SONT EN BARRES ET LE VOLUME EN COURBE, encodage
-                inversé le 22/10. Le premier essai mettait les taux en courbes
-                et le volume en barres ; les deux taux se comparent mois à mois
-                et c'est ce que des barres accolées montrent le mieux, pendant
-                que le volume, lui, raconte une tendance continue.
-
-                LE VOLUME RESTE INDISPENSABLE. Sans lui, « 100 % de réalisés en
-                mai » et « 61 % en février » se liraient comme deux mois
-                comparables, alors que mai porte quatre besoins et février
-                dix-huit. */}
             <div className={styles.blocGraphe}>
             <Card title="Réalisés et non aboutis, mois par mois">
               {evolution.every(p => p.demandes === 0) ? (
@@ -574,12 +458,14 @@ export default function Performance() {
                       vivre, et leur taux de réalisation est bas pour cette
                       seule raison. Sans cette phrase, la fin de la courbe se
                       lit comme un effondrement du recrutement. */}
+                  {/* LA RÉSERVE SUR LES MOIS RÉCENTS RESTE, en une phrase. Sans
+                      elle, la fin de la courbe se lit comme un effondrement
+                      alors que ces besoins n'ont pas fini de vivre. C'est la
+                      seule chose qu'on ne peut PAS deviner en regardant le
+                      graphe, donc la seule qui mérite d'être écrite. */}
                   <div className={styles.mention}>
-                    Chaque mois porte les besoins OUVERTS ce mois-là, et leur issue à ce jour :
-                    le classeur ne date ni les annulations ni les clôtures. Les mois récents
-                    affichent donc peu de réalisés parce que leurs besoins sont encore en cours,
-                    et non parce qu’ils ont échoué. Les deux taux ne sont pas complémentaires :
-                    ce qui reste est le stock encore ouvert.
+                    Chaque mois porte les besoins ouverts ce mois-là et leur issue à ce jour :
+                    les plus récents n’ont pas fini de vivre.
                   </div>
                 </>
               )}
@@ -603,49 +489,70 @@ export default function Performance() {
                   </div>
                 </div>
               ) : (
-                <table className={styles.tbl}>
-                  <thead>
-                    <tr>
-                      <th>Type de mission</th>
-                      <th className={styles.num}>Besoins</th>
-                      <th className={styles.num}>Réalisés</th>
-                      <th className={styles.num}>Taux réalisés</th>
-                      <th className={styles.num}>Non aboutis</th>
-                      <th className={styles.num}>Taux non aboutis</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {missions.map(m => (
-                      <tr key={m.cle || 'a-classer'}>
-                        <td>{m.libelle}</td>
-                        <td className={styles.num}>{fmtNumber(m.demandes)}</td>
-                        <td className={styles.num}>{fmtNumber(m.realises)}</td>
-                        <td className={styles.num}>
-                          {m.tauxRealise == null ? '-' : fmtPourcentage(m.tauxRealise)}
-                        </td>
-                        <td className={styles.num}>{fmtNumber(m.annules)}</td>
-                        <td className={styles.num}>
-                          {m.tauxNonAbouti == null ? '-' : fmtPourcentage(m.tauxNonAbouti)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <>
+                  <div className={styles.repartSplit}>
+                    <div className={styles.repartDonut}>
+                      <DonutChart
+                        variant="half-rose"
+                        data={missions.map(m => m.demandes)}
+                        labels={missions.map(m => m.libelle)}
+                        colors={missions.map(m => m.couleur)}
+                        height={240}
+                        tooltip={(label, value, pct) => {
+                          const m = missions.find(x => x.libelle === label);
+                          if (!m) return `${label} : ${fmtNumber(value)}`;
+                          return [
+                            `${label} — ${fmtNumber(value)} besoin${s(value)}, ${fmtPourcentage(pct)}`,
+                            `Réalisés : ${fmtNumber(m.realises)} (${m.tauxRealise == null ? '-' : fmtPourcentage(m.tauxRealise)})`,
+                            `Non aboutis : ${fmtNumber(m.annules)} (${m.tauxNonAbouti == null ? '-' : fmtPourcentage(m.tauxNonAbouti)})`,
+                          ];
+                        }}
+                      />
+                    </div>
+                    <div className={styles.repartListe}>
+                      <table className={styles.tbl}>
+                        <thead>
+                          <tr>
+                            <th>Type de mission</th>
+                            <th className={styles.num}>Besoins</th>
+                            <th className={styles.num}>Réalisés</th>
+                            <th className={styles.num}>Taux réalisés</th>
+                            <th className={styles.num}>Non aboutis</th>
+                            <th className={styles.num}>Taux non aboutis</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {missions.map(m => (
+                            <tr key={m.cle || 'a-classer'}>
+                              <td>
+                                <span className={styles.libelle}>
+                                  <span className={styles.puce} style={{ background: m.couleur }} />
+                                  {m.libelle}
+                                </span>
+                              </td>
+                              <td className={styles.num}>{fmtNumber(m.demandes)}</td>
+                              <td className={styles.num}>{fmtNumber(m.realises)}</td>
+                              <td className={styles.num}>
+                                {m.tauxRealise == null ? '-' : fmtPourcentage(m.tauxRealise)}
+                              </td>
+                              <td className={styles.num}>{fmtNumber(m.annules)}</td>
+                              <td className={styles.num}>
+                                {m.tauxNonAbouti == null ? '-' : fmtPourcentage(m.tauxNonAbouti)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className={styles.mention}>
+                    Le cercle répartit les {fmtNumber(besoinsMissions)} besoins. Les deux taux
+                    ne se complètent pas : le reste est encore en cours.
+                  </div>
+                </>
               )}
             </Card>
 
-            {cloturesOuvertes && (
-              <ListeModale
-                titre="Détail des besoins clôturés"
-                sousTitre={
-                  `${fmtNumber(clotures.length)} besoin${s(clotures.length)} clôturé${s(clotures.length)}`
-                  + ` · ${fmtNumber(annules)} annulé${s(annules)}, ${fmtNumber(closSansRecrutement)} sans recrutement`
-                }
-                onClose={() => setCloturesOuvertes(false)}
-              >
-                {tableauClotures(clotures)}
-              </ListeModale>
-            )}
           </div>
         );
       }}
