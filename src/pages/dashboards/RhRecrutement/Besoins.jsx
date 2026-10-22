@@ -5,7 +5,8 @@ import Loader from '../../../components/ui/Loader';
 import { useRhBesoins } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { fmtNumber } from '../../../utils/formatNumber';
+import MotifBar from '../../../components/ui/MotifBar';
+import { fmtNumber, partPct } from '../../../utils/formatNumber';
 import styles from '../RhEffectifs/Rh.module.css';
 
 /* Vue 1 du dashboard Recrutement, « Besoins et recrutements ».
@@ -92,6 +93,7 @@ export default function Besoins() {
         const {
           demandes, realises, enCours, enCours15j,
           annules, closSansRecrutement, postesDemandes, sansProfil, entites, tauxPourvu,
+          tranches, parEntite,
         } = result;
         const s = n => (n > 1 ? 's' : '');
 
@@ -178,6 +180,82 @@ export default function Besoins() {
               />
 
             </div>
+
+            {/* L'ANCIENNETÉ DES BESOINS QUI RESTENT. La phrase : parmi ce qui
+                attend encore, voici depuis combien de temps.
+
+                LES QUATRE TRANCHES SONT TOUJOURS AFFICHÉES, même à zéro. Celle
+                de 30 à 60 jours est vide sur toutes les périodes mesurées le
+                22/10 : la masquer donnerait trois barres et laisserait croire
+                que la tranche n'existe pas, alors que c'est un trou réel et
+                qu'il dit quelque chose du renouvellement du stock. */}
+            <SectionLabel>Ancienneté des besoins en cours</SectionLabel>
+            <Card>
+              {enCours === 0 ? (
+                <div className={styles.etat}>
+                  <div className={styles.etatTexte}>
+                    Aucun besoin n’est en attente sur cette période.
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.barres}>
+                  {tranches.map(t => (
+                    <MotifBar
+                      key={t.cle}
+                      label={t.libelle}
+                      pct={partPct(t.besoins, enCours)}
+                      count={t.besoins}
+                      fillColor="rgba(38,0,31,0.95)"
+                    />
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            {/* LE SUIVI PAR ENTITÉ REPREND LA MÊME PHRASE QUE LA RANGÉE :
+                demandés, réalisés, en cours. S'y ajoute la seule chose qu'un
+                tableau peut dire et qu'une tuile ne peut pas, l'âge du plus
+                ancien besoin qui attend chez ce client.
+
+                PAS DE COLONNE DE TAUX, volontairement. « 33 % » seul pose le
+                même problème de lisibilité que sur les tuiles, et le couple
+                réalisés / demandés le donne déjà, lisible et vérifiable. */}
+            <SectionLabel>Suivi des besoins par entité</SectionLabel>
+            <Card>
+              {parEntite.length === 0 ? (
+                <div className={styles.etat}>
+                  <div className={styles.etatTexte}>
+                    Aucune entité n’a de besoin en attente sur cette période.
+                  </div>
+                </div>
+              ) : (
+                <table className={styles.tbl}>
+                  <thead>
+                    <tr>
+                      <th>Entité</th>
+                      <th className={styles.num}>Demandés</th>
+                      <th className={styles.num}>Réalisés</th>
+                      <th className={styles.num}>En cours</th>
+                      <th className={styles.num}>Plus ancien</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {parEntite.map(e => (
+                      <tr key={e.entite}>
+                        <td>{e.entite}</td>
+                        <td className={styles.num}>{fmtNumber(e.demandes)}</td>
+                        <td className={styles.num}>{fmtNumber(e.realises)}</td>
+                        <td className={styles.num}>{fmtNumber(e.en_cours)}</td>
+                        {/* `plus_ancien_j` ne peut pas être nul ici : la route
+                            ne rend que les entités qui ont au moins un besoin
+                            en cours, et un besoin en cours porte une date. */}
+                        <td className={styles.num}>{fmtNumber(e.plus_ancien_j)} j</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </Card>
           </div>
         );
       }}
