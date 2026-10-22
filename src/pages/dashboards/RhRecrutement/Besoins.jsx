@@ -10,39 +10,39 @@ import styles from '../RhEffectifs/Rh.module.css';
 
 /* Vue 1 du dashboard Recrutement, « Besoins et recrutements ».
  *
- * TROIS TUILES SUR QUATRE, dans l'ordre que Clémence a demandé sur la planche
- * 13 : besoin de recrutement en cours, besoins ouverts depuis plus de quinze
- * jours, puis taux de besoins pourvus.
+ * L'ORDRE DES QUATRE TUILES RACONTE LE CYCLE D'UN BESOIN, arbitrage de Jimmy
+ * du 22/10 : ce qu'on nous demande, ce qu'on a réalisé, ce qui reste en cours,
+ * et pour finir la synthèse en taux. On lit la rangée de gauche à droite comme
+ * une phrase, et chaque chiffre est explicité par celui d'à côté.
  *
- * LA QUATRIÈME, « Recrutements réalisés », N'EST PAS POSÉE, et ce n'est pas un
- * oubli. Deux raisons, l'une de données, l'autre de logique. D'abord la
- * donnée : sur les 43 commandes pourvues de l'année, 21 n'ont AUCUNE date de
- * démarrage. Compter les recrutements par cette colonne en perdrait la
- * moitié. Ensuite la logique : si on les compte par le statut, cette tuile
- * devient le NUMÉRATEUR de la tuile « taux de besoins pourvus », soit le même
- * ensemble de commandes affiché deux fois. C'est exactement ce que Clémence
- * reproche à la planche 16, « le volume n'est-il pas déjà dans le taux ? Si
- * c'est le cas, l'intégrer à la description plutôt qu'un widget de plus ».
- * Le volume est donc dans le sous-titre du taux, et la tuile libérée attendra
- * que les dates de démarrage soient saisies.
+ * LE MOT « COMMANDE » NE PARAÎT PAS À L'ÉCRAN. Clémence ne l'aime pas, et elle
+ * a raison sur le fond : une ligne du FCC est une commande au sens du
+ * classeur, mais ce que lit l'équipe RH est un BESOIN à pourvoir. Le mot reste
+ * dans le code et dans la base, où il désigne la ligne source, et disparaît de
+ * l'interface.
  *
- * LA PÉRIODE BORNE LA DATE DE COMMANDE, PAS L'ÉTAT. Arbitrage de Jimmy du
- * 22/10. On compte, parmi les besoins ARRIVÉS sur la période, ceux qui sont
- * encore ouverts AUJOURD'HUI : sur septembre, 2 encore ouverts sur 11 arrivés.
- * Le stock à une date passée n'est pas calculable, le classeur ne portant
- * aucune date de changement de statut ; une date de clôture dans le FCC
- * lèverait cette limite d'un coup.
+ * PAS DE TUILE POUR LE TAUX DES PLUS DE 15 JOURS, retirée le 22/10 : « je ne
+ * vois pas l'importance de dédier une carte au taux de besoins ouverts depuis
+ * plus de 15 jours ». Le compte vit maintenant dans la description des besoins
+ * en cours, qui est son contexte naturel — c'est parmi eux qu'un besoin peut
+ * traîner, et nulle part ailleurs.
  *
- * LE DÉNOMINATEUR N'EST PAS DÉCORATIF, il est ce qui rend le chiffre lisible.
- * « 2 » seul laisse croire à une charge de deux besoins, alors que 27 sont
- * ouverts ce jour-là, dont sept commandés en février et mars. « Non pourvus
- * sur 11 commandes reçues » se lit sans explication.
+ * LES QUATRE CATÉGORIES PARTITIONNENT, c'est-à-dire que réalisés, en cours,
+ * annulés et clos sans recrutement font exactement le total demandé. Deux
+ * commandes portent à la fois « Annuler » et « En poste » : sans un ordre de
+ * priorité elles seraient comptées deux fois. Le détail est dans l'en-tête de
+ * la route, avec l'arbitrage qui fait primer l'annulation sur le placement.
  *
- * LES POSTES NE S'AFFICHENT QUE S'ILS DIFFÈRENT du nombre de besoins. Une
- * commande peut en porter plusieurs via `# PROFIL`, mais la plupart n'en
- * portent qu'un : écrire « 2 postes » sous une valeur qui dit déjà 2 ajoute
- * du bruit, pas de l'information. En octobre, 8 besoins valent 9 postes et la
- * mention apparaît. */
+ * L'INVERSION DE COULEUR ne touche QUE « besoins en cours » : c'est le seul
+ * des quatre chiffres qu'on veut voir baisser. Les besoins demandés qui
+ * montent, c'est de l'activité ; les réalisés qui montent, c'est du travail
+ * livré ; le taux qui monte, c'est mieux. L'arriéré qui monte, c'est le seul
+ * mauvais signe de la rangée.
+ *
+ * LA PÉRIODE BORNE LA DATE DE COMMANDE, PAS L'ÉTAT : on compte, parmi les
+ * besoins ARRIVÉS sur la période, ce qu'ils sont devenus AUJOURD'HUI. Le stock
+ * à une date passée n'est pas calculable, le classeur ne portant aucune date
+ * de changement de statut. */
 export default function Besoins() {
   const { result, compareResult, loading, error } = useRhBesoins();
   const { comparePeriodKey } = usePeriod();
@@ -65,16 +65,17 @@ export default function Besoins() {
             </div>
           );
         }
-        if (!result || result.commandes === 0) {
+        if (!result || result.demandes === 0) {
           return (
             <div className={styles.page}>
               <SectionLabel badge="Onglet Suivi de commande RH Q2">Les besoins en cours</SectionLabel>
               <Card>
                 <div className={styles.etat}>
-                  <div className={styles.etatTitre}>En attente du classeur FCC</div>
+                  <div className={styles.etatTitre}>Aucun besoin sur cette période</div>
                   <div className={styles.etatTexte}>
-                    Aucune commande n’est chargée. Le classeur se charge avec
-                    <code> scripts/ingest-fcc-fichier.js</code>.
+                    Aucun besoin n’a été demandé entre ces deux dates. Si la page
+                    reste vide sur toutes les périodes, le classeur FCC n’est pas
+                    chargé : <code>scripts/ingest-fcc-fichier.js</code>.
                   </div>
                 </div>
               </Card>
@@ -83,65 +84,75 @@ export default function Besoins() {
         }
 
         const {
-          besoinsEnCours, commandesRecues, profilsDemandes, sansProfil,
-          ouvertsPlus15j, tauxPlus15j, pourvues, tauxPourvu,
+          demandes, realises, enCours, enCours15j,
+          annules, closSansRecrutement, postesDemandes, sansProfil, entites, tauxPourvu,
         } = result;
+        const s = n => (n > 1 ? 's' : '');
 
-        /* Le dénominateur d'abord, c'est lui qui donne son sens à la valeur. */
-        let sousTitre = `Non pourvus sur ${fmtNumber(commandesRecues)} commande${commandesRecues > 1 ? 's' : ''} reçue${commandesRecues > 1 ? 's' : ''}`;
-        /* Les postes seulement s'ils apportent quelque chose, c'est-à-dire
-           s'ils ne redisent pas la valeur déjà affichée en gros. Et jamais un
-           total incomplet : si une commande n'a pas de `# PROFIL`, on ne
-           suppose pas 1, on se tait. */
-        if (sansProfil === 0 && profilsDemandes !== besoinsEnCours) {
-          sousTitre += ` · ${fmtNumber(profilsDemandes)} postes`;
-        }
+        /* Le sous-titre de la première tuile dit d'abord les POSTES, quand ils
+           diffèrent des besoins : une commande peut en porter plusieurs, et
+           sans cette ligne un lecteur qui compare au plan de recrutement ne
+           retrouve pas ses comptes. Jamais un total incomplet : si une
+           commande n'a pas de `# PROFIL`, supposer 1 serait inventer.
+           À défaut, il dit le nombre d'ENTITÉS, qui apprend quelque chose. Il
+           ne doit en aucun cas répéter le libellé de la tuile. */
+        const postes = sansProfil === 0 && postesDemandes !== demandes
+          ? `${fmtNumber(postesDemandes)} postes à pourvoir`
+          : `Sur ${fmtNumber(entites)} entité${s(entites)}`;
 
         return (
           <div className={styles.page}>
             <SectionLabel badge="Onglet Suivi de commande RH Q2">Les besoins en cours</SectionLabel>
             <div className={styles.kpiGrid}>
-              {/* INVERSION DE COULEUR, demandée par Jimmy le 22/10 et vraie
-                  pour les trois tuiles de gauche à droite sauf la dernière :
-                  un besoin non pourvu de moins est une BONNE nouvelle, et la
-                  carte doit virer au vert quand le chiffre baisse. Le
-                  paramètre n'inverse que la couleur ; la flèche continue de
-                  suivre le chiffre, sinon on lit « ↘ +11 % » et cela passe
-                  pour une erreur de calcul. */}
+
               <KPICard
-                label="Besoin de recrutement en cours"
-                value={fmtNumber(besoinsEnCours)}
-                unit={besoinsEnCours > 1 ? ' besoins' : ' besoin'}
+                label="Besoins demandés"
+                value={fmtNumber(demandes)}
+                unit={` besoin${s(demandes)}`}
                 compare={compareResult
-                  ? compareValueText(besoinsEnCours, compareResult.besoinsEnCours, comparePeriodKey, true)
+                  ? compareValueText(demandes, compareResult.demandes, comparePeriodKey)
                   : null}
-                trend={{ dir: 'neutral', text: sousTitre }}
+                trend={{ dir: 'neutral', text: postes }}
               />
 
-              {/* L'ANCIENNETÉ SE COMPTE À CE JOUR, pas à la fin de la période :
-                  mesurée au 30/09, cette tuile annonçait 0 % sur septembre
-                  alors que ses deux besoins encore ouverts traînent depuis plus
-                  de cinquante jours. Voir l'en-tête de la route. */}
+              {/* Le sous-titre porte ce qui N'A PAS abouti, parce que c'est le
+                  complément direct des réalisés et que sans lui la rangée ne
+                  se recompose pas : demandés = réalisés + en cours + annulés +
+                  clos sans recrutement. */}
               <KPICard
-                /* LIBELLÉ REPRIS MOT POUR MOT DE LA MAQUETTE, planche 13.
-                   Le mien avait perdu le mot « taux », si bien qu'un « 25 % »
-                   s'affichait sous un intitulé qui annonce un décompte. */
-                label="Taux des besoins ouverts, depuis +15 jours"
-                value={tauxPlus15j == null ? '-' : fmtNumber(tauxPlus15j)}
-                unit={tauxPlus15j == null ? '' : ' %'}
+                label="Besoins réalisés"
+                value={fmtNumber(realises)}
+                unit={` besoin${s(realises)}`}
                 compare={compareResult
-                  ? comparePtsText(tauxPlus15j, compareResult.tauxPlus15j, comparePeriodKey, true)
+                  ? compareValueText(realises, compareResult.realises, comparePeriodKey)
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: besoinsEnCours === 0
-                    ? 'Aucun besoin encore ouvert sur la période'
-                    : `${fmtNumber(ouvertsPlus15j)} sur ${fmtNumber(besoinsEnCours)} encore ouverts`,
+                  text: `${fmtNumber(annules)} annulé${s(annules)}, ${fmtNumber(closSansRecrutement)} clos sans recrutement`,
                 }}
               />
 
-              {/* Celle-ci ne s'inverse PAS : un taux de besoins pourvus qui
-                  monte est une bonne nouvelle, la couleur suit le chiffre. */}
+              {/* SEULE TUILE INVERSÉE de la rangée : un arriéré qui baisse est
+                  une bonne nouvelle, la couleur doit virer au vert. Le
+                  paramètre n'inverse que la couleur, la flèche suit le
+                  chiffre. */}
+              <KPICard
+                label="Besoins en cours"
+                value={fmtNumber(enCours)}
+                unit={` besoin${s(enCours)}`}
+                compare={compareResult
+                  ? compareValueText(enCours, compareResult.enCours, comparePeriodKey, true)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: enCours === 0
+                    ? 'Aucun besoin en attente'
+                    : enCours15j === 0
+                      ? 'Aucun ne dépasse 15 jours'
+                      : `Dont ${fmtNumber(enCours15j)} depuis plus de 15 jours`,
+                }}
+              />
+
               <KPICard
                 label="Taux de besoins pourvus"
                 value={tauxPourvu == null ? '-' : fmtNumber(tauxPourvu)}
@@ -151,9 +162,10 @@ export default function Besoins() {
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: `${fmtNumber(pourvues)} pourvu${pourvues > 1 ? 's' : ''} sur ${fmtNumber(commandesRecues)} reçu${commandesRecues > 1 ? 's' : ''}`,
+                  text: `${fmtNumber(realises)} réalisé${s(realises)} sur ${fmtNumber(demandes)} demandé${s(demandes)}`,
                 }}
               />
+
             </div>
           </div>
         );
