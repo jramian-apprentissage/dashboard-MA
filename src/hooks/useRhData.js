@@ -106,27 +106,41 @@ export function useRhTurnover() {
 
 /* Vue 1 du dashboard Recrutement, « Besoins et recrutements ».
  *
- * SEUL HOOK RH QUI NE DÉPEND PAS DE LA PÉRIODE, et il faut savoir pourquoi
- * avant de « corriger » ce qui ressemble à un oubli. Un besoin en cours est un
- * stock, et le classeur FCC ne porte aucune date de changement de statut : on
- * sait qu'une commande est aujourd'hui terminée, jamais quand elle l'est
- * devenue. L'état du stock à une date passée n'est donc pas reconstituable.
- * Brancher le sélecteur de période ferait changer un chiffre qui, lui, ne
- * change pas, ce qui est pire qu'un chiffre figé et assumé.
+ * LA PÉRIODE BORNE LA DATE DE COMMANDE, PAS L'ÉTAT. Arbitrage de Jimmy du
+ * 22/10, et c'est le point à comprendre avant de lire le chiffre : on compte,
+ * parmi les besoins ARRIVÉS sur la période, ceux qui sont encore ouverts
+ * AUJOURD'HUI. Sur septembre, 2 encore ouverts sur 11 arrivés.
  *
- * Conséquence volontaire : pas de `compareResult`, et les cartes de cette page
- * passent `compare={false}` pour que la comparaison soit éteinte à l'écran et
- * non laissée en attente d'un calcul qui ne viendra jamais. */
+ * Le stock à une date passée, qui serait la lecture naturelle, n'est pas
+ * calculable : le classeur FCC ne porte aucune date de changement de statut.
+ * On sait qu'une commande est aujourd'hui terminée, jamais quand elle l'est
+ * devenue.
+ *
+ * CONSÉQUENCE POUR L'ÉCRAN : le dénominateur doit toujours accompagner la
+ * valeur. « 2 » seul est illisible et sous-entend une charge de deux besoins,
+ * alors que 27 sont ouverts ce jour-là. */
 export function useRhBesoins() {
-  const [etat, setEtat] = useState({ result: null, loading: true, error: null });
+  const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
+  const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });
 
   useEffect(() => {
     let annule = false;
-    fetchRh('/besoins')
-      .then(r => { if (!annule) setEtat({ result: r, loading: false, error: null }); })
-      .catch(e => { if (!annule) setEtat({ result: null, loading: false, error: e.message }); });
+    setEtat(e => ({ ...e, loading: true }));
+    const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
+
+    Promise.all([
+      fetchRh(`/besoins?du=${from}&au=${to}`),
+      compareActive && compareRange
+        ? fetchRh(`/besoins?du=${compareRange.from}&au=${compareRange.to}`)
+        : Promise.resolve(null),
+    ])
+      .then(([result, compareResult]) => {
+        if (!annule) setEtat({ result, compareResult, loading: false, error: null });
+      })
+      .catch(e => { if (!annule) setEtat({ result: null, compareResult: null, loading: false, error: e.message }); });
+
     return () => { annule = true; };
-  }, []);
+  }, [periodKey, customFrom, customTo, compareActive, compareRange]);
 
   return etat;
 }

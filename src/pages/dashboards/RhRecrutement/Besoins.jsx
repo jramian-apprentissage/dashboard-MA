@@ -3,6 +3,8 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import { useRhBesoins } from '../../../hooks/useRhData';
+import { compareValueText } from '../../../utils/compareText';
+import { usePeriod } from '../../../contexts/PeriodContext';
 import { fmtNumber } from '../../../utils/formatNumber';
 import styles from '../RhEffectifs/Rh.module.css';
 
@@ -18,22 +20,26 @@ import styles from '../RhEffectifs/Rh.module.css';
  * commande`, la seule colonne du classeur FCC remplie à 100 %, et aucune date.
  * Les trois suivantes dépendent de colonnes trouées ou d'un arbitrage ouvert.
  *
- * LA CARTE NE SUIT PAS LE SÉLECTEUR DE PÉRIODE, et ce n'est pas un oubli. Un
- * besoin en cours est un stock, et le classeur ne porte aucune date de
- * changement de statut : on sait qu'une commande est aujourd'hui terminée,
- * jamais quand elle l'est devenue. L'état du stock au 30 septembre n'est donc
- * pas reconstituable. Faire bouger le chiffre avec la période reviendrait à
- * l'inventer. Le sous-titre dit « à ce jour » pour que la lecture soit juste,
- * et la comparaison est éteinte plutôt que laissée en attente d'un calcul qui
- * ne viendra pas. Une date de clôture dans le FCC lèverait tout cela d'un
- * coup : c'est la première chose à demander à l'équipe RH.
+ * LA PÉRIODE BORNE LA DATE DE COMMANDE, PAS L'ÉTAT. Arbitrage de Jimmy du
+ * 22/10. On compte, parmi les besoins ARRIVÉS sur la période, ceux qui sont
+ * encore ouverts AUJOURD'HUI : sur septembre, 2 encore ouverts sur 11 arrivés.
+ * Le stock à une date passée n'est pas calculable, le classeur ne portant
+ * aucune date de changement de statut ; une date de clôture dans le FCC
+ * lèverait cette limite d'un coup.
  *
- * LE SOUS-TITRE PORTE LE VOLUME DE POSTES, pas une définition. Une commande
- * du FCC peut porter plusieurs postes via `# PROFIL` : vingt-sept besoins
- * valent vingt-neuf postes à pourvoir. Sans cette ligne, un lecteur qui
- * compare au plan de recrutement ne retrouverait pas ses comptes. */
+ * LE DÉNOMINATEUR N'EST PAS DÉCORATIF, il est ce qui rend le chiffre lisible.
+ * « 2 » seul laisse croire à une charge de deux besoins, alors que 27 sont
+ * ouverts ce jour-là, dont sept commandés en février et mars. « Non pourvus
+ * sur 11 commandes reçues » se lit sans explication.
+ *
+ * LES POSTES NE S'AFFICHENT QUE S'ILS DIFFÈRENT du nombre de besoins. Une
+ * commande peut en porter plusieurs via `# PROFIL`, mais la plupart n'en
+ * portent qu'un : écrire « 2 postes » sous une valeur qui dit déjà 2 ajoute
+ * du bruit, pas de l'information. En octobre, 8 besoins valent 9 postes et la
+ * mention apparaît. */
 export default function Besoins() {
-  const { result, loading, error } = useRhBesoins();
+  const { result, compareResult, loading, error } = useRhBesoins();
+  const { comparePeriodKey } = usePeriod();
 
   return (
     <Loader loading={loading && !result} label="Chargement des besoins…" minHeight={220}>
@@ -70,14 +76,17 @@ export default function Besoins() {
           );
         }
 
-        const { besoinsEnCours, profilsDemandes, sansProfil } = result;
-        /* Le volume de postes n'est annoncé que s'il est COMPLET. Si une
-           commande en cours n'a pas de `# PROFIL`, on dit sur combien de
-           besoins il porte plutôt que d'afficher un total qui en oublie.
-           Supposer 1 serait une donnée inventée. */
-        const postes = sansProfil === 0
-          ? `${fmtNumber(profilsDemandes)} poste${profilsDemandes > 1 ? 's' : ''} à pourvoir`
-          : `${fmtNumber(profilsDemandes)} postes sur ${fmtNumber(besoinsEnCours - sansProfil)} des ${fmtNumber(besoinsEnCours)} besoins`;
+        const { besoinsEnCours, commandesRecues, profilsDemandes, sansProfil } = result;
+
+        /* Le dénominateur d'abord, c'est lui qui donne son sens à la valeur. */
+        let sousTitre = `Non pourvus sur ${fmtNumber(commandesRecues)} commande${commandesRecues > 1 ? 's' : ''} reçue${commandesRecues > 1 ? 's' : ''}`;
+        /* Les postes seulement s'ils apportent quelque chose, c'est-à-dire
+           s'ils ne redisent pas la valeur déjà affichée en gros. Et jamais un
+           total incomplet : si une commande n'a pas de `# PROFIL`, on ne
+           suppose pas 1, on se tait. */
+        if (sansProfil === 0 && profilsDemandes !== besoinsEnCours) {
+          sousTitre += ` · ${fmtNumber(profilsDemandes)} postes`;
+        }
 
         return (
           <div className={styles.page}>
@@ -87,9 +96,10 @@ export default function Besoins() {
                 label="Besoin de recrutement en cours"
                 value={fmtNumber(besoinsEnCours)}
                 unit={besoinsEnCours > 1 ? ' besoins' : ' besoin'}
-                /* Éteinte, pas en attente : voir l'en-tête du fichier. */
-                compare={false}
-                trend={{ dir: 'neutral', text: `Non pourvus à ce jour · ${postes}` }}
+                compare={compareResult
+                  ? compareValueText(besoinsEnCours, compareResult.besoinsEnCours, comparePeriodKey)
+                  : null}
+                trend={{ dir: 'neutral', text: sousTitre }}
               />
             </div>
           </div>
