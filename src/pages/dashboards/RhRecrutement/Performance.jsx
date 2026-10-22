@@ -7,10 +7,11 @@ import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import ListeModale from '../../../components/ui/ListeModale';
 import MotifBar from '../../../components/ui/MotifBar';
+import { libelleFamille } from '../../../data/familles';
 import { useRhQualite } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import { fmtNumber, partPct } from '../../../utils/formatNumber';
+import { fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import styles from '../RhEffectifs/Rh.module.css';
 
 /* Chart.js s'enregistre par fichier dans ce projet, et seulement pour ce qu'on
@@ -51,6 +52,28 @@ function dateCourte(iso) {
 }
 
 const ISSUES = { annule: 'Annulé', clos_sans: 'Clôturé sans recrutement' };
+
+/* UNE COULEUR PAR MOTIF, dans l'ordre de la nomenclature. Pas une rampe : les
+   motifs ne sont pas ordonnés, aucun n'est « plus » qu'un autre.
+   « NON RENSEIGNÉ » EST EN CIMENT, la couleur du « reste » partout dans ce
+   dépôt, et c'est délibéré : c'est la plus grosse barre de la carte, onze sur
+   trente et un, et elle ne doit surtout pas ressembler à un motif. Lui donner
+   une teinte franche la ferait lire comme une cause parmi les autres. */
+const COULEURS_MOTIF = {
+  non_renseigne:   'rgba(167,173,170,0.50)', // ciment : une absence, pas une cause
+  couvert_autrement: 'rgba(142,207,170,0.80)',
+  sans_retour:     'rgba(196,135,106,0.80)',
+  conditions:      'rgba(136,84,48,0.78)',
+  redefini:        'rgba(123,170,191,0.78)',
+  decision_ma:     'rgba(38,0,31,0.70)',
+  profils_refuses: 'rgba(201,170,196,0.85)',
+};
+
+/* Les deux couleurs du graphe mensuel. Littéraux, le canvas ne lit pas les
+   jetons CSS. */
+const C_MOIS_REALISE = 'rgba(38,0,31,0.78)';
+const C_MOIS_PERDU = 'rgba(196,135,106,0.85)';
+const C_MOIS_VOLUME = 'rgba(38,0,31,0.88)';
 
 /* Six lignes sur la carte, le reste en pop-up. Le détail des besoins clôturés
    sert à repérer ce qui se répète — un client, un type de poste — pas à lire
@@ -142,10 +165,20 @@ export default function Performance() {
 
         const {
           demandes, realises, annules, closSansRecrutement, enCours,
-          tauxRealise, tauxNonAbouti,
+          tauxNonAbouti,
+          tauxR3, r3Base, r3Passe,
+          tauxPrez, prezBase, prezAboutis,
+          satisfactionN, satisfaits, tauxSatisfaction,
+          motifs, parMission,
           parRecruteur, sansRecruteur, clotures, evolution,
         } = result;
         const s = n => (n > 1 ? 's' : '');
+
+        const motifTotal = motifs.reduce((n, m) => n + m.total, 0);
+        const missions = parMission.map(m => ({
+          ...m,
+          libelle: m.cle ? libelleFamille(m.cle) : 'À classer',
+        }));
 
         /* La charge totale porte TOUS les besoins ouverts, y compris ceux dont
            la case « responsable » est vide : c'est elle qui fait le dénominateur
@@ -188,34 +221,57 @@ export default function Performance() {
 
             {/* ── Planche 16, section « Qualité de recrutement » ───────────── */}
             <SectionLabel badge="Onglet Suivi de commande RH Q2">Qualité de recrutement</SectionLabel>
-            <div className={styles.kpiGrid3}>
+            {/* LA RANGÉE A ÉTÉ ENTIÈREMENT REFAITE le 22/10 — « supprime tout ce
+                qu'il y a actuellement dans qualité ». Partent « Recrutements
+                réalisés », qui faisait doublon avec la vue 1, et « Besoins
+                clôturés sans recrutement », dont le volume vit maintenant dans
+                la carte des motifs.
 
-              {/* ANNOTATION 1 DE CLÉMENCE. La maquette écrivait « Recrutements
-                  finalisés · date de démarrage renseignée », ce qui comptait
-                  les dates saisies et non les recrutements : 21 placements sur
-                  43 n'ont aucune date de démarrage au fichier, la tuile en
-                  perdait donc la moitié. Elle compte maintenant les besoins où
-                  quelqu'un est EN POSTE, règle de la vue 1, et les deux pages
-                  donnent le même chiffre — ce qui est le but de son « comme
-                  sur la slide 13 ». */}
+                QUATRE TAUX ET RIEN D'AUTRE : la section s'appelle qualité, et
+                une qualité se mesure en proportions, pas en volumes. Chaque
+                sous-titre porte la fraction qui la produit, pour qu'on puisse
+                la refaire de tête.
+
+                LES DEUX PREMIERS NE SE LISENT QUE SUR LES BESOINS CLOS. Un
+                besoin encore en cours à R4 n'a pas échoué, il n'a pas fini :
+                l'inclure ferait baisser les taux à mesure que le pipeline se
+                remplit, c'est-à-dire quand tout va bien. */}
+            <div className={styles.kpiGrid}>
+
               <KPICard
-                label="Recrutements réalisés"
-                value={fmtNumber(realises)}
-                unit={` recrutement${s(realises)}`}
+                label="Taux de réussite à R3"
+                value={tauxR3 == null ? '-' : fmtNumber(tauxR3)}
+                unit={tauxR3 == null ? '' : ' %'}
                 compare={compareResult
-                  ? compareValueText(realises, compareResult.realises, comparePeriodKey)
+                  ? comparePtsText(tauxR3, compareResult.tauxR3, comparePeriodKey)
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: `${fmtNumber(realises)} sur ${fmtNumber(demandes)} besoin${s(demandes)} demandé${s(demandes)}`,
+                  text: r3Base === 0
+                    ? 'Aucun besoin clos n’a atteint l’entretien approfondi'
+                    : `${fmtNumber(r3Passe)} besoin${s(r3Passe)} dépasse${s(r3Passe) ? 'nt' : ''} R3 sur ${fmtNumber(r3Base)} qui l’atteignent · besoins clos`,
+                }}
+              />
+
+              <KPICard
+                label="Taux de réussite après présentation client"
+                value={tauxPrez == null ? '-' : fmtNumber(tauxPrez)}
+                unit={tauxPrez == null ? '' : ' %'}
+                compare={compareResult
+                  ? comparePtsText(tauxPrez, compareResult.tauxPrez, comparePeriodKey)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: prezBase === 0
+                    ? 'Aucun besoin clos n’a été présenté au client'
+                    : `${fmtNumber(prezAboutis)} en poste sur ${fmtNumber(prezBase)} présenté${s(prezBase)} au client · besoins clos`,
                 }}
               />
 
               {/* INVERSÉE : un taux de perte qui baisse est une bonne nouvelle,
                   la couleur doit virer au vert. Le paramètre n'inverse que la
                   COULEUR, la flèche suit toujours le chiffre.
-                  LE VOLUME EST DANS LE SOUS-TITRE, et c'est la part de
-                  l'annotation 3 qui reste vraie quoi qu'il arrive : un taux
+                  LE VOLUME EST DANS LE SOUS-TITRE, demande du 22/10 : un taux
                   seul ne se vérifie pas, « 23 annulés sur 98 » se vérifie. */}
               <KPICard
                 label="Taux de besoins non aboutis"
@@ -226,161 +282,80 @@ export default function Performance() {
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: `${fmtNumber(annules)} besoin${s(annules)} annulé${s(annules)} sur ${fmtNumber(demandes)} demandé${s(demandes)}`,
+                  text: `${fmtNumber(annules)} annulé${s(annules)} et ${fmtNumber(closSansRecrutement)} clôturé${s(closSansRecrutement)} sans recrutement sur ${fmtNumber(demandes)}`,
                 }}
               />
 
-              {/* ANNOTATION 3, et la réponse est non : ces besoins-là ne sont
-                  pas les annulés. Le sous-titre le dit en toutes lettres, parce
-                  que deux tuiles voisines qui comptent « ce qui n'a pas abouti »
-                  invitent à les confondre, et parce que la question a déjà été
-                  posée une fois. */}
+              {/* LA CARTE LA PLUS TROUÉE DE LA VUE, et son sous-titre le dit :
+                  14 commandes sur 98 portent un niveau. 93 % sur quatorze
+                  réponses n'est pas le taux de satisfaction de l'année, c'est
+                  celui des quatorze clients qui ont répondu.
+                  « RELANCE RECHERCHE » EST ÉCARTÉE du dénominateur, côté route :
+                  c'est la quatrième valeur du classeur et ce n'est pas un
+                  niveau de satisfaction mais une suite donnée à l'entretien. */}
               <KPICard
-                label="Besoins clôturés sans recrutement"
-                value={fmtNumber(closSansRecrutement)}
-                unit={` besoin${s(closSansRecrutement)}`}
+                label="Taux de satisfaction client"
+                value={tauxSatisfaction == null ? '-' : fmtNumber(tauxSatisfaction)}
+                unit={tauxSatisfaction == null ? '' : ' %'}
                 compare={compareResult
-                  ? compareValueText(closSansRecrutement, compareResult.closSansRecrutement, comparePeriodKey, true)
+                  ? comparePtsText(tauxSatisfaction, compareResult.tauxSatisfaction, comparePeriodKey)
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: 'Recherche close sans placement, hors annulations · aucun motif au fichier',
+                  text: satisfactionN === 0
+                    ? 'Aucun entretien noté sur cette période'
+                    : `${fmtNumber(satisfaits)} satisfait${s(satisfaits)} sur ${fmtNumber(satisfactionN)} entretien${s(satisfactionN)} noté${s(satisfactionN)} · ${fmtNumber(demandes)} besoin${s(demandes)} au total`,
                 }}
               />
 
             </div>
 
-            {/* ANNOTATION 2 DE CLÉMENCE : le graphe mensuel des deux taux.
-                Les barres de volume ne sont pas une décoration. Sans elles,
-                « 100 % de réalisés en mai » et « 61 % en février » se liraient
-                comme deux mois comparables, alors que mai porte quatre besoins
-                et février dix-huit. Une barre de quatre à côté d'une barre de
-                dix-huit règle la question sans une ligne de texte. */}
-            <Card title="Réalisés et non aboutis, mois par mois">
-              {evolution.every(p => p.demandes === 0) ? (
+            {/* LES MOTIFS DES BESOINS NON ABOUTIS.
+                LE CLASSEUR N'EN PORTE AUCUN. Le classement vient de
+                motifNonAbouti.js, lu à la main dans la colonne Commentaire le
+                22/10 — j'avais alerté sur le risque, Jimmy a tranché : « il
+                faut que tu catégorises ». Chaque attribution est écrite dans ce
+                fichier avec le fragment de commentaire qui la fonde, pour
+                qu'elle se conteste ligne à ligne.
+
+                « MOTIF NON RENSEIGNÉ » EST LA PLUS GROSSE BARRE, onze sur trente
+                et un, et elle est en ciment pour qu'on ne la lise pas comme une
+                cause. Ce n'est pas un trou dans mon classement : onze
+                commentaires écrivent eux-mêmes que la raison est introuvable.
+
+                DEUX COLONNES À DROITE, annulés et clos sans recrutement : le
+                même motif ne produit pas la même issue. « Besoin couvert
+                autrement » est clos six fois sur huit, « sans retour du
+                client » est annulé trois fois sur trois. */}
+            <Card title="Motifs des besoins non aboutis">
+              {motifTotal === 0 ? (
                 <div className={styles.etat}>
                   <div className={styles.etatTexte}>
-                    Aucun besoin n’a été ouvert sur les douze derniers mois.
+                    Aucun besoin de cette période n’a été annulé ni clôturé sans recrutement.
                   </div>
                 </div>
               ) : (
                 <>
-                  <div className={styles.chartWrap} style={{ height: 240 }}>
-                    <Bar
-                      data={{
-                        labels: evolution.map(p => libelleMois(p.mois)),
-                        datasets: [
-                          {
-                            label: 'Besoins ouverts',
-                            data: evolution.map(p => p.demandes),
-                            backgroundColor: C_VOLUME,
-                            borderRadius: 4,
-                            borderSkipped: false,
-                            yAxisID: 'y2',
-                            order: 2,
-                          },
-                          {
-                            type: 'line',
-                            label: 'Taux de recrutements réalisés',
-                            data: evolution.map(p => p.tauxRealise),
-                            borderColor: C_REALISE,
-                            pointBackgroundColor: C_REALISE,
-                            pointRadius: 3,
-                            borderWidth: 2,
-                            tension: 0.3,
-                            fill: false,
-                            /* LES MOIS SANS AUCUN BESOIN RESTENT DES TROUS : avec
-                               spanGaps, Chart.js relierait les deux mois voisins
-                               d'un trait continu et l'on y lirait une évolution
-                               régulière là où rien ne s'est passé. */
-                            spanGaps: false,
-                            yAxisID: 'y',
-                            /* order 0 dessine la courbe PAR-DESSUS les barres ;
-                               sans cela elle passerait dessous. */
-                            order: 0,
-                          },
-                          {
-                            type: 'line',
-                            label: 'Taux de besoins non aboutis',
-                            data: evolution.map(p => p.tauxNonAbouti),
-                            borderColor: C_PERDU,
-                            pointBackgroundColor: C_PERDU,
-                            pointRadius: 3,
-                            borderWidth: 2,
-                            tension: 0.3,
-                            fill: false,
-                            spanGaps: false,
-                            yAxisID: 'y',
-                            order: 1,
-                          },
-                        ],
-                      }}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: { duration: 900, easing: 'easeOutQuart' },
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                          legend: { display: false },
-                          tooltip: {
-                            callbacks: {
-                              title: items => libelleMoisLong(evolution[items[0].dataIndex].mois),
-                              label: ctx => {
-                                const v = ctx.parsed.y;
-                                if (v == null) return null;
-                                if (ctx.dataset.label === 'Besoins ouverts') {
-                                  return `${fmtNumber(v)} besoin${v > 1 ? 's' : ''} ouvert${v > 1 ? 's' : ''}`;
-                                }
-                                return `${ctx.dataset.label} : ${fmtNumber(v)} %`;
-                              },
-                            },
-                          },
-                        },
-                        scales: {
-                          x: { grid: { display: false } },
-                          y: {
-                            position: 'left',
-                            beginAtZero: true,
-                            /* PLAFOND À 100 : ce sont des pourcentages, et une
-                               échelle qui s'arrête à 62 parce que c'est le plus
-                               haut point du moment ferait bouger la pente d'un
-                               mois à l'autre sans que rien n'ait changé. */
-                            max: 100,
-                            ticks: { precision: 0, callback: v => `${v} %` },
-                          },
-                          y2: {
-                            position: 'right',
-                            beginAtZero: true,
-                            ticks: { precision: 0 },
-                            /* Pas de grille en double : celle des pourcentages
-                               suffit, deux trames superposées brouillent tout. */
-                            grid: { drawOnChartArea: false },
-                            title: { display: true, text: 'Besoins', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
-                          },
-                        },
-                      }}
-                    />
+                  <div className={styles.barres}>
+                    <div className={styles.barresEntete}>
+                      <span className={styles.barresEnteteLib}>Annulés</span>
+                      <span className={styles.barresEnteteLib}>Clos sans</span>
+                    </div>
+                    {motifs.filter(m => m.total > 0).map(m => (
+                      <MotifBar
+                        key={m.cle}
+                        label={m.libelle}
+                        pct={partPct(m.total, motifTotal)}
+                        count={m.total}
+                        extras={[fmtNumber(m.annules), fmtNumber(m.closSans)]}
+                        fillColor={COULEURS_MOTIF[m.cle]}
+                      />
+                    ))}
                   </div>
-                  {/* LÉGENDE EN HTML, pas celle de Chart.js, comme partout dans
-                      ce dépôt : trois séries sur deux axes ne se devinent pas. */}
-                  <div className={styles.legende}>
-                    <span className={styles.legDot} style={{ background: C_VOLUME }} />Besoins ouverts
-                    <span className={styles.legDot} style={{ background: C_REALISE, marginLeft: 12 }} />Réalisés
-                    <span className={styles.legDot} style={{ background: C_PERDU, marginLeft: 12 }} />Non aboutis
-                  </div>
-                  {/* CETTE MENTION N'EST PAS UNE PRÉCAUTION DE STYLE. Le mois
-                      d'un besoin est celui de sa COMMANDE, faute de mieux : le
-                      classeur ne porte ni date d'annulation ni date de clôture.
-                      Les besoins des deux derniers mois n'ont donc pas fini de
-                      vivre, et leur taux de réalisation est bas pour cette
-                      seule raison. Sans cette phrase, la fin de la courbe se
-                      lit comme un effondrement du recrutement. */}
                   <div className={styles.mention}>
-                    Chaque mois porte les besoins OUVERTS ce mois-là, et leur issue à ce jour :
-                    le classeur ne date ni les annulations ni les clôtures. Les mois récents
-                    affichent donc peu de réalisés parce que leurs besoins sont encore en cours,
-                    et non parce qu’ils ont échoué. Les deux taux ne sont pas complémentaires :
-                    ce qui reste est le stock encore ouvert.
+                    Motifs relevés dans le commentaire de chaque commande. Le classeur n’a
+                    pas de colonne de motif : ceux qui n’en portent aucun sont comptés
+                    « non renseigné » plutôt que répartis.
                   </div>
                 </>
               )}
@@ -412,8 +387,8 @@ export default function Performance() {
                   )}
                   <div className={styles.mention}>
                     {fmtNumber(annules)} annulé{s(annules)} et {fmtNumber(closSansRecrutement)} clôturé
-                    {s(closSansRecrutement)} sans recrutement, les plus récents d’abord.
-                    Le classeur ne porte AUCUNE colonne de motif : on sait lesquels, jamais pourquoi.
+                    {s(closSansRecrutement)} sans recrutement, les plus récents d’abord. Le motif de
+                    chacun est dans la carte du dessus.
                   </div>
                 </>
               )}
@@ -460,10 +435,196 @@ export default function Performance() {
                     Charge en cours, pas un classement : on compte les besoins qu’il reste à
                     pourvoir, pas les recrutements conclus.
                     {sansRecruteur > 0
-                      ? ` ${fmtNumber(sansRecruteur)} besoin${s(sansRecruteur)} ouvert${s(sansRecruteur)} n’a pas de responsable au fichier et n’apparaît sur aucune barre.`
+                      ? ` ${fmtNumber(sansRecruteur)} besoin${s(sansRecruteur)} ouvert${s(sansRecruteur)} ${sansRecruteur > 1 ? 'n’ont' : 'n’a'} pas de responsable au fichier.`
                       : ''}
                   </div>
                 </>
+              )}
+            </Card>
+
+            {/* ANNOTATION 2 DE CLÉMENCE, posée EN BAS DE PAGE le 22/10 : c'est
+                une lecture d'ensemble, elle vient après le détail.
+
+                LES DEUX TAUX SONT EN BARRES ET LE VOLUME EN COURBE, encodage
+                inversé le 22/10. Le premier essai mettait les taux en courbes
+                et le volume en barres ; les deux taux se comparent mois à mois
+                et c'est ce que des barres accolées montrent le mieux, pendant
+                que le volume, lui, raconte une tendance continue.
+
+                LE VOLUME RESTE INDISPENSABLE. Sans lui, « 100 % de réalisés en
+                mai » et « 61 % en février » se liraient comme deux mois
+                comparables, alors que mai porte quatre besoins et février
+                dix-huit. */}
+            <Card title="Réalisés et non aboutis, mois par mois">
+              {evolution.every(p => p.demandes === 0) ? (
+                <div className={styles.etat}>
+                  <div className={styles.etatTexte}>
+                    Aucun besoin n’a été ouvert sur les douze derniers mois.
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.chartWrap} style={{ height: 240 }}>
+                    <Bar
+                      data={{
+                        labels: evolution.map(p => libelleMois(p.mois)),
+                        datasets: [
+                          {
+                            label: 'Taux de recrutements réalisés',
+                            data: evolution.map(p => p.tauxRealise),
+                            backgroundColor: C_MOIS_REALISE,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                            yAxisID: 'y',
+                            order: 2,
+                          },
+                          {
+                            label: 'Taux de besoins non aboutis',
+                            data: evolution.map(p => p.tauxNonAbouti),
+                            backgroundColor: C_MOIS_PERDU,
+                            borderRadius: 4,
+                            borderSkipped: false,
+                            yAxisID: 'y',
+                            order: 2,
+                          },
+                          {
+                            type: 'line',
+                            label: 'Besoins ouverts',
+                            data: evolution.map(p => p.demandes),
+                            borderColor: C_MOIS_VOLUME,
+                            pointBackgroundColor: C_MOIS_VOLUME,
+                            pointRadius: 3,
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: false,
+                            /* LES MOIS SANS AUCUN BESOIN RESTENT DES TROUS : avec
+                               spanGaps, Chart.js relierait les deux mois voisins
+                               d'un trait continu et l'on y lirait une évolution
+                               régulière là où rien ne s'est passé. */
+                            spanGaps: false,
+                            yAxisID: 'y2',
+                            /* order 0 dessine la courbe PAR-DESSUS les barres ;
+                               sans cela elle passerait dessous. */
+                            order: 0,
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: { duration: 900, easing: 'easeOutQuart' },
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                          legend: { display: false },
+                          tooltip: {
+                            callbacks: {
+                              title: items => libelleMoisLong(evolution[items[0].dataIndex].mois),
+                              label: ctx => {
+                                const v = ctx.parsed.y;
+                                if (v == null) return null;
+                                if (ctx.dataset.label === 'Besoins ouverts') {
+                                  return `${fmtNumber(v)} besoin${v > 1 ? 's' : ''} ouvert${v > 1 ? 's' : ''}`;
+                                }
+                                return `${ctx.dataset.label} : ${fmtNumber(v)} %`;
+                              },
+                            },
+                          },
+                        },
+                        scales: {
+                          x: { grid: { display: false } },
+                          y: {
+                            position: 'left',
+                            beginAtZero: true,
+                            /* PLAFOND À 100 : ce sont des pourcentages, et une
+                               échelle qui s'arrête à 62 parce que c'est le plus
+                               haut point du moment ferait bouger la pente d'un
+                               mois à l'autre sans que rien n'ait changé. */
+                            max: 100,
+                            ticks: { precision: 0, callback: v => `${v} %` },
+                          },
+                          y2: {
+                            position: 'right',
+                            beginAtZero: true,
+                            ticks: { precision: 0 },
+                            /* Pas de grille en double : celle des pourcentages
+                               suffit, deux trames superposées brouillent tout. */
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'Besoins ouverts', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                          },
+                        },
+                      }}
+                    />
+                  </div>
+                  {/* LÉGENDE EN HTML, pas celle de Chart.js, comme partout dans
+                      ce dépôt : trois séries sur deux axes ne se devinent pas. */}
+                  <div className={styles.legende}>
+                    <span className={styles.legDot} style={{ background: C_MOIS_REALISE }} />Réalisés
+                    <span className={styles.legDot} style={{ background: C_MOIS_PERDU, marginLeft: 12 }} />Non aboutis
+                    <span className={styles.legDot} style={{ background: C_MOIS_VOLUME, marginLeft: 12 }} />Besoins ouverts
+                  </div>
+                  {/* CETTE MENTION N'EST PAS UNE PRÉCAUTION DE STYLE. Le mois
+                      d'un besoin est celui de sa COMMANDE, faute de mieux : le
+                      classeur ne porte ni date d'annulation ni date de clôture.
+                      Les besoins des deux derniers mois n'ont donc pas fini de
+                      vivre, et leur taux de réalisation est bas pour cette
+                      seule raison. Sans cette phrase, la fin de la courbe se
+                      lit comme un effondrement du recrutement. */}
+                  <div className={styles.mention}>
+                    Chaque mois porte les besoins OUVERTS ce mois-là, et leur issue à ce jour :
+                    le classeur ne date ni les annulations ni les clôtures. Les mois récents
+                    affichent donc peu de réalisés parce que leurs besoins sont encore en cours,
+                    et non parce qu’ils ont échoué. Les deux taux ne sont pas complémentaires :
+                    ce qui reste est le stock encore ouvert.
+                  </div>
+                </>
+              )}
+            </Card>
+
+            {/* LES DEUX TAUX PAR TYPE DE MISSION, pour fermer la vue.
+                Même découpage et même table de correspondance que la carte des
+                durées du Pipeline : deux vues du même dashboard qui découperaient
+                les métiers autrement ne seraient pas comparables.
+
+                LES DEUX TAUX NE SE COMPLÈTENT PAS À 100 %, et c'est voulu : ce
+                qui manque, ce sont les besoins encore en cours et ceux clôturés
+                sans recrutement. Le nombre de besoins ouvre la ligne pour que
+                l'écart se lise. */}
+            <Card title="Réalisés et non aboutis par type de mission">
+              {missions.length === 0 ? (
+                <div className={styles.etat}>
+                  <div className={styles.etatTexte}>
+                    Aucun besoin n’a été demandé sur cette période.
+                  </div>
+                </div>
+              ) : (
+                <table className={styles.tbl}>
+                  <thead>
+                    <tr>
+                      <th>Type de mission</th>
+                      <th className={styles.num}>Besoins</th>
+                      <th className={styles.num}>Réalisés</th>
+                      <th className={styles.num}>Taux réalisés</th>
+                      <th className={styles.num}>Non aboutis</th>
+                      <th className={styles.num}>Taux non aboutis</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {missions.map(m => (
+                      <tr key={m.cle || 'a-classer'}>
+                        <td>{m.libelle}</td>
+                        <td className={styles.num}>{fmtNumber(m.demandes)}</td>
+                        <td className={styles.num}>{fmtNumber(m.realises)}</td>
+                        <td className={styles.num}>
+                          {m.tauxRealise == null ? '-' : fmtPourcentage(m.tauxRealise)}
+                        </td>
+                        <td className={styles.num}>{fmtNumber(m.annules)}</td>
+                        <td className={styles.num}>
+                          {m.tauxNonAbouti == null ? '-' : fmtPourcentage(m.tauxNonAbouti)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </Card>
 
