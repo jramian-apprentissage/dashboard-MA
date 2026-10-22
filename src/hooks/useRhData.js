@@ -145,6 +145,38 @@ export function useRhBesoins() {
   return etat;
 }
 
+/* Vue 2 du dashboard Recrutement, « Pipeline candidats et délais ».
+ *
+ * MÊME LECTURE EN COHORTE QUE LA VUE 1, et ce n'est pas un détail : les deux
+ * pages doivent compter la même chose sur la même période, sinon elles se
+ * contredisent d'un onglet à l'autre sans que personne ne sache laquelle a
+ * raison. La période borne la date de commande, jamais l'état. */
+export function useRhPipeline() {
+  const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
+  const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });
+
+  useEffect(() => {
+    let annule = false;
+    setEtat(e => ({ ...e, loading: true }));
+    const { from, to } = getPeriodRange(periodKey, customFrom, customTo);
+
+    Promise.all([
+      fetchRh(`/pipeline?du=${from}&au=${to}`),
+      compareActive && compareRange
+        ? fetchRh(`/pipeline?du=${compareRange.from}&au=${compareRange.to}`)
+        : Promise.resolve(null),
+    ])
+      .then(([result, compareResult]) => {
+        if (!annule) setEtat({ result, compareResult, loading: false, error: null });
+      })
+      .catch(e => { if (!annule) setEtat({ result: null, compareResult: null, loading: false, error: e.message }); });
+
+    return () => { annule = true; };
+  }, [periodKey, customFrom, customTo, compareActive, compareRange]);
+
+  return etat;
+}
+
 export function useRhEffectifs() {
   const { periodKey, customFrom, customTo, compareActive, compareRange } = usePeriod();
   const [etat, setEtat] = useState({ result: null, compareResult: null, loading: true, error: null });
