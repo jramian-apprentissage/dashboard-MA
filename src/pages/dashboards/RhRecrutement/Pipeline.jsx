@@ -209,6 +209,11 @@ export default function Pipeline() {
                             borderWidth: 2,
                             tension: 0.35,
                             fill: false,
+                            /* LES MOIS SANS DÉMARRAGE RESTENT DES TROUS. Avec
+                               spanGaps, Chart.js relierait février à avril
+                               d'un trait continu et l'on y lirait une
+                               évolution régulière là où mars n'a rien eu. */
+                            spanGaps: false,
                           }],
                         }}
                         options={{
@@ -239,9 +244,20 @@ export default function Pipeline() {
                         }}
                       />
                     </div>
+                    {/* CETTE LIGNE EXISTE PARCE QUE LE GRAPHE ET LA TUILE NE
+                        COMPTENT PAS LA MÊME CHOSE, et que sans elle on les
+                        croirait en désaccord. La tuile est bornée à la
+                        COHORTE, les besoins commandés sur la période ; le
+                        graphe tourne sur une FENÊTRE GLISSANTE de douze mois
+                        ancrée sur la fin de période, comme tous les graphes
+                        d'évolution de ce dépôt. Une courbe réduite au mois
+                        sélectionné n'aurait qu'un point. */}
                     <div className={styles.mention}>
                       Médiane du délai entre l’ouverture de recherche et le démarrage,
-                      par mois de démarrage · {fmtNumber(pourvoirN)} démarrage{s(pourvoirN)} daté{s(pourvoirN)} sur la période.
+                      par mois de démarrage · douze derniers mois ·{' '}
+                      {fmtNumber(evolution.reduce((t, p) => t + p.n, 0))} démarrage
+                      {evolution.reduce((t, p) => t + p.n, 0) > 1 ? 's' : ''} daté
+                      {evolution.reduce((t, p) => t + p.n, 0) > 1 ? 's' : ''}.
                     </div>
                   </>
                 )}
