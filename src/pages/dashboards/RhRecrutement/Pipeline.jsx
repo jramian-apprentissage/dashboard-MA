@@ -142,21 +142,6 @@ export default function Pipeline() {
            renseignés pour onze échecs. */
         const ouTiret = v => (v == null ? '-' : fmtNumber(v));
 
-        /* Le survol d'une ligne : les postes, un par ligne, puis l'étape
-           atteinte en toutes lettres. C'est là que vit le détail qu'une barre
-           à neuf cases ne peut pas porter. */
-        const survolClient = c => {
-          const postes = (c.postes || '')
-            .split(' ; ')
-            .map(x => x.replace(/\s+/g, ' ').trim())
-            .filter(Boolean);
-          const etape = libelleEtape(c.etape);
-          return [
-            `${fmtNumber(c.besoins)} besoin${s(c.besoins)} en cours`,
-            ...postes.map(x => `• ${x}`),
-            etape ? `Étape la plus avancée : ${etape}` : 'Étape non renseignée au fichier',
-          ].join('\n');
-        };
         const j = v => (v == null ? '-' : fmtNumber(v));
         /* Neutralise la couleur d'une comparaison sans toucher au chiffre ni à
            la flèche : pour les indicateurs dont aucun sens n'est bon en soi. */
@@ -293,7 +278,6 @@ export default function Pipeline() {
                           ouTiret(c.presentes),
                           ouTiret(c.retenus),
                         ]}
-                        title={survolClient(c)}
                       />
                     ))}
                   </div>

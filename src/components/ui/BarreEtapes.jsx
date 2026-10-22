@@ -1,3 +1,4 @@
+import Infobulle from './Infobulle';
 import styles from './BarreEtapes.module.css';
 
 /* LA RAMPE DES NEUF ÉTAPES, du R0 au placement.
@@ -80,9 +81,10 @@ export function EnteteEtapes({ colonnes }) {
  * la même difficulté, et afficher un taux inventerait une mesure que personne
  * n'a prise.
  *
- * `title` porte le survol. Le navigateur l'affiche tel quel, retours à la ligne
- * compris — d'où les postes passés avec des sauts de ligne par l'appelant. */
-export default function BarreEtapes({ label, etape, valeurs, title }) {
+ * LE SURVOL VIT SUR LES SEGMENTS, pas sur la ligne : chaque case annonce son
+ * étape. Le composant ne prend donc plus de `title` — il en acceptait un pour
+ * le survol de ligne, retiré le 22/10. */
+export default function BarreEtapes({ label, etape, valeurs }) {
   /* AUCUN ÉTAT D'ANIMATION ICI, ET C'EST UN CORRECTIF, pas une simplification.
    *
    * La première version copiait MotifBar : un useState à 0, puis un
@@ -103,39 +105,47 @@ export default function BarreEtapes({ label, etape, valeurs, title }) {
    * au CSS, qui ne peut pas se tromper de valeur : une animation suspendue
    * laisse un segment déjà coloré, jamais un segment vide. */
   return (
-    <div className={styles.row} title={title || undefined}>
-      <div className={styles.label}>{label}</div>
-      <div className={styles.piste}>
-        {ETAPES.map(e => {
-          const atteint = (etape || 0) >= e.rang;
-          return (
-            /* CHAQUE SEGMENT PORTE SON PROPRE SURVOL, demande de Jimmy du
-               22/10 : neuf cases vertes ne disent pas laquelle est R5. Le
-               survol d'un segment annonce son étape, et précise si elle est
-               franchie — la couleur le dit déjà, mais pas pour qui hésite
-               entre deux teintes voisines de la rampe.
+    /* UN SEUL SURVOL, CELUI DE L'ÉTAPE. La ligne en portait un second, qui
+       dépliait les postes du client ; retiré le 22/10 — « il me faut juste
+       l'étape ». Les postes n'ont rien perdu : ils ont une colonne à eux dans
+       la pop-up, où ils se lisent mieux qu'en bulle.
 
-               IL PREND LE PAS SUR CELUI DE LA LIGNE, et c'est le comportement
-               voulu : le navigateur affiche le `title` de l'élément le plus
-               PROCHE du curseur. Sur la barre on lit donc l'étape, et sur le
-               nom du client ou ses chiffres, les postes. Deux informations,
-               deux zones, aucune ne masque l'autre. */
-            <div
-              key={e.cle}
-              className={`${styles.segment} ${atteint ? styles.atteint : ''}`}
-              /* Le décalage échelonne l'entrée des segments de gauche à droite,
-                 ce que faisait le rAF — sans jamais porter la valeur. */
-              style={atteint
-                ? { background: e.couleur, animationDelay: `${(e.rang - 1) * 45}ms` }
-                : undefined}
-              title={`${e.libelle} · ${atteint ? 'étape franchie' : 'pas encore atteinte'}`}
-            />
-          );
-        })}
+       L'INFOBULLE EST CELLE DU DÉPÔT, PAS CELLE DU NAVIGATEUR : `title` mettait
+       une seconde à sortir et Jimmy l'a cherchée sans la trouver le même jour.
+       Voir Infobulle.jsx pour le portail, qui est ce qui lui permet de sortir
+       d'une carte à `overflow: hidden`. */
+      <div className={styles.row}>
+        <div className={styles.label}>{label}</div>
+        <div className={styles.piste}>
+          {ETAPES.map(e => {
+            const atteint = (etape || 0) >= e.rang;
+            return (
+              /* CHAQUE SEGMENT ANNONCE SON ÉTAPE, demande de Jimmy du 22/10 :
+                 neuf cases vertes ne disent pas laquelle est R5. Elle précise
+                 Le libellé seul, sans « franchie » ou « pas atteinte » : la
+                 couleur le dit déjà, et la bulle doit se lire d'un coup. */
+              <Infobulle
+                key={e.cle}
+                contenu={e.libelle}
+              >
+                <div
+                  className={`${styles.segment} ${atteint ? styles.atteint : ''}`}
+                  /* Le décalage échelonne l'entrée des segments de gauche à
+                     droite, ce que faisait le rAF — sans porter la valeur. */
+                  style={atteint
+                    ? { background: e.couleur, animationDelay: `${(e.rang - 1) * 45}ms` }
+                    : undefined}
+                  /* Focusable au clavier : sans cela l'étape d'un segment
+                     n'est accessible qu'à la souris. */
+                  tabIndex={0}
+                />
+              </Infobulle>
+            );
+          })}
+        </div>
+        <div className={styles.valeurs} style={{ gridTemplateColumns: `repeat(${valeurs.length}, 56px)` }}>
+          {valeurs.map((v, i) => <span key={i}>{v}</span>)}
+        </div>
       </div>
-      <div className={styles.valeurs} style={{ gridTemplateColumns: `repeat(${valeurs.length}, 56px)` }}>
-        {valeurs.map((v, i) => <span key={i}>{v}</span>)}
-      </div>
-    </div>
   );
 }

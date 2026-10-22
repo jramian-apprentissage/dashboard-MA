@@ -1,0 +1,53 @@
+/* Infobulle de survol — voir Infobulle.jsx.
+   Même vocabulaire visuel que l'infobulle des cartes KPI et que celle de
+   MontantExact : fond myrtille, texte soleil. C'est la même information, elle
+   doit se présenter de la même façon où qu'elle apparaisse. */
+
+.bulle {
+  position: fixed;
+  /* Le point d'ancrage calculé par le composant est le MILIEU de l'élément :
+     c'est cette translation qui centre la boîte dessus. */
+  transform: translateX(-50%);
+  z-index: 900;
+  max-width: 300px;
+  background: var(--myrtille);
+  color: var(--soleil);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.45;
+  padding: 7px 10px;
+  border-radius: 7px;
+  /* Le contenu arrive en texte avec des retours à la ligne, comme l'ancien
+     `title`. pre-line les respecte sans transformer la chaîne en tableau de
+     nœuds côté appelant. */
+  white-space: pre-line;
+  box-shadow: 0 6px 20px rgba(38, 0, 31, 0.26);
+  /* Elle ne doit jamais intercepter la souris : le curseur reste sur
+     l'élément survolé, sinon l'infobulle se fermerait en s'ouvrant sous le
+     pointeur, puis se rouvrirait, à l'infini. */
+  pointer-events: none;
+  animation: bulleEntre 0.12s ease-out both;
+}
+
+/* `top` est le bord haut quand elle s'ouvre vers le bas, et le bord BAS quand
+   elle s'ouvre vers le haut : d'où la translation verticale, qui s'ajoute au
+   centrage horizontal. */
+/* Declaration explicite et non une regle vide : CSS modules n'emet pas de
+   classe pour un bloc sans propriete, et `styles.dessous` vaudrait undefined. */
+.dessous { transform: translateX(-50%); }
+.dessus  { transform: translate(-50%, -100%); }
+
+@keyframes bulleEntre {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bulle { animation: none; }
+}
+
+/* Sans survol fiable, une infobulle qui s'ouvrirait au toucher entrerait en
+   concurrence avec le geste de défilement. Même arbitrage que MontantExact. */
+@media not all and (hover: hover) {
+  .bulle { display: none; }
+}
