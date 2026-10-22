@@ -11,9 +11,15 @@ import styles from '../RhEffectifs/Rh.module.css';
 /* Vue 1 du dashboard Recrutement, « Besoins et recrutements ».
  *
  * L'ORDRE DES QUATRE TUILES RACONTE LE CYCLE D'UN BESOIN, arbitrage de Jimmy
- * du 22/10 : ce qu'on nous demande, ce qu'on a réalisé, ce qui reste en cours,
- * et pour finir la synthèse en taux. On lit la rangée de gauche à droite comme
- * une phrase, et chaque chiffre est explicité par celui d'à côté.
+ * du 22/10 : ce qu'on nous demande, ce qu'on a réalisé, la part que cela
+ * représente, et ce qui reste en cours. On lit la rangée de gauche à droite
+ * comme une phrase, et chaque chiffre est explicité par celui d'à côté.
+ *
+ * LE TAUX EST COLLÉ AUX RÉALISÉS, et c'est le sens de la permutation du
+ * 22/10 : « 41 réalisés » puis « 42 % » se lisent d'un seul mouvement, alors
+ * qu'une tuile intercalée obligeait l'œil à faire l'aller-retour entre deux
+ * nombres qui disent la même chose. L'arriéré ferme la rangée, à sa place : il
+ * ne décrit pas ce qui a été fait mais ce qui attend.
  *
  * LE MOT « COMMANDE » NE PARAÎT PAS À L'ÉCRAN. Clémence ne l'aime pas, et elle
  * a raison sur le fond : une ligne du FCC est une commande au sens du
@@ -132,10 +138,28 @@ export default function Besoins() {
                 }}
               />
 
-              {/* SEULE TUILE INVERSÉE de la rangée : un arriéré qui baisse est
-                  une bonne nouvelle, la couleur doit virer au vert. Le
-                  paramètre n'inverse que la couleur, la flèche suit le
-                  chiffre. */}
+              {/* LE TAUX SUIT IMMÉDIATEMENT LES RÉALISÉS, permutation demandée
+                  par Jimmy le 22/10 : un chiffre et son pourcentage se lisent
+                  côte à côte, « 41 réalisés, soit 42 % ». Les séparer par
+                  l'arriéré obligeait l'œil à sauter une tuile pour relier deux
+                  nombres qui disent la même chose. */}
+              <KPICard
+                label="Taux de besoins pourvus"
+                value={tauxPourvu == null ? '-' : fmtNumber(tauxPourvu)}
+                unit={tauxPourvu == null ? '' : ' %'}
+                compare={compareResult
+                  ? comparePtsText(tauxPourvu, compareResult.tauxPourvu, comparePeriodKey)
+                  : null}
+                trend={{
+                  dir: 'neutral',
+                  text: `${fmtNumber(realises)} réalisé${s(realises)} sur ${fmtNumber(demandes)} demandé${s(demandes)}`,
+                }}
+              />
+
+              {/* SEULE TUILE INVERSÉE de la rangée, et elle la ferme : un
+                  arriéré qui baisse est une bonne nouvelle, la couleur doit
+                  virer au vert. Le paramètre n'inverse que la couleur, la
+                  flèche suit le chiffre. */}
               <KPICard
                 label="Besoins en cours"
                 value={fmtNumber(enCours)}
@@ -150,19 +174,6 @@ export default function Besoins() {
                     : enCours15j === 0
                       ? 'Aucun ne dépasse 15 jours'
                       : `Dont ${fmtNumber(enCours15j)} depuis plus de 15 jours`,
-                }}
-              />
-
-              <KPICard
-                label="Taux de besoins pourvus"
-                value={tauxPourvu == null ? '-' : fmtNumber(tauxPourvu)}
-                unit={tauxPourvu == null ? '' : ' %'}
-                compare={compareResult
-                  ? comparePtsText(tauxPourvu, compareResult.tauxPourvu, comparePeriodKey)
-                  : null}
-                trend={{
-                  dir: 'neutral',
-                  text: `${fmtNumber(realises)} réalisé${s(realises)} sur ${fmtNumber(demandes)} demandé${s(demandes)}`,
                 }}
               />
 
