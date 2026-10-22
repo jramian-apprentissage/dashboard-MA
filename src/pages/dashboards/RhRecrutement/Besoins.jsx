@@ -123,7 +123,10 @@ export default function Besoins() {
                   alors que ses deux besoins encore ouverts traînent depuis plus
                   de cinquante jours. Voir l'en-tête de la route. */}
               <KPICard
-                label="Besoins ouverts depuis plus de 15 jours"
+                /* LIBELLÉ REPRIS MOT POUR MOT DE LA MAQUETTE, planche 13.
+                   Le mien avait perdu le mot « taux », si bien qu'un « 25 % »
+                   s'affichait sous un intitulé qui annonce un décompte. */
+                label="Taux des besoins ouverts, depuis +15 jours"
                 value={tauxPlus15j == null ? '-' : fmtNumber(tauxPlus15j)}
                 unit={tauxPlus15j == null ? '' : ' %'}
                 compare={compareResult
