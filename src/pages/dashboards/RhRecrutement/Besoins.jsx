@@ -4,11 +4,11 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import ListeModale from '../../../components/ui/ListeModale';
 import Loader from '../../../components/ui/Loader';
+import DonutChart from '../../../components/ui/DonutChart';
 import { useRhBesoins } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
 import { usePeriod } from '../../../contexts/PeriodContext';
-import MotifBar from '../../../components/ui/MotifBar';
-import { fmtNumber, partPct } from '../../../utils/formatNumber';
+import { fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import styles from '../RhEffectifs/Rh.module.css';
 
 /* Vue 1 du dashboard Recrutement, « Besoins et recrutements ».
@@ -57,6 +57,31 @@ import styles from '../RhEffectifs/Rh.module.css';
    gauche, qui porte quatre barres. Sans plafond, une période large allongerait
    l'une et laisserait l'autre vide à côté. */
 const CLIENTS_APERCU = 5;
+
+/* PALETTE DU CAMEMBERT DES TRANCHES — des LITTÉRAUX, jamais `var(--myrtille)`.
+ *
+ * La règle est écrite en tête de la palette d'Effectifs.jsx et elle a déjà
+ * coûté un bug muet : le canvas de Chart.js ne résout pas les variables CSS,
+ * `ctx.fillStyle` ignore SILENCIEUSEMENT ce qu'il ne sait pas lire et garde la
+ * couleur précédente, donc une tranche prend la teinte de sa voisine sans le
+ * moindre avertissement.
+ *
+ * LA RAMPE SUIT L'ÂGE, du plus clair au plus foncé, et ce n'est pas une
+ * décoration : l'ancienneté est une variable ORDONNÉE, pas une liste de
+ * catégories sans rapport. Quatre couleurs indépendantes obligeraient à lire la
+ * légende pour savoir laquelle est la mauvaise nouvelle ; une rampe la désigne
+ * sans un mot. Le plus de 60 jours, qui est l'alerte, porte le myrtille, la
+ * couleur la plus appuyée du dashboard.
+ *
+ * LE MÊME TABLEAU SERT AU DONUT ET AUX PASTILLES DU TABLEAU, une seule source
+ * pour le cercle et sa légende — sans quoi les deux divergent au premier
+ * changement (précédent ASUS). */
+const COULEURS_TRANCHE = [
+  'rgba(167,173,170,0.62)', // ciment        — moins de 15 jours
+  'rgba(201,170,196,0.78)', // glycine       — 15 à 30 jours
+  'rgba(116,81,110,0.72)',  // glycine encre — 30 à 60 jours
+  'rgba(38,0,31,0.88)',     // myrtille      — plus de 60 jours
+];
 
 export default function Besoins() {
   const { result, compareResult, loading, error } = useRhBesoins();
@@ -251,13 +276,37 @@ export default function Besoins() {
                 que le reste part en pop-up — sans plafond, une période large
                 allongerait la carte de droite et laisserait la gauche vide. */}
             <SectionLabel>Analyse de l’ancienneté</SectionLabel>
-            <div className={styles.deuxCol}>
+            <div className={`${styles.deuxCol} ${styles.rangeeAnciennete}`}>
 
-              {/* LES QUATRE TRANCHES SONT TOUJOURS AFFICHÉES, même à zéro.
+              {/* CAMEMBERT ET NON PLUS QUATRE BARRES, demande de Jimmy du
+                  22/10, au modèle de « Répartition du revenu par type de
+                  mission » du dashboard commercial : même composant, même
+                  variante 'half-rose'. Ce que les barres disaient mal ici,
+                  c'est que les quatre tranches forment un TOUT — le stock des
+                  besoins en attente, découpé par âge. Un camembert le dit par
+                  sa forme ; quatre barres indépendantes laissaient croire à
+                  quatre mesures sans rapport.
+
+                  LE TABLEAU EST SOUS LE GRAPHE et non à sa droite comme sur le
+                  dashboard commercial, également demandé le 22/10 — et c'est
+                  le bon arbitrage ici : cette carte ne fait que la MOITIÉ de la
+                  largeur, un cercle et un tableau côte à côte y laisseraient
+                  trois colonnes dans moins de 150 px.
+
+                  LES QUATRE TRANCHES SONT TOUJOURS LISTÉES, même à zéro.
                   Celle de 30 à 60 jours est vide sur toutes les périodes
-                  mesurées le 22/10 : la masquer donnerait trois barres et
+                  mesurées le 22/10 : la masquer donnerait trois lignes et
                   laisserait croire que la tranche n'existe pas, alors que ce
-                  trou dit quelque chose du renouvellement du stock. */}
+                  trou dit quelque chose du renouvellement du stock. Le cercle,
+                  lui, ne dessine rien pour une tranche vide — c'est le tableau
+                  qui porte le zéro, à sa place.
+
+                  LA PART EST CALCULÉE SUR `enCours`, le total de la rangée, et
+                  non sur la somme des tranches : les deux sont égaux et
+                  doivent le rester, puisque la route rend une partition. S'ils
+                  divergeaient un jour, les parts cesseraient de faire 100 % et
+                  le tableau le montrerait, là où un total recalculé sur
+                  lui-même le cacherait. */}
               <Card title="Besoins en cours par tranche d’ancienneté">
                 {enCours === 0 ? (
                   <div className={styles.etat}>
@@ -266,16 +315,44 @@ export default function Besoins() {
                     </div>
                   </div>
                 ) : (
-                  <div className={styles.barres}>
-                    {tranches.map(t => (
-                      <MotifBar
-                        key={t.cle}
-                        label={t.libelle}
-                        pct={partPct(t.besoins, enCours)}
-                        count={t.besoins}
-                        fillColor="rgba(38,0,31,0.95)"
-                      />
-                    ))}
+                  <div className={styles.donutPuisTable}>
+                    <DonutChart
+                      variant="half-rose"
+                      data={tranches.map(t => t.besoins)}
+                      labels={tranches.map(t => t.libelle)}
+                      colors={tranches.map((_, i) => COULEURS_TRANCHE[i])}
+                      height={188}
+                      tooltip={(label, value, pct) =>
+                        `${label} : ${value} besoin${value > 1 ? 's' : ''} en cours (${fmtPourcentage(pct)})`}
+                    />
+                    <table className={styles.tbl}>
+                      <thead>
+                        <tr>
+                          <th>Ancienneté</th>
+                          <th className={styles.num}>Besoins</th>
+                          <th className={styles.num}>Part</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {tranches.map((t, i) => (
+                          <tr key={t.cle}>
+                            <td>
+                              <span className={styles.libelle}>
+                                <span
+                                  className={styles.puce}
+                                  style={{ background: COULEURS_TRANCHE[i] }}
+                                />
+                                {t.libelle}
+                              </span>
+                            </td>
+                            <td className={styles.num}>{fmtNumber(t.besoins)}</td>
+                            <td className={styles.num}>
+                              {fmtPourcentage(partPct(t.besoins, enCours))}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </Card>
@@ -296,18 +373,26 @@ export default function Besoins() {
                     </div>
                   </div>
                 ) : (
-                  <>
+                  <div className={styles.corpsEtire}>
                     {tableauClients(parClient.slice(0, CLIENTS_APERCU))}
+                    {/* LE BOUTON EST COLLÉ AU BAS DE LA CARTE, et non au bas du
+                        tableau : les deux cartes de la rangée ont la même
+                        hauteur par construction mais pas le même contenu, et un
+                        bouton flottant au milieu du blanc donne l'air d'un
+                        gabarit cassé. `margin-top: auto` le pose sur le bord bas
+                        quelle que soit la longueur de la liste. */}
                     {parClient.length > CLIENTS_APERCU && (
-                      <button
-                        type="button"
-                        className={styles.voirPlus}
-                        onClick={() => setClientsOuverts(true)}
-                      >
-                        Voir les {fmtNumber(parClient.length)} clients
-                      </button>
+                      <div className={styles.piedCarte}>
+                        <button
+                          type="button"
+                          className={styles.voirPlus}
+                          onClick={() => setClientsOuverts(true)}
+                        >
+                          Voir les {fmtNumber(parClient.length)} clients
+                        </button>
+                      </div>
                     )}
-                  </>
+                  </div>
                 )}
               </Card>
             </div>

@@ -55,6 +55,38 @@
   align-items: center;
 }
 
+/* VARIANTE VERTICALE : le camembert AU-DESSUS de son tableau, demande de Jimmy
+   du 22/10 pour les tranches d'ancienneté.
+   Ce n'est pas un caprice de mise en page, c'est la place disponible : cette
+   carte-là partage sa rangée avec le suivi par client, elle ne fait donc que
+   la moitié de la largeur. En grille à deux colonnes il resterait moins de
+   150 px pour trois en-têtes, qui se casseraient tous en deux lignes —
+   exactement le problème qui a déjà fait passer .donutEtTable de 236 à
+   196 px le 16/10. Empilés, le cercle et le tableau ont chacun toute la
+   largeur de la carte. */
+.donutPuisTable { display: flex; flex-direction: column; gap: 10px; }
+
+/* LA RANGÉE DE L'ANCIENNETÉ GARDE UNE HAUTEUR CONSTANTE, demande de Jimmy du
+   22/10 : tenir cinq clients même quand la liste en compte moins, pour que les
+   deux cartes côte à côte ne bougent plus d'une période à l'autre.
+   ELLE LA TIENT SANS min-height, et c'est voulu : la carte de gauche a un
+   contenu de taille FIXE — un demi-camembert de 188 px et un tableau de quatre
+   lignes, les quatre tranches étant toujours listées même à zéro. Elle mesure
+   donc la même chose sur toutes les périodes, et elle est plus haute qu'un
+   tableau de cinq clients suivi de son bouton ; comme les éléments d'une
+   grille s'étirent sur la hauteur de leur rangée, c'est elle qui fixe la
+   hauteur des deux. Un min-height chiffré serait soit mort, soit du blanc
+   ajouté sous le camembert — et il faudrait le recalculer à chaque retouche
+   du cercle.
+   RESTE À CE QUE LA CARTE DE DROITE HABITE cette hauteur au lieu d'y laisser
+   son bouton flotter : d'où la colonne flex, .corpsEtire et .piedCarte.
+   Le sélecteur vise `div` et non `*` pour passer devant .card de Card.module
+   .css, qui porte la même spécificité à une classe près et dont l'ordre dans
+   le bundle n'est pas garanti. */
+.rangeeAnciennete > div { display: flex; flex-direction: column; }
+.corpsEtire { flex: 1; display: flex; flex-direction: column; }
+.piedCarte { margin-top: auto; }
+
 /* La pastille de couleur devant le libellé. Elle DOIT porter le même littéral
    que la tranche correspondante du donut : voir la note de palette dans
    Effectifs.jsx, le canvas ne sait pas lire un jeton CSS. */

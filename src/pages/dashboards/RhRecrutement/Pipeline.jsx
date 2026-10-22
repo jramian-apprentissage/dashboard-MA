@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import KPICard from '../../../components/ui/KPICard';
 import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
+import ListeModale from '../../../components/ui/ListeModale';
 import MotifBar from '../../../components/ui/MotifBar';
 import { useRhPipeline } from '../../../hooks/useRhData';
 import { compareValueText, comparePtsText } from '../../../utils/compareText';
@@ -66,9 +68,17 @@ function libelleMoisLong(ym) {
  * dont aucun sens n'est bon en soi, les candidats en cours et les profils
  * présentés par besoin : leur couleur est NEUTRALISÉE plutôt que de leur faire
  * porter un jugement indéfendable. */
+/* TROIS LIGNES SUR LA CARTE, le reste en pop-up : à cet endroit le
+   classement compte plus que l'exhaustivité. */
+const CLIENTS_APERCU = 3;
+
 export default function Pipeline() {
   const { result, compareResult, loading, error } = useRhPipeline();
   const { comparePeriodKey } = usePeriod();
+  /* Déclaré ici et pas dans le corps du Loader : ce corps est une
+     fonction que le Loader n'appelle QUE s'il a fini de charger, donc un
+     useState posé dedans serait un appel de hook conditionnel. */
+  const [clientsOuverts, setClientsOuverts] = useState(false);
 
   return (
     <Loader loading={loading && !result} label="Chargement du pipeline…" minHeight={220}>
@@ -201,11 +211,68 @@ export default function Pipeline() {
               />
             </div>
 
+            {/* LES CANDIDATS PAR CLIENT, DIRECTEMENT SOUS LA RANGÉE,
+                demande de Jimmy du 22/10 : c'est le détail de l'entonnoir
+                qu'on vient de lire, il se place donc contre lui et non deux
+                sections plus bas.
+
+                AU STYLE DE « EFFECTIF PAR DÉPARTEMENT » : barres MotifBar avec
+                une colonne supplémentaire et son en-tête. La largeur de cette
+                colonne est un CONTRAT avec MotifBar, 86 px, écrit des deux
+                côtés — la changer ici sans la changer là désaligne les deux.
+
+                TROIS LIGNES SUR LA CARTE, le reste en pop-up : à cet endroit
+                le classement compte plus que l'exhaustivité, on veut savoir où
+                se concentre le pipeline, pas lire soixante clients. */}
+            <Card title="Candidats en recrutement par prospects/clients">
+              {candidatsParClient.length === 0 ? (
+                <div className={styles.etat}>
+                  <div className={styles.etatTexte}>
+                    Aucun besoin en cours ne porte de candidat compté sur cette période.
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.barres}>
+                    {/* UN SEUL EN-TÊTE, pour la seule colonne qui ne se lit pas
+                        seule : « 3 » après un « → 5 » ne dit pas de quoi il
+                        s'agit, alors que le pourcentage et le nombre de
+                        candidats se comprennent sans légende. */}
+                    <div className={styles.barresEntete}>
+                      <span className={styles.barresEnteteLib}>Besoins</span>
+                    </div>
+                    {candidatsParClient.slice(0, CLIENTS_APERCU).map(c => (
+                      <MotifBar
+                        key={c.entite}
+                        label={c.entite}
+                        pct={partPct(c.candidats, candidats)}
+                        count={c.candidats}
+                        extras={[fmtNumber(c.besoins)]}
+                        fillColor="rgba(38,0,31,0.95)"
+                      />
+                    ))}
+                  </div>
+                  {candidatsParClient.length > CLIENTS_APERCU && (
+                    <button
+                      type="button"
+                      className={styles.voirPlus}
+                      onClick={() => setClientsOuverts(true)}
+                    >
+                      Voir les {fmtNumber(candidatsParClient.length)} clients
+                    </button>
+                  )}
+                </>
+              )}
+            </Card>
+
             {/* ── Planche 14, section « Délais et pipeline de recrutement » ──
                 Titre validé par Clémence le 30/09, qui remplace « time to fill
                 et candidats par client ». */}
             <SectionLabel>Délais et pipeline de recrutement</SectionLabel>
-            <div className={styles.deuxCol}>
+            {/* LE GRAPHE PREND TOUTE LA LARGEUR depuis que les candidats
+                par client sont remontes sous la rangee : une grille a deux
+                colonnes dont une est vide laisse un trou, et une courbe a
+                douze points respire mieux large. */}
 
               <Card title="Évolution du délai pour pourvoir un poste">
                 {evolution.length === 0 ? (
@@ -346,29 +413,6 @@ export default function Pipeline() {
                   </>
                 )}
               </Card>
-
-              <Card title="Candidats en recrutement par prospects/clients">
-                {candidatsParClient.length === 0 ? (
-                  <div className={styles.etat}>
-                    <div className={styles.etatTexte}>
-                      Aucun besoin en cours ne porte de candidat compté sur cette période.
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.barres}>
-                    {candidatsParClient.slice(0, 6).map(c => (
-                      <MotifBar
-                        key={c.entite}
-                        label={c.entite}
-                        pct={partPct(c.candidats, candidats)}
-                        count={c.candidats}
-                        fillColor="rgba(38,0,31,0.95)"
-                      />
-                    ))}
-                  </div>
-                )}
-              </Card>
-            </div>
 
             {/* ── Planche 15, section « La transformation des profils » ──
                 « Besoins » et non « commandes » : Clémence, sur cette planche,
@@ -534,6 +578,36 @@ export default function Pipeline() {
                 }}
               />
             </div>
+
+            {clientsOuverts && (
+              <ListeModale
+                titre="Candidats en recrutement par prospects/clients"
+                sousTitre={
+                  `${fmtNumber(candidatsParClient.length)} client${s(candidatsParClient.length)}`
+                  + ` · ${fmtNumber(candidats)} candidat${s(candidats)} sur des besoins en cours`
+                }
+                onClose={() => setClientsOuverts(false)}
+              >
+                <table className={styles.tbl}>
+                  <thead>
+                    <tr>
+                      <th>Client</th>
+                      <th className={styles.num}>Candidats</th>
+                      <th className={styles.num}>Besoins</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {candidatsParClient.map(c => (
+                      <tr key={c.entite}>
+                        <td>{c.entite}</td>
+                        <td className={styles.num}>{fmtNumber(c.candidats)}</td>
+                        <td className={styles.num}>{fmtNumber(c.besoins)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ListeModale>
+            )}
           </div>
         );
       }}
