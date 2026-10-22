@@ -128,6 +128,37 @@
 .tbl tr:last-child td { border-bottom: none; }
 .num { text-align: right; font-weight: 700; white-space: nowrap; }
 
+/* EN-TÊTE CLIQUABLE POUR LE TRI. Un bouton et non un `th` qui écoute un clic :
+   sans lui, le tri est hors de portée au clavier et rien n'annonce qu'il
+   existe. Il hérite entièrement de la typographie du `th`, donc l'en-tête ne
+   bouge pas d'un pixel tant qu'on ne trie pas.
+   La flèche est RÉSERVÉE EN PERMANENCE, ↕ quand la colonne n'est pas triee :
+   une flèche qui apparaît au clic décalerait le libellé de chaque colonne au
+   moment précis où l'on vient de la viser. */
+.triBtn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.triBtn:hover { color: var(--myrtille); }
+.triBtn:focus-visible { outline: 2px solid var(--myrtille); outline-offset: 2px; border-radius: 3px; }
+.triActif { color: var(--myrtille); }
+.triFleche { font-size: 9px; opacity: 0.45; }
+.triActif .triFleche { opacity: 1; }
+/* La colonne de droite garde sa flèche DANS son alignement : sans ça le bouton
+   se cale à gauche de la cellule et l'en-tête ne surplombe plus ses chiffres. */
+.num .triBtn { justify-content: flex-end; width: 100%; }
+
+
 /* .sousTitre a vécu ici jusqu'au 20/10 : la ligne de périmètre d'une carte,
    posée AVANT ses chiffres parce qu'elle change ce qu'ils veulent dire.
    Deux cartes l'ont portée, « Évolution annuelle » puis « Effectif par

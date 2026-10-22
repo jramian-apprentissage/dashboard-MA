@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Bar } from 'react-chartjs-2';
 import { Chart, BarElement, LineElement, PointElement, CategoryScale, LinearScale, Tooltip } from 'chart.js';
 import KPICard from '../../../components/ui/KPICard';
@@ -6,6 +6,7 @@ import Card from '../../../components/ui/Card';
 import SectionLabel from '../../../components/ui/SectionLabel';
 import Loader from '../../../components/ui/Loader';
 import ListeModale from '../../../components/ui/ListeModale';
+import RechercheAvecSuggestions from '../../../components/ui/RechercheAvecSuggestions';
 import MotifBar from '../../../components/ui/MotifBar';
 import BarreEtapes, { EnteteEtapes, libelleEtape } from '../../../components/ui/BarreEtapes';
 import { useRhPipeline } from '../../../hooks/useRhData';
@@ -85,6 +86,28 @@ function libelleMoisLong(ym) {
 /* UN BESOIN CLOS N'A PAS D'ANCIENNETÉ : il ne vieillit plus, et le classeur ne
    porte aucune date de clôture pour dire l'âge qu'il avait en s'arrêtant. La
    route rend donc NULL et la colonne écrit un tiret. */
+/* LES COLONNES DE LA POP-UP, déclarées une fois : l'en-tête et le tri lisent
+   la même liste, donc ils ne peuvent pas diverger. `valeur` sert au tri, et
+   rend ce qui se compare — une chaîne pour du texte, un nombre pour un compte,
+   la date ISO pour une date, qui se trie comme du texte sans conversion.
+
+   `null` EST TOUJOURS REJETÉ EN FIN DE LISTE, dans les deux sens. Une cellule
+   vide n'est ni le plus petit ni le plus grand : la ranger avec les zéros
+   ferait passer onze besoins non renseignés pour onze besoins à zéro, ce que
+   le tiret de la colonne s'emploie justement à éviter. */
+const COLONNES = [
+  { cle: 'entite', libelle: 'Client', valeur: d => d.entite },
+  { cle: 'poste', libelle: 'Poste', valeur: d => d.poste },
+  { cle: 'etape', libelle: 'Étape', valeur: d => d.etape },
+  { cle: 'issue', libelle: 'Issue', valeur: d => ISSUES[d.issue] },
+  { cle: 'dateCommande', libelle: 'Commande', num: true, valeur: d => d.dateCommande },
+  { cle: 'echeanceR3', libelle: 'Échéance R3', num: true, valeur: d => d.echeanceR3 },
+  { cle: 'ageJ', libelle: 'Ancienneté', num: true, valeur: d => d.ageJ },
+  { cle: 'profilsDemandes', libelle: 'Besoin', num: true, valeur: d => d.profilsDemandes },
+  { cle: 'presentes', libelle: 'Présentés', num: true, valeur: d => d.presentes },
+  { cle: 'retenus', libelle: 'Retenus', num: true, valeur: d => d.retenus },
+];
+
 const ISSUES = {
   en_cours: 'En cours',
   realise: 'Pourvu',
@@ -101,6 +124,16 @@ export default function Pipeline() {
      fonction que le Loader n'appelle QUE s'il a fini de charger, donc un
      useState posé dedans serait un appel de hook conditionnel. */
   const [clientsOuverts, setClientsOuverts] = useState(false);
+  /* Recherche et tri de la pop-up. Ils vivent ici et non dans le corps du
+     Loader, pour la même raison que `clientsOuverts` : ce corps n'est appelé
+     qu'une fois le chargement fini, un useState posé dedans serait un appel de
+     hook conditionnel.
+
+     L'ORDRE PAR DÉFAUT EST CELUI DE LA ROUTE, client puis commande la plus
+     récente : `cle: null` veut dire « ne touche à rien ». Un tri imposé dès
+     l'ouverture ferait croire que la colonne triée est la plus importante. */
+  const [recherche, setRecherche] = useState('');
+  const [tri, setTri] = useState({ cle: null, sens: 'asc' });
 
   return (
     <Loader loading={loading && !result} label="Chargement du pipeline…" minHeight={220}>
@@ -151,6 +184,43 @@ export default function Pipeline() {
            absence d'information. Les confondre ferait passer onze besoins non
            renseignés pour onze échecs. */
         const ouTiret = v => (v == null ? '-' : fmtNumber(v));
+
+        /* LA NORMALISATION RETIRE LES ACCENTS avant de comparer : chercher
+           « etendard » doit trouver « Étendard », et « telepro » doit trouver
+           « Téléprospecteur ». Sans elle, la recherche échoue sur la moitié des
+           intitulés de ce classeur. */
+        const sansAccent = v => String(v || '')
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/\s+/g, ' ').trim().toLowerCase();
+
+        /* Les suggestions sont les valeurs réelles des deux colonnes
+           cherchables, clients et postes mêlangés : on tape ce qu'on a en
+           tête sans avoir à choisir d'abord dans quelle colonne chercher. */
+        const suggestions = [
+          ...new Set(detailsClients.flatMap(d => [d.entite, d.poste]).filter(Boolean)),
+        ];
+
+        const q = sansAccent(recherche);
+        const filtrees = q.length === 0
+          ? detailsClients
+          : detailsClients.filter(d => sansAccent(d.entite).includes(q)
+            || sansAccent(d.poste).includes(q));
+
+        /* LE TRI NE MODIFIE PAS LE TABLEAU REÇU : `slice()` d'abord. `sort`
+           trie en place, et trier `detailsClients` lui-même reviendrait à
+           réécrire la réponse de la route sous les autres lectures de la page. */
+        const colonne = COLONNES.find(c => c.cle === tri.cle);
+        const lignesVisibles = !colonne ? filtrees : filtrees.slice().sort((a, b) => {
+          const va = colonne.valeur(a);
+          const vb = colonne.valeur(b);
+          if (va == null && vb == null) return 0;
+          if (va == null) return 1;
+          if (vb == null) return -1;
+          const cmp = typeof va === 'number' && typeof vb === 'number'
+            ? va - vb
+            : String(va).localeCompare(String(vb), 'fr', { sensitivity: 'base' });
+          return tri.sens === 'asc' ? cmp : -cmp;
+        });
 
         const j = v => (v == null ? '-' : fmtNumber(v));
         /* Neutralise la couleur d'une comparaison sans toucher au chiffre ni à
@@ -312,9 +382,7 @@ export default function Pipeline() {
                       Le reste (le survol, l'absence de pourcentage) se
                       découvre en survolant, ou ne change rien à la lecture. */}
                   <div className={styles.mention}>
-                    La barre situe le besoin le plus avancé du client, de R0 à « En poste » :
-                    elle atteint donc le bout dès qu’un seul besoin a été pourvu. Ouvrir la
-                    liste pour lire chaque besoin à sa position, avec son issue.
+                    La barre situe le besoin le plus avancé du client, de R0 à « En poste ».
                     Un tiret signale une colonne non saisie.
                   </div>
                 </>
@@ -654,10 +722,13 @@ export default function Pipeline() {
                 large
                 titre="Détails par prospects/clients"
                 sousTitre={
-                  `${fmtNumber(detailsClients.length)} besoin${s(detailsClients.length)}`
-                  + ` · ${fmtNumber(candidatsParClient.length)} client${s(candidatsParClient.length)}`
+                  recherche.trim()
+                    ? `${fmtNumber(lignesVisibles.length)} besoin${s(lignesVisibles.length)}`
+                      + ` sur ${fmtNumber(detailsClients.length)}`
+                    : `${fmtNumber(detailsClients.length)} besoin${s(detailsClients.length)}`
+                      + ` · ${fmtNumber(candidatsParClient.length)} client${s(candidatsParClient.length)}`
                 }
-                onClose={() => setClientsOuverts(false)}
+                onClose={() => { setClientsOuverts(false); setRecherche(''); }}
               >
                 {/* UNE LIGNE PAR BESOIN, ET NON PLUS PAR CLIENT. La carte
                     résume un client, la pop-up s'appelle « détails » : elle
@@ -671,23 +742,56 @@ export default function Pipeline() {
                     ouverts, 26 sur 26 au 22/10. C'est l'exception dans ce
                     classeur, où la plupart des colonnes de dates sont
                     trouées : celles-ci s'affichent sans réserve. */}
+                {/* LA RECHERCHE PORTE SUR LE CLIENT ET LE POSTE, demande de
+                    Jimmy du 22/10 : ce sont les deux seules colonnes qu'on a
+                    en tête avant d'ouvrir la liste. Les suggestions sortent
+                    des lignes elles-mêmes, jamais d'un référentiel — une
+                    proposition sans résultat ferait croire que la donnée
+                    existe. */}
+                <RechercheAvecSuggestions
+                  valeur={recherche}
+                  onChange={setRecherche}
+                  suggestions={suggestions}
+                  placeholder="Rechercher un client ou un poste…"
+                />
+                {lignesVisibles.length === 0 ? (
+                  <div className={styles.etat}>
+                    <div className={styles.etatTexte}>
+                      Aucun besoin ne correspond à « {recherche} ».
+                    </div>
+                  </div>
+                ) : (
                 <table className={styles.tbl}>
                   <thead>
                     <tr>
-                      <th>Client</th>
-                      <th>Poste</th>
-                      <th>Étape</th>
-                      <th>Issue</th>
-                      <th className={styles.num}>Commande</th>
-                      <th className={styles.num}>Échéance R3</th>
-                      <th className={styles.num}>Ancienneté</th>
-                      <th className={styles.num}>Besoin</th>
-                      <th className={styles.num}>Présentés</th>
-                      <th className={styles.num}>Retenus</th>
+                      {COLONNES.map(c => (
+                        <th key={c.cle} className={c.num ? styles.num : undefined}>
+                          {/* L'EN-TÊTE EST UN BOUTON, pas un `th` qui écoute un
+                              clic : sans ça le tri est hors de portée au
+                              clavier et rien n'annonce qu'il existe. */}
+                          <button
+                            type="button"
+                            className={`${styles.triBtn} ${tri.cle === c.cle ? styles.triActif : ''}`}
+                            onClick={() => setTri(t => ({
+                              cle: c.cle,
+                              /* Un deuxième clic sur la même colonne inverse le
+                                 sens ; passer à une autre colonne repart en
+                                 croissant, sinon on hérite d'un sens qu'on n'a
+                                 pas demandé. */
+                              sens: t.cle === c.cle && t.sens === 'asc' ? 'desc' : 'asc',
+                            }))}
+                          >
+                            {c.libelle}
+                            <span className={styles.triFleche} aria-hidden="true">
+                              {tri.cle === c.cle ? (tri.sens === 'asc' ? '↑' : '↓') : '↕'}
+                            </span>
+                          </button>
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {detailsClients.map(d => (
+                    {lignesVisibles.map(d => (
                       <tr key={d.numero}>
                         <td>{d.entite}</td>
                         {/* Les intitulés du classeur portent parfois un retour
@@ -719,6 +823,7 @@ export default function Pipeline() {
                     ))}
                   </tbody>
                 </table>
+                )}
               </ListeModale>
             )}
           </div>
