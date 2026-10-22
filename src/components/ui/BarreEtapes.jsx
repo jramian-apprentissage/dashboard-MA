@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import styles from './BarreEtapes.module.css';
 
 /* LA RAMPE DES NEUF ÉTAPES, du R0 au placement.
@@ -84,26 +83,52 @@ export function EnteteEtapes({ colonnes }) {
  * `title` porte le survol. Le navigateur l'affiche tel quel, retours à la ligne
  * compris — d'où les postes passés avec des sauts de ligne par l'appelant. */
 export default function BarreEtapes({ label, etape, valeurs, title }) {
-  /* Même animation d'entrée que MotifBar : la barre se remplit une fois montée,
-     sinon les neuf segments apparaissent d'un bloc et le mouvement qui dit
-     « voilà jusqu'où on est allé » se perd. */
-  const [vus, setVus] = useState(0);
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => setVus(etape || 0));
-    return () => cancelAnimationFrame(raf);
-  }, [etape]);
-
+  /* AUCUN ÉTAT D'ANIMATION ICI, ET C'EST UN CORRECTIF, pas une simplification.
+   *
+   * La première version copiait MotifBar : un useState à 0, puis un
+   * requestAnimationFrame qui posait la vraie valeur, pour que la barre se
+   * remplisse à l'arrivée. Sur MotifBar le défaut est bénin, le nombre est
+   * écrit en toutes lettres à côté de la barre. Ici la barre EST la seule
+   * information : si le rAF ne se déclenche pas, les neuf segments restent
+   * gris et le client paraît n'avoir franchi aucune étape.
+   *
+   * OR UN rAF NE SE DÉCLENCHE PAS TOUJOURS. Le navigateur le suspend quand la
+   * page ne dessine pas : onglet en arrière-plan, fenêtre minimisée, aperçu
+   * hors champ. Constaté le 22/10 — les neuf segments lus dans le DOM
+   * n'avaient AUCUNE classe `atteint` sur un client pourtant à R5, et rien ne
+   * le signalait. C'est le pire cas possible : pas une anomalie visible, une
+   * valeur fausse qui ressemble à une vraie.
+   *
+   * Le composant rend donc directement l'étape reçue. Le mouvement est confié
+   * au CSS, qui ne peut pas se tromper de valeur : une animation suspendue
+   * laisse un segment déjà coloré, jamais un segment vide. */
   return (
     <div className={styles.row} title={title || undefined}>
       <div className={styles.label}>{label}</div>
       <div className={styles.piste}>
         {ETAPES.map(e => {
-          const atteint = vus >= e.rang;
+          const atteint = (etape || 0) >= e.rang;
           return (
+            /* CHAQUE SEGMENT PORTE SON PROPRE SURVOL, demande de Jimmy du
+               22/10 : neuf cases vertes ne disent pas laquelle est R5. Le
+               survol d'un segment annonce son étape, et précise si elle est
+               franchie — la couleur le dit déjà, mais pas pour qui hésite
+               entre deux teintes voisines de la rampe.
+
+               IL PREND LE PAS SUR CELUI DE LA LIGNE, et c'est le comportement
+               voulu : le navigateur affiche le `title` de l'élément le plus
+               PROCHE du curseur. Sur la barre on lit donc l'étape, et sur le
+               nom du client ou ses chiffres, les postes. Deux informations,
+               deux zones, aucune ne masque l'autre. */
             <div
               key={e.cle}
               className={`${styles.segment} ${atteint ? styles.atteint : ''}`}
-              style={atteint ? { background: e.couleur } : undefined}
+              /* Le décalage échelonne l'entrée des segments de gauche à droite,
+                 ce que faisait le rAF — sans jamais porter la valeur. */
+              style={atteint
+                ? { background: e.couleur, animationDelay: `${(e.rang - 1) * 45}ms` }
+                : undefined}
+              title={`${e.libelle} · ${atteint ? 'étape franchie' : 'pas encore atteinte'}`}
             />
           );
         })}

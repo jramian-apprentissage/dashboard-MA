@@ -28,6 +28,9 @@
 .segment {
   flex: 1;
   border-radius: 2px;
+  /* Le curseur d'aide signale qu'il y a quelque chose a survoler. Sans lui,
+     l'infobulle native de chaque segment reste a decouvrir par hasard. */
+  cursor: help;
   /* Le creux : la même teinte que le rail de MotifBar, pour que les barres des
      deux familles aient le même fond dans une carte qui les mélange. */
   background: var(--sable-light);
@@ -40,9 +43,24 @@
 .piste .segment:last-child  { border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
 
 /* UN LISERÉ SUR LES SEGMENTS ATTEINTS. Les premières teintes de la rampe sont
-   très pâles — #DBE6DD sur un rail #F5F1EC se distingue mal, et une étape R0
-   paraîtrait vide. Le contour tranche sans assombrir la couleur. */
-.atteint { box-shadow: inset 0 0 0 1px rgba(38, 0, 31, 0.10); }
+   pâles et le contour tranche sans assombrir la couleur.
+
+   L'ENTRÉE NE JOUE QUE SUR L'OPACITÉ, et c'est délibéré. Une animation qui
+   partirait d'une largeur ou d'une hauteur nulle laisserait, si elle ne
+   s'exécute pas, un segment INVISIBLE — c'est-à-dire une étape franchie qui
+   paraît ne pas l'être. C'est exactement le défaut corrigé le 22/10 côté JS.
+   À 0,45 d'opacité, un segment bloqué reste vert et reste juste. */
+.atteint {
+  box-shadow: inset 0 0 0 1px rgba(38, 0, 31, 0.10);
+  animation: segmentEntre 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes segmentEntre {
+  from { opacity: 0.45; }
+  to   { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atteint { animation: none; }
+}
 
 .valeurs {
   display: grid;

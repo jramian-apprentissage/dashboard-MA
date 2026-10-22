@@ -683,6 +683,7 @@ export default function Pipeline() {
                       <th>Étape</th>
                       <th className={styles.num}>Commande</th>
                       <th className={styles.num}>Échéance R3</th>
+                      <th className={styles.num}>Ancienneté</th>
                       <th className={styles.num}>Besoin</th>
                       <th className={styles.num}>Présentés</th>
                       <th className={styles.num}>Retenus</th>
@@ -699,6 +700,14 @@ export default function Pipeline() {
                         <td>{libelleEtape(d.etape) || '-'}</td>
                         <td className={styles.num}>{dateCourte(d.dateCommande)}</td>
                         <td className={styles.num}>{dateCourte(d.echeanceR3)}</td>
+                        {/* L'ANCIENNETÉ ARRIVE ICI depuis le suivi par client de
+                            la vue 1, déplacée le 22/10 : cette carte-là ne
+                            porte plus que les quatre indicateurs de sa rangée,
+                            et l'âge d'un besoin est un détail de besoin, pas un
+                            résumé de client. Il est d'ailleurs plus juste ici :
+                            par besoin il se lit tel quel, là où par client il
+                            fallait prendre le plus ancien et l'expliquer. */}
+                        <td className={styles.num}>{fmtNumber(d.ageJ)} j</td>
                         <td className={styles.num}>{ouTiret(d.profilsDemandes)}</td>
                         <td className={styles.num}>{ouTiret(d.presentes)}</td>
                         <td className={styles.num}>{ouTiret(d.retenus)}</td>

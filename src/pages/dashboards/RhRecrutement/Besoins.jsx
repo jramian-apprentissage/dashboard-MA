@@ -156,8 +156,12 @@ export default function Besoins() {
            différent. L'écrire deux fois, c'est prendre le risque qu'ils
            divergent à la première colonne ajoutée. */
         const tableauClients = lignes => (
-          /* LES COLONNES SUIVENT LA RANGÉE DE TUILES DU HAUT, arbitrage de
-             Jimmy du 22/10 : réalisés, taux de pourvus, en cours, ancienneté.
+          /* LES COLONNES SONT EXACTEMENT LES QUATRE TUILES DE LA RANGÉE,
+             dans leur ordre, arbitrage de Jimmy du 22/10 : demandés,
+             réalisés, taux de pourvus, en cours. Le tableau est la même phrase
+             que la rangée, répétée client par client, et il ne dit RIEN DE
+             PLUS — l'ancienneté qui y figurait est partie dans le détail par
+             besoin de la vue 2, où elle se lit sans agrégation.
              La planche 13 les posait dans l'ordre inverse — en cours d'abord,
              puis les recrutements — et l'œil devait repartir en arrière pour
              relier un tableau à la phrase qu'il venait de lire au-dessus. Le
@@ -169,11 +173,6 @@ export default function Besoins() {
              que la tuile, pour la même mesure, et le classeur n'a pas de
              notion de recrutement distincte du besoin pourvu.
 
-             « ANCIENNETÉ EN COURS » levè une ambiguïté que « Ancienneté »
-             laissait ouverte : c'est l'âge du plus vieux besoin ENCORE OUVERT
-             chez ce client, pas l'ancienneté moyenne de ses commandes ni celle
-             de la relation client.
-
              LE TAUX ET LES RÉALISÉS SORTENT DE LA MÊME SOURCE, le statut
              « En poste ». La maquette affichait pour REGARD INC « 5
              recrutements » et « 0 % pourvu » sur la même ligne, parce que ses
@@ -183,25 +182,22 @@ export default function Besoins() {
             <thead>
               <tr>
                 <th>Client</th>
+                <th className={styles.num}>Besoins demandés</th>
                 <th className={styles.num}>Besoins réalisés</th>
                 <th className={styles.num}>Taux de pourvus</th>
                 <th className={styles.num}>Besoins en cours</th>
-                <th className={styles.num}>Ancienneté en cours</th>
               </tr>
             </thead>
             <tbody>
               {lignes.map(e => (
                 <tr key={e.entite}>
                   <td>{e.entite}</td>
+                  <td className={styles.num}>{fmtNumber(e.demandes)}</td>
                   <td className={styles.num}>{fmtNumber(e.realises)}</td>
                   <td className={styles.num}>
                     {e.demandes > 0 ? `${Math.round((100 * e.realises) / e.demandes)} %` : '-'}
                   </td>
                   <td className={styles.num}>{fmtNumber(e.en_cours)}</td>
-                  {/* `plus_ancien_j` ne peut pas être nul ici : la route ne
-                      rend que les clients ayant au moins un besoin en cours,
-                      et un besoin de la cohorte porte une date. */}
-                  <td className={styles.num}>{fmtNumber(e.plus_ancien_j)} j</td>
                 </tr>
               ))}
             </tbody>
