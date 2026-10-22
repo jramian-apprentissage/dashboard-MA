@@ -4,36 +4,47 @@ import styles from './BarreEtapes.module.css';
 /* LA RAMPE DES NEUF ÉTAPES, du R0 au placement.
  *
  * Elle est ORDONNÉE, et c'est tout l'intérêt : l'avancement d'un recrutement
- * n'est pas une catégorie mais une position sur une échelle. Neuf couleurs
- * sans rapport entre elles obligeraient à compter les segments pour savoir où
- * l'on en est ; une rampe se lit d'un coup d'œil, et plus c'est vert, plus
- * c'est près d'aboutir.
+ * n'est pas une catégorie mais une position sur une échelle. Neuf couleurs sans
+ * rapport entre elles obligeraient à compter les segments pour savoir où l'on
+ * en est ; une rampe se lit d'un coup d'œil, et plus c'est appuyé, plus c'est
+ * près d'aboutir.
  *
- * LE NEUVIÈME EST #80EF80, le vert pastel donné par Jimmy le 22/10. Les huit
- * autres y mènent, d'un vert grisé presque neutre à ce vert-là : teinte de 135
- * à 120, saturation de 38 à 78 %, clarté de 84 à 72 %, interpolées linéairement.
- * LE DÉPART EST FRANCHEMENT VERT et non grisé : la première rampe essayée
- * partait de #DBE6DD, qui se confond avec le rail #F0EEE9 — un besoin à R0
- * paraissait n'avoir franchi aucune étape.
- * Les valeurs sont écrites en clair plutôt que calculées à l'exécution — une
- * palette qui se relit vaut mieux qu'une palette qui se recalcule, et celle-ci
- * ne changera que si quelqu'un la redessine.
+ * EN ABRICOT, LA TEINTE DU DASHBOARD, et non en vert. Elle a été posée en vert
+ * le 22/10 puis reprise le même jour : le dashboard Recrutement porte l'abricot
+ * partout ailleurs, de son bandeau à ses courbes, et une seule carte en vert
+ * donnait l'air d'un emprunt à un autre écran.
+ *
+ * ELLE COURT DE #EDD5C0 À --abricot-encre #885430, qui ferme la famille abricot
+ * de tokens.css : teinte de 28 à 24,5, saturation de 55 à 48, clarté de 84 à
+ * 36, interpolées linéairement. Le troisième cran, #DEB492, tombe à deux points
+ * de --abricot #E0B99E : la couleur de signature est DANS la rampe, elle n'en
+ * est pas une extrémité — l'y mettre aurait aplati les huit autres crans,
+ * #E0B99E étant déjà clair.
+ *
+ * LE DÉPART RESTE FRANC, 84 de clarté et non 88 : au-dessus, le premier cran se
+ * confond avec le rail #F0EEE9 et un besoin à R0 paraît n'avoir franchi aucune
+ * étape. C'est le défaut qui avait déjà fait reprendre la rampe précédente.
+ *
+ * DES LITTÉRAUX, jamais `var(--abricot-encre)` : ces valeurs partent en style
+ * inline, et surtout la règle vaut pour toute palette de ce dépôt — le canvas
+ * de Chart.js ne résout pas les variables CSS et garde silencieusement la
+ * couleur précédente. Une palette, une seule écriture.
  *
  * LA DERNIÈRE ÉTAPE EST « EN POSTE » et n'apparaîtra donc JAMAIS sur une carte
- * qui ne montre que des besoins ouverts. Elle est dans la rampe quand même :
- * la barre représente les neuf étapes du processus, et en retirer la dernière
+ * qui ne montre que des besoins ouverts. Elle est dans la rampe quand même : la
+ * barre représente les neuf étapes du processus, et en retirer la dernière
  * ferait croire que le recrutement s'arrête à l'onboarding. Le segment reste
  * vide, et c'est précisément ce qu'il doit dire. */
 export const ETAPES = [
-  { rang: 1, cle: 'R0', libelle: 'R0 · Ouverture de recherche', couleur: '#C7E6CE' },
-  { rang: 2, cle: 'R1', libelle: 'R1 · Sourcing des candidats', couleur: '#BFE6C8' },
-  { rang: 3, cle: 'R2', libelle: 'R2 · Qualification des candidats', couleur: '#B7E6C0' },
-  { rang: 4, cle: 'R3', libelle: 'R3 · Entretien approfondi', couleur: '#AFE6B8' },
-  { rang: 5, cle: 'R4', libelle: 'R4 · Présentation candidat', couleur: '#A6E7AE' },
-  { rang: 6, cle: 'R5', libelle: 'R5 · Présentation client', couleur: '#9DE9A4' },
-  { rang: 7, cle: 'R6', libelle: 'R6 · Formalité administrative', couleur: '#94EB99' },
-  { rang: 8, cle: 'R7', libelle: 'R7 · Onboarding ambassadeur', couleur: '#8AED8D' },
-  { rang: 9, cle: 'POSTE', libelle: 'En poste', couleur: '#80EF80' },
+  { rang: 1, cle: 'R0', libelle: 'R0 · Ouverture de recherche', couleur: '#EDD5C0' },
+  { rang: 2, cle: 'R1', libelle: 'R1 · Sourcing des candidats', couleur: '#E5C4A9' },
+  { rang: 3, cle: 'R2', libelle: 'R2 · Qualification des candidats', couleur: '#DEB492' },
+  { rang: 4, cle: 'R3', libelle: 'R3 · Entretien approfondi', couleur: '#D6A37B' },
+  { rang: 5, cle: 'R4', libelle: 'R4 · Présentation candidat', couleur: '#CD9365' },
+  { rang: 6, cle: 'R5', libelle: 'R5 · Présentation client', couleur: '#C5824F' },
+  { rang: 7, cle: 'R6', libelle: 'R6 · Formalité administrative', couleur: '#B7713E' },
+  { rang: 8, cle: 'R7', libelle: 'R7 · Onboarding ambassadeur', couleur: '#A06337' },
+  { rang: 9, cle: 'POSTE', libelle: 'En poste', couleur: '#885430' },
 ];
 
 export function libelleEtape(rang) {
