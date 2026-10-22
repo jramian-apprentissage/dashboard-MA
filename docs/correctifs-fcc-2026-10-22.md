@@ -41,7 +41,38 @@ un repère posé à l'ouverture et jamais revu ? Dans le premier cas, c'est une
 alerte à afficher ; dans le second, la colonne ne mesure rien et il vaut mieux
 le savoir avant de construire un indicateur dessus.
 
-## 3. Rappel du point le plus rentable, inchangé depuis le 21/10
+## 3. Le type de mission n'existe pas dans le FCC
+
+Demande du 22/10 : une répartition des profils retenus **par type de mission**,
+au modèle de celle du dashboard commercial. Elle n'est pas constructible en
+l'état, et voici pourquoi.
+
+Les cinq types de mission — Commercial, Administratif, Support client, Tech,
+Service digital — se déduisent du préfixe à deux lettres du libellé de poste :
+« SO - Téléprospecteur » donne SO. C'est la convention du registre des
+collaborateurs, où elle fonctionne : **les 347 lignes portent toutes une
+famille**, réparties SO 197, AV 79, CS 30, IT 23, DS 18.
+
+Le FCC ne suit pas cette convention. Sur les 98 commandes de 2026 :
+
+- **4 seulement** ont un libellé de poste préfixé (2 AV, 1 SO, 1 CS) ;
+- **1 seule** porte un libellé identique à une mission du registre.
+
+Il n'y a donc aucun pont automatique entre les deux fichiers. Classer les 94
+autres à partir des mots du libellé — « Développeur » vers Tech,
+« Téléprospecteur » vers Commercial — produirait une répartition qui serait la
+mienne et non celle de l'équipe, sur un indicateur destiné à être présenté.
+
+**Ce qu'il faut demander :** soit une colonne « Type de mission » à liste
+fermée sur les cinq valeurs déjà en usage, soit le préfixe appliqué au libellé
+de poste comme dans le registre. Le second coûte moins cher à saisir et réutilise
+une convention que l'équipe connaît déjà.
+
+Gain : la répartition demandée, et avec elle la lecture des quatre indicateurs
+de l'entonnoir par métier — où la transformation est la meilleure, où les
+délais s'allongent.
+
+## 4. Rappel du point le plus rentable, inchangé depuis le 21/10
 
 Deux colonnes manquent toujours et commandent plusieurs cartes : **une date de
 clôture et un motif à liste fermée**, à remplir sur les 23 commandes annulées
