@@ -184,7 +184,6 @@ export default function Besoins() {
                 <th>Client</th>
                 <th className={styles.num}>Besoins demandés</th>
                 <th className={styles.num}>Besoins réalisés</th>
-                <th className={styles.num}>Taux de pourvus</th>
                 <th className={styles.num}>Besoins en cours</th>
               </tr>
             </thead>
@@ -193,9 +192,9 @@ export default function Besoins() {
                 <tr key={e.entite}>
                   <td>{e.entite}</td>
                   <td className={styles.num}>{fmtNumber(e.demandes)}</td>
-                  <td className={styles.num}>{fmtNumber(e.realises)}</td>
                   <td className={styles.num}>
-                    {e.demandes > 0 ? `${Math.round((100 * e.realises) / e.demandes)} %` : '-'}
+                    <span className={styles.valeurBrute}>{fmtNumber(e.realises)}</span>
+                    <span className={styles.partSuffixe}>{e.demandes > 0 ? `${Math.round((100 * e.realises) / e.demandes)} %` : '-'}</span>
                   </td>
                   <td className={styles.num}>{fmtNumber(e.en_cours)}</td>
                 </tr>
@@ -350,7 +349,6 @@ export default function Besoins() {
                         <tr>
                           <th>Ancienneté</th>
                           <th className={styles.num}>Besoins</th>
-                          <th className={styles.num}>Part</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -365,9 +363,9 @@ export default function Besoins() {
                                 {t.libelle}
                               </span>
                             </td>
-                            <td className={styles.num}>{fmtNumber(t.besoins)}</td>
                             <td className={styles.num}>
-                              {fmtPourcentage(partsTranches[i])}
+                              <span className={styles.valeurBrute}>{fmtNumber(t.besoins)}</span>
+                              <span className={styles.partSuffixe}>{fmtPourcentage(partsTranches[i])}</span>
                             </td>
                           </tr>
                         ))}

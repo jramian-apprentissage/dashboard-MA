@@ -103,7 +103,7 @@ const COLONNES = [
   { cle: 'etape', libelle: 'Étape', valeur: d => d.etape },
   { cle: 'issue', libelle: 'Issue', valeur: d => ISSUES[d.issue] },
   { cle: 'dateCommande', libelle: 'Commande', num: true, valeur: d => d.dateCommande },
-  { cle: 'echeanceR3', libelle: 'Échéance R3', num: true, valeur: d => d.echeanceR3 },
+  { cle: 'echeanceR3', libelle: 'Échéance', num: true, valeur: d => d.echeanceR3 },
   { cle: 'ageJ', libelle: 'Ancienneté', num: true, valeur: d => d.ageJ },
   { cle: 'profilsDemandes', libelle: 'Besoin', num: true, valeur: d => d.profilsDemandes },
   { cle: 'presentes', libelle: 'Présentés', num: true, valeur: d => d.presentes },
@@ -497,7 +497,7 @@ export default function Pipeline() {
                   dir: 'neutral',
                   text: rechercheN === 0
                     ? 'Aucune recherche close sur la période'
-                    : `De la demande à la fin R3 · médiane ${j(rechercheMed)} j · ${fmtNumber(rechercheN)} besoin${s(rechercheN)}`,
+                    : `De la demande à la fin de recherche · médiane ${j(rechercheMed)} j · ${fmtNumber(rechercheN)} besoin${s(rechercheN)}`,
                 }}
               />
 
@@ -512,7 +512,7 @@ export default function Pipeline() {
                   dir: 'neutral',
                   text: presentationN === 0
                     ? 'Aucun rendez-vous client daté sur la période'
-                    : `De la demande au rendez-vous R5 · médiane ${j(presentationMed)} j · ${fmtNumber(presentationN)} besoin${s(presentationN)}`,
+                    : `De la demande au rendez-vous client · médiane ${j(presentationMed)} j · ${fmtNumber(presentationN)} besoin${s(presentationN)}`,
                 }}
               />
 
@@ -542,7 +542,7 @@ export default function Pipeline() {
                   dir: 'neutral',
                   text: delaiN === 0
                     ? 'Aucune recherche close sur la période'
-                    : `Fin de recherche avant l’échéance R3 · ${fmtNumber(dansDelai)} sur ${fmtNumber(delaiN)}`,
+                    : `Recherche close avant son échéance · ${fmtNumber(dansDelai)} sur ${fmtNumber(delaiN)}`,
                 }}
               />
 

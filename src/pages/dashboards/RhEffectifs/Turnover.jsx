@@ -424,7 +424,7 @@ export default function Turnover() {
                     />
                   <table className={styles.tbl}>
                     <thead>
-                      <tr><th>Cause</th><th>Sorties</th><th>Part</th></tr>
+                      <tr><th>Cause</th><th>Sorties</th></tr>
                     </thead>
                     <tbody>
                       {causesDeDepart.lignes.map(l => (
@@ -438,8 +438,10 @@ export default function Turnover() {
                               {l.cause}
                             </span>
                           </td>
-                          <td className={styles.num}>{fmtNumber(l.n)}</td>
-                          <td className={styles.num}>{fmtNumber(l.part)} %</td>
+                          <td className={styles.num}>
+                            <span className={styles.valeurBrute}>{fmtNumber(l.n)}</span>
+                            <span className={styles.partSuffixe}>{fmtNumber(l.part)} %</span>
+                          </td>
                         </tr>
                       ))}
                     </tbody>

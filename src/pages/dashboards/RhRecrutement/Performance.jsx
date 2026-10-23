@@ -203,14 +203,22 @@ export default function Performance() {
                 sous-titre porte la fraction qui la produit, pour qu'on puisse
                 la refaire de tête.
 
-                LES DEUX PREMIERS NE SE LISENT QUE SUR LES BESOINS CLOS. Un
-                besoin encore en cours à R4 n'a pas échoué, il n'a pas fini :
+                « R3 » A DISPARU DES LIBELLÉS le 23/10 — « R3 ne parle à
+                personne ». Le code reste la clé en base et sur la barre à neuf
+                crans, où il est toujours collé à son sens (« R3 · Entretien
+                approfondi ») ; seul il ne dit rien. Les deux tuiles se lisent
+                donc en français, et en parallèle : après l'entretien, après la
+                présentation.
+
+                LES DEUX NE SE LISENT QUE SUR LES BESOINS CLOS. Un besoin encore
+                en cours au stade de la présentation n'a pas échoué, il n'a pas
+                fini :
                 l'inclure ferait baisser les taux à mesure que le pipeline se
                 remplit, c'est-à-dire quand tout va bien. */}
             <div className={styles.kpiGrid}>
 
               <KPICard
-                label="Taux de réussite à R3"
+                label="Taux de réussite après l’entretien approfondi"
                 value={tauxR3 == null ? '-' : fmtNumber(tauxR3)}
                 unit={tauxR3 == null ? '' : ' %'}
                 compare={compareResult
@@ -219,8 +227,8 @@ export default function Performance() {
                 trend={{
                   dir: 'neutral',
                   text: r3Base === 0
-                    ? 'Aucun besoin clos n’a atteint l’entretien approfondi'
-                    : `${fmtNumber(r3Passe)} besoin${s(r3Passe)} dépasse${s(r3Passe) ? 'nt' : ''} R3 sur ${fmtNumber(r3Base)} qui l’atteignent · besoins clos`,
+                    ? 'Aucun besoin clos n’est arrivé à l’entretien'
+                    : `${fmtNumber(r3Passe)} besoin${s(r3Passe)} poursuivent sur ${fmtNumber(r3Base)} arrivés à l’entretien · besoins clos`,
                 }}
               />
 
@@ -516,9 +524,7 @@ export default function Performance() {
                             <th>Type de mission</th>
                             <th className={styles.num}>Besoins</th>
                             <th className={styles.num}>Réalisés</th>
-                            <th className={styles.num}>Taux réalisés</th>
                             <th className={styles.num}>Non aboutis</th>
-                            <th className={styles.num}>Taux non aboutis</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -531,13 +537,13 @@ export default function Performance() {
                                 </span>
                               </td>
                               <td className={styles.num}>{fmtNumber(m.demandes)}</td>
-                              <td className={styles.num}>{fmtNumber(m.realises)}</td>
                               <td className={styles.num}>
-                                {m.tauxRealise == null ? '-' : fmtPourcentage(m.tauxRealise)}
+                                <span className={styles.valeurBrute}>{fmtNumber(m.realises)}</span>
+                                <span className={styles.partSuffixe}>{m.tauxRealise == null ? '-' : fmtPourcentage(m.tauxRealise)}</span>
                               </td>
-                              <td className={styles.num}>{fmtNumber(m.annules)}</td>
                               <td className={styles.num}>
-                                {m.tauxNonAbouti == null ? '-' : fmtPourcentage(m.tauxNonAbouti)}
+                                <span className={styles.valeurBrute}>{fmtNumber(m.annules)}</span>
+                                <span className={styles.partSuffixe}>{m.tauxNonAbouti == null ? '-' : fmtPourcentage(m.tauxNonAbouti)}</span>
                               </td>
                             </tr>
                           ))}

@@ -151,6 +151,24 @@
 .tbl tr:last-child td { border-bottom: none; }
 .num { text-align: right; font-weight: 700; white-space: nowrap; }
 
+/* UN NOMBRE ET SA PART DANS LA MÊME CELLULE, repris du dashboard commercial
+   (Activite.module.css, « Principaux leviers »). Deux colonnes pour un seul
+   indicateur, l'une comptant et l'autre divisant la précédente, élargissent le
+   tableau sans rien apprendre de plus : l'œil fait l'aller-retour entre deux
+   nombres qui disent la même chose. Arbitrage de Jimmy du 23/10.
+   LA HIÉRARCHIE TIENT PAR LA TAILLE ET LA COULEUR, pas par la place : le
+   volume en encre pleine, la part en plus petit et en encre secondaire. Sans
+   cela, deux nombres colles se liraient comme deux mesures de même rang.
+   LES TUILES NE SONT PAS CONCERNÉES, elles ont leur propre mise en page. */
+.valeurBrute { font-weight: 700; color: var(--text); }
+.partSuffixe {
+  font-size: 0.86em;
+  font-weight: 600;
+  margin-left: 5px;
+  white-space: nowrap;
+  color: var(--text2);
+}
+
 /* L'effectif d'une mesure, en gris à côté d'elle dans la même cellule : une
    moyenne calculée sur deux observations ne doit pas se lire comme un fait
    établi. Séparé par un point médian plutôt que par une parenthèse, qui

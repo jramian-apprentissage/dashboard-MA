@@ -265,7 +265,7 @@ export default function Effectifs() {
                 <table className={styles.tbl}>
                   <thead>
                     <tr>
-                      <th>Type de contrat</th><th>Effectif</th><th>Ancienneté moy.</th><th>Part</th>
+                      <th>Type de contrat</th><th>Effectif</th><th>Ancienneté moy.</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -280,9 +280,11 @@ export default function Effectifs() {
                             {c.type_contrat}
                           </span>
                         </td>
-                        <td className={styles.num}>{fmtNumber(c.effectif)}</td>
+                        <td className={styles.num}>
+                          <span className={styles.valeurBrute}>{fmtNumber(c.effectif)}</span>
+                          <span className={styles.partSuffixe}>{fmtPourcentage(partPct(c.effectif, totalContrats))}</span>
+                        </td>
                         <td className={styles.num}>{mois(c.anciennete_mois)}</td>
-                        <td className={styles.num}>{fmtPourcentage(partPct(c.effectif, totalContrats))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -308,15 +310,17 @@ export default function Effectifs() {
               <Card title="Répartition par client">
                 <table className={styles.tbl}>
                   <thead>
-                    <tr><th>Client</th><th>Effectif</th><th>Ancienneté moy.</th><th>Part</th></tr>
+                    <tr><th>Client</th><th>Effectif</th><th>Ancienneté moy.</th></tr>
                   </thead>
                   <tbody>
                     {entites.slice(0, 4).map(e => (
                       <tr key={e.entite}>
                         <td>{e.entite}</td>
-                        <td className={styles.num}>{fmtNumber(e.effectif)}</td>
+                        <td className={styles.num}>
+                          <span className={styles.valeurBrute}>{fmtNumber(e.effectif)}</span>
+                          <span className={styles.partSuffixe}>{fmtPourcentage(partPct(e.effectif, totalClients))}</span>
+                        </td>
                         <td className={styles.num}>{mois(e.anciennete_mois)}</td>
-                        <td className={styles.num}>{fmtPourcentage(partPct(e.effectif, totalClients))}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -359,15 +363,17 @@ export default function Effectifs() {
                   >
                     <table className={styles.tbl}>
                       <thead>
-                        <tr><th>Client</th><th>Effectif</th><th>Ancienneté moy.</th><th>Part</th></tr>
+                        <tr><th>Client</th><th>Effectif</th><th>Ancienneté moy.</th></tr>
                       </thead>
                       <tbody>
                         {entites.map(e => (
                           <tr key={e.entite}>
                             <td>{e.entite}</td>
-                            <td className={styles.num}>{fmtNumber(e.effectif)}</td>
+                            <td className={styles.num}>
+                              <span className={styles.valeurBrute}>{fmtNumber(e.effectif)}</span>
+                              <span className={styles.partSuffixe}>{fmtPourcentage(partPct(e.effectif, totalClients))}</span>
+                            </td>
                             <td className={styles.num}>{mois(e.anciennete_mois)}</td>
-                            <td className={styles.num}>{fmtPourcentage(partPct(e.effectif, totalClients))}</td>
                           </tr>
                         ))}
                       </tbody>

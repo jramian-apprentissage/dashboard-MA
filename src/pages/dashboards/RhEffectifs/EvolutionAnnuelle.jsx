@@ -58,20 +58,18 @@ export default function EvolutionAnnuelle() {
               synonyme ici laissait croire à une autre mesure.
               « Encore actif » garde le mot de Clémence en retirant le seul
               morceau qui était faux, « fin d'année » : voir l'en-tête. */}
-          <tr><th>Année</th><th>Entrées</th><th>Encore actif</th><th>Sorties</th><th>Rétention</th></tr>
+          <tr><th>Année</th><th>Entrées</th><th>Encore actif</th><th>Sorties</th></tr>
         </thead>
         <tbody>
           {lignes.map(l => (
             <tr key={l.annee}>
               <td>{l.annee}</td>
               <td className={styles.num}>{fmtNumber(l.entrees)}</td>
-              <td className={styles.num}>{fmtNumber(l.encore)}</td>
+              <td className={styles.num}>
+                <span className={styles.valeurBrute}>{fmtNumber(l.encore)}</span>
+                <span className={styles.partSuffixe}>{fmtPourcentage(partPct(l.encore, l.entrees))}</span>
+              </td>
               <td className={styles.num}>{fmtNumber(l.sortis)}</td>
-              {/* LA RÉTENTION EST LA LECTURE DE LA LIGNE, pas un indicateur de
-                  plus : c'est exactement ce que Clémence fait de tête en
-                  disant « 130 départs pour 150 intégrations ». La donner
-                  évite que chacun la recalcule, et de travers. */}
-              <td className={styles.num}>{fmtPourcentage(partPct(l.encore, l.entrees))}</td>
             </tr>
           ))}
         </tbody>
