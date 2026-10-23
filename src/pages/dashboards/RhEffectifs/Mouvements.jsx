@@ -260,7 +260,7 @@ export default function Mouvements() {
                 un tiret, pas un zéro, qui se lirait comme « ils partent le
                 jour de leur arrivée ». */}
             <div className={styles.deuxCol}>
-              <Card title="Mouvements par département">
+              <Card title="Mouvements par type de mission">
                 <table className={styles.tbl}>
                   <thead>
                     <tr>
@@ -269,7 +269,7 @@ export default function Mouvements() {
                           est la ventilation, pas une autre mesure. Un libellé
                           raccourci laisserait croire à un indicateur voisin.
                           Demande de Jimmy du 17/10. */}
-                      <th>Département</th><th className={styles.num}>Entrées</th><th className={styles.num}>Sorties</th>
+                      <th>Type de mission</th><th className={styles.num}>Entrées</th><th className={styles.num}>Sorties</th>
                       <th className={styles.num}>Ancienneté moy. à la fin de mission</th>
                       <th className={styles.num}>Durée moy. de mission terminée</th>
                     </tr>

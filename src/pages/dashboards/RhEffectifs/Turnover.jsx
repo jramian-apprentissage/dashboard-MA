@@ -309,7 +309,7 @@ export default function Turnover() {
                   global. Le taux d'ensemble est donc la combinaison de
                   ceux-ci, et non un chiffre calculé à part qui pourrait
                   diverger en silence. */}
-              <Card title="Turnover par département">
+              <Card title="Turnover par type de mission">
                 {turnoverParDepartement?.length ? (
                   <>
                     {/* L'EFFECTIF MOYEN EST LE DÉNOMINATEUR DU TAUX, demande
@@ -351,7 +351,7 @@ export default function Turnover() {
                   </>
                 ) : (
                   <div className={styles.etat}>
-                    <div className={styles.etatTexte}>Aucun département sur la période.</div>
+                    <div className={styles.etatTexte}>Aucun type de mission sur la période.</div>
                   </div>
                 )}
               </Card>

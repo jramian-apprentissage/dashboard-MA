@@ -400,7 +400,7 @@ export default function Effectifs() {
                 On l'écrit sous la carte plutôt que de laisser quelqu'un
                 additionner les barres et s'étonner. */}
             <Card
-              title="Effectif par département"
+              title="Effectif par type de mission"
               action={famillesTous && (
                 /* LA BASCULE DES INTERNES, posée le 16/10.
                    Le libellé ne change jamais, seul le voyant s'allume : un

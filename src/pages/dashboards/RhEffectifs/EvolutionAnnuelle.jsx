@@ -48,7 +48,7 @@ export default function EvolutionAnnuelle() {
           c'était une aide à la lecture, pas un périmètre, et la carte a déjà
           son pied de page pour ça. Retiré le 17/10, le texte est descendu dans
           la mention.
-          La carte « Effectif par département » garde le sien, elle, parce
+          La carte « Effectif par type de mission » garde le sien, elle, parce
           qu'il annonce un PÉRIMÈTRE : savoir qu'on ne regarde que les placés
           change ce que les chiffres veulent dire, et doit se lire avant eux. */}
       <table className={styles.tbl}>
