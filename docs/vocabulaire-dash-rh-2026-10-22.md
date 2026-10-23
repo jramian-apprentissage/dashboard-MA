@@ -49,6 +49,20 @@ recrutement ».
 dashboards, celui que la colonne « Nombre de Profil Retenue » emploie déjà. Le
 mot *candidat* ne revient pas, y compris là où la planche 14 l'employait.
 
+## 2 bis. Besoin ou à recruter
+
+**Règle arrêtée par Jimmy le 23/10 :** *besoin* quand on parle des **lignes par
+client**, *à recruter* quand on parle de **profils**.
+
+Le mot *besoin* portait les deux sens à trois colonnes d'intervalle sur la
+carte « Détails par prospects/clients » : une ligne du classeur dans la colonne
+« Besoins » du tableau voisin, un nombre de personnes dans la colonne « Besoin
+en profils ». Cette dernière s'appelle désormais **à recruter**, de même que la
+tuile du haut.
+
+*Profils présentés* et *profils retenus* ne changent pas : ils comptent bien des
+personnes et n'emploient pas le mot *besoin*.
+
 ## 3. Besoin, poste et recrutement
 
 Trois mots pour la même unité — une ligne du FCC :
