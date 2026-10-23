@@ -51,7 +51,13 @@ export function libelleEtape(rang) {
   return ETAPES.find(e => e.rang === rang)?.libelle ?? null;
 }
 
-/* L'en-tête des colonnes de droite, et la légende de la rampe sous la piste.
+/* 72 px PAR COLONNE ET NON 56 depuis le 23/10 : « Besoin en profils »
+   remplace « Besoin », qui ne disait pas de quoi il parlait. À 56 px le
+   libellé se cassait en trois lignes et poussait l'en-tête au-dessus des
+   barres. La largeur est la même pour l'en-tête et pour les valeurs, sans
+   quoi les deux cessent de s'aligner.
+
+   L'en-tête des colonnes de droite, et la légende de la rampe sous la piste.
  *
  * ELLE EST OBLIGATOIRE ICI, là où MotifBar peut s'en passer : trois nombres nus
  * alignés à droite ne disent pas lequel est le besoin et lequel le retenu, et
@@ -70,7 +76,7 @@ export function EnteteEtapes({ colonnes }) {
           <span>En poste</span>
         </div>
       </div>
-      <div className={styles.entete} style={{ gridTemplateColumns: `repeat(${colonnes.length}, 56px)` }}>
+      <div className={styles.entete} style={{ gridTemplateColumns: `repeat(${colonnes.length}, 72px)` }}>
         {colonnes.map(c => <span key={c}>{c}</span>)}
       </div>
     </div>
@@ -154,7 +160,7 @@ export default function BarreEtapes({ label, etape, valeurs }) {
             );
           })}
         </div>
-        <div className={styles.valeurs} style={{ gridTemplateColumns: `repeat(${valeurs.length}, 56px)` }}>
+        <div className={styles.valeurs} style={{ gridTemplateColumns: `repeat(${valeurs.length}, 72px)` }}>
           {valeurs.map((v, i) => <span key={i}>{v}</span>)}
         </div>
       </div>

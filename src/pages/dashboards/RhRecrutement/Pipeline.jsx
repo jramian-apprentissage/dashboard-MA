@@ -105,7 +105,7 @@ const COLONNES = [
   { cle: 'dateCommande', libelle: 'Commande', num: true, valeur: d => d.dateCommande },
   { cle: 'echeanceR3', libelle: 'Échéance', num: true, valeur: d => d.echeanceR3 },
   { cle: 'ageJ', libelle: 'Ancienneté', num: true, valeur: d => d.ageJ },
-  { cle: 'profilsDemandes', libelle: 'Besoin', num: true, valeur: d => d.profilsDemandes },
+  { cle: 'profilsDemandes', libelle: 'Besoin en profils', num: true, valeur: d => d.profilsDemandes },
   { cle: 'presentes', libelle: 'Présentés', num: true, valeur: d => d.presentes },
   { cle: 'retenus', libelle: 'Retenus', num: true, valeur: d => d.retenus },
 ];
@@ -393,7 +393,13 @@ export default function Pipeline() {
               ) : (
                 <>
                   <div className={styles.barres}>
-                    <EnteteEtapes colonnes={['Besoin', 'Présentés', 'Retenus']} />
+                    {/* « BESOIN EN PROFILS » EN TOUTES LETTRES depuis le 23/10 :
+                        « besoin » seul était incompréhensible ici. Dans tout le
+                        reste du dashboard un « besoin » est une ligne du
+                        classeur, un poste à pourvoir ; dans cette colonne-ci
+                        c'est le nombre de PERSONNES demandées pour ce poste.
+                        Deux sens pour un mot, à trois colonnes d'intervalle. */}
+                    <EnteteEtapes colonnes={['Besoin en profils', 'Présentés', 'Retenus']} />
                     {candidatsParClient.slice(0, CLIENTS_APERCU).map(c => (
                       <BarreEtapes
                         key={c.entite}
