@@ -312,6 +312,19 @@ export default function Turnover() {
               <Card title="Turnover par département">
                 {turnoverParDepartement?.length ? (
                   <>
+                    {/* L'EFFECTIF MOYEN EST LE DÉNOMINATEUR DU TAUX, demande
+                        de Jimmy du 23/10. Sans lui, « 170 % » et « 12 » ne
+                        disent pas sur quelle population ils portent, et un
+                        département de six personnes se lit comme un
+                        département de soixante. C'est aussi ce qui explique
+                        les taux au-dessus de 100 : six sorties pour trois
+                        personnes en moyenne, parce que les missions durent
+                        quelques mois.
+                        L'EN-TÊTE SE CALE SUR LES 86 PX DE MotifBar, contrat
+                        écrit des deux côtés. */}
+                    <div className={styles.barresEntete}>
+                      <span className={styles.barresEnteteLib}>Effectif moyen</span>
+                    </div>
                     {(() => {
                       const max = Math.max(...turnoverParDepartement.map(d => d.taux || 0), 1);
                       return turnoverParDepartement.map(d => (
@@ -321,6 +334,7 @@ export default function Turnover() {
                           pct={d.taux === null ? 0 : d.taux}
                           largeur={d.taux === null ? 0 : Math.round((100 * d.taux) / max)}
                           count={d.sorties}
+                          extras={[d.effectifMoyen == null ? '-' : fmtNumber(d.effectifMoyen)]}
                           fillColor="rgba(38,0,31,0.95)"
                           title={`${fmtNumber(d.sorties)} sortie${d.sorties > 1 ? 's' : ''} pour ${fmtNumber(d.effectifMoyen)} personnes en moyenne`}
                         />
@@ -424,7 +438,7 @@ export default function Turnover() {
                     />
                   <table className={styles.tbl}>
                     <thead>
-                      <tr><th>Cause</th><th>Sorties</th></tr>
+                      <tr><th>Cause</th><th className={styles.num}>Sorties</th></tr>
                     </thead>
                     <tbody>
                       {causesDeDepart.lignes.map(l => (

@@ -229,7 +229,30 @@ export default function Pipeline() {
           libelle: m.cle ? libelleFamille(m.cle) : 'À classer',
           couleur: m.cle ? (COULEURS_MISSION[m.cle] || COULEUR_A_CLASSER) : COULEUR_A_CLASSER,
         }));
-        const besoinsMissions = missions.reduce((n, m) => n + m.besoins, 0);
+        /* LA CARTE COMPTE DES PROFILS, demande de Jimmy du 23/10 : cet
+           onglet mesure des profils de bout en bout - la première tuile en
+           annonce 130 - et la carte comptait les lignes du classeur, 98. Deux
+           unités sur le même écran sans que rien ne le dise. La somme de la
+           carte vaut maintenant celle de la tuile.
+           LE `?? 0` TIENT LE TEMPS D'UN DÉPLOIEMENT : Vercel et Railway ne
+           montent pas ensemble, et la réponse d'avant ne porte pas `profils`.
+           Sans lui le camembert dessinerait des parts de NaN. */
+        const profilsMissions = missions.reduce((n, m) => n + (m.profils ?? 0), 0);
+
+        /* LE RESPECT D'ÉCHÉANCE SE COLORE, demande de Jimmy du 23/10.
+           LES DEUX SEUILS NE SONT PAS DÉCORATIFS : 50 % est le seul point qui
+           change le sens de la phrase - en dessous, la MAJORITÉ des besoins
+           dépasse l'échéance annoncée au client. 75 % marque le taux tenu.
+           Entre les deux, l'ambre dit « ni l'un ni l'autre » plutôt que de
+           trancher.
+           AUCUNE COULEUR SANS MESURE : un taux absent faute de date reste
+           gris, sinon le défaut de saisie se lirait comme un échec. */
+        /* UN BESOIN DONT LA COLONNE PROFILS N EST PAS SAISIE NE VAUT PAS
+           ZERO PROFIL. Le Support client a bien un besoin sur le mois, mais
+           aucun nombre en face : afficher 0 ferait passer une absence de
+           saisie pour une demande vide. Meme regle que ouTiret plus haut. */
+        const aRecruter = m => (m.profilsN === 0 ? '-' : fmtNumber(m.profils ?? 0));
+        const tonDelai = t => (t == null ? '' : t >= 75 ? styles.tauxBon : t >= 50 ? styles.tauxMoyen : styles.tauxFaible);
 
         /* LA NORMALISATION RETIRE LES ACCENTS avant de comparer : chercher
            « etendard » doit trouver « Étendard », et « telepro » doit trouver
@@ -297,6 +320,23 @@ export default function Pipeline() {
                 descendues en bas de page, en attendant que Jimmy dise où les
                 placer. Elles ne sont pas supprimées : c'est sa consigne. */}
             <SectionLabel badge="Onglet Suivi de commande RH Q2">Placement de profils</SectionLabel>
+            {/* LES TROIS VOLUMES N'ONT PAS DE COULEUR DE COMPARAISON, seul le
+                taux en garde une — demande de Jimmy du 23/10. Un volume monte
+                ou descend avec l'activité du mois : trois besoins de moins,
+                c'est trois commandes de moins, pas une contre-performance de
+                l'équipe. Le peindre en rouge affirme un jugement que la mesure
+                ne porte pas, et le lecteur finit par ignorer une couleur qui
+                parle à tort.
+
+                LE TAUX, LUI, EST COMPARABLE D'UNE PÉRIODE À L'AUTRE : il
+                rapporte les retenus aux présentés, donc il ne bouge pas quand
+                le volume bouge. Quand il baisse, c'est bien le rendement qui
+                baisse, et la couleur dit quelque chose.
+
+                LA FLÈCHE ET LE CHIFFRE RESTENT sur les trois tuiles. On ne
+                cache pas la variation, on retire seulement le verdict :
+                `sansJugement` ne touche que `dir`, qui porte la couleur, et
+                laisse `sens`, qui porte la flèche. */}
             <div className={styles.kpiGrid}>
 
               {/* LA TUILE DIT « PROFILS À RECRUTER », LES COLONNES DISENT
@@ -311,7 +351,7 @@ export default function Pipeline() {
                 value={fmtNumber(profilsDemandes)}
                 unit={` profil${s(profilsDemandes)}`}
                 compare={compareResult
-                  ? compareValueText(profilsDemandes, compareResult.profilsDemandes, comparePeriodKey)
+                  ? sansJugement(compareValueText(profilsDemandes, compareResult.profilsDemandes, comparePeriodKey))
                   : null}
                 trend={{
                   dir: 'neutral',
@@ -319,9 +359,6 @@ export default function Pipeline() {
                 }}
               />
 
-              {/* Couleur neutralisée : présenter davantage de profils, c'est
-                  plus de choix pour le client et plus de travail pour la même
-                  place. Aucun des deux sens n'est bon en soi. */}
               <KPICard
                 label="Profils présentés"
                 value={fmtNumber(presentesBrut)}
@@ -340,7 +377,7 @@ export default function Pipeline() {
                 value={fmtNumber(retenusBrut)}
                 unit={` profil${s(retenusBrut)}`}
                 compare={compareResult
-                  ? compareValueText(retenusBrut, compareResult.retenusBrut, comparePeriodKey)
+                  ? sansJugement(compareValueText(retenusBrut, compareResult.retenusBrut, comparePeriodKey))
                   : null}
                 trend={{
                   dir: 'neutral',
@@ -599,7 +636,7 @@ export default function Pipeline() {
                     <div className={styles.repartDonut}>
                       <DonutChart
                         variant="half-rose"
-                        data={missions.map(m => m.besoins)}
+                        data={missions.map(m => m.profils ?? 0)}
                         labels={missions.map(m => m.libelle)}
                         colors={missions.map(m => m.couleur)}
                         height={240}
@@ -610,7 +647,7 @@ export default function Pipeline() {
                           const m = missions.find(x => x.libelle === label);
                           if (!m) return `${label} : ${fmtNumber(value)}`;
                           return [
-                            `${label} — ${fmtNumber(value)} besoin${s(value)}, ${fmtPourcentage(pct)}`,
+                            `${label} — ${fmtNumber(value)} profil${s(value)} à recruter, ${fmtPourcentage(pct)}`,
                             `Fin de recherche : ${j(m.rechercheMoy)} j sur ${fmtNumber(m.rechercheN)}`,
                             `Présentation client : ${j(m.presentationMoy)} j sur ${fmtNumber(m.presentationN)}`,
                             `Pourvoir un poste : ${j(m.pourvoirMoy)} j sur ${fmtNumber(m.pourvoirN)}`,
@@ -624,7 +661,7 @@ export default function Pipeline() {
                         <thead>
                           <tr>
                             <th>Type de mission</th>
-                            <th className={styles.num}>Besoins</th>
+                            <th className={styles.num}>À recruter</th>
                             <th className={styles.num}>Fin de recherche</th>
                             <th className={styles.num}>Présentation</th>
                             <th className={styles.num}>Pourvoir</th>
@@ -640,7 +677,7 @@ export default function Pipeline() {
                                   {m.libelle}
                                 </span>
                               </td>
-                              <td className={styles.num}>{fmtNumber(m.besoins)}</td>
+                              <td className={styles.num}>{aRecruter(m)}</td>
                               {/* CHAQUE DURÉE PORTE SON EFFECTIF, en gris à côté
                                   d'elle. À ce niveau de découpage les moyennes
                                   reposent parfois sur une ou deux observations :
@@ -660,7 +697,9 @@ export default function Pipeline() {
                                 <span className={styles.effectif}>{fmtNumber(m.pourvoirN)}</span>
                               </td>
                               <td className={styles.num}>
-                                {m.tauxDelai == null ? '-' : fmtPourcentage(m.tauxDelai)}
+                                <span className={tonDelai(m.tauxDelai)}>
+                                  {m.tauxDelai == null ? '-' : fmtPourcentage(m.tauxDelai)}
+                                </span>
                                 <span className={styles.effectif}>{fmtNumber(m.delaiN)}</span>
                               </td>
                             </tr>
@@ -677,8 +716,9 @@ export default function Pipeline() {
                       correctifs. Ne reste ici que ce qui aide à lire la
                       carte. */}
                   <div className={styles.mention}>
-                    Le cercle répartit les {fmtNumber(besoinsMissions)} besoins. En gris,
-                    l’effectif de chaque durée.
+                    Le cercle répartit les {fmtNumber(profilsMissions)} profils à recruter.
+                    En gris, l’effectif de chaque durée. La couleur du dernier
+                    taux : vert au-delà de 75 %, rouge en dessous de 50 %.
                   </div>
                 </>
               )}
@@ -706,8 +746,8 @@ export default function Pipeline() {
                                besoins ecraserait des courbes a 40 jours, ou
                                l inverse selon le mois. */
                             {
-                              label: 'Besoins pourvus',
-                              data: evolution.map(p => p.n),
+                              label: 'Profils à recruter',
+                              data: evolution.map(p => p.profils ?? p.n),
                               backgroundColor: C_BESOINS,
                               borderRadius: 4,
                               borderSkipped: false,
@@ -764,8 +804,17 @@ export default function Pipeline() {
                                 label: ctx => {
                                   const v = ctx.parsed.y;
                                   if (v == null) return null;
-                                  if (ctx.dataset.label === 'Besoins pourvus') {
-                                    return `${fmtNumber(v)} besoin${v > 1 ? 's' : ''} pourvu${v > 1 ? 's' : ''}`;
+                                  if (ctx.dataset.label === 'Profils à recruter') {
+                                    /* LE NOMBRE DE BESOINS RESTE DIT ICI, et ce
+                                       n'est pas un détail : la moyenne et la
+                                       médiane du mois reposent sur les BESOINS
+                                       pourvus, pas sur les profils. Un besoin de
+                                       dix profils n'a qu'une date de démarrage,
+                                       donc qu'une observation. Sans cette
+                                       seconde ligne, une barre de dix profils
+                                       ferait croire à dix mesures. */
+                                    const n = evolution[ctx.dataIndex].n;
+                                    return `${fmtNumber(v)} profil${v > 1 ? 's' : ''} à recruter · ${fmtNumber(n)} besoin${n > 1 ? 's' : ''} pourvu${n > 1 ? 's' : ''}`;
                                   }
                                   return `${ctx.dataset.label} : ${fmtNumber(v)} j`;
                                 },
@@ -783,12 +832,12 @@ export default function Pipeline() {
                             y2: {
                               position: 'right',
                               beginAtZero: true,
-                              /* Pas de demi-besoin, et pas de grille en double :
+                              /* Pas de demi-profil, et pas de grille en double :
                                  celle de l axe des jours suffit, deux trames
                                  superposees brouillent la lecture. */
                               ticks: { precision: 0 },
                               grid: { drawOnChartArea: false },
-                              title: { display: true, text: 'Besoins', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                              title: { display: true, text: 'Profils', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
                             },
                           },
                         }}
@@ -798,7 +847,7 @@ export default function Pipeline() {
                         dans ce depot : trois series sur deux axes ne se
                         devinent pas, et la legende native se place mal. */}
                     <div className={styles.legende}>
-                      <span className={styles.legDot} style={{ background: C_BESOINS }} />Besoins pourvus
+                      <span className={styles.legDot} style={{ background: C_BESOINS }} />Profils à recruter
                       <span className={styles.legDot} style={{ background: C_MOYENNE, marginLeft: 12 }} />Moyenne
                       <span className={styles.legDot} style={{ background: C_MEDIANE, marginLeft: 12 }} />Médiane
                     </div>

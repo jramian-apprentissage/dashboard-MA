@@ -269,9 +269,9 @@ export default function Mouvements() {
                           est la ventilation, pas une autre mesure. Un libellé
                           raccourci laisserait croire à un indicateur voisin.
                           Demande de Jimmy du 17/10. */}
-                      <th>Département</th><th>Entrées</th><th>Sorties</th>
-                      <th>Ancienneté moy. à la fin de mission</th>
-                      <th>Durée moy. de mission terminée</th>
+                      <th>Département</th><th className={styles.num}>Entrées</th><th className={styles.num}>Sorties</th>
+                      <th className={styles.num}>Ancienneté moy. à la fin de mission</th>
+                      <th className={styles.num}>Durée moy. de mission terminée</th>
                     </tr>
                   </thead>
                   <tbody>

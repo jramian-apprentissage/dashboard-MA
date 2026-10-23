@@ -173,6 +173,13 @@ export default function Besoins() {
              que la tuile, pour la même mesure, et le classeur n'a pas de
              notion de recrutement distincte du besoin pourvu.
 
+             LES DEUX PARTS SE LISENT SUR LES BESOINS DEMANDÉS DU CLIENT,
+             la même base que le taux de pourvus de la tuile. Elles ne se
+             complètent donc PAS à 100 % : ce qui manque est annulé ou clos
+             sans recrutement. Deux bases différentes dans une même rangée
+             seraient pires, on ne saurait plus de quoi chaque part est la
+             part.
+
              LE TAUX ET LES RÉALISÉS SORTENT DE LA MÊME SOURCE, le statut
              « En poste ». La maquette affichait pour REGARD INC « 5
              recrutements » et « 0 % pourvu » sur la même ligne, parce que ses
@@ -196,7 +203,10 @@ export default function Besoins() {
                     <span className={styles.valeurBrute}>{fmtNumber(e.realises)}</span>
                     <span className={styles.partSuffixe}>{e.demandes > 0 ? `${Math.round((100 * e.realises) / e.demandes)} %` : '-'}</span>
                   </td>
-                  <td className={styles.num}>{fmtNumber(e.en_cours)}</td>
+                  <td className={styles.num}>
+                    <span className={styles.valeurBrute}>{fmtNumber(e.en_cours)}</span>
+                    <span className={styles.partSuffixe}>{e.demandes > 0 ? `${Math.round((100 * e.en_cours) / e.demandes)} %` : '-'}</span>
+                  </td>
                 </tr>
               ))}
             </tbody>

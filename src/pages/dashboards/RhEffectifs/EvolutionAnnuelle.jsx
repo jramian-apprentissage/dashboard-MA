@@ -58,7 +58,7 @@ export default function EvolutionAnnuelle() {
               synonyme ici laissait croire à une autre mesure.
               « Encore actif » garde le mot de Clémence en retirant le seul
               morceau qui était faux, « fin d'année » : voir l'en-tête. */}
-          <tr><th>Année</th><th>Entrées</th><th>Encore actif</th><th>Sorties</th></tr>
+          <tr><th>Année</th><th className={styles.num}>Entrées</th><th className={styles.num}>Encore actif</th><th className={styles.num}>Sorties</th></tr>
         </thead>
         <tbody>
           {lignes.map(l => (

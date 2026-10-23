@@ -151,6 +151,14 @@
 .tbl tr:last-child td { border-bottom: none; }
 .num { text-align: right; font-weight: 700; white-space: nowrap; }
 
+/* UN EN-TETE REVIENT A LA LIGNE, PAS UN NOMBRE. Le nowrap de .num existe pour
+   que « 4,7 mois » ou « 12,5 % » ne se coupent jamais en deux ; appliqué tel
+   quel à un en-tête aligné à droite comme « Ancienneté moy. à la fin de
+   mission », il pousse le tableau hors de sa carte et la dernière colonne
+   disparaît. Les en-têtes ont été alignés à droite sur leurs chiffres le
+   23/10, demande de Jimmy : « il y a trop d écart ». */
+.tbl th.num { white-space: normal; font-weight: 600; }
+
 /* UN NOMBRE ET SA PART DANS LA MÊME CELLULE, repris du dashboard commercial
    (Activite.module.css, « Principaux leviers »). Deux colonnes pour un seul
    indicateur, l'une comptant et l'autre divisant la précédente, élargissent le
@@ -175,6 +183,19 @@
    alourdit une colonne déjà serrée. */
 .effectif { color: var(--text3); font-weight: 500; font-size: 0.86em; }
 .effectif::before { content: '\00b7'; margin: 0 3px; opacity: 0.55; }
+
+/* MISE EN FORME CONDITIONNELLE D'UN TAUX, demande de Jimmy du 23/10.
+   LES MÊMES DEUX COULEURS QUE LES TUILES (KPICard.module.css : #15803d et
+   #b91c1c), parce qu'un vert qui veut dire « bon » ne peut pas changer de
+   teinte d'une carte à l'autre. L'ambre du milieu est la seule nouvelle, et
+   elle est volontairement sourde : elle ne dit rien d'autre que « entre les
+   deux ».
+   LA COULEUR PORTE SUR LE NOMBRE SEUL, pas sur la cellule : un fond coloré
+   dans un tableau de six colonnes se lit comme une sélection, et l'effectif
+   en gris qui suit le taux ne doit pas être teinté - il ne juge rien. */
+.tauxBon    { color: #15803d; }
+.tauxMoyen  { color: #b45309; }
+.tauxFaible { color: #b91c1c; }
 
 /* EN-TÊTE CLIQUABLE POUR LE TRI. Un bouton et non un `th` qui écoute un clic :
    sans lui, le tri est hors de portée au clavier et rien n'annonce qu'il
