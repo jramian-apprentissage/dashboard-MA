@@ -299,8 +299,15 @@ export default function Pipeline() {
             <SectionLabel badge="Onglet Suivi de commande RH Q2">Placement de profils</SectionLabel>
             <div className={styles.kpiGrid}>
 
+              {/* LA TUILE DIT « PROFILS À RECRUTER », LES COLONNES DISENT
+                  « À RECRUTER », demande de Jimmy du 23/10. Ce n'est pas une
+                  incohérence : une tuile se lit seule, sans voisine pour dire
+                  de quoi elle parle, alors qu'une colonne est encadrée par
+                  « Présentés » et « Retenus », qui portent déjà le mot.
+                  Au pluriel, pour s'accorder avec ses deux voisines
+                  « Profils présentés » et « Profils retenus ». */}
               <KPICard
-                label="À recruter"
+                label="Profils à recruter"
                 value={fmtNumber(profilsDemandes)}
                 unit={` profil${s(profilsDemandes)}`}
                 compare={compareResult
