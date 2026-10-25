@@ -310,7 +310,7 @@ export default function Effectifs() {
               <Card title="Répartition par client">
                 <table className={styles.tbl}>
                   <thead>
-                    <tr><th>Client</th><th className={styles.num}>Effectif</th><th className={styles.num}>Ancienneté moy. des actifs</th></tr>
+                    <tr><th>Client</th><th className={styles.num}>Effectif placé</th><th className={styles.num}>Ancienneté moy. des actifs</th></tr>
                   </thead>
                   <tbody>
                     {entites.slice(0, 4).map(e => (
@@ -363,7 +363,7 @@ export default function Effectifs() {
                   >
                     <table className={styles.tbl}>
                       <thead>
-                        <tr><th>Client</th><th className={styles.num}>Effectif</th><th className={styles.num}>Ancienneté moy. des actifs</th></tr>
+                        <tr><th>Client</th><th className={styles.num}>Effectif placé</th><th className={styles.num}>Ancienneté moy. des actifs</th></tr>
                       </thead>
                       <tbody>
                         {entites.map(e => (

@@ -340,6 +340,15 @@ export default function Turnover() {
                         />
                       ));
                     })()}
+                    {/* LA MENTION DIT CE QUE LE TAUX N'AVALE PAS, demande de
+                        Clémence du 23/10 : « il faudra bien que tu le
+                        mentionnes ». Sans elle, un département dont toute
+                        l'activité est ponctuelle afficherait un taux vide
+                        sans que rien ne l'explique. */}
+                    <div className={styles.mention}>
+                      Les missions bornées d’avance, ponctuelles ou au rendez-vous,
+                      sont hors du taux : leur fin était prévue, ce n’est pas un départ.
+                    </div>
                     {/* MENTION RETIRÉE LE 19/10, demande de Jimmy. Elle disait
                         que les barres sont à l'échelle du plus fort et non des
                         parts d'un total, et ce qu'un taux au-dessus de 100 %

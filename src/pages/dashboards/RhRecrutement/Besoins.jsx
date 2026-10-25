@@ -36,11 +36,15 @@ import styles from '../RhEffectifs/Rh.module.css';
  * en cours, qui est son contexte naturel — c'est parmi eux qu'un besoin peut
  * traîner, et nulle part ailleurs.
  *
- * LES QUATRE CATÉGORIES PARTITIONNENT, c'est-à-dire que réalisés, en cours,
- * annulés et clos sans recrutement font exactement le total demandé. Deux
- * commandes portent à la fois « Annuler » et « En poste » : sans un ordre de
- * priorité elles seraient comptées deux fois. Le détail est dans l'en-tête de
- * la route, avec l'arbitrage qui fait primer l'annulation sur le placement.
+ * TROIS CATÉGORIES PARTITIONNENT, c'est-à-dire que réalisés, en cours et non
+ * aboutis font exactement le total demandé. Elles étaient quatre jusqu'au
+ * 23/10 : « clôturé sans recrutement » en formait une à part, et Hirijy l'a
+ * tranché en réunion, « on les considère comme annulés, directement ». Dans
+ * la majorité des cas le client valide un profil puis ne donne plus suite, et
+ * après quelques relances la RH classe le dossier : c'est une annulation.
+ * Deux commandes portent à la fois « Annuler » et « En poste » : sans un ordre
+ * de priorité elles seraient comptées deux fois. Le détail est dans l'en-tête
+ * de la route, avec l'arbitrage qui fait primer l'annulation sur le placement.
  *
  * L'INVERSION DE COULEUR ne touche QUE « besoins en cours » : c'est le seul
  * des quatre chiffres qu'on veut voir baisser. Les besoins demandés qui
@@ -130,7 +134,7 @@ export default function Besoins() {
 
         const {
           demandes, realises, enCours, enCours15j,
-          annules, closSansRecrutement, postesDemandes, sansProfil, clients, tauxPourvu,
+          annules, postesDemandes, sansProfil, clients, tauxPourvu,
           tranches, parClient,
         } = result;
         const s = n => (n > 1 ? 's' : '');
@@ -230,8 +234,8 @@ export default function Besoins() {
 
               {/* Le sous-titre porte ce qui N'A PAS abouti, parce que c'est le
                   complément direct des réalisés et que sans lui la rangée ne
-                  se recompose pas : demandés = réalisés + en cours + annulés +
-                  clos sans recrutement. */}
+                  se recompose pas : demandés = réalisés + en cours + non
+                  aboutis. */}
               <KPICard
                 label="Besoins réalisés"
                 value={fmtNumber(realises)}
@@ -241,7 +245,7 @@ export default function Besoins() {
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: `${fmtNumber(annules)} annulé${s(annules)}, ${fmtNumber(closSansRecrutement)} clos sans recrutement`,
+                  text: `${fmtNumber(annules)} besoin${s(annules)} non abouti${s(annules)}`,
                 }}
               />
 

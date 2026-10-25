@@ -71,9 +71,10 @@ export function EnteteEtapes({ colonnes }) {
     <div className={styles.ligneEntete}>
       <div className={styles.enteteVide} />
       <div className={styles.entetePiste}>
-        <div className={styles.entete} style={{ gridTemplateColumns: '1fr auto' }}>
-          <span style={{ textAlign: 'left' }}>R0</span>
-          <span>En poste</span>
+        <div className={styles.entete} style={{ gridTemplateColumns: '1fr 1fr 1fr' }}>
+          <span style={{ textAlign: 'left' }}>{ETAPES[0].cle}</span>
+          <span style={{ textAlign: 'center' }}>{ETAPES[Math.floor(ETAPES.length / 2)].cle}</span>
+          <span>{ETAPES[ETAPES.length - 1].libelle}</span>
         </div>
       </div>
       <div className={styles.entete} style={{ gridTemplateColumns: `repeat(${colonnes.length}, 72px)` }}>

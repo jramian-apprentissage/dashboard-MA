@@ -162,7 +162,7 @@ export default function Performance() {
         }
 
         const {
-          demandes, realises, annules, closSansRecrutement, enCours,
+          demandes, realises, annules, enCours,
           tauxNonAbouti,
           tauxR3, r3Base, r3Passe,
           tauxPrez, prezBase, prezAboutis,
@@ -178,7 +178,7 @@ export default function Performance() {
           libelle: m.cle ? libelleFamille(m.cle) : 'À classer',
           couleur: m.cle ? (COULEURS_MISSION[m.cle] || COULEUR_A_CLASSER) : COULEUR_A_CLASSER,
         }));
-        const besoinsMissions = missions.reduce((n, m) => n + m.demandes, 0);
+        const nonAboutisMissions = missions.reduce((n, m) => n + m.annules, 0);
 
         /* La charge totale porte TOUS les besoins ouverts, y compris ceux dont
            la case « responsable » est vide : c'est elle qui fait le dénominateur
@@ -261,7 +261,7 @@ export default function Performance() {
                   : null}
                 trend={{
                   dir: 'neutral',
-                  text: `${fmtNumber(annules)} annulé${s(annules)} et ${fmtNumber(closSansRecrutement)} clôturé${s(closSansRecrutement)} sans recrutement sur ${fmtNumber(demandes)}`,
+                  text: `${fmtNumber(annules)} non abouti${s(annules)} sur ${fmtNumber(demandes)} demandé${s(demandes)}`,
                 }}
               />
 
@@ -302,32 +302,28 @@ export default function Performance() {
                 cause. Ce n'est pas un trou dans mon classement : onze
                 commentaires écrivent eux-mêmes que la raison est introuvable.
 
-                DEUX COLONNES À DROITE, annulés et clos sans recrutement : le
-                même motif ne produit pas la même issue. « Besoin couvert
-                autrement » est clos six fois sur huit, « sans retour du
-                client » est annulé trois fois sur trois. */}
+                LES DEUX COLONNES DE DROITE ONT DISPARU le 23/10 avec la
+                catégorie qu'elles séparaient : elles comptaient d'un côté les
+                annulations déclarées, de l'autre les clôtures sans
+                recrutement. Hirijy a tranché en réunion, c'est la même chose,
+                et une colonne qui répète le total n'apprend rien. */}
             <div className={styles.blocGraphe}>
             <Card title="Motifs des besoins non aboutis">
               {motifTotal === 0 ? (
                 <div className={styles.etat}>
                   <div className={styles.etatTexte}>
-                    Aucun besoin de cette période n’a été annulé ni clôturé sans recrutement.
+                    Aucun besoin de cette période n’a été annulé.
                   </div>
                 </div>
               ) : (
                 <>
                   <div className={styles.barres}>
-                    <div className={styles.barresEntete}>
-                      <span className={styles.barresEnteteLib}>Annulés</span>
-                      <span className={styles.barresEnteteLib}>Clos sans</span>
-                    </div>
                     {motifs.filter(m => m.total > 0).map(m => (
                       <MotifBar
                         key={m.cle}
                         label={m.libelle}
                         pct={partPct(m.total, motifTotal)}
                         count={m.total}
-                        extras={[fmtNumber(m.annules), fmtNumber(m.closSans)]}
                         fillColor={COULEURS_MOTIF[m.cle]}
                       />
                     ))}
@@ -502,7 +498,7 @@ export default function Performance() {
                     <div className={styles.repartDonut}>
                       <DonutChart
                         variant="half-rose"
-                        data={missions.map(m => m.demandes)}
+                        data={missions.map(m => m.annules)}
                         labels={missions.map(m => m.libelle)}
                         colors={missions.map(m => m.couleur)}
                         height={240}
@@ -510,7 +506,7 @@ export default function Performance() {
                           const m = missions.find(x => x.libelle === label);
                           if (!m) return `${label} : ${fmtNumber(value)}`;
                           return [
-                            `${label} — ${fmtNumber(value)} besoin${s(value)}, ${fmtPourcentage(pct)}`,
+                            `${label} — ${fmtNumber(value)} non abouti${s(value)}, ${fmtPourcentage(pct)}`,
                             `Réalisés : ${fmtNumber(m.realises)} (${m.tauxRealise == null ? '-' : fmtPourcentage(m.tauxRealise)})`,
                             `Non aboutis : ${fmtNumber(m.annules)} (${m.tauxNonAbouti == null ? '-' : fmtPourcentage(m.tauxNonAbouti)})`,
                           ];
@@ -552,8 +548,8 @@ export default function Performance() {
                     </div>
                   </div>
                   <div className={styles.mention}>
-                    Le cercle répartit les {fmtNumber(besoinsMissions)} besoins. Les deux taux
-                    ne se complètent pas : le reste est encore en cours.
+                    Le cercle répartit les {fmtNumber(nonAboutisMissions)} besoins non aboutis.
+                    Les deux taux ne se complètent pas : le reste est encore en cours.
                   </div>
                 </>
               )}

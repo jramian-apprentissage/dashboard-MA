@@ -28,6 +28,9 @@ Chart.register(BarElement, LineElement, PointElement, CategoryScale, LinearScale
 const C_MOYENNE = 'rgba(38,0,31,0.88)';     // myrtille
 const C_MEDIANE = 'rgba(136,84,48,0.90)';   // encre abricot, la teinte de ce dashboard
 const C_BESOINS = 'rgba(167,173,170,0.50)'; // ciment, en retrait derriere les courbes
+const C_PRESENTES = 'rgba(167,173,170,0.50)'; // ciment, le volume offert
+const C_RETENUS = 'rgba(205,147,101,0.75)';   // abricot, le volume garde
+const C_TAUX = 'rgba(38,0,31,0.88)';          // myrtille, la courbe qui porte le taux
 
 /* '2026-04' → 'avr.', fabriqué en UTC. Un `new Date('2026-04')` est interprété
    en UTC puis réaffiché en heure locale, ce qui recule d'un mois à l'ouest de
@@ -140,8 +143,10 @@ const COULEUR_A_CLASSER = 'rgba(167,173,170,0.50)';
 const ISSUES = {
   en_cours: 'En cours',
   realise: 'Pourvu',
+  /* « Clos sans recrutement » a disparu de cette liste le 23/10 : la route
+     ne rend plus cette issue, Hirijy ayant tranché que c'est une annulation.
+     Un besoin clôturé sans personne en poste sort donc « Annulé ». */
   annule: 'Annulé',
-  clos_sans: 'Clos sans recrutement',
 };
 
 const CLIENTS_APERCU = 5;
@@ -203,7 +208,8 @@ export default function Pipeline() {
           presentationN, presentationMoy, presentationMed,
           pourvoirN, pourvoirMoy, pourvoirMed,
           delaiN, dansDelai, tauxDelai,
-          evolution, candidatsParClient, detailsClients, parMission,
+          evolution, cohortes, candidatsParClient, detailsClients, parMission,
+          promesseN, promesseTenue, promesseMoy, tauxPromesse,
         } = result;
         const s = n => (n > 1 ? 's' : '');
 
@@ -427,6 +433,7 @@ export default function Pipeline() {
                 LE SURVOL PORTE LES POSTES, demandé le 22/10 : un client porte
                 souvent plusieurs recrutements — REGARD INC en a cinq — et la
                 ligne ne peut pas les nommer sans devenir un tableau. */}
+            <div className={styles.blocGraphe}>
             <Card title="Détails par prospects/clients">
               {candidatsParClient.length === 0 ? (
                 <div className={styles.etat}>
@@ -483,6 +490,113 @@ export default function Pipeline() {
                 </>
               )}
             </Card>
+            </div>
+
+            <div className={styles.blocGraphe}>
+              <Card title="Évolution du taux de transformation de profil">
+                {cohortes.every(c => c.presentes === 0) ? (
+                  <div className={styles.etat}>
+                    <div className={styles.etatTexte}>
+                      Aucun profil présenté sur les douze derniers mois.
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.chartWrap} style={{ height: 232 }}>
+                      <Bar
+                        data={{
+                          labels: cohortes.map(c => libelleMois(c.mois)),
+                          datasets: [
+                            {
+                              label: 'Profils présentés',
+                              data: cohortes.map(c => c.presentes),
+                              backgroundColor: C_PRESENTES,
+                              borderRadius: 4,
+                              borderSkipped: false,
+                              yAxisID: 'y2',
+                              order: 2,
+                            },
+                            {
+                              label: 'Profils retenus',
+                              data: cohortes.map(c => c.retenus),
+                              backgroundColor: C_RETENUS,
+                              borderRadius: 4,
+                              borderSkipped: false,
+                              yAxisID: 'y2',
+                              order: 2,
+                            },
+                            {
+                              type: 'line',
+                              label: 'Taux de transformation',
+                              data: cohortes.map(c => c.tauxTransfo),
+                              borderColor: C_TAUX,
+                              pointBackgroundColor: C_TAUX,
+                              pointRadius: 3,
+                              borderWidth: 2,
+                              tension: 0.3,
+                              fill: false,
+                              /* UN MOIS SANS PRÉSENTATION EST UN TROU, pas un
+                                 zéro : la courbe ne doit pas plonger là où
+                                 elle n'a rien mesuré. */
+                              spanGaps: false,
+                              yAxisID: 'y',
+                              order: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          animation: { duration: 900, easing: 'easeOutQuart' },
+                          interaction: { mode: 'index', intersect: false },
+                          plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                              callbacks: {
+                                title: items => libelleMoisLong(cohortes[items[0].dataIndex].mois),
+                                label: ctx => {
+                                  const v = ctx.parsed.y;
+                                  if (v == null) return null;
+                                  if (ctx.dataset.label === 'Taux de transformation') {
+                                    return `Taux de transformation : ${fmtPourcentage(v)}`;
+                                  }
+                                  return `${ctx.dataset.label} : ${fmtNumber(v)}`;
+                                },
+                              },
+                            },
+                          },
+                          scales: {
+                            x: { grid: { display: false } },
+                            y: {
+                              position: 'left',
+                              beginAtZero: true,
+                              ticks: { precision: 0, callback: v => `${v} %` },
+                              title: { display: true, text: 'Taux', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                            },
+                            y2: {
+                              position: 'right',
+                              beginAtZero: true,
+                              ticks: { precision: 0 },
+                              grid: { drawOnChartArea: false },
+                              title: { display: true, text: 'Profils', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                    <div className={styles.legende}>
+                      <span className={styles.legDot} style={{ background: C_PRESENTES }} />Profils présentés
+                      <span className={styles.legDot} style={{ background: C_RETENUS, marginLeft: 12 }} />Profils retenus
+                      <span className={styles.legDot} style={{ background: C_TAUX, marginLeft: 12 }} />Taux de transformation
+                    </div>
+                    <div className={styles.mention}>
+                      Par mois de commande, sur douze mois. Les deux barres
+                      totalisent les deux tuiles du haut de page.
+                    </div>
+                  </>
+                )}
+              </Card>
+            </div>
 
             {/* ── Planche 14, la section des durées ──
                 « Durée de recrutement » depuis le 22/10. Elle s'appelait
@@ -723,6 +837,108 @@ export default function Pipeline() {
                 </>
               )}
             </Card>
+            </div>
+
+            <div className={styles.blocGraphe}>
+              <Card title="Respect de la promesse des 15 jours">
+                {promesseN === 0 ? (
+                  <div className={styles.etat}>
+                    <div className={styles.etatTexte}>
+                      Aucun besoin de la période ne porte à la fois une ouverture
+                      de recherche et un rendez-vous de présentation.
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className={styles.chartWrap} style={{ height: 232 }}>
+                      <Bar
+                        data={{
+                          labels: cohortes.map(c => libelleMois(c.mois)),
+                          datasets: [
+                            {
+                              label: 'Besoins mesurables',
+                              data: cohortes.map(c => c.promesseN),
+                              backgroundColor: C_BESOINS,
+                              borderRadius: 4,
+                              borderSkipped: false,
+                              yAxisID: 'y2',
+                              order: 2,
+                            },
+                            {
+                              type: 'line',
+                              label: 'Promesse tenue',
+                              data: cohortes.map(c => c.tauxPromesse),
+                              borderColor: C_TAUX,
+                              pointBackgroundColor: C_TAUX,
+                              pointRadius: 3,
+                              borderWidth: 2,
+                              tension: 0.3,
+                              fill: false,
+                              spanGaps: false,
+                              yAxisID: 'y',
+                              order: 0,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          animation: { duration: 900, easing: 'easeOutQuart' },
+                          interaction: { mode: 'index', intersect: false },
+                          plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                              callbacks: {
+                                title: items => libelleMoisLong(cohortes[items[0].dataIndex].mois),
+                                label: ctx => {
+                                  const v = ctx.parsed.y;
+                                  if (v == null) return null;
+                                  const c = cohortes[ctx.dataIndex];
+                                  if (ctx.dataset.label === 'Promesse tenue') {
+                                    return `Promesse tenue : ${fmtPourcentage(v)} · ${fmtNumber(c.promesseTenue)} sur ${fmtNumber(c.promesseN)}`;
+                                  }
+                                  return `${fmtNumber(v)} besoin${v > 1 ? 's' : ''} mesurable${v > 1 ? 's' : ''}`;
+                                },
+                              },
+                            },
+                          },
+                          scales: {
+                            x: { grid: { display: false } },
+                            y: {
+                              position: 'left',
+                              beginAtZero: true,
+                              /* BORNÉ À 100 : un taux ne dépasse pas son
+                                 maximum, et une échelle qui s'arrête à 60 un
+                                 mois et à 100 le suivant fait bouger la courbe
+                                 sans que la mesure ait bougé. */
+                              max: 100,
+                              ticks: { precision: 0, callback: v => `${v} %` },
+                              title: { display: true, text: 'Promesse tenue', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                            },
+                            y2: {
+                              position: 'right',
+                              beginAtZero: true,
+                              ticks: { precision: 0 },
+                              grid: { drawOnChartArea: false },
+                              title: { display: true, text: 'Besoins', color: 'rgba(38,0,31,0.45)', font: { size: 9 } },
+                            },
+                          },
+                        }}
+                      />
+                    </div>
+                    <div className={styles.legende}>
+                      <span className={styles.legDot} style={{ background: C_BESOINS }} />Besoins mesurables
+                      <span className={styles.legDot} style={{ background: C_TAUX, marginLeft: 12 }} />Promesse tenue
+                    </div>
+                    <div className={styles.mention}>
+                      De l’ouverture de recherche au rendez-vous de présentation,
+                      en 15 jours ou moins : {fmtPourcentage(tauxPromesse)} sur la période,
+                      soit {fmtNumber(promesseTenue)} besoin{s(promesseTenue)} sur {fmtNumber(promesseN)}{' '}
+                      mesurable{s(promesseN)}, pour une moyenne de {fmtNumber(promesseMoy)} jours.
+                    </div>
+                  </>
+                )}
+              </Card>
             </div>
 
               <Card title="Évolution de la durée pour pourvoir un poste">
