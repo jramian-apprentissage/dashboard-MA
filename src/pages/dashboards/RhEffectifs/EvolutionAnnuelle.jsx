@@ -87,15 +87,18 @@ export default function EvolutionAnnuelle() {
               synonyme ici laissait croire à une autre mesure.
               « Encore actif » garde le mot de Clémence en retirant le seul
               morceau qui était faux, « fin d'année » : voir l'en-tête. */}
-          {/* L'EFFECTIF ET SA CROISSANCE OUVRENT LA LIGNE, avant la cohorte :
-              ils disent la TAILLE de l'agence cette année-là, et les trois
-              colonnes suivantes racontent ce qu'est devenue la promotion
-              entrée la même année. Deux mesures différentes, dans cet ordre,
-              parce qu'on lit d'abord combien on était. */}
+          {/* L'EFFECTIF OUVRE LA LIGNE, avant la cohorte : il dit la TAILLE
+              de l'agence cette année-là, et les trois colonnes suivantes
+              racontent ce qu'est devenue la promotion entrée la même année.
+              Deux mesures différentes, dans cet ordre, parce qu'on lit
+              d'abord combien on était.
+              SA CROISSANCE EST DANS SA CELLULE, pas dans une colonne à elle :
+              c'est la règle posée le 23/10 pour tout le dashboard, un nombre
+              et sa part se lisent ensemble. Elle était en colonne séparée
+              pendant une heure, corrigée par Jimmy le 25/10. */}
           <tr>
             <th>Année</th>
             <th className={styles.num}>Effectif au 31/12</th>
-            <th className={styles.num}>Croissance</th>
             <th className={styles.num}>Entrées</th>
             <th className={styles.num}>Encore actif</th>
             <th className={styles.num}>Sorties</th>
@@ -107,21 +110,18 @@ export default function EvolutionAnnuelle() {
             return (
             <tr key={l.annee}>
               <td>{l.annee}</td>
-              <td className={styles.num}>{fmtNumber(l.effectif)}</td>
               <td className={styles.num}>
-                {!c ? '-' : (
-                  <>
-                    <span className={c.dir === 'up' ? styles.hausse : c.dir === 'down' ? styles.baisse : ''}>
-                      <TrendIcon dir={c.dir} />
-                      {' '}
-                      <span className={styles.valeurBrute} style={{ color: 'inherit' }}>
-                        {c.pct == null ? signe(c.ecart) : `${signe(c.pct)} %`}
-                      </span>
-                    </span>
-                    {c.pct != null && (
-                      <span className={styles.partSuffixe}>{signe(c.ecart)}</span>
-                    )}
-                  </>
+                <span className={styles.valeurBrute}>{fmtNumber(l.effectif)}</span>
+                {/* LA FLÈCHE GARDE SA COULEUR, c'est tout ce qui distingue ce
+                    suffixe de celui d'« encore actif » : une part en gris dit
+                    une proportion, une croissance dit un sens. Le vert et le
+                    rouge sont ceux des tuiles, la flèche est leur composant. */}
+                {c && (
+                  <span className={`${styles.partSuffixe} ${c.dir === 'up' ? styles.hausse : c.dir === 'down' ? styles.baisse : ''}`}>
+                    <TrendIcon dir={c.dir} />
+                    {' '}
+                    {c.pct == null ? signe(c.ecart) : `${signe(c.pct)} % (${signe(c.ecart)})`}
+                  </span>
                 )}
               </td>
               <td className={styles.num}>{fmtNumber(l.entrees)}</td>
