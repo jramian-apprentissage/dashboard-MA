@@ -202,6 +202,22 @@
 .hausse { color: #15803d; }
 .baisse { color: #b91c1c; }
 
+/* LA CROISSANCE A UNE LARGEUR FIXE, et c'est elle qui aligne la colonne des
+   effectifs. Même taille et même graisse que `.partSuffixe`, dont elle est la
+   variante : un suffixe qui porte un SENS et non une proportion.
+   62 px tient « +513 % » et sa flèche, le plus long que cette carte produise.
+   Si un jour un taux à quatre chiffres apparaît, c'est ici qu'il faut
+   l'élargir, pas dans le composant. */
+.croissance {
+  display: inline-block;
+  width: 62px;
+  text-align: left;
+  margin-left: 5px;
+  font-size: 0.86em;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .tauxBon    { color: #15803d; }
 .tauxMoyen  { color: #b45309; }
 .tauxFaible { color: #b91c1c; }

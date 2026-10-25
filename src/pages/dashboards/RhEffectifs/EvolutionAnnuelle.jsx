@@ -115,14 +115,26 @@ export default function EvolutionAnnuelle() {
                 {/* LA FLÈCHE GARDE SA COULEUR, c'est tout ce qui distingue ce
                     suffixe de celui d'« encore actif » : une part en gris dit
                     une proportion, une croissance dit un sens. Le vert et le
-                    rouge sont ceux des tuiles, la flèche est leur composant. */}
-                {c && (
-                  <span className={`${styles.partSuffixe} ${c.dir === 'up' ? styles.hausse : c.dir === 'down' ? styles.baisse : ''}`}>
-                    <TrendIcon dir={c.dir} />
-                    {' '}
-                    {c.pct == null ? signe(c.ecart) : `${signe(c.pct)} % (${signe(c.ecart)})`}
-                  </span>
-                )}
+                    rouge sont ceux des tuiles, la flèche est leur composant.
+
+                    LE SUFFIXE EST TOUJOURS LÀ, MÊME VIDE, et c'est ce qui aligne
+                    la colonne. Les cellules sont calées à droite : sans largeur
+                    fixe, « +513 % » poussait son effectif plus à gauche que
+                    « +30 % », et 2023, qui n'a pas de croissance, collait au
+                    bord. Les quatre nombres ne tombaient jamais au même endroit.
+
+                    L'ÉCART EN PERSONNES EST PARTI avec la parenthèse, retiré le
+                    25/10. Il reste le seul affichage possible quand l'année
+                    précédente est à zéro : un taux n'existe pas, l'écart si. */}
+                <span className={`${styles.croissance} ${c && c.dir === 'up' ? styles.hausse : ''} ${c && c.dir === 'down' ? styles.baisse : ''}`}>
+                  {c && (
+                    <>
+                      <TrendIcon dir={c.dir} />
+                      {' '}
+                      {c.pct == null ? signe(c.ecart) : `${signe(c.pct)} %`}
+                    </>
+                  )}
+                </span>
               </td>
               <td className={styles.num}>{fmtNumber(l.entrees)}</td>
               <td className={styles.num}>
