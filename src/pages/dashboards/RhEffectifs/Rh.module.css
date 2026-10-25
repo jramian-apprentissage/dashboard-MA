@@ -193,6 +193,15 @@
    LA COULEUR PORTE SUR LE NOMBRE SEUL, pas sur la cellule : un fond coloré
    dans un tableau de six colonnes se lit comme une sélection, et l'effectif
    en gris qui suit le taux ne doit pas être teinté - il ne juge rien. */
+/* LA HAUSSE ET LA BAISSE, aux couleurs des tuiles (KPICard.module.css) : un
+   vert qui veut dire « ca monte » ne peut pas changer de teinte d'une carte a
+   l'autre. La fleche est dessinee en currentColor, elle suit donc la cellule.
+   SUR UN EFFECTIF, LA HAUSSE EST UNE BONNE NOUVELLE et le vert ne se discute
+   pas. Ce ne serait pas le cas sur un taux de perte, ou KPICard sait inverser
+   la couleur sans toucher a la fleche. */
+.hausse { color: #15803d; }
+.baisse { color: #b91c1c; }
+
 .tauxBon    { color: #15803d; }
 .tauxMoyen  { color: #b45309; }
 .tauxFaible { color: #b91c1c; }

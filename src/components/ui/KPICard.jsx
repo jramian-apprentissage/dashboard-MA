@@ -2,30 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import styles from './KPICard.module.css';
 import { fmtNumber } from '../../utils/formatNumber';
 import { usePeriod } from '../../contexts/PeriodContext';
+import TrendIcon from './TrendIcon';
 
-// Icônes "tendance graphique" (trending-up/down) plutôt qu'un chevron, qui se
-// lit comme un contrôle cliquable (expand/collapse) et non comme un
-// indicateur de hausse/baisse. Partagées entre la ligne comparaison et la
-// ligne définition (toutes deux peuvent porter un up/down).
-function TrendIcon({ dir }) {
-  if (dir === 'up') {
-    return (
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
-        <polyline points="16 7 22 7 22 13"/>
-      </svg>
-    );
-  }
-  if (dir === 'down') {
-    return (
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <polyline points="22 17 13.5 8.5 8.5 13.5 2 7"/>
-        <polyline points="16 17 22 17 22 11"/>
-      </svg>
-    );
-  }
-  return null;
-}
+// L'icône vit dans son propre fichier depuis le 25/10 : le tableau de
+// l'évolution annuelle porte la même flèche, et deux copies d'un même signe
+// finissent toujours par diverger. Le choix du trending-up plutôt que d'un
+// chevron est expliqué là-bas.
 
 // Ligne de comparaison jamais masquée silencieusement : tant que "Comparer"
 // est actif, la carte affiche toujours quelque chose (le delta, "0 sur la

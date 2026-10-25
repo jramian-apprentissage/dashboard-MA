@@ -1,4 +1,5 @@
 import Card from '../../../components/ui/Card';
+import TrendIcon from '../../../components/ui/TrendIcon';
 import { useRhAnnuel } from '../../../hooks/useRhData';
 import { fmtNumber, partPct, fmtPourcentage } from '../../../utils/formatNumber';
 import styles from './Rh.module.css';
@@ -26,6 +27,34 @@ import styles from './Rh.module.css';
  * l'unité près, parce qu'une personne encore en poste est rarement sur deux
  * missions à la fois.
  */
+/* LA CROISSANCE D'UNE ANNEE SUR L'AUTRE, demandee par Clemence le 23/10 :
+ * « ca permet de se dire que chaque annee, mon ambassadeur croit a peu pres
+ * de X % ». Elle porte sur l'EFFECTIF de fin d'annee et non sur les entrees :
+ * une annee qui recrute cent personnes et en perd cent n'a pas grandi.
+ *
+ * LE POURCENTAGE ET L'ECART SONT DONNES TOUS LES DEUX, comme le demande
+ * Jimmy : « le systeme de pourcentage mais avec l'emoji + la difference ».
+ * Passer de 8 a 54 fait +575 %, passer de 124 a 120 fait -3 % : le taux seul
+ * ne dit pas de combien de personnes on parle, l'ecart seul ne dit pas si
+ * c'est beaucoup.
+ *
+ * SANS ANNEE PRECEDENTE, RIEN NE S'AFFICHE. La premiere ligne du tableau n'a
+ * pas de comparaison possible, et un « +100 % » sur un effectif parti de zero
+ * serait une invention. */
+function croissance(effectif, precedent) {
+  if (effectif == null || precedent == null) return null;
+  const ecart = effectif - precedent;
+  return {
+    ecart,
+    /* Un denominateur nul n'a pas de taux : on garde l'ecart, qui lui est
+       toujours vrai. */
+    pct: precedent === 0 ? null : Math.round((100 * ecart) / precedent),
+    dir: ecart > 0 ? 'up' : ecart < 0 ? 'down' : 'neutral',
+  };
+}
+
+const signe = n => (n > 0 ? `+${fmtNumber(n)}` : fmtNumber(n));
+
 export default function EvolutionAnnuelle() {
   const { lignes, loading, error } = useRhAnnuel();
   const titre = 'Évolution annuelle';
@@ -58,12 +87,43 @@ export default function EvolutionAnnuelle() {
               synonyme ici laissait croire à une autre mesure.
               « Encore actif » garde le mot de Clémence en retirant le seul
               morceau qui était faux, « fin d'année » : voir l'en-tête. */}
-          <tr><th>Année</th><th className={styles.num}>Entrées</th><th className={styles.num}>Encore actif</th><th className={styles.num}>Sorties</th></tr>
+          {/* L'EFFECTIF ET SA CROISSANCE OUVRENT LA LIGNE, avant la cohorte :
+              ils disent la TAILLE de l'agence cette année-là, et les trois
+              colonnes suivantes racontent ce qu'est devenue la promotion
+              entrée la même année. Deux mesures différentes, dans cet ordre,
+              parce qu'on lit d'abord combien on était. */}
+          <tr>
+            <th>Année</th>
+            <th className={styles.num}>Effectif au 31/12</th>
+            <th className={styles.num}>Croissance</th>
+            <th className={styles.num}>Entrées</th>
+            <th className={styles.num}>Encore actif</th>
+            <th className={styles.num}>Sorties</th>
+          </tr>
         </thead>
         <tbody>
-          {lignes.map(l => (
+          {lignes.map((l, i) => {
+            const c = croissance(l.effectif, i > 0 ? lignes[i - 1].effectif : null);
+            return (
             <tr key={l.annee}>
               <td>{l.annee}</td>
+              <td className={styles.num}>{fmtNumber(l.effectif)}</td>
+              <td className={styles.num}>
+                {!c ? '-' : (
+                  <>
+                    <span className={c.dir === 'up' ? styles.hausse : c.dir === 'down' ? styles.baisse : ''}>
+                      <TrendIcon dir={c.dir} />
+                      {' '}
+                      <span className={styles.valeurBrute} style={{ color: 'inherit' }}>
+                        {c.pct == null ? signe(c.ecart) : `${signe(c.pct)} %`}
+                      </span>
+                    </span>
+                    {c.pct != null && (
+                      <span className={styles.partSuffixe}>{signe(c.ecart)}</span>
+                    )}
+                  </>
+                )}
+              </td>
               <td className={styles.num}>{fmtNumber(l.entrees)}</td>
               <td className={styles.num}>
                 <span className={styles.valeurBrute}>{fmtNumber(l.encore)}</span>
@@ -71,7 +131,8 @@ export default function EvolutionAnnuelle() {
               </td>
               <td className={styles.num}>{fmtNumber(l.sortis)}</td>
             </tr>
-          ))}
+            );
+          })}
         </tbody>
       </table>
       <div className={styles.mention}>
@@ -83,7 +144,9 @@ export default function EvolutionAnnuelle() {
             lecture que la carte existe précisément pour permettre. */}
         Chaque ligne se lit seule : sur les collaborateurs arrivés cette année-là,
         combien sont encore en poste aujourd’hui. « Encore actif » s’entend à la fin
-        de la période choisie, pas au 31 décembre de l’année concernée.
+        de la période choisie, pas au 31 décembre de l’année concernée. L’effectif
+        de l’année en cours est arrêté à cette même date, son 31 décembre n’ayant
+        pas encore eu lieu.
       </div>
     </Card>
   );
