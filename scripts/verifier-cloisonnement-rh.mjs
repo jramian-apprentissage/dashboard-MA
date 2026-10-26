@@ -52,7 +52,7 @@
  * conditionnel dans la configuration de build, porté par tout le monde et pour
  * toujours.
  */
-import { readdirSync, readFileSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 const DIST = 'dist/assets';
@@ -80,6 +80,72 @@ try {
 } catch {
   console.error(`verif:rh — ${DIST} est introuvable. La construction a-t-elle abouti ?`);
   process.exit(1);
+}
+
+/* AUCUN SECRET RH DANS LE PAQUET LIVRÉ. C'est la vérification qui manquait,
+   ajoutée le 26/10 après l'avoir constaté en production : le front portait
+   VITE_API_RH_TOKEN, et un paquet JavaScript se télécharge sans se connecter.
+   Le secret se lisait en clair dans assets/Rh.module-*.js sur
+   dashboard-ma-rh.vercel.app. Qui connaissait l'adresse pouvait appeler l'API
+   RH sans compte, et y lire des noms, des salaires et des motifs de départ.
+
+   LES ROUTES SONT DEPUIS DERRIÈRE LA SESSION, donc le front n'a plus besoin du
+   secret. Celui-ci ne survit que pour l'outillage sans session, et il ne doit
+   plus jamais sortir d'une machine ou d'un serveur.
+
+   OÙ LE SCRIPT VA CHERCHER LA VALEUR, et pourquoi à trois endroits. Sur Vercel
+   elle serait dans l'environnement du processus. En local, `vite build --mode
+   rh` lit .env.rh pour lui-même sans la passer au script suivant : il faut
+   donc ouvrir le fichier. Et .env.local sert au poste de développement.
+   Aucune de ces sources n'est obligatoire : un poste qui n'a aucun secret sous
+   la main ne peut rien vérifier, et le script le dit plutôt que de se taire.
+
+   CE QU'IL NE PEUT PAS VOIR : un secret posé sur Vercel sans l'être ici. C'est
+   pourquoi la variable doit rester ABSENTE des projets Vercel, et non pas
+   seulement inutilisée. */
+const FICHIERS_ENV = ['.env.rh', '.env.local', '.env'];
+
+function secretsConnus() {
+  const vus = new Set();
+  if (process.env.VITE_API_RH_TOKEN) vus.add(process.env.VITE_API_RH_TOKEN);
+  if (process.env.API_RH_TOKEN) vus.add(process.env.API_RH_TOKEN);
+  for (const f of FICHIERS_ENV) {
+    if (!existsSync(f)) continue;
+    for (const ligne of readFileSync(f, 'utf8').split(/\r?\n/)) {
+      const m = ligne.match(/^\s*(VITE_API_RH_TOKEN|API_RH_TOKEN)\s*=\s*(.+?)\s*$/);
+      if (m) vus.add(m[2].replace(/^["']|["']$/g, ''));
+    }
+  }
+  /* Une valeur trop courte chercherait une aiguille qui ressemble à tout :
+     un secret de quelques caractères produirait des correspondances fortuites
+     dans du code minifié. */
+  return [...vus].filter(v => v.length >= 12);
+}
+
+const secrets = secretsConnus();
+if (secrets.length === 0) {
+  console.warn(
+    'verif:rh — aucun secret RH trouvé dans l\'environnement ni dans '
+    + `${FICHIERS_ENV.join(', ')} : la fuite de jeton n'a PAS pu être vérifiée.`,
+  );
+} else {
+  const fuites = fichiers.filter(f => {
+    const contenu = readFileSync(join(DIST, f), 'utf8');
+    return secrets.some(v => contenu.includes(v));
+  });
+  if (fuites.length > 0) {
+    console.error(
+      'verif:rh — ÉCHEC. Le secret de l\'API RH se trouve dans le paquet livré '
+      + `(${fuites.join(', ')}).\n`
+      + "Un paquet JavaScript se telecharge sans se connecter : ce secret serait "
+      + 'lisible par qui connaît l\'adresse du site, et ouvrirait les noms, les '
+      + 'salaires et les motifs de départ.\n'
+      + 'Cause la plus probable : VITE_API_RH_TOKEN posée dans les variables du '
+      + "projet Vercel. Elle doit en être retirée — les routes RH sont derrière "
+      + 'la session depuis le 26/10, le front n\'a plus besoin du secret.',
+    );
+    process.exit(1);
+  }
 }
 
 /* Un marqueur manquant suffit à alerter, un seul marqueur présent suffit à
@@ -120,5 +186,6 @@ if (!RH_ACTIF && presents.length > 0) {
 
 console.log(
   `verif:rh — ok. ${RH_ACTIF ? 'Front RH' : 'Production'} : les ${MARQUEURS.length} entrées RH sont `
-  + `${RH_ACTIF ? 'bien présentes' : 'bien absentes'}.`,
+  + `${RH_ACTIF ? 'bien présentes' : 'bien absentes'}`
+  + `${secrets.length ? ', et aucun secret RH dans le paquet' : ''}.`,
 );

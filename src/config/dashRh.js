@@ -18,9 +18,18 @@
  *    d'API (voir .env.demo-rh) : même si l'adresse fuite, il n'y a aucune
  *    donnée réelle derrière, parce qu'il n'existe aucun chemin vers elle.
  *
- * 3. Les deux drapeaux ne s'allument jamais sur la production du dashboard.
- *    `npm run verif:rh`, branché sur prebuild, casse la compilation si un
- *    fichier RH importe le client d'API.
+ * 3. CE QUE LE DRAPEAU PROTÈGE A CHANGÉ LE 26/10. Il a tenu le Dash RH hors
+ *    de la production tant que celle-ci n'était pas prête ; la mise en
+ *    production décidée, il devient un simple interrupteur de déploiement,
+ *    allumé sur les deux fronts. Ce qui garde les données RH, désormais, ce
+ *    sont les DROITS : les routes /api/rh exigent la session de la personne
+ *    et relisent son accès en base à chaque appel. Un compte sans dashboard
+ *    RH reçoit 403, même s'il atteint l'adresse.
+ *
+ * 4. `npm run verif:rh` tourne à chaque construction et casse la compilation
+ *    si le secret de l'API RH se retrouve dans le paquet livré. C'est la
+ *    vérification qui manquait : jusqu'au 26/10 le front embarquait
+ *    VITE_API_RH_TOKEN, lisible par qui téléchargeait le JavaScript du site.
  */
 
 export const DASH_RH_ACTIF = import.meta.env.VITE_DASH_RH === '1';
