@@ -184,8 +184,12 @@ if (!RH_ACTIF && presents.length > 0) {
   process.exit(1);
 }
 
+/* « CONSTRUCTION AVEC LE DASH RH » ET NON « FRONT RH » depuis le 26/10 : les
+   deux fronts le portent maintenant, la production comprise, et lire
+   « Front RH » dans les journaux de dashboard-ma ferait croire a une erreur
+   de projet. Ce que le drapeau distingue n'est plus un site mais un etat. */
 console.log(
-  `verif:rh — ok. ${RH_ACTIF ? 'Front RH' : 'Production'} : les ${MARQUEURS.length} entrées RH sont `
+  `verif:rh — ok. ${RH_ACTIF ? 'Construction avec le Dash RH' : 'Construction sans le Dash RH'} : les ${MARQUEURS.length} entrées RH sont `
   + `${RH_ACTIF ? 'bien présentes' : 'bien absentes'}`
   + `${secrets.length ? ', et aucun secret RH dans le paquet' : ''}.`,
 );
