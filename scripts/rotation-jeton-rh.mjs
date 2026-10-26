@@ -26,6 +26,16 @@
 import { randomBytes } from 'crypto';
 import { execFileSync } from 'child_process';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+/* LES CHEMINS SE CALCULENT DEPUIS LE SCRIPT, jamais depuis le dossier
+   courant. Sous cmd.exe, `cd "E:/..."` ne change pas de lecteur sans /d :
+   la commande a l'air d'avoir marche, node cherche ailleurs, et le message
+   d'erreur parle d'un module introuvable plutot que d'un mauvais dossier.
+   Le script se lance donc de n'importe ou. */
+const RACINE = join(dirname(fileURLToPath(import.meta.url)), '..');
+const chemin = f => join(RACINE, f);
 
 const API = 'https://dashboard-ma-backend-production.up.railway.app/api/rh/effectifs?au=2026-01-31';
 const LOCAL_SEULEMENT = process.argv.includes('--local');
@@ -44,7 +54,7 @@ function lireCle(chemin, cle) {
   return m ? m[1].trim() : null;
 }
 
-const ancien = lireCle('server/.env', 'API_RH_TOKEN');
+const ancien = lireCle(chemin('server/.env'), 'API_RH_TOKEN');
 
 function remplacer(chemin, cle) {
   if (!existsSync(chemin)) {
@@ -62,8 +72,8 @@ function remplacer(chemin, cle) {
 }
 
 console.log('Fichiers locaux');
-remplacer('server/.env', 'API_RH_TOKEN');
-remplacer('.env.rh', 'VITE_API_RH_TOKEN');
+remplacer(chemin('server/.env'), 'API_RH_TOKEN');
+remplacer(chemin('.env.rh'), 'VITE_API_RH_TOKEN');
 
 if (LOCAL_SEULEMENT) {
   console.log('\n--local : Railway non touché. Le serveur de production garde '
@@ -76,7 +86,7 @@ try {
   /* execFileSync et non une chaîne shell : le secret ne passe ainsi par aucun
      interpréteur, donc ni par l'historique du terminal. */
   execFileSync('railway', ['variables', '--set', `API_RH_TOKEN=${nouveau}`], {
-    cwd: 'server',
+    cwd: chemin('server'),
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   console.log('  variable posée, le service redéploie');
