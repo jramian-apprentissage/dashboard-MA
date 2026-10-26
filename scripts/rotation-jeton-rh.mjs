@@ -81,11 +81,29 @@ if (LOCAL_SEULEMENT) {
   process.exit(0);
 }
 
+/* LE VRAI BINAIRE, PAS LE SHIM. Sous Windows, npm installe trois enveloppes
+   autour du programme : railway, railway.cmd et railway.ps1. Aucune n'est un
+   executable au sens de spawn, d'ou le ENOENT rencontre le 26/10. Passer par
+   railway.cmd obligerait a demarrer un shell, donc a faire transiter le
+   secret par une ligne de commande, ce que ce script existe justement pour
+   eviter. On vise donc l'exe livre dans le paquet npm, execute directement.
+
+   LA RECHERCHE RESTE TOLERANTE : si l'exe n'est pas la ou on le croit, on
+   retombe sur le nom nu, qui suffit partout ailleurs que sous Windows. */
+function binaireRailway() {
+  if (process.platform !== 'win32') return 'railway';
+  const candidats = [
+    join(process.env.APPDATA || '.', 'npm/node_modules/@railway/cli/bin/railway.exe'),
+    join(process.env.LOCALAPPDATA || '.', 'Programs/railway/railway.exe'),
+  ];
+  return candidats.find(c => existsSync(c)) || 'railway';
+}
+
 console.log('\nRailway');
 try {
   /* execFileSync et non une chaîne shell : le secret ne passe ainsi par aucun
      interpréteur, donc ni par l'historique du terminal. */
-  execFileSync('railway', ['variables', '--set', `API_RH_TOKEN=${nouveau}`], {
+  execFileSync(binaireRailway(), ['variables', '--set', `API_RH_TOKEN=${nouveau}`], {
     cwd: chemin('server'),
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -109,6 +127,7 @@ for (let essai = 1; essai <= 24; essai++) {
     : 401;
   if (neuf === 200 && vieux === 401) {
     console.log(`  ok après ${essai} essai(s) : le nouveau secret ouvre, l'ancien est mort.`);
+    console.log('  Pensez a redemarrer l API locale : elle a lu son .env au demarrage.');
     process.exit(0);
   }
   console.log(`  essai ${essai} : nouveau ${neuf}, ancien ${vieux}`);
